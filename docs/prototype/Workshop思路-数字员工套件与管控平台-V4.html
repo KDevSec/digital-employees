@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字员工套件 & 管控平台 · 架构总览</title>
+<style>
+:root{
+  --blue-950:#172554; --blue-900:#1e3a8a; --blue-800:#1e40af; --blue-700:#1d4ed8;
+  --blue-600:#2563eb; --blue-500:#3b82f6; --blue-400:#60a5fa; --blue-300:#93c5fd;
+  --blue-200:#bfdbfe; --blue-100:#dbeafe; --blue-50:#eff6ff;
+  --ink:#0f172a; --g700:#334155; --g600:#475569; --g500:#64748b; --g400:#94a3b8;
+  --g300:#cbd5e1; --g200:#e2e8f0; --g100:#f1f5f9; --bg:#f4f7fd;
+  --amber:#f59e0b; --amber-bg:#fffbeb; --amber-border:#fde68a;
+  --green:#059669; --green-bg:#ecfdf5; --green-border:#a7f3d0;
+  --red:#dc2626; --red-bg:#fef2f2; --red-border:#fecaca;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+
+/* ── Hero ── */
+.hero{background:linear-gradient(135deg,var(--blue-950) 0%,var(--blue-800) 60%,var(--blue-600) 100%);color:#fff;padding:52px 40px 100px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-100px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,.35),transparent 70%)}
+.hero::before{content:"";position:absolute;left:28%;bottom:-180px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(147,197,253,.18),transparent 70%)}
+.hero-inner{max-width:1060px;margin:0 auto;position:relative;z-index:1}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(147,197,253,.18);border:1px solid rgba(147,197,253,.4);border-radius:999px;padding:5px 14px;font-size:12px;color:var(--blue-200);margin-bottom:14px}
+.hero h1{font-size:34px;margin-bottom:8px;letter-spacing:.5px}
+.hero .sub{color:var(--blue-200);font-size:14px;max-width:680px;line-height:1.7}
+
+/* ── Layout ── */
+.wrap{max-width:1060px;margin:-52px auto 0;padding:0 32px 72px;position:relative;z-index:2}
+.chapter{background:#fff;border-radius:16px;padding:36px;margin-bottom:22px;box-shadow:0 8px 28px rgba(30,64,175,.1);border:1px solid var(--g200)}
+.chapter-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--g100)}
+.chapter-num{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue-600),var(--blue-400));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.chapter h2{font-size:21px;color:var(--blue-900)}
+.chapter h3{font-size:15px;color:var(--blue-800);margin:24px 0 8px}
+.chapter h3:first-of-type{margin-top:0}
+
+/* ── Tables ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+.tbl th{background:var(--blue-50);color:var(--blue-800);font-weight:600;padding:9px 12px;text-align:left;border:1px solid var(--blue-100);font-size:12px}
+.tbl td{padding:9px 12px;border:1px solid var(--g200);vertical-align:top;line-height:1.6}
+.tbl tr:nth-child(even) td{background:var(--g100)}
+
+/* ── Cards ── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin:12px 0}
+.card{background:var(--g100);border:1px solid var(--g200);border-radius:12px;padding:18px;transition:.15s}
+.card:hover{border-color:var(--blue-300);box-shadow:0 4px 14px rgba(37,99,235,.1)}
+.card h4{font-size:14px;color:var(--blue-800);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.card .icon{font-size:18px}
+.card p{font-size:12.5px;color:var(--g600);line-height:1.65}
+.card .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:600}
+.tag-blue{background:var(--blue-100);color:var(--blue-800)}
+.tag-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.tag-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-gray{background:var(--g200);color:var(--g600)}
+
+/* ── Diagrams ── */
+.diagram{margin:16px 0;font-size:13px}
+
+/* Left-label diagram */
+.ll-diagram{display:flex;flex-direction:column;gap:10px;align-items:center}
+.ll-row{display:flex;align-items:stretch;gap:0;width:100%}
+.ll-label{width:90px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;padding-right:12px;font-size:12px;font-weight:700;color:var(--g700);text-align:right}
+.ll-content{flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ll-arrow-down{display:flex;justify-content:center;padding:4px 0;font-size:18px;color:var(--blue-400);font-weight:700}
+.ll-arrow-down span{padding-left:90px}
+
+/* Box styles */
+.bbox{border-radius:10px;padding:10px 14px;text-align:center;border:1.5px solid;font-size:12px;line-height:1.5}
+.bbox strong{display:block;font-size:13px;margin-bottom:2px}
+.bbox .sub{font-size:10.5px;color:var(--g600);line-height:1.4}
+.bb-blue{background:var(--blue-50);border-color:var(--blue-300)}
+.bb-blue strong{color:var(--blue-800)}
+.bb-orange{background:var(--amber-bg);border-color:var(--amber-border)}
+.bb-orange strong{color:var(--amber)}
+.bb-green{background:var(--green-bg);border-color:var(--green-border)}
+.bb-green strong{color:var(--green)}
+.bb-white{background:#fff;border-color:var(--blue-400);box-shadow:0 2px 10px rgba(37,99,235,.08)}
+.bb-gray{background:var(--g100);border-color:var(--g300)}
+.bb-gray strong{color:var(--g700)}
+.bb-ink{background:var(--blue-950);border-color:var(--blue-800);color:#fff}
+.bb-ink strong{color:var(--blue-200)}
+
+/* ── Rich Architecture Diagram ── */
+.arch-wrap{position:relative;margin:20px 0;font-size:12px}
+.arch-layer{border-radius:14px;padding:18px 20px;margin-bottom:8px;border:1.5px solid;position:relative}
+.arch-layer-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.arch-layer-title .icon{font-size:18px}
+.arch-sub{background:rgba(255,255,255,.7);border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px dashed}
+.arch-sub:last-child{margin-bottom:0}
+.arch-sub-title{font-size:11px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.arch-tags{display:flex;flex-wrap:wrap;gap:5px}
+.arch-arrow{display:flex;align-items:center;justify-content:center;padding:6px 0;font-size:13px;font-weight:700;gap:8px}
+.arch-arrow-line{flex:1;height:0;border-top:2px dashed var(--g400);max-width:60px}
+.arch-arrow-text{color:var(--blue-500);font-size:11px;white-space:nowrap}
+
+/* Layer colors */
+.al-platform{background:linear-gradient(135deg,var(--green-bg),#f0fdf4);border-color:var(--green-border)}
+.al-platform .arch-layer-title{color:var(--green)}
+.al-workbench{background:linear-gradient(135deg,var(--blue-50),#e8f0fe);border-color:var(--blue-300)}
+.al-workbench .arch-layer-title{color:var(--blue-700)}
+.al-package{background:linear-gradient(135deg,var(--g100),#fafafa);border-color:var(--g300)}
+.al-package .arch-layer-title{color:var(--g700)}
+.al-adapter{background:linear-gradient(135deg,#fefce8,#fef9c3);border-color:var(--amber-border)}
+
+/* Plugin install flow */
+.plugin-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.plugin-step{background:#fff;border:2px solid var(--blue-300);border-radius:10px;padding:10px 14px;text-align:center;font-size:11px;min-width:80px}
+.plugin-step .step-num{font-size:18px;font-weight:700;color:var(--blue-500);display:block}
+.plugin-arrow{color:var(--blue-400);font-size:16px;font-weight:700}
+
+/* Employee package: five-category grid */
+.pkg-cats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.pkg-cat{background:#fff;border:1.5px solid var(--g200);border-radius:10px;padding:12px 10px;text-align:center}
+.pkg-cat .cat-icon{font-size:20px;display:block;margin-bottom:4px}
+.pkg-cat .cat-name{font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px}
+.pkg-cat .cat-fields{font-size:10.5px;color:var(--g500);line-height:1.6}
+.pkg-cat .cat-fields span{display:block}
+
+/* Employee package: install & distribution flow */
+.install-flow{border:1.5px dashed var(--g300);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:rgba(255,255,255,.6)}
+.install-flow .flow-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px}
+.install-flow .flow-row:last-child{margin-bottom:0}
+.install-flow .flow-dir{font-weight:700;font-size:10px;padding:3px 8px;border-radius:99px;min-width:44px;text-align:center;flex-shrink:0}
+.install-flow .flow-dir.down{background:var(--blue-100);color:var(--blue-700)}
+.install-flow .flow-dir.up{background:var(--green-bg);color:var(--green)}
+.install-flow .flow-step{background:#fff;border:1.5px solid var(--g200);border-radius:8px;padding:7px 10px;text-align:center;font-size:10.5px;white-space:nowrap}
+.install-flow .flow-step.strong{border-color:var(--blue-300);background:var(--blue-50);font-weight:600}
+.install-flow .flow-arr{color:var(--g400);font-size:13px;flex-shrink:0}
+.install-flow .flow-brace{color:var(--g400);font-size:11px;flex-shrink:0}
+
+@media(max-width:900px){.pkg-cats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.pkg-cats{grid-template-columns:repeat(2,1fr)}.install-flow .flow-row{flex-direction:column;align-items:flex-start}}
+
+/* Five-stage flow */
+.stage-row{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center}
+.stage-box{width:115px;text-align:center;padding:10px 6px;border-radius:10px;border:1.5px solid;font-size:12px}
+.stage-box .num{font-size:18px;font-weight:700;display:block;margin-bottom:2px}
+.stage-arrow{font-size:16px;color:var(--g400);margin:0 2px;flex-shrink:0}
+
+/* Connection grid */
+.connector-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+.connector{background:var(--g100);border-radius:10px;padding:14px;border:1px solid var(--g200)}
+.connector .dir{font-size:11px;color:var(--blue-600);font-weight:600;margin-bottom:4px}
+.connector p{font-size:12.5px;color:var(--g600)}
+
+/* Split columns */
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.split3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:720px){.split2,.split3{grid-template-columns:1fr}}
+
+/* Collapsible */
+.collapse-toggle{cursor:pointer;color:var(--blue-600);font-size:13px;font-weight:600;margin:8px 0;user-select:none;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--blue-200);border-radius:8px;background:var(--blue-50)}
+.collapse-toggle:hover{background:var(--blue-100);color:var(--blue-800)}
+.collapse-toggle .arrow{transition:transform .2s;display:inline-block;font-size:10px}
+.collapse-content{display:none;margin-top:8px}
+.collapse-content.open{display:block}
+.collapse-content pre{background:var(--blue-950);color:#e2e8f0;padding:18px;border-radius:10px;overflow-x:auto;font-size:11.5px;line-height:1.55;max-height:440px;overflow-y:auto}
+
+/* Proto links */
+.proto-link{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:9px 18px;background:var(--blue-600);color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;transition:.15s}
+.proto-link:hover{background:var(--blue-700);transform:translateY(-1px)}
+
+/* Muted / notes */
+.muted{color:var(--g500);font-size:12px}
+.note-box{background:var(--blue-50);border-left:3px solid var(--blue-400);border-radius:0 8px 8px 0;padding:11px 16px;margin:12px 0;font-size:13px;color:var(--g700);line-height:1.7}
+
+/* Inline code */
+code{background:var(--g100);padding:1px 5px;border-radius:4px;font-size:12px;color:var(--blue-700)}
+
+/* Feature list */
+.feat-list{list-style:none;padding:0}
+.feat-list li{padding:5px 0;font-size:12.5px;color:var(--g700);display:flex;align-items:flex-start;gap:8px}
+.feat-list li::before{content:"•";color:var(--blue-500);font-weight:700;flex-shrink:0}
+
+/* ── 全景架构（架构示意 · 数字员工套件 04） ── */
+.pano-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--blue-600);margin-bottom:10px}
+.pano-eyebrow b{font-size:10px;color:#fff;background:var(--blue-700);padding:5px 9px;border-radius:5px}
+.pano{border:1px solid var(--blue-200);border-radius:14px;padding:18px 20px;background:linear-gradient(180deg,#fff,var(--blue-50));margin:14px 0 4px}
+.pano-row{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:13px 0}
+.pano-row + .pano-row{border-top:1px solid var(--g200)}
+.pano-side{padding:11px 13px;border-left:5px solid var(--blue-600);background:var(--blue-50);border-radius:0 10px 10px 0}
+.pano-side small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--blue-600)}
+.pano-side strong{display:block;margin-top:5px;font-size:16px;color:var(--blue-900)}
+.pano-side span{display:block;margin-top:4px;font-size:11px;color:var(--g500)}
+.pano-content{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:stretch}
+.pano-content.two{grid-template-columns:1fr 1fr}
+.pano-content.production{grid-template-columns:1fr 26px 1fr}
+.pano-box{padding:13px 15px;border:1px solid var(--blue-200);border-radius:10px;background:#fff}
+.pano-box small{display:block;font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--blue-600)}
+.pano-box strong{display:block;margin-top:6px;font-size:14px;color:var(--ink)}
+.pano-box p{margin:5px 0 0;font-size:11.5px;line-height:1.6;color:var(--g600)}
+.pano-box.primary{border-top:3px solid var(--blue-600);background:var(--blue-50)}
+.pano-box.accent{border-top:3px solid #7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+.pano-box.accent small{color:#7c3aed}
+.pano-box.green{border-top:3px solid var(--green);background:var(--green-bg);border-color:var(--green-border)}
+.pano-box.green small{color:var(--green)}
+.pano-join{display:grid;place-items:center;color:var(--blue-600);font-size:19px;font-weight:800}
+.pano-link{display:flex;align-items:center;justify-content:center;gap:10px;padding:2px 0;font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--blue-600)}
+.pano-link b{display:grid;place-items:center;width:22px;height:22px;background:var(--blue-600);color:#fff;border-radius:6px;font-weight:800}
+.pano-feedback{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;margin-top:14px;padding:11px 15px;border:1px dashed var(--blue-400);border-radius:10px;background:var(--blue-50);font-size:12px;color:var(--g700)}
+.pano-feedback b{color:var(--blue-800)}
+.pano-note{margin-top:12px;font-size:12px;color:var(--g500);text-align:right}
+.pano-note b{color:var(--blue-800)}
+@media(max-width:780px){
+  .pano-row{grid-template-columns:1fr}
+  .pano-content,.pano-content.two,.pano-content.production{grid-template-columns:1fr}
+  .pano-join{transform:rotate(90deg)}
+  .pano-feedback{align-items:flex-start;flex-direction:column}
+}
+
+/* ── 跨组协同诉求（第五部分） ── */
+.ask-item{border:1px solid var(--g200);border-radius:12px;padding:18px 20px;background:#fff;margin:14px 0;transition:.15s}
+.ask-item:hover{border-color:var(--blue-300);box-shadow:0 4px 14px rgba(37,99,235,.08)}
+.ask-item h4{font-size:15px;color:var(--blue-900);display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.ask-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--blue-600),var(--blue-400));color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
+.ask-main{border-left:3px solid var(--blue-500);background:var(--blue-50);padding:11px 15px;border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.8;color:var(--g700);margin-bottom:12px}
+.ask-main strong{color:var(--blue-800)}
+.ask-sub-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--g400);margin:10px 0 4px}
+.ask-confirm{display:flex;gap:9px;align-items:flex-start;margin-top:12px;font-size:12px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:9px 13px;line-height:1.65}
+.ask-confirm b{flex-shrink:0}
+
+/* ── Responsive ── */
+@media(max-width:780px){
+  .hero{padding:36px 20px 80px}
+  .hero h1{font-size:26px}
+  .wrap{padding:0 16px 48px;margin-top:-36px}
+  .chapter{padding:20px}
+  .ll-label{width:60px;font-size:10px}
+  .stage-row{flex-direction:column;gap:4px}
+  .stage-arrow{transform:rotate(90deg)}
+  .connector-grid{grid-template-columns:1fr}
+  .plugin-flow{flex-direction:column}
+  .plugin-arrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ Hero ════════════════ -->
+<div class="hero">
+  <div class="hero-inner">
+    <span class="badge">数字员工套件 2.0 · 架构总览</span>
+    <h1>数字员工套件 &amp; 管控平台</h1>
+    <p class="sub">工作台 + 员工包 + 管控平台，三层分离。一份资产多底座上岗，编排引擎通用驱动，工程记忆跨员工共享。</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════════════ 〇、全景架构（架构示意 · 数字员工套件 04） ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">〇</span>
+    <h2>全景：从组织经验沉淀，走向个人工作台默认可用</h2>
+  </div>
+
+  <span class="pano-eyebrow"><b>架构示意</b>数字员工套件 · 04</span>
+  <div class="note-box">
+    <strong>管理端</strong>负责资产沉淀、治理和度量；<strong>生产端</strong>把成熟能力组装成统一制式数字员工套件；<strong>消费端</strong>提供贴近日常研发的多种入口。真实使用数据再反向驱动资产和规则迭代。
+  </div>
+
+  <div class="pano">
+    <div class="pano-row">
+      <div class="pano-side"><small>MANAGEMENT</small><strong>管理端</strong><span>治理与资产沉淀</span></div>
+      <div class="pano-content two">
+        <div class="pano-box primary"><small>CONTROL PLATFORM</small><strong>数字员工管控平台</strong><p>员工生命周期管控、版本发布、权限策略、运行观测与度量评价。</p></div>
+        <div class="pano-box accent"><small>AGENTHUB</small><strong>数字资产广场</strong><p>沉淀并复用效果较好的经验、Skill、Spec、SOP 与模板。</p></div>
+      </div>
+    </div>
+    <div class="pano-link"><b>↓</b><span>资产订阅 · 策略下发 · 版本与生命周期治理</span></div>
+    <div class="pano-row">
+      <div class="pano-side"><small>PRODUCTION</small><strong>生产端</strong><span>能力组装与供给</span></div>
+      <div class="pano-content production">
+        <div class="pano-box primary"><small>DIGITAL EMPLOYEE SUITE</small><strong>统一制式数字员工套件</strong><p>基础运行时 + 公共能力 + L3 数字员工插件；把成熟 SOP 固化为默认可执行能力。</p></div>
+        <div class="pano-join">→</div>
+        <div class="pano-box green"><small>PERSONAL WORKBENCH</small><strong>个人工作台/项目工作台</strong><p>组合、配置并运行个人数字员工 Team，承接项目目标与日常研发任务。</p></div>
+      </div>
+    </div>
+    <div class="pano-link"><b>↓</b><span>统一套件供给 · 工作台能力触达</span></div>
+    <div class="pano-row">
+      <div class="pano-side"><small>CONSUMPTION</small><strong>消费端</strong><span>统一使用入口</span></div>
+      <div class="pano-content">
+        <div class="pano-box"><small>LOCAL</small><strong>本地 IDE</strong><p>在开发现场直接调用套件、L3 插件和固化 SOP。</p></div>
+        <div class="pano-box"><small>CLOUD</small><strong>云上协同 · InAgent</strong><p>支持跨角色、跨任务的在线协同和统一工作空间。</p></div>
+        <div class="pano-box"><small>PORTAL</small><strong>管控平台／部门研发零处平台</strong><p>提供统一入口、团队看板、资产发现与治理视图。</p></div>
+      </div>
+    </div>
+    <div class="pano-feedback"><b>使用反馈闭环</b><span>使用量、质量、成本与例外 → 数字员工管控平台</span><span>新经验、SOP 与插件 → AgentHub</span></div>
+    <div class="pano-note"><b>核心链路：</b>经验资产化 → 插件产品化 → 套件标准化 → 入口场景化 → 反馈持续化</div>
+  </div>
+</div>
+
+<!-- ════════════════ 一、数字员工定义 ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">一</span>
+    <h2>数字员工定义</h2>
+  </div>
+
+  <div class="note-box">
+    <strong>数字员工 = 智能体底座 + 扩展配置</strong>，作为人的分身，只具备<strong>决策之外的执行能力</strong>。
+  </div>
+
+  <!-- 图：左标签 + 右框图 -->
+  <div class="diagram">
+    <div class="ll-diagram">
+      <div class="ll-row">
+        <div class="ll-label">智能体底座</div>
+        <div class="ll-content">
+          <div class="bbox bb-blue"><strong>编码智能体</strong><span class="sub">Claude Code / opencode<br>CodeBuddy / Qoder</span></div>
+          <div class="bbox bb-blue"><strong>通用智能体</strong><span class="sub">OpenClaw / Hammer 等</span></div>
+        </div>
+      </div>
+      <div class="ll-arrow-down"><span>+</span></div>
+      <div class="ll-row">
+        <div class="ll-label">扩展配置</div>
+        <div class="ll-content">
+          <div class="bbox bb-green"><strong>身份</strong><span class="sub">Agent定义/岗位名<br>角色/部门</span></div>
+          <div class="bbox bb-green"><strong>能力</strong><span class="sub">Skill / MCP接入<br>网关 / 知识库接口</span></div>
+          <div class="bbox bb-green"><strong>约束</strong><span class="sub">权限红线/模型档位<br>Token配额/质量流程/安全规范</span></div>
+          <div class="bbox bb-green"><strong>流程</strong><span class="sub">runbook / node-table<br>Hook / Command</span></div>
+          <div class="bbox bb-green"><strong>治理</strong><span class="sub">审批/可见范围/审计<br>质量流程/安全规范</span></div>
+        </div>
+      </div>
+      <div class="ll-arrow-down"><span>↓</span></div>
+      <div style="padding-left:90px">
+        <div class="bbox bb-orange" style="padding:18px 36px"><strong style="font-size:17px">数字员工</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>五大类别说明</h3>
+  <table class="tbl">
+    <tr><th style="width:10%">类别</th><th style="width:35%">回答</th><th>包含内容</th></tr>
+    <tr><td><strong>身份</strong></td><td>员工是谁</td><td>Agent 定义（主人设，五段式岗位说明书）、岗位名、角色、部门、版本</td></tr>
+    <tr><td><strong>能力</strong></td><td>员工会什么</td><td>Skill（能力模块，可跨员工复用、独立版本管理）、MCP 接入（知识库 / 外部工具 / 数据源连接器）、网关、知识库接口</td></tr>
+    <tr><td><strong>约束</strong></td><td>员工不能干什么</td><td>权限红线（禁写目录 / 禁调 API / 禁访知识库）、模型档位、Token 配额、底座限制、公司质量流程、安全规范</td></tr>
+    <tr><td><strong>流程</strong></td><td>员工怎么干活</td><td>结构化 runbook（流程档：agent 自跟的 skill 调用序列，同一会话内完成）、node-table（编排档：flow-driver 驱动的独立会话链）、Hook、Command</td></tr>
+    <tr><td><strong>治理</strong></td><td>谁管、谁能看</td><td>审批要求、可见范围、审计级别、生命周期管理、公司质量流程、安全规范</td></tr>
+  </table>
+
+  <h3>治理分级 L1–L4</h3>
+  <table class="tbl">
+    <tr><th>级别</th><th>维度</th><th>准入要求</th><th>审批</th><th>可见范围</th><th>审计</th></tr>
+    <tr><td><strong>L1</strong></td><td>公司级</td><td>最高，跨领域通用模板</td><td>公司审批</td><td>全公司</td><td>全量记录</td></tr>
+    <tr><td><strong>L2</strong></td><td>部门级</td><td>部门通用岗位模板</td><td>部门审批</td><td>部门内</td><td>全量记录</td></tr>
+    <tr><td><strong>L3</strong></td><td>团队级</td><td>团队内复用</td><td>团队自审</td><td>团队内</td><td>仅异常记录</td></tr>
+    <tr><td><strong>L4</strong></td><td>个人级</td><td>个人自定义，鼓励试错</td><td>无审批</td><td>仅自己</td><td>可关闭</td></tr>
+  </table>
+  <p class="muted">治理分级（L1–L4）与使用深度（裸用 / +方法论 / +流程 / +编排）<strong>完全正交</strong>——治理分级定「能不能用」，使用深度定「用多深」，两个维度自由组合。</p>
+
+  <h3>标准模板示例（代码形态）</h3>
+  <p class="muted">以"开发工程师"为例，展示按定义公式产出的标准模板。实际模板由创建向导自动生成，与手写规范完全同构。UI 形态见原型图。</p>
+  <div class="collapse-toggle" id="toggle-yaml">
+    <span class="arrow" style="transform:rotate(90deg)">▶</span> 收起 YAML 模板（开发工程师 · L2 部门级）
+  </div>
+  <div class="collapse-content open" id="yaml-content">
+<pre># ===== 数字员工标准模板示例：开发工程师 =====
+# 智能体底座：Claude Code / opencode / CodeBuddy / Qoder（多底座适配）
+
+# === 一、身份 ===
+agent:
+  name: dev-engineer
+  version: 1.0.0
+  department: 技术研发部
+  role: 开发工程师
+
+persona:          # 主人设（五段式岗位说明书）
+  identity: 你是一名资深开发工程师，擅长 Python / TypeScript，遵循 TDD 流程
+  principles:
+    - 每次改动后必须跑全量测试
+    - 代码风格严格遵循团队规范
+    - 优先使用现有工具和库，避免重复造轮子
+  capabilities: [代码实现与重构, 单元测试编写与执行, Git 分支管理]
+  usage_modes: [裸用, +方法论, +流程, +编排]
+  constraints: [禁止操作生产环境, 禁止修改DB schema未经审批, Token上限50K]
+
+# === 二、能力 ===
+skills:
+  - {name: code-impl, version: 1.2.0}
+  - {name: unit-test, version: 1.0.0}
+  - {name: git-ops, version: 0.9.0}
+mcp:
+  - {type: knowledge-base, name: 代码规范知识库, access: read}
+  - {type: knowledge-base, name: 业务领域知识库, access: read}
+  - {type: tool, name: Git API, access: read-write}
+
+# === 三、约束 ===
+constraints:
+  red_lines: [禁止写入 /etc/ /opt/production/, 禁止调用 deploy-to-prod, 禁止访问财务系统]
+  model_tier: claude-sonnet-5
+  token_quota: {per_task: 50000, per_day: 500000}
+  host_restrictions: [Claude Code, opencode]
+
+# === 四、流程 ===
+runbook:
+  name: TDD 开发流程
+  steps:
+    - {step:1, action: 理解需求与变更范围, self_check: 确认理解无误}
+    - {step:2, action: 编写失败测试, skill: unit-test, self_check: 红灯}
+    - {step:3, action: 最小实现使测试通过, skill: code-impl, self_check: 绿灯}
+    - {step:4, action: 重构优化, skill: code-impl, self_check: 测试全绿+质量达标}
+
+# === 五、治理 ===
+governance:
+  level: L2
+  approval: 部门审批
+  visibility: 部门内
+  audit: 全量记录
+  lifecycle_owner: 技术研发部</pre>
+  </div>
+
+  <h3>模板对应的 manifest 结构</h3>
+  <table class="tbl">
+    <tr><th>五大类别</th><th>manifest 字段</th><th>说明</th></tr>
+    <tr><td>身份</td><td><code>agent</code>（name/version/department/role）</td><td>最小身份集，用于管控平台接入与请求头标识</td></tr>
+    <tr><td>身份</td><td><code>persona</code>（identity/principles/capabilities/usage_modes/constraints）</td><td>主人设（五段式岗位说明书）</td></tr>
+    <tr><td>能力</td><td><code>skills</code></td><td>skill 集列表，含独立版本号，可跨员工复用</td></tr>
+    <tr><td>能力</td><td><code>mcp</code></td><td>MCP 连接器声明（知识库 / 外部工具 / 数据源）</td></tr>
+    <tr><td>约束</td><td><code>constraints</code>（red_lines/model_tier/token_quota/host_restrictions）</td><td>权限红线 + 资源上限</td></tr>
+    <tr><td>流程</td><td><code>runbook</code></td><td>流程档：agent 自跟的 skill 调用序列</td></tr>
+    <tr><td>流程</td><td><code>node-table</code>（可选）</td><td>编排档：flow-driver 驱动的独立会话链</td></tr>
+    <tr><td>治理</td><td><code>governance</code>（level/approval/visibility/audit/lifecycle_owner）</td><td>审批 + 可见范围 + 审计 + 生命周期</td></tr>
+    <tr><td>任务模板</td><td><code>task_templates</code></td><td>带变量的建议卡片，填参一键发起任务</td></tr>
+  </table>
+</div>
+
+<!-- ════════════════ 二、数字员工 Team 定义 ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">二</span>
+    <h2>数字员工 Team 定义</h2>
+  </div>
+
+  <div class="note-box">
+    <strong>数字员工 Team = 多个数字员工 + 流程编排</strong>。通过编排引擎驱动多员工协作，完成单人无法独立交付的复杂任务。
+  </div>
+
+  <h3>两种 Team 形态</h3>
+  <div class="split2">
+    <div class="card">
+      <h4><span class="icon">👥</span> 群组</h4>
+      <p>人的协作空间：人把多个员工拉进一个组，<strong>绑定 workflow 模板</strong>（必选），在组里 @ 员工发起任务、按组聚合看任务。</p>
+      <div class="tags"><span class="tag tag-blue">协作空间</span><span class="tag tag-amber">必选 workflow</span></div>
+    </div>
+    <div class="card">
+      <h4><span class="icon">⚙️</span> 编排 Team</h4>
+      <p>流程化协作：由 flow-driver 按 node-table 自动接力（需求 → 开发 → 测试 → 评审），人只在人工闸停靠确认。</p>
+      <div class="tags"><span class="tag tag-blue">自动接力</span><span class="tag tag-green">人工闸</span></div>
+    </div>
+  </div>
+
+  <h3>编排引擎的两种节点执行模式</h3>
+  <div class="diagram">
+    <div class="ll-diagram">
+      <div class="ll-row">
+        <div class="ll-label">inline</div>
+        <div class="ll-content">
+          <div class="bbox bb-blue" style="flex:1;min-width:200px">
+            <strong>同一会话内连续执行</strong>
+            <span class="sub">agent 按 runbook 依次调用 skill<br>上下文连续，适合轻量任务链</span>
+          </div>
+        </div>
+      </div>
+      <div class="ll-row">
+        <div class="ll-label">process</div>
+        <div class="ll-content">
+          <div class="bbox bb-orange" style="flex:1;min-width:200px">
+            <strong>每个节点独立会话</strong>
+            <span class="sub">flow-driver 管理状态 + gate 判定<br>上下文隔离，可并行、可重试、可跨底座</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>编排对象无关性</h3>
+  <p class="muted">编排引擎不区分节点是 skill 还是员工——对引擎来说，每个节点就是"要执行的东西 + 输入 + 输出 + gate 条件"。</p>
+  <div class="split3" style="margin-top:10px">
+    <div class="card"><h4>🔗 单员工 skill 链</h4><p>flow-driver 编排 skills，每个 skill 独立会话，避免上下文污染</p></div>
+    <div class="card"><h4>🤝 多员工接力</h4><p>flow-driver 编排员工，每个员工独立会话，gate 在员工间做质量门</p></div>
+    <div class="card"><h4>🔀 混合编排</h4><p>同一 node-table 中既有 skill 节点也有员工节点</p></div>
+  </div>
+</div>
+
+<!-- ════════════════ 三、数字员工套件（工作台） ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">三</span>
+    <h2>数字员工套件（工作台）</h2>
+  </div>
+
+  <div class="note-box">
+    <strong>数字员工套件 = 工作台 + 员工包</strong>；与远端<strong>管控平台</strong>配对，合起来构成完整产品「数字员工套件 &amp; 管控平台」。
+    工作台是装在开发者本地、和智能体底座一起运行的<strong>交互前端 + 运行时</strong>；员工包是数字员工的<strong>独立交付形态</strong>。
+  </div>
+
+  <!-- ════════ 完整架构图：参考白皮书 §2.1 + 系统设计思路 ════════ -->
+  <h3>架构总览</h3>
+  <div class="arch-wrap">
+
+    <!-- 管控平台层 -->
+    <div class="arch-layer al-platform">
+      <div class="arch-layer-title"><span class="icon">☁️</span> 管控平台（远端 Web · 独立部署）</div>
+      <div class="arch-sub">
+        <div class="arch-sub-title">五大模块</div>
+        <div class="arch-tags">
+          <span class="tag tag-green">员工市场 AgentHub</span>
+          <span class="tag tag-green">运营驾驶舱</span>
+          <span class="tag tag-green">跨开发者运行可见</span>
+          <span class="tag tag-green">成本中心</span>
+          <span class="tag tag-green">审计中心</span>
+        </div>
+      </div>
+      <div class="arch-sub">
+        <div class="arch-sub-title">系统能力全部由后端提供 · 用户通过插件接入 · 前端不绑定智能体软件</div>
+      </div>
+    </div>
+
+    <!-- 箭头 -->
+    <div class="arch-arrow">
+      <span class="arch-arrow-line"></span>
+      <span class="arch-arrow-text">⇅ 员工下载 / 数据上报（OTLP + HTTP）</span>
+      <span class="arch-arrow-line"></span>
+    </div>
+
+    <!-- 工作台层（核心，丰富展开） -->
+    <div class="arch-layer al-workbench">
+      <div class="arch-layer-title"><span class="icon">🖥️</span> 工作台（本地 · 与底座一起运行）</div>
+
+      <!-- 交互前端 -->
+      <div class="arch-sub">
+        <div class="arch-sub-title">交互前端（六大模块）</div>
+        <div class="arch-tags">
+          <span class="tag tag-blue">我的员工（默认首页）</span>
+          <span class="tag tag-blue">我的群组</span>
+          <span class="tag tag-blue">workflow 编排</span>
+          <span class="tag tag-blue">任务看板</span>
+          <span class="tag tag-blue">底座与环境管理</span>
+          <span class="tag tag-blue">对话界面</span>
+        </div>
+      </div>
+
+      <!-- 运行时 -->
+      <div class="arch-sub">
+        <div class="arch-sub-title">运行时（七大能力）</div>
+        <div class="arch-tags">
+          <span class="tag tag-blue">编排引擎</span>
+          <span class="tag tag-blue">编排驱动（flow-driver / goal）</span>
+          <span class="tag tag-blue">员工注册发现</span>
+          <span class="tag tag-blue">通用能力库</span>
+          <span class="tag tag-blue">合规监督</span>
+          <span class="tag tag-blue">工程记忆（.ieidev/）</span>
+          <span class="tag tag-blue">多底座适配（UPP）</span>
+        </div>
+      </div>
+
+      <!-- 多底座适配器 -->
+      <div class="arch-sub al-adapter">
+        <div class="arch-sub-title">多底座适配器层（UPP 开放标准）—— 员工包以行业开放标准组织，适配器只做薄 shim</div>
+        <div class="arch-tags">
+          <span class="tag tag-green">Claude Code</span>
+          <span class="tag tag-green">opencode</span>
+          <span class="tag tag-green">CodeBuddy</span>
+          <span class="tag tag-green">Qoder</span>
+          <span class="tag tag-gray">TRAE</span>
+          <span class="tag tag-gray">Pi</span>
+          <span class="tag tag-gray">Hermes</span>
+          <span class="tag tag-gray">OpenClaw</span>
+        </div>
+        <p style="font-size:10.5px;color:var(--g500);margin-top:6px">P0 已适配（绿） · 第二梯队（灰）· 模型无关（走宿主订阅）+ 底座无关（UPP 开放标准）</p>
+      </div>
+    </div>
+
+    <!-- 箭头 -->
+    <div class="arch-arrow">
+      <span class="arch-arrow-line"></span>
+      <span class="arch-arrow-text">⇅ manifest 注册 / 创建向导生成</span>
+      <span class="arch-arrow-line"></span>
+    </div>
+
+    <!-- 员工包层 -->
+    <div class="arch-layer al-package">
+      <div class="arch-layer-title"><span class="icon">📦</span> 员工包（独立交付形态 · 可独立安装/卸载/升级）</div>
+
+      <!-- 员工包结构 = 五大类别（呼应 §2.4 标准模板） -->
+      <div class="arch-sub">
+        <div class="arch-sub-title">员工包结构 = 五大类别（呼应数字员工标准模板 §2.4）</div>
+        <div class="pkg-cats">
+          <div class="pkg-cat">
+            <span class="cat-icon">🪪</span>
+            <div class="cat-name">身份</div>
+            <div class="cat-fields">
+              <span>agent 定义</span>
+              <span>persona 主人设</span>
+              <span>岗位名 / 角色 / 部门</span>
+              <span>使用深度</span>
+            </div>
+          </div>
+          <div class="pkg-cat">
+            <span class="cat-icon">⚡</span>
+            <div class="cat-name">能力</div>
+            <div class="cat-fields">
+              <span>skills 能力模块</span>
+              <span>MCP 连接器</span>
+              <span>网关 / 知识库接口</span>
+              <span>独立版本管理</span>
+            </div>
+          </div>
+          <div class="pkg-cat">
+            <span class="cat-icon">🛡️</span>
+            <div class="cat-name">约束</div>
+            <div class="cat-fields">
+              <span>权限红线</span>
+              <span>模型档位 tier-map</span>
+              <span>Token 配额</span>
+              <span>质量流程 / 安全规范</span>
+            </div>
+          </div>
+          <div class="pkg-cat">
+            <span class="cat-icon">📐</span>
+            <div class="cat-name">流程</div>
+            <div class="cat-fields">
+              <span>runbook 流程档</span>
+              <span>node-table 编排档</span>
+              <span>Hook / Command</span>
+              <span>dispatch-table</span>
+            </div>
+          </div>
+          <div class="pkg-cat">
+            <span class="cat-icon">🏛️</span>
+            <div class="cat-name">治理</div>
+            <div class="cat-fields">
+              <span>L1–L4 治理分级</span>
+              <span>审批要求</span>
+              <span>可见范围 / 审计</span>
+              <span>生命周期管理</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 员工包安装与分发回路 -->
+      <div class="arch-sub">
+        <div class="arch-sub-title">员工包安装与分发回路 —— 通过工作台安装，可上传到 AgentHub 审核上架</div>
+        <div class="install-flow">
+          <div class="flow-row">
+            <span class="flow-dir down">⬇ 获取</span>
+            <span class="flow-step strong">管控平台<br>浏览下载</span>
+            <span class="flow-brace">{</span>
+            <span class="flow-step">安装<br>员工包</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">插件注册<br>manifest 声明</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">底座激活<br>CC/oc/CB/Qoder</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step strong">localhost:19820<br>上岗运行</span>
+          </div>
+          <div class="flow-row">
+            <span class="flow-dir down">⬇ 获取</span>
+            <span class="flow-step strong">工作台<br>本地新建</span>
+            <span class="flow-brace" style="visibility:hidden">{</span>
+            <span class="flow-step" style="visibility:hidden">安装</span>
+            <span class="flow-arr" style="color:var(--g300)">⤻</span>
+            <span class="flow-step" style="border-style:dashed">创建向导<br>按模板生成</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">插件注册<br>manifest 声明</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">底座激活<br>CC/oc/CB/Qoder</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step strong">localhost:19820<br>上岗运行</span>
+          </div>
+          <div class="flow-row" style="margin-top:6px;padding-top:8px;border-top:1px dashed var(--g200)">
+            <span class="flow-dir up">⬆ 发布</span>
+            <span class="flow-step strong">工作台</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">上传到<br>AgentHub</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">审核</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step strong">管控平台<br>上架</span>
+            <span class="flow-arr">→</span>
+            <span class="flow-step">各团队<br>可下载安装</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 三条产出路径 -->
+      <div class="arch-sub">
+        <div class="arch-sub-title">三条产出路径（完全同构，产出物可 git 管理）</div>
+        <div class="plugin-flow">
+          <div class="plugin-step"><span class="step-num">①</span>工作台创建向导<br><span style="font-size:10px;color:var(--g500)">推荐</span></div>
+          <span class="plugin-arrow">→</span>
+          <div class="plugin-step"><span class="step-num">②</span>手写按规范<br><span style="font-size:10px;color:var(--g500)">完全同构</span></div>
+          <span class="plugin-arrow">→</span>
+          <div class="plugin-step"><span class="step-num">③</span>上传 AgentHub<br><span style="font-size:10px;color:var(--g500)">审核</span></div>
+          <span class="plugin-arrow">→</span>
+          <div class="plugin-step"><span class="step-num">④</span>管控平台上架<br><span style="font-size:10px;color:var(--g500)">各团队下载</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 架构图下分别解释 -->
+  <h3>工作台功能模块</h3>
+  <div class="card-grid">
+    <div class="card"><h4><span class="icon">👤</span> 我的员工（默认首页）</h4><p>员工卡片 grid + 底座标签 + 在跑状态；员工创建/详情/安装入口均为子页，不占独立菜单</p></div>
+    <div class="card"><h4><span class="icon">👥</span> 我的群组</h4><p>群组卡片 + 绑定 workflow + 在跑任务数；建组必选 workflow 模板</p></div>
+    <div class="card"><h4><span class="icon">📐</span> workflow 编排</h4><p>SOP 可视化编辑器（Canvas/Script 双视图），读写 node-table YAML 本体，每个节点可选 inline/process 模式</p></div>
+    <div class="card"><h4><span class="icon">📋</span> 任务看板</h4><p>多员工协作泳道（List/Lanes 双视图）+ 审批工作台（人工闸停靠确认）+ 实时事件流</p></div>
+    <div class="card"><h4><span class="icon">🖥️</span> 底座与环境管理</h4><p>各底座在场状态/版本/已装员工数 + 跨底座员工版本漂移视图（不一致高亮 + 一键对齐）</p></div>
+    <div class="card"><h4><span class="icon">💬</span> 对话界面</h4><p>与员工或群组直接对话，任务建议卡片带模板变量，填参一键发起</p></div>
+  </div>
+
+  <h3>工作台安装与使用</h3>
+  <div class="split3">
+    <div class="card">
+      <h4><span class="icon">📦</span> 安装方式</h4>
+      <ul class="feat-list">
+        <li>npm 包安装：<code>npm install @ieidev/workbench</code></li>
+        <li>IDE 插件市场：Claude Code / opencode / CodeBuddy / Qoder 扩展安装</li>
+        <li>启动后访问 <code>localhost:19820</code> 进入交互前端</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="icon">🔄</span> 员工获取</h4>
+      <ul class="feat-list">
+        <li>管控平台员工市场下载已上架版本</li>
+        <li>工作台创建向导按模板生成</li>
+        <li>手写 manifest 按规范编写</li>
+        <li>三者产出物完全同构，可 git 管理</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="icon">🔗</span> 多底座运行</h4>
+      <ul class="feat-list">
+        <li>员工定义不绑定任何底座</li>
+        <li>UPP 适配器层自动翻译</li>
+        <li>同一员工可在不同底座上岗</li>
+        <li>版本漂移检测 + 一键对齐</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>三个不变式</h3>
+  <div class="split3" style="margin-top:14px">
+    <div class="card"><h4>🔗 一份资产多底座上岗</h4><p>员工定义不绑定任何智能体底座，通过 UPP 适配器层在多底座上运行</p></div>
+    <div class="card"><h4>⚙️ 编排引擎是通用底座</h4><p>不感知具体节点内容（skill 还是员工），只提供状态机 + 节点图 + gate 判定</p></div>
+    <div class="card"><h4>🧠 工程记忆跨员工共享</h4><p>所有员工共用同一套记忆底座（<code>.ieidev/memory/</code>），知识不随会话消失</p></div>
+  </div>
+
+  <h3>三层职责边界</h3>
+  <table class="tbl">
+    <tr><th style="width:14%">层</th><th style="width:43%">负责</th><th style="width:43%">不负责</th></tr>
+    <tr><td><strong>工作台</strong></td><td>编排引擎/编排驱动/员工注册/通用能力/合规监督/多底座适配/工程记忆 + 客户端交互前端 + 员工安装上下传</td><td>不含具体员工定义、不含员工专属 skill/node-table</td></tr>
+    <tr><td><strong>员工包</strong></td><td>员工 manifest/主人设/能力 agent/node-table/dispatch-table/专属 skill/评审标准。来源 = 管理平台市场下载 / 工作台创建 / 手写</td><td>不含编排引擎/编排驱动/跨员工调度</td></tr>
+    <tr><td><strong>管控平台</strong></td><td>员工市场（上游 AgentHub 审核托管）/ 跨开发者运行可见 / 成本 / 审计 / 运营 / 远端观测</td><td>不干预员工运行时、不替代编排引擎、不替代底座、不做本地交互前端</td></tr>
+  </table>
+
+  <a class="proto-link" href="workbench.html" target="_blank">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    查看工作台交互原型 →（新标签打开）
+  </a>
+</div>
+
+<!-- ════════════════ 四、管控平台的规划和设计 ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">四</span>
+    <h2>管控平台的规划和设计</h2>
+  </div>
+
+  <div class="note-box">
+    管控平台定位为<strong>数字员工的统一管理中枢</strong>——向上承接企业业务系统与用户智能体的任务，向下统一支撑数字员工的<strong>定义、运行、发现、协同、效能</strong>五个环节。用户通过插件接入平台，无需更换自己的智能体软件。
+  </div>
+
+  <!-- 五阶段主线 -->
+  <h3>五阶段主线</h3>
+  <div class="diagram">
+    <div class="stage-row">
+      <div class="stage-box bb-blue"><span class="num">①</span>定义<br><span style="font-size:10px;color:var(--g600)">员工管理<br>AgentHub 集成</span></div>
+      <span class="stage-arrow">→</span>
+      <div class="stage-box bb-blue"><span class="num">②</span>运行<br><span style="font-size:10px;color:var(--g600)">部署引擎<br>运行环境</span></div>
+      <span class="stage-arrow">→</span>
+      <div class="stage-box bb-blue"><span class="num">③</span>发现<br><span style="font-size:10px;color:var(--g600)">目录发现<br>Search Agent</span></div>
+      <span class="stage-arrow">→</span>
+      <div class="stage-box bb-blue"><span class="num">④</span>协同<br><span style="font-size:10px;color:var(--g600)">任务调度<br>编排引擎</span></div>
+      <span class="stage-arrow">→</span>
+      <div class="stage-box bb-blue"><span class="num">⑤</span>效能<br><span style="font-size:10px;color:var(--g600)">监控+评估<br>闭环</span></div>
+    </div>
+  </div>
+
+  <!-- 管控平台架构 -->
+  <h3>管控平台架构</h3>
+  <div class="arch-wrap">
+    <div class="arch-layer al-platform" style="padding:20px">
+      <div class="arch-layer-title"><span class="icon">☁️</span> 管控平台（远端 Web · 独立部署）</div>
+      <div class="arch-sub">
+        <div class="arch-sub-title">核心模块</div>
+        <div class="arch-tags">
+          <span class="tag tag-green">员工市场 AgentHub</span>
+          <span class="tag tag-green">运营驾驶舱</span>
+          <span class="tag tag-green">跨开发者运行可见</span>
+          <span class="tag tag-green">成本中心</span>
+          <span class="tag tag-green">审计中心</span>
+        </div>
+      </div>
+      <div class="arch-sub">
+        <div class="arch-sub-title">设计原则</div>
+        <ul class="feat-list">
+          <li>用户通过插件接入平台，无需更换智能体软件</li>
+          <li>系统能力全部由后端提供，插件只负责接入与数据上报</li>
+          <li>前端不绑定智能体软件，以 OpenCode 为主要兼容目标，同时兼容 CC / Codex / CodeBuddy / Qoder</li>
+        </ul>
+      </div>
+    </div>
+    <div class="arch-arrow">
+      <span class="arch-arrow-line"></span>
+      <span class="arch-arrow-text">⇅ OTLP / HTTP · 各工作台运行元数据上报（不可关闭）</span>
+      <span class="arch-arrow-line"></span>
+    </div>
+    <div class="arch-layer" style="background:var(--g100);border-color:var(--g300);padding:14px">
+      <p style="font-size:11px;color:var(--g600);text-align:center"><strong>数据来源</strong>：各工作台上报运行元数据 → 平台汇总分析 → 效能评估反哺目录（不合格下架，合格继续在岗）</p>
+    </div>
+  </div>
+
+  <h3>五大模块</h3>
+  <div class="card-grid">
+    <div class="card"><h4><span class="icon">①</span> 定义——员工怎么被定义</h4><p>员工管理：组合基座 + MCP + 记忆 + 知识库 + 工具 + 指令文件，定义出"数字员工是谁"，支持版本与模板</p><p style="margin-top:4px">AgentHub 集成：从技能市场拉取 Agents.md / Skill.md，注入数字员工，补全"会什么"</p></div>
+    <div class="card"><h4><span class="icon">②</span> 运行——员工怎么跑起来</h4><p>部署引擎：把员工定义打包成"员工包"，提交运行环境拉起实例，自动登记员工身份</p><p style="margin-top:4px">运行环境：K8s 容器化，支持 Pro 模式（独立隔离）和 Lite 模式（共享资源池）</p></div>
+    <div class="card"><h4><span class="icon">③</span> 发现——员工怎么被找到</h4><p>目录发现服务：数字员工的"通讯录"——上岗即登记（注册/注销/心跳/能力画像），统一维护"在岗名单"</p><p style="margin-top:4px">Search Agent：按能力检索匹配的员工，按匹配度排序推荐</p></div>
+    <div class="card"><h4><span class="icon">④</span> 协同——多员工怎么一起干活</h4><p><strong>模式 A · 固定工作流</strong>：DAG 执行引擎按流程驱动，人工审批节点强制把关、不可跳过</p><p style="margin-top:4px"><strong>模式 B · LLM 动态编排</strong>：Orchestrator 自主拆解任务、挑选员工、并行执行并汇总</p></div>
+    <div class="card"><h4><span class="icon">⑤</span> 效能——员工干得怎么样</h4><p>监控与可观测性：汇总 Trace/指标/日志，做统计、链路追踪、异常告警、协作拓扑</p><p style="margin-top:4px">评估引擎：基于成功率、Token 消耗、耗时、SLA 达成率综合评估——不合格下架，合格继续在岗，效能参与后续任务匹配</p></div>
+  </div>
+
+  <h3>套件侧 ↔ 管控平台衔接点</h3>
+  <div class="connector-grid">
+    <div class="connector"><div class="dir">工作台 → 管控平台</div><p>员工市场上架：本地产出的员工包上传 → AgentHub 审核托管 → 管控平台上架</p></div>
+    <div class="connector"><div class="dir">管控平台 → 工作台</div><p>员工下载安装：工作台从管控平台员工市场下载已上架版本，安装到本地</p></div>
+    <div class="connector"><div class="dir">工作台 → 管控平台</div><p>运行数据上报（OTLP，不可关闭）：供管控平台效能监控与成本核算</p></div>
+    <div class="connector"><div class="dir">工作台 → 管控平台</div><p>AgentCard 注册：员工上岗时自动注册身份到目录发现服务，供 Search Agent 检索匹配</p></div>
+  </div>
+
+  <a class="proto-link" href="management.html" target="_blank">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+    查看管控平台交互原型 →（新标签打开）
+  </a>
+</div>
+
+<!-- ════════════════ 五、跨组协同诉求 ════════════════ -->
+<div class="chapter">
+  <div class="chapter-header">
+    <span class="chapter-num">五</span>
+    <h2>跨组协同诉求</h2>
+  </div>
+
+  <h3>数字员工套件与管控平台组 OKR</h3>
+  <div class="note-box">
+    <strong>O（目标）：</strong>构建面向研发体系的数字员工套件与管控平台，制定数字员工统一标准与 L1–L4 分级体系，实现各领域数字员工的纳管、度量与治理，把质量与安全合规要求固化进数字员工套件，打造具有浪潮信息 DNA、可规模化推广的数字员工体系。
+  </div>
+  <table class="tbl">
+    <tr><th style="width:8%">KR</th><th style="width:11%">时间</th><th style="width:50%">关键结果</th><th>需要的主要协同</th></tr>
+    <tr><td><strong>KR1</strong></td><td>26 年 9 月</td><td>完成数字员工统一标准与 L1–L4 分级体系定义，发布数字员工套件与管控平台 <strong>V0.5</strong>。</td><td>质量、安全提供首批标准、规则、指标和模板</td></tr>
+    <tr><td><strong>KR2</strong></td><td>26 年 10 月</td><td>首批数字员工上架至平台运行，跑通数字员工团队和数据可观测，形成使用监督与效果度量闭环；支持一键分发到本地 IDE 与云端，在 <strong>2 个团队</strong>完成试运行验证。</td><td>纵向组提供场景；工具链、基建、度量打通运行链路</td></tr>
+    <tr><td><strong>KR3</strong></td><td>26 年 11 月</td><td>成本中心、审计中心与评价选用机制上线，初步实现数字员工生命周期闭环管理，并筛选优秀数字员工跨团队复用，向<strong>不少于 3 个部门/团队</strong>推广接入，同步收集试运行优化意见。</td><td>预算、安全、度量完成规则和数据对接</td></tr>
+    <tr><td><strong>KR4</strong></td><td>26 年 12 月</td><td>根据试运行意见完成标准规范与平台的修订，沉淀数字员工模板库，发布可持续运营的数字员工套件与管控平台 <strong>V1.0</strong>；与知识管理、安全合规、质量组完成协同对接固化，形成规模化推广能力。</td><td>知识、质量、安全等接口和机制定版</td></tr>
+  </table>
+  <p class="muted" style="margin-top:8px">以下协同要求不是一次性收材料，而是要共同支撑 <strong style="color:var(--blue-800)">9–12 月从 V0.5 到 V1.0 的连续交付</strong>。</p>
+
+  <p class="muted" style="margin:16px 0 12px"><strong>使用方式</strong>：每个章节先看「会上主要讲」，这是本次 Workshop 的主线；后面的「补充支撑」只在需要解释或被追问时展开。</p>
+
+  <h3>整体诉求</h3>
+  <div class="note-box">
+    我们对各组最核心的诉求只有一句话：<strong>横向组的产出，请以「可被数字员工装配」的形式交付；纵向组提供真实场景，并使用套件做出数字员工、在平台上跑起来。</strong>
+  </div>
+  <div class="split2">
+    <div class="card"><h4><span class="icon">🧰</span> 数字员工套件负责</h4><p>把岗位、流程、知识、工具、安全和质量要求装配成数字员工。</p></div>
+    <div class="card"><h4><span class="icon">🏛️</span> 管控平台负责</h4><p>数字员工的上架、分发、运行监控、度量评价、成本和权限审计。</p></div>
+  </div>
+  <p class="muted" style="margin-top:10px">各组的标准如果只停留在文档里，仍然依赖人主动遵守；<strong style="color:var(--blue-800)">装配进数字员工后，才能成为默认执行、可追溯、可度量的能力</strong>。</p>
+
+  <h3>对各横向组的要求</h3>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">1</span>对质量组的要求 <span class="tag tag-blue">L1-L4 标准共创</span></h4>
+    <div class="ask-main">请质量组提供两类基础材料：一是 <strong>L1 级岗位说明的原始版本</strong>；二是协调垂直领域提供<strong>岗位说明、作业手册、操作指导、模板和验收规则</strong>，用于 L2/L3 等更高等级数字员工的定义。首批可从系统软件、技术研发、硬件研发/BMC 等领域开始。</div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>将 IPD、敏捷、瀑布等研发流程拆解为可配置的流程节点，明确输入、输出和准出标准</li>
+      <li>共同定义数字员工的岗位职责、能力要求、交付物标准和质量验收规则</li>
+      <li>V0.3 中材料仍以 L1–L3 表述；正式分级口径按已定稿 OKR 统一为 <strong>L1–L4</strong></li>
+      <li>质量要求最好能够结构化，便于装配进套件，并由平台自动执行和留痕</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>接口人、首批材料范围、提供时间，以及 L1–L4 标准的共创安排。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">2</span>对安全合规组的要求 <span class="tag tag-amber">9 月随 V0.5 上线</span></h4>
+    <div class="ask-main"><strong>9 月随 V0.5 上线首批安全能力。</strong>请安全合规组提供现有安全规范等原始材料，将其 AI 化为 Spec、Skill、工具和原则要求，并协同完成数字员工安全行为规范与模板的定义和开发。</div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>明确数字员工能够访问哪些代码库、数据和网络资源</li>
+      <li>明确数据外流规则、敏感操作清单和必须记录的审计事件</li>
+      <li>明确数字员工、Skill 和工具上架前的安全扫描与准入要求</li>
+      <li>安全规则应尽量内置到套件中，实现「出厂即合规」，而不是运行后再补检查</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>安全接口人、V0.5 安全最小要求清单、规则和模板的交付及联调时间。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">3</span>对知识管理组的要求 <span class="tag tag-blue">统一知识接口和权限</span></h4>
+    <div class="ask-main">请知识管理组与我们<strong>统一知识接口和权限</strong>，重点明确不同场景下「数字员工权限」与「知识权限」的交叉关系。</div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>为数字员工提供统一的知识入口或检索接口，使其能够按岗位和场景挂载相应知识</li>
+      <li>明确哪些知识可由哪一级、哪一岗位的数字员工访问，并与安全权限体系打通</li>
+      <li>建立双向机制：数字员工既消费知识，也能把运行经验和问题记录回流到知识库</li>
+      <li>各领域知识工程师可作为相应数字员工的知识对接和维护人员</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>接口负责人、权限模型负责人、首个联调场景和时间节点。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">4</span>对工具链管理组的要求 <span class="tag tag-blue">四件事</span></h4>
+    <div class="ask-main">重点解决四件事：<strong>新旧平台工具融合、CI/CD 等端到端链路打通、Skill/Agent/数字员工兼容、AgentHub 对接。</strong></div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>建立统一的工具注册和调用标准，可采用 MCP 或统一工具网关等方式，避免逐个点对点集成</li>
+      <li>工具凭证、权限和配额统一托管，数字员工不直接持有裸凭证</li>
+      <li>明确数字员工在本地 IDE、云端和其他运行环境中的适配规范与责任边界</li>
+      <li>套件尽量做到一次标准化、多个运行端复用，兼容问题统一归口处理</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>首批接入工具、AgentHub/CI/CD 接口人、联调时间及兼容规范维护方。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">5</span>对基建组、度量绩效组和预算组的要求 <span class="tag tag-blue">选、用、育、留、备、退</span></h4>
+    <div class="ask-main">一是明确数字员工运行的<strong>观测、监控和度量指标</strong>；二是在度量绩效组指导和评审下，由套件与平台团队提炼<strong>数字员工评价选用机制</strong>，并上线智能体评测能力；三是逐步覆盖数字员工的<strong>「选、用、育、留、备、退」</strong>。</div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li><strong>基建组</strong>：提供数字员工运行环境、模型算力、网络和网关链路，支持本地、研发专网、沙箱或云端等运行形态</li>
+      <li><strong>度量绩效组</strong>：指导任务成功率、返工率、质量、效率和资源消耗等指标定义；平台负责采集和提供数据</li>
+      <li><strong>预算组</strong>：共同明确模型/Token、算力和工具等成本口径，逐步核算到单个数字员工、团队和使用部门</li>
+      <li>评价选用和成本核算最终都需要以平台的实际运行数据为依据</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>各组接口人、首批指标集、评测方法、成本口径和数据对接时间。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">6</span>对纵向领域组的要求 <span class="tag tag-green">1 个典型场景实跑</span></h4>
+    <div class="ask-main"><strong>每个领域至少选择 1 个典型场景，使用数字员工套件制作本领域的数字员工，并在管控平台上实际跑起来，验证整体方案可行性。</strong></div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>每个垂直小组指定 1 名数字员工需求接口人</li>
+      <li>提出本领域最痛的 1–2 个岗位场景，并选其中 1 个优先验证</li>
+      <li>提供岗位 SOP、输入输出、所需知识和工具、验收标准等材料</li>
+      <li>数字员工上架后，领域组作为第一批用户，承担试用、反馈和定级评审</li>
+      <li>条件成熟时，可选择 BIOS Debug、CVE 修复等跨节点流程，验证多个数字员工的团队协同</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>首批场景、接口人、材料提供时间和首个数字员工试跑时间。</span></div>
+  </div>
+
+  <div class="ask-item">
+    <h4><span class="ask-num">7</span>服务器及其他资源需求 <span class="tag tag-amber">联调验证环境</span></h4>
+    <div class="ask-main">请提供 <strong>1 台可稳定使用的 M7 / Gen8 服务器，并接入研发专网</strong>，用于数字员工套件、管控平台及首批场景的联调验证。</div>
+    <div class="ask-sub-label">补充支撑</div>
+    <ul class="feat-list">
+      <li>需要进一步确认服务器具体配置、归属、到位时间和运维责任人</li>
+      <li>模型算力需求、供给方式和配额目前仍需结合首批场景确认</li>
+      <li>相关入口还包括本地 IDE、云端协同、AgentHub、管控平台，并需明确对 InAgent、EPAI 等平台的集成方式</li>
+      <li>V0.3 中列出的协同人员为：李勇、霍文、周广跃、唐超、俊昌；叶笑夕、刘斌；龙飞、海渔</li>
+    </ul>
+    <div class="ask-confirm"><b>现场最好确认：</b><span>服务器和算力负责人、资源到位时间，以及上述协同人员的角色和投入方式。</span></div>
+  </div>
+
+  <h3>现场收口</h3>
+  <div class="ask-main" style="margin-bottom:0">
+    今天不要求把所有方案一次讨论完，但希望每个相关组至少确认三件事：<strong>接口人是谁、首批交付物是什么、什么时间能够提供。</strong>如果存在人员、服务器、算力、权限或平台集成阻塞，也请一并提出，由项目组形成清单统一协调。
+  </div>
+</div>
+
+</div><!-- .wrap -->
+
+<script>
+document.getElementById('toggle-yaml').addEventListener('click',function(){
+  var arrow = this.querySelector('.arrow');
+  var content = document.getElementById('yaml-content');
+  if(content.classList.contains('open')){
+    content.classList.remove('open');
+    if(arrow) arrow.textContent = '▶';
+    this.childNodes.forEach(function(n){
+      if(n.nodeType===3) n.textContent = n.textContent.replace('收起','展开');
+    });
+  }else{
+    content.classList.add('open');
+    if(arrow) arrow.textContent = '▼';
+    this.childNodes.forEach(function(n){
+      if(n.nodeType===3) n.textContent = n.textContent.replace('展开','收起');
+    });
+  }
+});
+</script>
+</body>
+</html>
