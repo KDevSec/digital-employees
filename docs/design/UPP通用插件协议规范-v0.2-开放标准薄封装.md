@@ -130,8 +130,8 @@ ieidev-dev-engineer/
 | 底座 | AGENTS.md | skills/ | hooks/ | mcp.json | shim 量 |
 |------|-----------|---------|--------|----------|--------|
 | Claude Code | **转 CLAUDE.md**（root） | `.claude/skills/` 或插件 skills/ | 插件 hooks.json | `.mcp.json` | 极轻（转换+落位） |
-| CodeBuddy | 同 CC | 同 CC | 同 CC | 同 CC | 极轻 |
-| Qoder (CN/Lingma) | 待核（可能原生） | 原生 | **原生 CC Hooks** | 原生 | 近零 |
+| CodeBuddy | 同 CC | 同 CC | 同 CC | 同 CC | 极轻（已验证） |
+| Qoder (CN/Lingma) | 原生 | 原生 | **原生 CC Hooks** | 原生 | 近零（已验证） |
 | opencode | **原生读 root** | `~/.claude/skills/`（CC 兼容） | TS 翻译层（已有，148 行实证） | 原生 | 轻 |
 | TRAE | 内容→`.trae/agents/agent.md` | →`.traerules` | ✗（无事件模型） | `mcp.json/yaml` | 中 |
 | Pi | ? | `.pi/extensions/`（resources_discover→SKILL.md） | ✗（自有 5 事件） | ? | 中 |
@@ -262,8 +262,8 @@ unsupported:
 | 底座 | AGENTS.md | SKILL.md | CC Hooks | MCP | 可达 Level | CQO | shim 量 |
 |------|-----------|----------|----------|-----|-----------|-----|--------|
 | Claude Code | convert→CLAUDE.md | 原生 | **原生** | 原生 | **L3 全量** | L-a+L-b+熔断 | 极轻 |
-| CodeBuddy | 同 CC | 原生 | 原生 | 原生 | **L3 全量** | 全量 | 极轻 |
-| Qoder (CN/Lingma) | 待核 | 原生 | **原生** | 原生 | **L3 全量** | 全量 | 近零 |
+| CodeBuddy | 同 CC | 原生 | 原生 | 原生 | **L3 全量** | 全量 | 极轻（已验证） |
+| Qoder (CN/Lingma) | 原生 | 原生 | **原生** | 原生 | **L3 全量** | 全量 | 近零（已验证） |
 | opencode | **原生** | 原生(CC兼容) | 翻译层(实证) | 原生 | **L3** | 全量 | 轻 |
 | TRAE | convert | 待验证 | ✗ | 原生 | **L1 确定，L2 待验证** | L-b+熔断 | 中 |
 | Pi | ? | 原生(resources_discover) | ✗(自有5事件) | ? | **L1，L2 待验证** | L-b+熔断 | 中 |
@@ -313,7 +313,9 @@ unsupported:
 | # | 验证项 | 底座 | 方法 | 通过判据 |
 |---|--------|------|------|---------|
 | V-1 | AGENTS.md 原生读取 | opencode/Codex/Cursor/CC | 放 root AGENTS.md，看底座是否注入为指令 | 指令生效 |
-| V-2 | CC Hooks 原生实现度 | Qoder CN/Lingma/VS Code/Docker/腾讯 | 放 hooks.json，触发 PreToolUse/PostToolUse | hook 脚本按 CC 协议被喂送 |
+| V-2 | CC Hooks 原生实现度 | VS Code/Docker/腾讯 | 放 hooks.json，触发 PreToolUse/PostToolUse | hook 脚本按 CC 协议被喂送 |
+| V-2b | ✅ 已验证 | Qoder CN/Lingma | 已验证原生 CC Hooks | — |
+| V-2c | ✅ 已验证 | CodeBuddy | 已验证兼容 CC hooks（基于 CC SDK） | — |
 | V-3 | SKILL.md 兼容性 | TRAE/Pi/OpenClaw | 放标准 SKILL.md，看是否被发现/加载 | skill 可调用 |
 | V-4 | AGENTS.md→CLAUDE.md 转换 | CC | shim 转换后 CC 读 CLAUDE.md | 指令生效，无格式损失 |
 | V-5 | subagent 派发 | TRAE/Pi | 跑"主人设派能力 agent"最小用例 | 能力 agent 收到上下文并返回 |
