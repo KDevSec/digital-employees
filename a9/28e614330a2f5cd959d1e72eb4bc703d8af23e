@@ -1,0 +1,28 @@
+README.md
+  s_220e2ccf4ae5c5::t_dfe727dc079348 36-37,40,42-56
+docs/design/设计决策记录-2026-08-13.md
+  s_220e2ccf4ae5c5::t_0df21edd208b0b 97-110
+  s_220e2ccf4ae5c5::t_205e7511067800 1-96
+  s_220e2ccf4ae5c5::t_d4360203445362 111-124
+docs/design/待讨论问题-2026-08-13.md
+  s_220e2ccf4ae5c5::t_692e37849cda69 1-18,23-25,40-42
+  s_220e2ccf4ae5c5::t_344807e08020f9 21-22
+  s_220e2ccf4ae5c5::t_5286db0915e1a3 26-39
+  s_220e2ccf4ae5c5::t_466865d88de1e3 19-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a928e614330a2f5cd959d1e72eb4bc703d8af23e",
+  "prompts": {},
+  "sessions": {
+    "s_220e2ccf4ae5c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0f09ba3a-5976-4cef-8d01-5dc66595fdea",
+        "model": "unknown"
+      },
+      "human_author": "will <mj66fs295u@gmail.com>"
+    }
+  }
+}
