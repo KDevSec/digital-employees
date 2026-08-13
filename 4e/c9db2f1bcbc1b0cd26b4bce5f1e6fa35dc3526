@@ -1,0 +1,23 @@
+docs/design/UPP通用插件协议规范-v0.2-开放标准薄封装.md
+  s_46b58eb4e1d972::t_f4e2d2601a039c 133-134,265-266,316-318
+docs/design/交接提示词-深度调研待办-2026-08-13.md
+  s_46b58eb4e1d972::t_c5f8364d964f39 4-5,11,13,26,29,43-52,55,60-61,63,79-82,86,88,90,92,94-98,100,102,104,106-110,112,114-133,137,139,141,143,145-149,151-155,159,161-197,201,203-207
+docs/research/新仓MVP规划+技术调研结论-2026-08-12.md
+  s_46b58eb4e1d972::t_deb5816b3b4cde 151-152,319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4ec9db2f1bcbc1b0cd26b4bce5f1e6fa35dc3526",
+  "prompts": {},
+  "sessions": {
+    "s_46b58eb4e1d972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32762d99-6747-41a8-acb8-532550bb0a85",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
