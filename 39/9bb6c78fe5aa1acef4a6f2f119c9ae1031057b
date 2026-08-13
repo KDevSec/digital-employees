@@ -1,0 +1,47 @@
+docs/design/UPP通用插件协议规范-v0.2-开放标准薄封装.md
+  s_46b58eb4e1d972::t_7f32199ebbe67b 1-336
+docs/design/交接提示词-深度调研待办-2026-08-13.md
+  s_46b58eb4e1d972::t_0884fdbd0f6d7c 1-296
+docs/design/数字员工套件2.0架构白皮书-v0.7.md
+  s_46b58eb4e1d972::t_a008cb6d9b3d29 1-613
+docs/design/数字员工扩展配置具体内容-v0.1.md
+  s_46b58eb4e1d972::t_48330ceb6508df 1-465
+docs/prototype/Workshop思路-数字员工套件与管控平台-V4.html
+  s_46b58eb4e1d972::t_ff7177a1e31f0f 1-1009
+docs/prototype/management.html
+  s_46b58eb4e1d972::t_58cd967dd6728e 1-1293
+docs/prototype/workbench.html
+  s_46b58eb4e1d972::t_b04afd990b4fb1 1-1817
+docs/research/AgentTeams-Matrix借鉴分析-多智能体底座兼容方案-2026-08-11.md
+  s_46b58eb4e1d972::t_6cd8184e2c2e1c 1-354
+docs/research/AgentTeams-Matrix深度调研报告-2026-08-12.md
+  s_46b58eb4e1d972::t_c38bc47d0e2d63 1-433
+docs/research/TencentDB-vs-MemOS深度对比-源码级-2026-08-13.md
+  s_46b58eb4e1d972::t_1bd0fb06386315 1-324
+docs/research/多智能体底座插件系统调研-UPP可行性分析-2026-08-08.md
+  s_46b58eb4e1d972::t_e993bcbddfc600 1-389
+docs/research/数字员工多底座适配调研报告-开放标准与UPP再审视-2026-08-10.md
+  s_46b58eb4e1d972::t_79f508b064b03f 1-228
+docs/research/新仓MVP规划+技术调研结论-2026-08-12.md
+  s_46b58eb4e1d972::t_bb12a97b742125 1-323
+docs/research/记忆与适配技术调研汇总-2026-08-12.md
+  s_46b58eb4e1d972::t_67e857ef442aaa 1-492
+docs/research/运行时架构选型-工作台自跑vs安装到底座-2026-08-12.md
+  s_46b58eb4e1d972::t_741e78164cc310 1-348
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "399bb6c78fe5aa1acef4a6f2f119c9ae1031057b",
+  "prompts": {},
+  "sessions": {
+    "s_46b58eb4e1d972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32762d99-6747-41a8-acb8-532550bb0a85",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
