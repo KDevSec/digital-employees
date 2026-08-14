@@ -1,0 +1,19 @@
+docs/design/设计评审记录-2026-08-14.md
+  s_ba7f41082d4e1b::t_48faa40d739282 1-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0288eb066a06e5dfeb8db40e8fba2575f060660c",
+  "prompts": {},
+  "sessions": {
+    "s_ba7f41082d4e1b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0803edb4-c2cd-4c4e-b4f8-cd730278f3b3",
+        "model": "kimi-k3"
+      },
+      "human_author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
