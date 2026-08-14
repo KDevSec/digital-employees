@@ -1,0 +1,29 @@
+README.md
+  s_46b58eb4e1d972::t_6ba638f62d4e14 3,11,13,23-24,31-32
+docs/references/README.md
+  s_46b58eb4e1d972::t_291436705826d4 3,12-28
+CLAUDE.md
+  s_46b58eb4e1d972::t_6de5eccc08cbc5 7,9-17,23-26,35
+workbench/README.md
+  s_46b58eb4e1d972::t_c91ec4ce8937cb 1,3-34
+docs/design/交接提示词-深度调研待办-2026-08-13.md
+  s_46b58eb4e1d972::t_d7c31fe70ab987 54
+docs/design/数字员工套件2.0架构白皮书-v0.7.md
+  s_46b58eb4e1d972::t_94ac324516c0fb 56,212-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "845b13f5c458ab697cc21edf2420f708addc5e7a",
+  "prompts": {},
+  "sessions": {
+    "s_46b58eb4e1d972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32762d99-6747-41a8-acb8-532550bb0a85",
+        "model": "deepseek-v4-pro"
+      },
+      "human_author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
