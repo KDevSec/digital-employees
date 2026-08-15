@@ -1,4 +1,5 @@
 from functools import lru_cache
+from ipaddress import ip_address
 from pathlib import Path
 
 from pydantic import AnyHttpUrl, Field, field_validator
@@ -33,8 +34,12 @@ class Settings(BaseSettings):
     def validate_public_url(cls, value: str) -> str:
         parsed = AnyHttpUrl(value)
         host = parsed.host or ""
-        if parsed.scheme != "https" and host not in {"localhost", "127.0.0.1", "keycloak"}:
-            raise ValueError("non-loopback URLs must use HTTPS")
+        try:
+            private_ip = ip_address(host).is_private
+        except ValueError:
+            private_ip = False
+        if parsed.scheme != "https" and host not in {"localhost", "keycloak"} and not private_ip:
+            raise ValueError("non-local URLs must use HTTPS")
         return value.rstrip("/")
 
     @property

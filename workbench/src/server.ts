@@ -58,7 +58,7 @@ async function oidcDocument(issuer: string): Promise<Record<string, string>> {
 }
 
 app.get('/health/live', (_request, response) => response.json({ status: 'ok' }))
-app.get('/', (_request, response) => response.type('html').send(workbenchHtml))
+app.get('/', (_request, response) => response.type('html').send(workbenchHtml(platformPublicUrl)))
 
 app.get('/auth/login', async (_request, response, next) => {
   try {

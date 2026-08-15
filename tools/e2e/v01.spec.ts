@@ -1,15 +1,15 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
-const platformUrl = process.env.PLATFORM_URL ?? 'http://localhost:18000'
-const workbenchUrl = process.env.WORKBENCH_URL ?? 'http://localhost:19820'
-const password = process.env.E2E_PASSWORD ?? 'ChangeMe123!'
+const platformUrl = process.env.PLATFORM_URL ?? 'http://192.168.153.128:18000'
+const workbenchUrl = process.env.WORKBENCH_URL ?? 'http://192.168.153.128:19820'
+const password = process.env.E2E_PASSWORD ?? 'Horse~test@2026'
 
 async function login(page: Page, entryUrl: string, username: string): Promise<void> {
   await page.goto(entryUrl)
   await page.locator('#username').fill(username)
   await page.locator('#password').fill(password)
   await page.locator('#kc-login').click()
-  await expect(page).toHaveURL(new RegExp(entryUrl.startsWith(workbenchUrl) ? 'localhost:19820' : 'localhost:18000'))
+  await expect(page).toHaveURL(new RegExp(entryUrl.startsWith(workbenchUrl) ? '192\\.168\\.153\\.128:19820' : '192\\.168\\.153\\.128:18000'))
 }
 
 async function platformSession(browser: Browser, username: string): Promise<BrowserContext> {
