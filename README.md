@@ -7,11 +7,15 @@
 ```
 ├── docs/
 │   ├── design/         设计文档（架构白皮书、UPP协议、扩展配置、交接提示词）
+│   ├── context/        当前实现状态与 Agent 交接上下文
 │   ├── research/       调研文档（深度调研报告、技术对比、MVP规划）
 │   ├── references/     参考引用来源 + QoderWaker UI 参照截图
 │   └── prototype/      原型图
-├── workbench/          工作台（独立应用，exe/CLI 安装，Web 访问）
-└── platform/           管控平台（远端 Web）
+├── iam/                Keycloak Realm 与 PostgreSQL 初始化
+├── platform/           管控平台（远端 Web）
+├── specs/              Spec Coding 规格、决策、计划与任务
+├── tools/              构建、启动、部署与真实 E2E 工具
+└── workbench/          工作台（独立应用，exe/CLI 安装，Web 访问）
 ```
 
 ## 架构概览
@@ -20,7 +24,7 @@
 
 ### 三层架构
 
-- **工作台（独立应用）**：exe/CLI 安装，启动本地 Web 服务，浏览器访问 `localhost:19820`。提供编排引擎 + 交互前端 + 多底座适配 + 工程记忆 + 合规监督。**参照 QoderWaker 的 UI 形态**
+- **工作台（独立应用）**：exe/CLI 安装，启动本地 Web 服务，浏览器通过部署配置的 `PUBLIC_HOST:19820` 访问。提供编排引擎 + 交互前端 + 多底座适配 + 工程记忆 + 合规监督。**参照 QoderWaker 的 UI 形态**
 - **员工包**：AGENTS.md + skills/ + hooks/ + mcp.json + orchestration/，可独立安装/卸载/升级。**员工包安装到智能体底座**（CC/CB/Qoder 等），底座加载后成为该员工
 - **管控平台（远端）**：员工市场 + 运营驾驶舱 + 成本/审计 + 跨开发者运行可见
 
@@ -54,3 +58,17 @@
 
 - [设计决策记录（ADR）](docs/design/设计决策记录-2026-08-13.md) —— D-001~D-014 横切决策
 - [待讨论问题清单](docs/design/待讨论问题-2026-08-13.md) —— Q-001~Q-014 待拍板事项
+
+### 管理平台 V0.1
+
+- [功能规格](specs/001-management-platform-v0-1/spec.md)
+- [部署与外部访问设计](docs/design/管理平台V0.1部署与外部访问设计.md)
+- [开发交接上下文](docs/context/管理平台V0.1开发交接-2026-08-16.md)
+
+启动验收环境：
+
+```bash
+PUBLIC_HOST=<虚拟机IP或DNS名> ./tools/up.sh
+```
+
+也可复制 `tools/.env.example` 为 `tools/.env`。启动脚本会统一配置管理平台、Keycloak、工作台、OIDC issuer 和回调地址，并输出最终访问 URL。

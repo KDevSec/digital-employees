@@ -1,7 +1,8 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
-const platformUrl = process.env.PLATFORM_URL ?? 'http://192.168.153.128:18000'
-const workbenchUrl = process.env.WORKBENCH_URL ?? 'http://192.168.153.128:19820'
+const publicHost = process.env.PUBLIC_HOST ?? '127.0.0.1'
+const platformUrl = process.env.PLATFORM_URL ?? `http://${publicHost}:18000`
+const workbenchUrl = process.env.WORKBENCH_URL ?? `http://${publicHost}:19820`
 const password = process.env.E2E_PASSWORD ?? 'Horse~test@2026'
 
 async function login(page: Page, entryUrl: string, username: string): Promise<void> {
@@ -9,7 +10,7 @@ async function login(page: Page, entryUrl: string, username: string): Promise<vo
   await page.locator('#username').fill(username)
   await page.locator('#password').fill(password)
   await page.locator('#kc-login').click()
-  await expect(page).toHaveURL(new RegExp(entryUrl.startsWith(workbenchUrl) ? '192\\.168\\.153\\.128:19820' : '192\\.168\\.153\\.128:18000'))
+  await expect.poll(() => new URL(page.url()).origin).toBe(new URL(entryUrl).origin)
 }
 
 async function platformSession(browser: Browser, username: string): Promise<BrowserContext> {

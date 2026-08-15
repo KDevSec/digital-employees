@@ -16,8 +16,8 @@
       "secret": "platform-dev-secret",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://192.168.153.128:18000/auth/callback"],
-      "webOrigins": ["http://192.168.153.128:18000"],
+      "redirectUris": ["${PLATFORM_PUBLIC_URL}/auth/callback"],
+      "webOrigins": ["${PLATFORM_PUBLIC_URL}"],
       "attributes": { "pkce.code.challenge.method": "S256" },
       "protocolMappers": [
         { "name": "platform-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": { "included.client.audience": "platform-web", "access.token.claim": "true" } }
@@ -30,8 +30,8 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://192.168.153.128:19820/auth/callback"],
-      "webOrigins": ["http://192.168.153.128:19820"],
+      "redirectUris": ["${WORKBENCH_PUBLIC_URL}/auth/callback"],
+      "webOrigins": ["${WORKBENCH_PUBLIC_URL}"],
       "attributes": { "pkce.code.challenge.method": "S256" },
       "protocolMappers": [
         { "name": "platform-api-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": { "included.client.audience": "platform-web", "access.token.claim": "true" } }

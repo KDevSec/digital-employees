@@ -21,7 +21,9 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: Horse~test@2026
-      KC_HOSTNAME: http://192.168.153.128:18080
+      KC_HOSTNAME: http://${PUBLIC_HOST:-127.0.0.1}:18080
+      PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
+      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
@@ -38,9 +40,9 @@ services:
     build: ../platform/backend
     environment:
       PLATFORM_DATABASE_URL: postgresql+psycopg://platform:Horse~test%402026@postgres:5432/platform
-      PLATFORM_PLATFORM_BASE_URL: http://192.168.153.128:18000
-      PLATFORM_WORKBENCH_BASE_URL: http://192.168.153.128:19820
-      PLATFORM_OIDC_ISSUER: http://192.168.153.128:18080/realms/digital-employees
+      PLATFORM_PLATFORM_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
+      PLATFORM_WORKBENCH_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
+      PLATFORM_OIDC_ISSUER: http://${PUBLIC_HOST:-127.0.0.1}:18080/realms/digital-employees
       PLATFORM_OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
       PLATFORM_OIDC_CLIENT_ID: platform-web
       PLATFORM_OIDC_CLIENT_SECRET: platform-dev-secret
@@ -66,8 +68,8 @@ services:
   workbench:
     build: ../workbench
     environment:
-      WORKBENCH_PUBLIC_URL: http://192.168.153.128:19820
-      PLATFORM_PUBLIC_URL: http://192.168.153.128:18000
+      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
+      PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
       PLATFORM_INTERNAL_URL: http://platform-api:8000
       OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
       WORKBENCH_STATE_PATH: /app/data/state.enc
