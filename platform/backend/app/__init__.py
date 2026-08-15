@@ -1,0 +1,1 @@
+"""Digital employees management platform."""

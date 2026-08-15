@@ -1,0 +1,7 @@
+{
+  "name": "digital-employees-v01-tools",
+  "private": true,
+  "engines": { "node": "22.22.0" },
+  "scripts": { "test:e2e": "playwright test" },
+  "devDependencies": { "@playwright/test": "1.62.1", "typescript": "7.0.2" }
+}

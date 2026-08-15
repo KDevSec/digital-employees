@@ -1,0 +1,47 @@
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import AnyHttpUrl, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="PLATFORM_", env_file=".env", extra="ignore")
+
+    database_url: str = "postgresql+psycopg://platform:platform@postgres:5432/platform"
+    package_storage_path: Path = Path("/var/lib/platform/packages")
+    platform_base_url: str = "http://localhost:18000"
+    workbench_base_url: str = "http://localhost:19820"
+    oidc_issuer: str = "http://localhost:18080/realms/digital-employees"
+    oidc_internal_issuer: str | None = None
+    oidc_client_id: str = "platform-web"
+    oidc_client_secret: str = "change-me-platform-client-secret"
+    iam_sync_client_id: str = "platform-iam-sync"
+    iam_sync_client_secret: str = "change-me-iam-sync-secret"
+    session_secret: str = Field(default="change-me-session-secret-32-characters", min_length=32)
+    machine_signing_secret: str = Field(default="change-me-machine-signing-secret-32-chars", min_length=32)
+    challenge_ttl_seconds: int = Field(default=300, ge=60, le=900)
+    machine_token_ttl_seconds: int = Field(default=300, ge=60, le=300)
+    heartbeat_offline_seconds: int = Field(default=90, ge=30, le=3600)
+    enrollment_ttl_hours: int = Field(default=24, ge=1, le=168)
+    max_package_bytes: int = Field(default=100 * 1024 * 1024, ge=1)
+    bootstrap_system_username: str = "system.admin"
+    testing: bool = False
+
+    @field_validator("platform_base_url", "workbench_base_url", "oidc_issuer")
+    @classmethod
+    def validate_public_url(cls, value: str) -> str:
+        parsed = AnyHttpUrl(value)
+        host = parsed.host or ""
+        if parsed.scheme != "https" and host not in {"localhost", "127.0.0.1", "keycloak"}:
+            raise ValueError("non-loopback URLs must use HTTPS")
+        return value.rstrip("/")
+
+    @property
+    def oidc_discovery_issuer(self) -> str:
+        return (self.oidc_internal_issuer or self.oidc_issuer).rstrip("/")
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

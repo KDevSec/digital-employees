@@ -1,0 +1,89 @@
+{
+  "realm": "digital-employees",
+  "enabled": true,
+  "displayName": "数字员工",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "sslRequired": "external",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 28800,
+  "clients": [
+    {
+      "clientId": "platform-web",
+      "name": "管理平台",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "platform-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:18000/auth/callback"],
+      "webOrigins": ["http://localhost:18000"],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        { "name": "platform-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": { "included.client.audience": "platform-web", "access.token.claim": "true" } }
+      ]
+    },
+    {
+      "clientId": "workbench-desktop",
+      "name": "工作台登录演示",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:19820/auth/callback"],
+      "webOrigins": ["http://localhost:19820"],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        { "name": "platform-api-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": { "included.client.audience": "platform-web", "access.token.claim": "true" } }
+      ]
+    },
+    {
+      "clientId": "platform-iam-sync",
+      "name": "管理平台 IAM 目录同步",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "platform-iam-sync-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "organization-context",
+      "description": "Domain, department and team claims used for data-scope enforcement",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" },
+      "protocolMappers": [
+        { "name": "subject", "protocol": "openid-connect", "protocolMapper": "oidc-sub-mapper", "config": { "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "preferred-username", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-property-mapper", "config": { "user.attribute": "username", "claim.name": "preferred_username", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "full-name", "protocol": "openid-connect", "protocolMapper": "oidc-full-name-mapper", "config": { "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "email", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-property-mapper", "config": { "user.attribute": "email", "claim.name": "email", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "domain-id", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "domain_id", "claim.name": "domain_id", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "domain-name", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "domain_name", "claim.name": "domain_name", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "department-id", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "department_id", "claim.name": "department_id", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "department-name", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "department_name", "claim.name": "department_name", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "team-id", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "team_id", "claim.name": "team_id", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } },
+        { "name": "team-name", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper", "config": { "user.attribute": "team_name", "claim.name": "team_name", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "true" } }
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": ["organization-context"],
+  "groups": [
+    { "name": "华东域", "attributes": { "domain_id": ["domain-east"] }, "subGroups": [
+      { "name": "研发部", "attributes": { "department_id": ["dept-rd"] }, "subGroups": [
+        { "name": "平台组", "attributes": { "team_id": ["team-platform"] } }
+      ] },
+      { "name": "运营部", "attributes": { "department_id": ["dept-ops"] } }
+    ] }
+  ],
+  "users": [
+    { "username": "system.admin", "enabled": true, "email": "system.admin@example.test", "firstName": "系统", "lastName": "管理员", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"], "team_id": ["team-platform"], "team_name": ["平台组"] } },
+    { "username": "platform.admin", "enabled": true, "email": "platform.admin@example.test", "firstName": "平台", "lastName": "管理员", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"] } },
+    { "username": "department.admin", "enabled": true, "email": "department.admin@example.test", "firstName": "部门", "lastName": "管理员", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"] } },
+    { "username": "security.admin", "enabled": true, "email": "security.admin@example.test", "firstName": "安全", "lastName": "管理员", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"] } },
+    { "username": "audit.admin", "enabled": true, "email": "audit.admin@example.test", "firstName": "审计", "lastName": "管理员", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-ops"], "department_name": ["运营部"] } },
+    { "username": "employee", "enabled": true, "email": "employee@example.test", "firstName": "普通", "lastName": "员工", "credentials": [{ "type": "password", "value": "ChangeMe123!", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"], "team_id": ["team-platform"], "team_name": ["平台组"] } },
+    { "username": "service-account-platform-iam-sync", "enabled": true, "serviceAccountClientId": "platform-iam-sync", "clientRoles": { "realm-management": ["view-users", "query-users"] } }
+  ]
+}

@@ -5,3 +5,12 @@ screenshots/
 .vscode/
 .env
 .env.local
+.venv/
+.pytest_cache/
+*.egg-info/
+__pycache__/
+*.pyc
+test-results/
+playwright-report/
+tools/.bin/
+workbench/data/

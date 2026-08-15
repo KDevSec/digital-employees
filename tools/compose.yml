@@ -1,0 +1,85 @@
+name: digital-employees-v01
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ../iam/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_HOSTNAME: http://localhost:18080
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ../iam/realm:/opt/keycloak/data/import:ro
+    ports:
+      - "18080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  platform-api:
+    build: ../platform/backend
+    environment:
+      PLATFORM_DATABASE_URL: postgresql+psycopg://platform:platform@postgres:5432/platform
+      PLATFORM_PLATFORM_BASE_URL: http://localhost:18000
+      PLATFORM_WORKBENCH_BASE_URL: http://localhost:19820
+      PLATFORM_OIDC_ISSUER: http://localhost:18080/realms/digital-employees
+      PLATFORM_OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
+      PLATFORM_OIDC_CLIENT_ID: platform-web
+      PLATFORM_OIDC_CLIENT_SECRET: platform-dev-secret
+      PLATFORM_IAM_SYNC_CLIENT_ID: platform-iam-sync
+      PLATFORM_IAM_SYNC_CLIENT_SECRET: platform-iam-sync-secret
+      PLATFORM_SESSION_SECRET: local-v01-session-secret-change-before-production
+      PLATFORM_MACHINE_SIGNING_SECRET: local-v01-machine-secret-change-before-production
+    volumes:
+      - package-data:/var/lib/platform/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  platform-web:
+    build: ../platform/frontend
+    ports:
+      - "18000:80"
+    depends_on:
+      - platform-api
+
+  workbench:
+    build: ../workbench
+    environment:
+      WORKBENCH_PUBLIC_URL: http://localhost:19820
+      PLATFORM_PUBLIC_URL: http://localhost:18000
+      PLATFORM_INTERNAL_URL: http://platform-api:8000
+      OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
+      WORKBENCH_STATE_PATH: /app/data/state.enc
+      WORKBENCH_STATE_SECRET: local-v01-workbench-state-secret
+    volumes:
+      - workbench-data:/app/data
+    ports:
+      - "19820:19820"
+    depends_on:
+      - platform-api
+
+volumes:
+  postgres-data:
+  package-data:
+  workbench-data:
