@@ -17,6 +17,7 @@ const router = createRouter({
         { path: 'enrollments', component: () => import('./features/enrollments/EnrollmentsPage.vue'), meta: { permission: 'workbench.enrollment.review' } },
         { path: 'audit', component: () => import('./features/audit/AuditPage.vue'), meta: { permissionPrefix: 'audit.' } },
         { path: 'packages', component: () => import('./features/packages/PackagesPage.vue'), meta: { permission: 'package.manage' } },
+        { path: 'organization', component: () => import('./features/organization/OrganizationPage.vue'), meta: { permission: 'role.manage' } },
         { path: 'permissions', component: () => import('./features/permissions/PermissionsPage.vue'), meta: { permission: 'role.manage' } },
         { path: 'settings', component: () => import('./features/settings/SettingsPage.vue'), meta: { permission: 'platform.settings.manage' } },
       ],

@@ -174,6 +174,7 @@ class OidcClient:
             claims = {
                 "iss": self.settings.oidc_issuer,
                 "sub": raw_user["id"],
+                "keycloak_user_id": raw_user["id"],
                 "preferred_username": username,
                 "name": " ".join(
                     value for value in [raw_user.get("firstName"), raw_user.get("lastName")] if value
@@ -185,6 +186,7 @@ class OidcClient:
                 "department_name": attribute("department_name"),
                 "team_id": attribute("team_id"),
                 "team_name": attribute("team_name"),
+                "primary_org_id": attribute("primary_org_id"),
             }
             principal = self.sync_principal(session, claims, self.settings)
             principal.status = "ACTIVE" if raw_user.get("enabled", False) else "DISABLED"
@@ -199,6 +201,7 @@ class OidcClient:
         domain_id = str(claims.get("domain_id") or "default-domain")
         department_id = claims.get("department_id")
         team_id = claims.get("team_id")
+        keycloak_user_id = claims.get("keycloak_user_id") or subject
         domain = session.get(IamDomain, domain_id)
         if domain is None:
             session.add(IamDomain(id=domain_id, name=str(claims.get("domain_name") or domain_id), status="ACTIVE"))
@@ -238,6 +241,8 @@ class OidcClient:
                 department_id=str(department_id) if department_id else None,
                 team_id=str(team_id) if team_id else None,
                 status="ACTIVE",
+                keycloak_user_id=str(keycloak_user_id),
+                primary_org_id=claims.get("primary_org_id"),
             )
             session.add(principal)
         else:
@@ -248,6 +253,9 @@ class OidcClient:
             principal.department_id = str(department_id) if department_id else None
             principal.team_id = str(team_id) if team_id else None
             principal.status = "ACTIVE"
+            principal.keycloak_user_id = str(keycloak_user_id)
+            if claims.get("primary_org_id"):
+                principal.primary_org_id = str(claims["primary_org_id"])
             principal.synced_at = utc_now()
         session.flush()
         assignment = session.query(RoleAssignment).filter_by(principal_id=principal.id, status="ACTIVE").first()

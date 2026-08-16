@@ -14,7 +14,7 @@ from app.config import Settings
 from app.database import Base, get_session
 from app.domain.authorization import RoleCode, ScopeType
 from app.main import create_app
-from app.models import IamDepartment, IamDomain, IamPrincipal, RoleAssignment
+from app.models import IamDepartment, IamDomain, IamOrgClosure, IamOrgNode, IamPrincipal, PermissionDefinition, RoleAssignment
 
 
 @pytest.fixture
@@ -31,6 +31,17 @@ def db_factory() -> sessionmaker[Session]:
         department = IamDepartment(id="dept-a", domain_id=domain.id, name="Engineering", status="ACTIVE")
         session.add_all(
             [
+                IamOrgNode(
+                    id="domain-a",
+                    keycloak_group_id="kc-domain-a",
+                    domain_id="domain-a",
+                    org_code="domain-a",
+                    org_type="DOMAIN",
+                    name="Example Corp",
+                ),
+                IamOrgClosure(ancestor_id="domain-a", descendant_id="domain-a", depth=0),
+                PermissionDefinition(code="organization.read", resource_type="organization", action="read", description="Read organizations", risk_level="LOW", delegable=True),
+                PermissionDefinition(code="organization.member.manage", resource_type="organization", action="member.manage", description="Manage organization members", risk_level="HIGH", delegable=True),
                 domain,
                 department,
                 IamPrincipal(

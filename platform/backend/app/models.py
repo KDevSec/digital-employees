@@ -1,7 +1,8 @@
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, JSON, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -37,6 +38,38 @@ class IamTeam(Base):
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class IamOrgType(Base):
+    __tablename__ = "iam_org_type"
+    code: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    icon: Mapped[str | None] = mapped_column(String(100))
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class IamOrgNode(Base):
+    __tablename__ = "iam_org_node"
+    __table_args__ = (UniqueConstraint("domain_id", "org_code", name="uq_org_node_domain_code"),)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    keycloak_group_id: Mapped[str] = mapped_column(String(64), unique=True)
+    domain_id: Mapped[str] = mapped_column(String(64), index=True)
+    parent_id: Mapped[str | None] = mapped_column(ForeignKey("iam_org_node.id"), index=True)
+    org_code: Mapped[str] = mapped_column(String(100))
+    org_type: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class IamOrgClosure(Base):
+    __tablename__ = "iam_org_closure"
+    ancestor_id: Mapped[str] = mapped_column(ForeignKey("iam_org_node.id"), primary_key=True)
+    descendant_id: Mapped[str] = mapped_column(ForeignKey("iam_org_node.id"), primary_key=True)
+    depth: Mapped[int] = mapped_column(Integer)
+
+
 class IamPrincipal(Base):
     __tablename__ = "iam_principal"
     __table_args__ = (UniqueConstraint("issuer", "subject"),)
@@ -51,6 +84,88 @@ class IamPrincipal(Base):
     team_id: Mapped[str | None] = mapped_column(ForeignKey("iam_team.id"), index=True)
     status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
     synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    keycloak_user_id: Mapped[str | None] = mapped_column(String(64), unique=True)
+    primary_org_id: Mapped[str | None] = mapped_column(ForeignKey("iam_org_node.id"), index=True)
+    authorization_version: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class IamPrincipalOrg(Base):
+    __tablename__ = "iam_principal_org"
+    __table_args__ = (
+        Index(
+            "uq_principal_active_primary_org",
+            "principal_id",
+            unique=True,
+            sqlite_where=text("membership_type = 'PRIMARY' AND status = 'ACTIVE'"),
+            postgresql_where=text("membership_type = 'PRIMARY' AND status = 'ACTIVE'"),
+        ),
+        Index(
+            "uq_principal_active_org_membership",
+            "principal_id",
+            "org_id",
+            unique=True,
+            sqlite_where=text("status = 'ACTIVE'"),
+            postgresql_where=text("status = 'ACTIVE'"),
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    principal_id: Mapped[str] = mapped_column(ForeignKey("iam_principal.id"), index=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("iam_org_node.id"), index=True)
+    membership_type: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PermissionDefinition(Base):
+    __tablename__ = "permission_definition"
+    code: Mapped[str] = mapped_column(String(100), primary_key=True)
+    resource_type: Mapped[str] = mapped_column(String(60), index=True)
+    action: Mapped[str] = mapped_column(String(60))
+    description: Mapped[str] = mapped_column(String(500))
+    risk_level: Mapped[str] = mapped_column(String(20), default="MEDIUM")
+    delegable: Mapped[bool] = mapped_column(Boolean, default=True)
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE")
+
+
+class CustomRole(Base):
+    __tablename__ = "custom_role"
+    __table_args__ = (UniqueConstraint("domain_id", "code", name="uq_custom_role_domain_code"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    domain_id: Mapped[str] = mapped_column(String(64), index=True)
+    code: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(String(500))
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_by: Mapped[str] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class CustomRolePermission(Base):
+    __tablename__ = "custom_role_permission"
+    role_id: Mapped[str] = mapped_column(ForeignKey("custom_role.id"), primary_key=True)
+    permission_code: Mapped[str] = mapped_column(ForeignKey("permission_definition.code"), primary_key=True)
+
+
+class ScopedRoleAssignment(Base):
+    __tablename__ = "scoped_role_assignment"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    role_id: Mapped[str] = mapped_column(ForeignKey("custom_role.id"), index=True)
+    subject_type: Mapped[str] = mapped_column(String(20), index=True)
+    subject_id: Mapped[str] = mapped_column(String(64), index=True)
+    subject_include_descendants: Mapped[bool] = mapped_column(Boolean, default=False)
+    scope_org_id: Mapped[str] = mapped_column(ForeignKey("iam_org_node.id"), index=True)
+    scope_include_descendants: Mapped[bool] = mapped_column(Boolean, default=False)
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", index=True)
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by: Mapped[str] = mapped_column(String(36))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    revoked_by: Mapped[str | None] = mapped_column(String(36))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    version: Mapped[int] = mapped_column(Integer, default=1)
 
 
 class RoleAssignment(Base):

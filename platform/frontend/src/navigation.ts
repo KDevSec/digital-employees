@@ -10,6 +10,7 @@ const navigation: NavigationItem[] = [
   { label: '接入申请', path: '/app/enrollments', permission: 'workbench.enrollment.review' },
   { label: '审计', path: '/app/audit', permission: 'audit' },
   { label: '安装包', path: '/app/packages', permission: 'package.manage' },
+  { label: '组织管理', path: '/app/organization', permission: 'role.manage' },
   { label: '权限配置', path: '/app/permissions', permission: 'role.manage' },
   { label: '平台设置', path: '/app/settings', permission: 'platform.settings.manage' },
 ]

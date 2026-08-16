@@ -37,6 +37,15 @@ update_client_urls() {
 
 update_client_urls platform-web "$platform_url/auth/callback" "$platform_url"
 update_client_urls workbench-desktop "$workbench_url/auth/callback" "$workbench_url"
+
+# Existing realms are not re-imported, so keep the IAM service account's least-privilege
+# group/user management roles synchronized as part of every deployment.
+for role in manage-users view-users query-users query-groups; do
+  "$kcadm" add-roles -r digital-employees \
+    --uusername service-account-platform-iam-sync \
+    --cclientid realm-management \
+    --rolename "$role" >/dev/null
+done
 KEYCLOAK_SYNC
 
 echo "Keycloak client URLs synchronized for PUBLIC_HOST=$PUBLIC_HOST"

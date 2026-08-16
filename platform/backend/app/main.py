@@ -13,6 +13,9 @@ from app.api.enrollment import router as enrollment_router
 from app.api.core import router as core_router
 from app.api.packages import router as packages_router
 from app.api.roles import router as roles_router
+from app.api.organizations import router as organizations_router
+from app.api.custom_roles import router as custom_roles_router
+from app.iam import KeycloakAdminClient
 from app.models import AuditEvent
 
 
@@ -30,6 +33,12 @@ def create_app(settings: Settings | None = None, audit_session_factory=None) -> 
     app = FastAPI(title="Digital Employees Management Platform", version="0.1.0", lifespan=lifespan)
     app.state.settings = application_settings
     app.state.oidc = OidcClient(application_settings)
+    app.state.iam_admin = KeycloakAdminClient(
+        application_settings.oidc_issuer,
+        application_settings.oidc_discovery_issuer,
+        application_settings.iam_sync_client_id,
+        application_settings.iam_sync_client_secret,
+    )
 
     @app.middleware("http")
     async def trace_id_middleware(request: Request, call_next):
@@ -70,6 +79,8 @@ def create_app(settings: Settings | None = None, audit_session_factory=None) -> 
     app.include_router(core_router)
     app.include_router(packages_router)
     app.include_router(roles_router)
+    app.include_router(organizations_router)
+    app.include_router(custom_roles_router)
     app.include_router(enrollment_router)
 
     install_error_handlers(app)

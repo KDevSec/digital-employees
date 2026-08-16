@@ -20,6 +20,7 @@ describe('navigationForPermissions', () => {
       '/app/enrollments',
       '/app/audit',
       '/app/packages',
+      '/app/organization',
       '/app/permissions',
       '/app/settings',
     ])

@@ -84,6 +84,6 @@
     { "username": "security.admin", "enabled": true, "email": "security.admin@example.test", "firstName": "安全", "lastName": "管理员", "credentials": [{ "type": "password", "value": "Horse~test@2026", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"] } },
     { "username": "audit.admin", "enabled": true, "email": "audit.admin@example.test", "firstName": "审计", "lastName": "管理员", "credentials": [{ "type": "password", "value": "Horse~test@2026", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-ops"], "department_name": ["运营部"] } },
     { "username": "employee", "enabled": true, "email": "employee@example.test", "firstName": "普通", "lastName": "员工", "credentials": [{ "type": "password", "value": "Horse~test@2026", "temporary": false }], "attributes": { "domain_id": ["domain-east"], "domain_name": ["华东域"], "department_id": ["dept-rd"], "department_name": ["研发部"], "team_id": ["team-platform"], "team_name": ["平台组"] } },
-    { "username": "service-account-platform-iam-sync", "enabled": true, "serviceAccountClientId": "platform-iam-sync", "clientRoles": { "realm-management": ["view-users", "query-users"] } }
+    { "username": "service-account-platform-iam-sync", "enabled": true, "serviceAccountClientId": "platform-iam-sync", "clientRoles": { "realm-management": ["manage-users", "view-users", "query-users", "query-groups"] } }
   ]
 }
