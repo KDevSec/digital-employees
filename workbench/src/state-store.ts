@@ -13,8 +13,9 @@ export interface WorkbenchState {
   publicJwk: JWK
   enrollmentId?: string
   workbenchId?: string
-  status: 'NEW' | 'PENDING_REVIEW' | 'APPROVED' | 'ACTIVE' | 'REVOKED' | 'ERROR'
+  status: 'NEW' | 'PENDING_REVIEW' | 'APPROVED' | 'COMPLETED' | 'ACTIVE' | 'REVOKED' | 'REJECTED' | 'ERROR'
   lastHeartbeatAt?: string
+  rejectionReason?: string
   error?: string
 }
 

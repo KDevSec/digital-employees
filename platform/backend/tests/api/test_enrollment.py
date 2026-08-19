@@ -135,7 +135,7 @@ async def test_real_key_enrollment_heartbeat_and_revocation(
 
     own = await client.get("/api/v1/workbenches", headers=employee_headers)
     assert own.status_code == 200
-    assert [item["id"] for item in own.json()] == [workbench_id]
+    assert [item["id"] for item in own.json()["items"]] == [workbench_id]
 
     assert (await client.post(
         f"/api/v1/workbenches/{workbench_id}/revoke",

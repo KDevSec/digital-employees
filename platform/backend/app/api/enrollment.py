@@ -1,29 +1,45 @@
 import hashlib
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import jwt
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, Form, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import false, or_, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import AuthenticatedPrincipal, get_current_principal, require_permission
+from app.api.core import PaginatedResponse
 from app.audit import record_audit
 from app.database import get_session
 from app.domain.authorization import ROLE_PERMISSIONS, ScopeType
 from app.domain.crypto import InvalidProof, jwk_thumbprint, verify_es256_jwt
+from app.domain.organization import descendant_org_ids
+from app.domain.scoped_visibility import (
+    can_review_scoped,
+    descendant_org_ids as scoped_descendant_org_ids,
+    has_global_permission,
+    org_path,
+    owner_org_context,
+    visible_org_ids,
+)
 from app.errors import ApiError
 from app.models import (
     EnrollmentChallenge,
     EnrollmentRequest,
+    IamOrgClosure,
+    IamOrgNode,
+    IamPrincipal,
     MachineCredential,
     UsedJti,
     WorkbenchInstance,
     utc_now,
 )
+
+logger = logging.getLogger("platform.enrollment")
 
 
 router = APIRouter()
@@ -60,10 +76,17 @@ class RevokeBody(BaseModel):
     reason: str = Field(min_length=1, max_length=500)
 
 
-def enrollment_json(item: EnrollmentRequest) -> dict:
-    return {
+def enrollment_json(item: EnrollmentRequest, session: Session) -> dict:
+    owner = session.get(IamPrincipal, item.owner_principal_id)
+    owner_name, owner_org_path, org_nodes = owner_org_context(
+        session, owner, item.owner_primary_org_id
+    )
+    result = {
         "id": item.id,
         "owner_principal_id": item.owner_principal_id,
+        "owner_display_name": owner_name,
+        "org_path": owner_org_path,
+        "org_path_nodes": org_nodes,
         "domain_id": item.domain_id_snapshot,
         "department_id": item.department_id_snapshot,
         "installation_id": item.installation_id,
@@ -77,18 +100,26 @@ def enrollment_json(item: EnrollmentRequest) -> dict:
         "created_at": item.created_at,
         "expires_at": item.expires_at,
     }
+    return result
 
 
-def workbench_json(item: WorkbenchInstance, offline_seconds: int) -> dict:
+def workbench_json(item: WorkbenchInstance, session: Session, offline_seconds: int) -> dict:
     now = utc_now()
+    owner = session.get(IamPrincipal, item.owner_principal_id)
+    owner_name, owner_org_path, org_nodes = owner_org_context(session, owner)
     online = (
         item.status == "ACTIVE"
         and item.last_heartbeat_at is not None
         and now - aware(item.last_heartbeat_at) <= timedelta(seconds=offline_seconds)
     )
     return {
+        "kind": "workbench",
+        "enrollment_id": item.enrollment_request_id,
         "id": item.id,
         "owner_principal_id": item.owner_principal_id,
+        "owner_display_name": owner_name,
+        "org_path": owner_org_path,
+        "org_path_nodes": org_nodes,
         "domain_id": item.domain_id,
         "department_id": item.department_id,
         "team_id": item.team_id,
@@ -106,10 +137,42 @@ def workbench_json(item: WorkbenchInstance, offline_seconds: int) -> dict:
     }
 
 
-def may_access_enrollment(identity: AuthenticatedPrincipal, item: EnrollmentRequest) -> bool:
+def enrollment_as_workbench_json(item: EnrollmentRequest, session: Session) -> dict:
+    owner = session.get(IamPrincipal, item.owner_principal_id)
+    owner_name, owner_org_path, org_nodes = owner_org_context(
+        session, owner, item.owner_primary_org_id
+    )
+    connection_status = "REJECTED" if item.status == "REJECTED" else "PENDING"
+    return {
+        "kind": "enrollment",
+        "enrollment_id": item.id,
+        "id": item.id,
+        "owner_principal_id": item.owner_principal_id,
+        "owner_display_name": owner_name,
+        "org_path": owner_org_path,
+        "org_path_nodes": org_nodes,
+        "domain_id": item.domain_id_snapshot,
+        "department_id": item.department_id_snapshot,
+        "team_id": item.team_id_snapshot,
+        "installation_id": item.installation_id,
+        "display_name": item.display_name,
+        "status": item.status,
+        "credential_status": connection_status,
+        "connection_status": connection_status,
+        "reported_version": item.version,
+        "reported_os": item.os,
+        "reported_arch": item.arch,
+        "first_heartbeat_at": None,
+        "last_heartbeat_at": None,
+        "created_at": item.created_at,
+        "review_reason": item.review_reason,
+    }
+
+
+def may_access_enrollment(session: Session, identity: AuthenticatedPrincipal, item: EnrollmentRequest) -> bool:
     if item.owner_principal_id == identity.principal.id:
         return True
-    return any("workbench.enrollment.review" in ROLE_PERMISSIONS[a.role] for a in identity.authorization.assignments)
+    return can_review_scoped(session, identity, item.owner_primary_org_id)
 
 
 @router.post("/api/v1/workbench-enrollments", status_code=status.HTTP_201_CREATED)
@@ -135,10 +198,11 @@ async def create_enrollment(
         )
     )
     if existing:
-        return enrollment_json(existing)
+        return enrollment_json(existing, session)
     item = EnrollmentRequest(
         id=str(uuid4()),
         owner_principal_id=identity.principal.id,
+        owner_primary_org_id=identity.principal.primary_org_id,
         domain_id_snapshot=identity.principal.domain_id,
         department_id_snapshot=identity.principal.department_id,
         team_id_snapshot=identity.principal.team_id,
@@ -179,20 +243,42 @@ async def create_enrollment(
         )
         if existing is None:
             raise
-        return enrollment_json(existing)
-    return enrollment_json(item)
+        logger.info("duplicate enrollment submission returned existing", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "enrollment_id": existing.id})
+        return enrollment_json(existing, session)
+    logger.info("enrollment request submitted", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "enrollment_id": item.id})
+    return enrollment_json(item, session)
 
 
 @router.get("/api/v1/workbench-enrollments")
 async def list_enrollments(
+    offset: int = Query(default=0, ge=0, le=10000),
+    limit: int = Query(default=20, ge=1, le=100),
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
-) -> list[dict]:
-    can_review = any("workbench.enrollment.review" in ROLE_PERMISSIONS[a.role] for a in identity.authorization.assignments)
-    statement = select(EnrollmentRequest)
-    if not can_review:
-        statement = statement.where(EnrollmentRequest.owner_principal_id == identity.principal.id)
-    return [enrollment_json(row) for row in session.scalars(statement.order_by(EnrollmentRequest.created_at.desc())).all()]
+) -> PaginatedResponse:
+    from sqlalchemy import func
+    can_review = has_global_permission(identity, "workbench.enrollment.review") or any(
+        "workbench.enrollment.review" in ROLE_PERMISSIONS[a.role]
+        for a in identity.authorization.assignments
+    ) or any(
+        "workbench.enrollment.review" in grant.permissions
+        for grant in identity.authorization.scoped_grants
+    )
+    base = select(EnrollmentRequest)
+    if can_review:
+        visible = visible_org_ids(session, identity, "workbench.enrollment.review")
+        if visible is not None:
+            base = base.where(EnrollmentRequest.owner_primary_org_id.in_(visible))
+    else:
+        base = base.where(EnrollmentRequest.owner_principal_id == identity.principal.id)
+    total = session.scalar(select(func.count()).select_from(base.subquery()))
+    rows = session.scalars(base.order_by(EnrollmentRequest.created_at.desc()).offset(offset).limit(limit)).all()
+    return PaginatedResponse(
+        items=[enrollment_json(row, session) for row in rows],
+        total=total or 0,
+        offset=offset,
+        limit=limit,
+    )
 
 
 @router.get("/api/v1/workbench-enrollments/{enrollment_id}")
@@ -202,9 +288,9 @@ async def get_enrollment(
     session: Session = Depends(get_session),
 ) -> dict:
     item = session.get(EnrollmentRequest, enrollment_id)
-    if item is None or not may_access_enrollment(identity, item):
+    if item is None or not may_access_enrollment(session, identity, item):
         raise ApiError(404, "ENROLLMENT_NOT_FOUND", "Enrollment request not found")
-    result = enrollment_json(item)
+    result = enrollment_json(item, session)
     instance = session.scalar(select(WorkbenchInstance).where(WorkbenchInstance.enrollment_request_id == item.id))
     if instance:
         result["workbench_instance_id"] = instance.id
@@ -224,6 +310,8 @@ def review_enrollment(
     item = session.get(EnrollmentRequest, enrollment_id)
     if item is None:
         raise ApiError(404, "ENROLLMENT_NOT_FOUND", "Enrollment request not found")
+    if not can_review_scoped(session, identity, item.owner_primary_org_id):
+        raise ApiError(403, "PERMISSION_DENIED", "You do not have permission for this operation")
     if item.status != "PENDING_REVIEW" or aware(item.expires_at) <= utc_now():
         raise ApiError(409, "ENROLLMENT_STATE_INVALID", "Enrollment request cannot be reviewed")
     item.status = "APPROVED" if approved else "REJECTED"
@@ -244,7 +332,11 @@ def review_enrollment(
         summary="Approved workbench enrollment" if approved else "Rejected workbench enrollment",
     )
     session.commit()
-    return enrollment_json(item)
+    logger.info(
+        "enrollment %s", "approved" if approved else "rejected",
+        extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "enrollment_id": item.id, "event_type": "ENROLLMENT_APPROVED" if approved else "ENROLLMENT_REJECTED"},
+    )
+    return enrollment_json(item, session)
 
 
 @router.post("/api/v1/workbench-enrollments/{enrollment_id}/approve")
@@ -401,6 +493,7 @@ async def complete_enrollment(
     except IntegrityError as exc:
         session.rollback()
         raise ApiError(409, "ENROLLMENT_CONFLICT", "Enrollment was completed concurrently") from exc
+    logger.info("workbench registered", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "workbench_id": instance.id, "enrollment_id": item.id})
     return {"workbench_instance_id": instance.id, "credential_id": credential.id, "status": "ACTIVE"}
 
 
@@ -517,7 +610,7 @@ async def heartbeat(
     return {"received_at": received_at, "connection_status": "ONLINE"}
 
 
-def workbench_scope(identity: AuthenticatedPrincipal):
+def workbench_scope(session: Session, identity: AuthenticatedPrincipal):
     clauses = []
     for assignment in identity.authorization.assignments:
         if "workbench.read" not in ROLE_PERMISSIONS[assignment.role]:
@@ -530,9 +623,10 @@ def workbench_scope(identity: AuthenticatedPrincipal):
         elif scope.scope_type is ScopeType.ALL_DEPARTMENTS:
             clauses.append(WorkbenchInstance.domain_id == scope.domain_id)
         elif scope.scope_type is ScopeType.DEPARTMENT_SET:
+            descendant_ids = descendant_org_ids(session, set(scope.department_ids))
             clauses.append(
                 (WorkbenchInstance.domain_id == scope.domain_id)
-                & WorkbenchInstance.department_id.in_(scope.department_ids)
+                & WorkbenchInstance.department_id.in_(descendant_ids)
             )
     return or_(*clauses) if clauses else false()
 
@@ -540,14 +634,84 @@ def workbench_scope(identity: AuthenticatedPrincipal):
 @router.get("/api/v1/workbenches")
 async def list_workbenches(
     request: Request,
+    offset: int = Query(default=0, ge=0, le=10000),
+    limit: int = Query(default=20, ge=1, le=100),
+    q: str = Query(default="", max_length=100),
+    org_id: str | None = Query(default=None, max_length=64),
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
-) -> list[dict]:
+) -> PaginatedResponse:
     require_permission(identity, "workbench.read")
-    rows = session.scalars(
-        select(WorkbenchInstance).where(workbench_scope(identity)).order_by(WorkbenchInstance.created_at.desc())
+    from sqlalchemy import func
+    wb_base = select(WorkbenchInstance).join(
+        IamPrincipal, IamPrincipal.id == WorkbenchInstance.owner_principal_id
+    )
+    visible = visible_org_ids(session, identity, "workbench.read")
+    if visible is not None:
+        scoped_clause = WorkbenchInstance.owner_principal_id == identity.principal.id
+        if visible:
+            scoped_clause = scoped_clause | IamPrincipal.primary_org_id.in_(visible)
+        wb_base = wb_base.where(or_(workbench_scope(session, identity), scoped_clause))
+    keyword = q.strip()
+    matching_org_ids = None
+    if keyword:
+        like = f"%{keyword}%"
+        matching_org_ids = (
+            select(IamOrgClosure.descendant_id)
+            .join(IamOrgNode, IamOrgNode.id == IamOrgClosure.ancestor_id)
+            .where(IamOrgNode.name.ilike(like))
+        )
+        wb_base = wb_base.where(
+            or_(
+                IamPrincipal.username.ilike(like),
+                IamPrincipal.display_name.ilike(like),
+                IamPrincipal.primary_org_id.in_(matching_org_ids),
+            )
+        )
+    selected_org_ids = scoped_descendant_org_ids(session, {org_id}) if org_id else None
+    if selected_org_ids:
+        wb_base = wb_base.where(IamPrincipal.primary_org_id.in_(selected_org_ids))
+    wb_total = session.scalar(select(func.count()).select_from(wb_base.subquery()))
+
+    enrollment_base = select(EnrollmentRequest).join(
+        IamPrincipal, IamPrincipal.id == EnrollmentRequest.owner_principal_id
+    ).where(EnrollmentRequest.status.in_(["PENDING_REVIEW", "APPROVED", "REJECTED"]))
+    if visible is not None:
+        enrollment_visible_clause = EnrollmentRequest.owner_principal_id == identity.principal.id
+        if visible:
+            enrollment_visible_clause = enrollment_visible_clause | EnrollmentRequest.owner_primary_org_id.in_(visible)
+        enrollment_base = enrollment_base.where(enrollment_visible_clause)
+    if keyword:
+        like = f"%{keyword}%"
+        enrollment_base = enrollment_base.where(
+            or_(
+                IamPrincipal.username.ilike(like),
+                IamPrincipal.display_name.ilike(like),
+                EnrollmentRequest.owner_primary_org_id.in_(matching_org_ids),
+            )
+        )
+    if selected_org_ids:
+        enrollment_base = enrollment_base.where(EnrollmentRequest.owner_primary_org_id.in_(selected_org_ids))
+    enrollment_total = session.scalar(select(func.count()).select_from(enrollment_base.subquery()))
+
+    wb_rows = session.scalars(
+        wb_base.order_by(WorkbenchInstance.created_at.desc()).limit(offset + limit)
     ).all()
-    return [workbench_json(row, request.app.state.settings.heartbeat_offline_seconds) for row in rows]
+    enrollment_rows = session.scalars(
+        enrollment_base.order_by(EnrollmentRequest.created_at.desc()).limit(offset + limit)
+    ).all()
+    items = [
+        *(workbench_json(row, session, request.app.state.settings.heartbeat_offline_seconds) for row in wb_rows),
+        *(enrollment_as_workbench_json(row, session) for row in enrollment_rows),
+    ]
+    items.sort(key=lambda item: item["created_at"], reverse=True)
+    page = items[offset:offset + limit]
+    return PaginatedResponse(
+        items=page,
+        total=(wb_total or 0) + (enrollment_total or 0),
+        offset=offset,
+        limit=limit,
+    )
 
 
 @router.get("/api/v1/workbenches/{workbench_id}")
@@ -557,12 +721,19 @@ async def get_workbench(
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> dict:
-    item = session.scalar(
-        select(WorkbenchInstance).where(WorkbenchInstance.id == workbench_id, workbench_scope(identity))
-    )
+    base = select(WorkbenchInstance).join(
+        IamPrincipal, IamPrincipal.id == WorkbenchInstance.owner_principal_id
+    ).where(WorkbenchInstance.id == workbench_id)
+    visible = visible_org_ids(session, identity, "workbench.read")
+    if visible is not None:
+        scoped_clause = WorkbenchInstance.owner_principal_id == identity.principal.id
+        if visible:
+            scoped_clause = scoped_clause | IamPrincipal.primary_org_id.in_(visible)
+        base = base.where(or_(workbench_scope(session, identity), scoped_clause))
+    item = session.scalar(base)
     if item is None:
         raise ApiError(404, "WORKBENCH_NOT_FOUND", "Workbench not found")
-    return workbench_json(item, request.app.state.settings.heartbeat_offline_seconds)
+    return workbench_json(item, session, request.app.state.settings.heartbeat_offline_seconds)
 
 
 @router.post("/api/v1/workbenches/{workbench_id}/revoke")
@@ -601,4 +772,5 @@ async def revoke_workbench(
         summary="Revoked platform access for workbench",
     )
     session.commit()
-    return workbench_json(item, request.app.state.settings.heartbeat_offline_seconds)
+    logger.info("workbench revoked", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "workbench_id": item.id})
+    return workbench_json(item, session, request.app.state.settings.heartbeat_offline_seconds)

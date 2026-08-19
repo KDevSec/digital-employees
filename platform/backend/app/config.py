@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     oidc_internal_issuer: str | None = None
     oidc_client_id: str = "platform-web"
     oidc_client_secret: str = "change-me-platform-client-secret"
+    oidc_admin_url: str = "http://localhost:18080"
+    oidc_realm: str = "digital-employees"
     iam_sync_client_id: str = "platform-iam-sync"
     iam_sync_client_secret: str = "change-me-iam-sync-secret"
     session_secret: str = Field(default="change-me-session-secret-32-characters", min_length=32)
@@ -24,9 +26,14 @@ class Settings(BaseSettings):
     challenge_ttl_seconds: int = Field(default=300, ge=60, le=900)
     machine_token_ttl_seconds: int = Field(default=300, ge=60, le=300)
     heartbeat_offline_seconds: int = Field(default=90, ge=30, le=3600)
+    directory_sync_ttl_seconds: int = Field(default=60, ge=0, le=3600)
     enrollment_ttl_hours: int = Field(default=24, ge=1, le=168)
     max_package_bytes: int = Field(default=100 * 1024 * 1024, ge=1)
     bootstrap_system_username: str = "system.admin"
+    db_pool_size: int = Field(default=20, ge=5, le=100)
+    db_max_overflow: int = Field(default=10, ge=0, le=50)
+    log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR)$")
+    log_dir: Path = Path("/var/log/platform")
     testing: bool = False
 
     @field_validator("platform_base_url", "workbench_base_url", "oidc_issuer")

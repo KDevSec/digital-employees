@@ -78,7 +78,7 @@ export class PlatformClient {
     })
   }
 
-  async enrollment(id: string, accessToken: string): Promise<{ status: string; workbench_instance_id?: string }> {
+  async enrollment(id: string, accessToken: string): Promise<{ status: string; workbench_instance_id?: string; review_reason?: string }> {
     return this.request(`${this.publicBaseUrl}/api/v1/workbench-enrollments/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })

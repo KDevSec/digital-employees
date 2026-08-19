@@ -14,6 +14,7 @@ from app.domain.authorization import (
     RoleCode,
     ScopeType,
 )
+from app.domain.scoped_authorization import is_scoped_allowed, load_effective_grants
 from app.errors import ApiError
 from app.auth.sessions import session_token_hash
 from app.models import BffSession, IamPrincipal, RoleAssignment
@@ -46,7 +47,8 @@ class AuthenticatedPrincipal:
             )
             for row in rows
         )
-        return cls(principal, AuthorizationContext(principal.id, assignments))
+        scoped_grants = load_effective_grants(session, principal.id, now=datetime.now(UTC))
+        return cls(principal, AuthorizationContext(principal.id, assignments, scoped_grants))
 
 
 async def get_current_principal(
@@ -79,8 +81,29 @@ async def get_current_principal(
 
 
 def require_permission(identity: AuthenticatedPrincipal, permission: str) -> None:
-    if not any(
+    fixed_role_allowed = any(
         permission in ROLE_PERMISSIONS[assignment.role]
         for assignment in identity.authorization.assignments
-    ):
+    )
+    scoped_role_allowed = any(
+        permission in grant.permissions for grant in identity.authorization.scoped_grants
+    )
+    if not fixed_role_allowed and not scoped_role_allowed:
+        raise ApiError(403, "PERMISSION_DENIED", "You do not have permission for this operation")
+
+
+def require_organization_permission(
+    session: Session,
+    identity: AuthenticatedPrincipal,
+    permission: str,
+    org_id: str,
+) -> None:
+    fixed_role_allowed = any(
+        "role.manage" in ROLE_PERMISSIONS[assignment.role]
+        for assignment in identity.authorization.assignments
+    )
+    scoped_role_allowed = is_scoped_allowed(
+        session, identity.authorization.scoped_grants, permission, org_id
+    )
+    if not fixed_role_allowed and not scoped_role_allowed:
         raise ApiError(403, "PERMISSION_DENIED", "You do not have permission for this operation")

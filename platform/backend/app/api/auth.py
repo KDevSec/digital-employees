@@ -1,9 +1,11 @@
+import logging
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse, Response
+from urllib.parse import urlencode
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,8 @@ from app.database import get_session
 from app.domain.authorization import RoleCode, ScopeType
 from app.errors import ApiError
 from app.models import BffSession, RoleAssignment
+
+logger = logging.getLogger("platform.auth")
 
 
 router = APIRouter()
@@ -95,6 +99,7 @@ async def callback(
             id_hash=session_token_hash(raw_session),
             principal_id=principal.id,
             expires_at=datetime.now(UTC) + timedelta(hours=8),
+            id_token=tokens.get("id_token"),
         )
     )
     record_audit(
@@ -111,6 +116,7 @@ async def callback(
         summary="Completed management platform OIDC login",
     )
     session.commit()
+    logger.info("login succeeded", extra={"trace_id": request.state.trace_id, "actor_id": principal.id})
     response = RedirectResponse(flow.return_to, status_code=302)
     response.delete_cookie(FLOW_COOKIE, path="/auth")
     response.set_cookie(
@@ -125,16 +131,18 @@ async def callback(
     return response
 
 
-@router.post("/auth/logout", status_code=204)
+@router.get("/auth/logout")
 async def logout(
     request: Request,
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
-) -> Response:
+) -> RedirectResponse:
     raw_session = request.cookies.get(SESSION_COOKIE)
+    id_token = None
     if raw_session:
         stored = session.get(BffSession, session_token_hash(raw_session))
         if stored:
+            id_token = stored.id_token
             session.delete(stored)
     record_audit(
         session,
@@ -150,6 +158,18 @@ async def logout(
         summary="Ended management platform BFF session",
     )
     session.commit()
-    response = Response(status_code=204)
+    settings = request.app.state.settings
+    discovery = await request.app.state.oidc.discovery()
+    end_session_url = discovery.get("end_session_endpoint")
+    if end_session_url and id_token:
+        params = urlencode(
+            {
+                "id_token_hint": id_token,
+                "post_logout_redirect_uri": f"{settings.platform_base_url}/",
+            }
+        )
+        response = RedirectResponse(f"{end_session_url}?{params}", status_code=302)
+    else:
+        response = RedirectResponse("/", status_code=302)
     response.delete_cookie(SESSION_COOKIE, path="/")
     return response

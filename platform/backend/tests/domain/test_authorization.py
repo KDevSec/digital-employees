@@ -34,9 +34,11 @@ def assignment(
         (RoleCode.PLATFORM_ADMIN, "role.manage", False),
         (RoleCode.DEPARTMENT_ADMIN, "workbench.read", True),
         (RoleCode.SECURITY_ADMIN, "workbench.revoke", False),
-        (RoleCode.AUDIT_ADMIN, "audit.all.read", True),
+        (RoleCode.AUDIT_ADMIN, "audit.read", True),
         (RoleCode.EMPLOYEE, "workbench.enroll", True),
-        (RoleCode.EMPLOYEE, "audit.all.read", False),
+        (RoleCode.EMPLOYEE, "audit.read", False),
+        (RoleCode.SYSTEM_ADMIN, "audit.read", True),
+        (RoleCode.DEPARTMENT_ADMIN, "audit.read", False),
     ],
 )
 def test_fixed_role_permissions(role: RoleCode, permission: str, expected: bool) -> None:
@@ -62,8 +64,8 @@ def test_all_departments_includes_future_departments_in_same_domain() -> None:
         (assignment(RoleCode.AUDIT_ADMIN, ScopeType.ALL_DEPARTMENTS, domain="domain-a"),),
     )
 
-    assert is_allowed(context, "audit.all.read", ResourceContext("domain-a", "new-department", "employee"))
-    assert not is_allowed(context, "audit.all.read", ResourceContext("domain-b", "new-department", "employee"))
+    assert is_allowed(context, "audit.read", ResourceContext("domain-a", "new-department", "employee"))
+    assert not is_allowed(context, "audit.read", ResourceContext("domain-b", "new-department", "employee"))
 
 
 def test_employee_self_scope_only_matches_owner() -> None:
@@ -86,6 +88,6 @@ def test_multiple_roles_union_permissions_and_scopes() -> None:
         ),
     )
 
-    assert is_allowed(context, "audit.operation.read", ResourceContext("domain-a", "dept-1", "owner"))
-    assert is_allowed(context, "audit.security.read", ResourceContext("domain-a", "dept-2", "owner"))
-    assert not is_allowed(context, "audit.security.read", ResourceContext("domain-a", "dept-1", "owner"))
+    assert is_allowed(context, "workbench.enrollment.review", ResourceContext("domain-a", "dept-1", "owner"))
+    assert is_allowed(context, "workbench.read", ResourceContext("domain-a", "dept-2", "owner"))
+    assert not is_allowed(context, "workbench.read", ResourceContext("domain-b", "dept-2", "owner"))

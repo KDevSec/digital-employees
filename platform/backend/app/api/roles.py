@@ -11,7 +11,7 @@ from app.audit import record_audit
 from app.database import get_session
 from app.domain.authorization import RoleCode, ScopeType
 from app.errors import ApiError
-from app.models import IamDepartment, IamPrincipal, RoleAssignment, RoleAssignmentDepartment
+from app.models import IamDepartment, IamOrgNode, IamPrincipal, RoleAssignment, RoleAssignmentDepartment
 
 
 router = APIRouter()
@@ -37,10 +37,12 @@ class RoleAssignmentCreate(BaseModel):
         elif self.role_code is RoleCode.EMPLOYEE:
             if self.scope_type is not ScopeType.SELF or self.domain_id or self.department_ids:
                 raise ValueError("employees require SELF scope")
-        elif self.scope_type not in {ScopeType.ALL_DEPARTMENTS, ScopeType.DEPARTMENT_SET} or not self.domain_id:
-            raise ValueError("range administrators require a domain scope")
-        if self.scope_type is ScopeType.DEPARTMENT_SET and not self.department_ids:
+        elif self.scope_type is ScopeType.ALL_DEPARTMENTS and not self.domain_id:
+            raise ValueError("ALL_DEPARTMENTS requires a domain scope")
+        elif self.scope_type is ScopeType.DEPARTMENT_SET and not self.department_ids:
             raise ValueError("DEPARTMENT_SET requires departments")
+        elif self.scope_type not in {ScopeType.ALL_DEPARTMENTS, ScopeType.DEPARTMENT_SET}:
+            raise ValueError("range administrators require a domain scope")
         return self
 
 
@@ -81,11 +83,20 @@ async def create_role_assignment(
     if body.domain_id and body.domain_id != principal.domain_id and body.role_code is RoleCode.EMPLOYEE:
         raise ApiError(422, "ROLE_SCOPE_INVALID", "Role scope does not match principal domain")
     if body.department_ids:
-        departments = session.scalars(
-            select(IamDepartment).where(IamDepartment.id.in_(body.department_ids))
+        nodes = session.scalars(
+            select(IamOrgNode).where(IamOrgNode.id.in_(body.department_ids), IamOrgNode.status == "ACTIVE")
         ).all()
-        if len(departments) != len(set(body.department_ids)) or any(d.domain_id != body.domain_id for d in departments):
+        node_domains = {n.domain_id for n in nodes}
+        if len(nodes) != len(set(body.department_ids)):
             raise ApiError(422, "ROLE_SCOPE_INVALID", "Departments must exist in the selected domain")
+        if len(node_domains) > 1:
+            raise ApiError(422, "ROLE_SCOPE_INVALID", "Departments must exist in the selected domain")
+        derived_domain = next(iter(node_domains))
+        if body.domain_id and body.domain_id != derived_domain:
+            raise ApiError(422, "ROLE_SCOPE_INVALID", "Departments must exist in the selected domain")
+        body.domain_id = derived_domain
+    elif body.scope_type is ScopeType.DEPARTMENT_SET:
+        raise ApiError(422, "ROLE_SCOPE_INVALID", "DEPARTMENT_SET requires departments")
     duplicate = session.scalar(
         select(RoleAssignment).where(
             RoleAssignment.principal_id == body.principal_id,

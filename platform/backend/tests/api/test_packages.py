@@ -45,7 +45,7 @@ async def test_anonymous_users_only_see_and_download_published_packages(
 async def test_employee_cannot_manage_packages(
     client: AsyncClient,
     employee_headers: dict[str, str],
-    system_headers: dict[str, str],
+    audit_admin_headers: dict[str, str],
 ) -> None:
     response = await client.post(
         "/api/v1/admin/workbench-packages",
@@ -59,9 +59,9 @@ async def test_employee_cannot_manage_packages(
 
     audit = await client.get(
         "/api/v1/audit-events?event_type=AUTHORIZATION_DENIED",
-        headers=system_headers,
+        headers=audit_admin_headers,
     )
     assert audit.status_code == 200
-    assert len(audit.json()) == 1
-    assert audit.json()[0]["result"] == "FAILURE"
-    assert audit.json()[0]["reason_code"] == "PERMISSION_DENIED"
+    assert len(audit.json()["items"]) == 1
+    assert audit.json()["items"][0]["result"] == "FAILURE"
+    assert audit.json()["items"][0]["reason_code"] == "PERMISSION_DENIED"

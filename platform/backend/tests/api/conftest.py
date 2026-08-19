@@ -42,6 +42,10 @@ def db_factory() -> sessionmaker[Session]:
                 IamOrgClosure(ancestor_id="domain-a", descendant_id="domain-a", depth=0),
                 PermissionDefinition(code="organization.read", resource_type="organization", action="read", description="Read organizations", risk_level="LOW", delegable=True),
                 PermissionDefinition(code="organization.member.manage", resource_type="organization", action="member.manage", description="Manage organization members", risk_level="HIGH", delegable=True),
+                PermissionDefinition(code="role.assign", resource_type="role", action="assign", description="Assign roles", risk_level="CRITICAL", delegable=True),
+                PermissionDefinition(code="audit.security.read", resource_type="audit", action="security.read", description="Read security audit", risk_level="CRITICAL", delegable=False),
+                PermissionDefinition(code="workbench.read", resource_type="workbench", action="read", description="Read workbenches", risk_level="LOW", delegable=True),
+                PermissionDefinition(code="workbench.enrollment.review", resource_type="workbench", action="enrollment.review", description="Review enrollments", risk_level="HIGH", delegable=True),
                 domain,
                 department,
                 IamPrincipal(
@@ -64,6 +68,26 @@ def db_factory() -> sessionmaker[Session]:
                     department_id=department.id,
                     status="ACTIVE",
                 ),
+                IamPrincipal(
+                    id="dept-admin-user",
+                    issuer="https://iam.test/realms/digital",
+                    subject="sub-dept-admin",
+                    username="deptadmin",
+                    display_name="Dept Admin",
+                    domain_id=domain.id,
+                    department_id=department.id,
+                    status="ACTIVE",
+                ),
+                IamPrincipal(
+                    id="audit-admin-user",
+                    issuer="https://iam.test/realms/digital",
+                    subject="sub-audit-admin",
+                    username="auditadmin",
+                    display_name="审计管理员",
+                    domain_id=domain.id,
+                    department_id=department.id,
+                    status="ACTIVE",
+                ),
                 RoleAssignment(
                     id="role-system",
                     principal_id="system-user",
@@ -77,6 +101,15 @@ def db_factory() -> sessionmaker[Session]:
                     principal_id="employee-user",
                     role_code=RoleCode.EMPLOYEE,
                     scope_type=ScopeType.SELF,
+                    status="ACTIVE",
+                    created_by="bootstrap",
+                ),
+                RoleAssignment(
+                    id="role-audit-admin",
+                    principal_id="audit-admin-user",
+                    role_code=RoleCode.AUDIT_ADMIN,
+                    scope_type=ScopeType.ALL_DEPARTMENTS,
+                    domain_id="domain-a",
                     status="ACTIVE",
                     created_by="bootstrap",
                 ),
@@ -106,7 +139,12 @@ async def client(db_factory: sessionmaker[Session], tmp_path: Path):
 
     def identity_override(request: Request) -> AuthenticatedPrincipal:
         token = request.headers.get("Authorization", "").removeprefix("Bearer ")
-        principal_id = {"test-system": "system-user", "test-employee": "employee-user"}.get(token)
+        principal_id = {
+            "test-system": "system-user",
+            "test-employee": "employee-user",
+            "test-dept-admin": "dept-admin-user",
+            "test-audit-admin": "audit-admin-user",
+        }.get(token)
         if not principal_id:
             from app.errors import ApiError
 
@@ -129,3 +167,13 @@ def system_headers() -> dict[str, str]:
 @pytest.fixture
 def employee_headers() -> dict[str, str]:
     return {"Authorization": "Bearer test-employee"}
+
+
+@pytest.fixture
+def dept_admin_headers() -> dict[str, str]:
+    return {"Authorization": "Bearer test-dept-admin"}
+
+
+@pytest.fixture
+def audit_admin_headers() -> dict[str, str]:
+    return {"Authorization": "Bearer test-audit-admin"}

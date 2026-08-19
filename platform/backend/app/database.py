@@ -25,7 +25,13 @@ _session_factory = None
 
 def configure_database(url: str) -> None:
     global _engine, _session_factory
-    _engine = create_engine(url, pool_pre_ping=True)
+    settings = get_settings()
+    _engine = create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+    )
     _session_factory = sessionmaker(_engine, expire_on_commit=False)
 
 

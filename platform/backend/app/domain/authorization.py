@@ -35,6 +35,7 @@ class RoleAssignment:
 class AuthorizationContext:
     principal_id: str
     assignments: tuple[RoleAssignment, ...]
+    scoped_grants: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -49,14 +50,13 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
         {
             "role.manage",
             "platform.settings.manage",
+            "system.logs.read",
+            "audit.read",
             "package.manage",
             "workbench.read",
             "workbench.enroll",
             "workbench.enrollment.review",
             "workbench.revoke",
-            "audit.operation.read",
-            "audit.security.read",
-            "audit.all.read",
         }
     ),
     RoleCode.PLATFORM_ADMIN: frozenset(
@@ -67,18 +67,16 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
             "workbench.enroll",
             "workbench.enrollment.review",
             "workbench.revoke",
-            "audit.operation.read",
-            "audit.security.read",
         }
     ),
     RoleCode.DEPARTMENT_ADMIN: frozenset(
-        {"workbench.read", "workbench.enroll", "audit.operation.read"}
+        {"workbench.read", "workbench.enroll", "workbench.enrollment.review"}
     ),
     RoleCode.SECURITY_ADMIN: frozenset(
-        {"workbench.read", "workbench.enroll", "audit.security.read"}
+        {"workbench.read", "workbench.enroll"}
     ),
     RoleCode.AUDIT_ADMIN: frozenset(
-        {"workbench.read", "workbench.enroll", "audit.all.read"}
+        {"workbench.read", "workbench.enroll", "audit.read"}
     ),
     RoleCode.EMPLOYEE: frozenset({"workbench.read", "workbench.enroll"}),
 }

@@ -47,6 +47,7 @@ p { color: var(--muted); }
 .badge { display: inline-block; border-radius: 99px; padding: 3px 8px; background: #eef2f1; font-size: 11px; font-weight: 800; }
 .badge.success { background: #dcf5ec; color: #08775b; }
 .badge.danger { background: #ffeaec; color: var(--red); }
+.badge.warning { background: #fff2d8; color: #9a5a07; }
 .empty { padding: 32px; text-align: center; color: var(--muted); }
 .error { padding: 10px 12px; background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; border-radius: 9px; }
 .success-text { color: #08775b; font-weight: 700; }
@@ -84,13 +85,28 @@ td small { color: var(--muted); }
 .form-grid label, .settings-form label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 700; }
 .settings-form { max-width: 780px; display: grid; gap: 14px; }
 .truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.my-wb { margin-bottom: 18px; }
+.my-wb-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; align-items: start; }
+.my-wb-info .row { display: grid; grid-template-columns: 100px 1fr; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eef2f0; }
+.my-wb-info .row span { color: var(--muted); }
+.my-wb-notice { padding: 16px 18px; border-radius: 12px; background: #fff7e6; border: 1px solid #f2d9a0; }
+.my-wb-notice.ok { background: #ecf9f1; border-color: #b3e3c4; }
+.my-wb-notice.bad { background: #fdeef0; border-color: #f0b8be; }
+.my-wb-notice strong { display: block; margin-bottom: 4px; }
+.my-wb-notice p { margin: 0; font-size: 13px; }
+.mini-table { width: 100%; border-collapse: collapse; min-width: 0; }
+.mini-table th, .mini-table td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #eef2f0; }
+.mini-table th { background: #f7f9f8; }
+.empty-hint { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+.kpi-danger strong { color: var(--red); }
 
 @media (max-width: 900px) {
-  .hero, .package-grid, .kpi-grid, .flow { grid-template-columns: 1fr 1fr; }
+  .hero, .package-grid, .kpi-grid, .flow, .overview-grid, .my-wb-grid { grid-template-columns: 1fr 1fr; }
   .form-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 700px) {
-  .hero, .package-grid, .kpi-grid, .flow, .form-grid { grid-template-columns: 1fr; }
+  .hero, .package-grid, .kpi-grid, .flow, .form-grid, .overview-grid, .my-wb-grid { grid-template-columns: 1fr; }
   .sidebar { position: static; width: auto; }
   .sidebar nav { grid-template-columns: repeat(2, 1fr); }
   .environment { display: none; }

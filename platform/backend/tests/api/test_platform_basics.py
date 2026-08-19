@@ -53,7 +53,7 @@ async def test_system_admin_updates_only_whitelisted_settings(
 
 
 async def test_audit_records_operation_without_sensitive_payload(
-    client: AsyncClient, system_headers: dict[str, str]
+    client: AsyncClient, system_headers: dict[str, str], audit_admin_headers: dict[str, str]
 ) -> None:
     secret_content = b"audit-secret-must-not-appear"
     uploaded = await client.post(
@@ -64,7 +64,7 @@ async def test_audit_records_operation_without_sensitive_payload(
     )
     assert uploaded.status_code == 201
 
-    audit = await client.get("/api/v1/audit-events?event_type=PACKAGE_UPLOADED", headers=system_headers)
+    audit = await client.get("/api/v1/audit-events?event_type=PACKAGE_UPLOADED", headers=audit_admin_headers)
     assert audit.status_code == 200
     serialized = audit.text
     assert "PACKAGE_UPLOADED" in serialized
@@ -80,13 +80,13 @@ async def test_iam_snapshots_are_read_only_and_searchable(
 
     assert domains.json() == [{"id": "domain-a", "name": "Example Corp", "status": "ACTIVE"}]
     assert departments.json()[0]["id"] == "dept-a"
-    assert principals.json()[0]["username"] == "employee"
+    assert principals.json()["items"][0]["username"] == "employee"
     assert (await client.post("/api/v1/iam/principals", headers=system_headers, json={})).status_code == 405
 
 
 async def test_authentication_failure_is_audited_without_request_credentials(
     client: AsyncClient,
-    system_headers: dict[str, str],
+    audit_admin_headers: dict[str, str],
 ) -> None:
     secret_bearer = "secret-bearer-must-not-appear"
     denied = await client.get(
@@ -97,8 +97,16 @@ async def test_authentication_failure_is_audited_without_request_credentials(
 
     audit = await client.get(
         "/api/v1/audit-events?event_type=AUTHENTICATION_FAILED",
-        headers=system_headers,
+        headers=audit_admin_headers,
     )
     assert audit.status_code == 200
     assert secret_bearer not in audit.text
-    assert audit.json()[0]["reason_code"] == "PERSON_SESSION_INVALID"
+    assert audit.json()["items"][0]["reason_code"] == "PERSON_SESSION_INVALID"
+
+
+async def test_platform_settings_excludes_admin_console_key(
+    client: AsyncClient, system_headers: dict[str, str]
+) -> None:
+    response = await client.get("/api/v1/platform-settings", headers=system_headers)
+    assert response.status_code == 200
+    assert "oidc_admin_url" not in response.json()

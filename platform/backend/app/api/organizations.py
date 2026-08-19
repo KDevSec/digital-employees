@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+import logging
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, Query, Request, status
@@ -5,10 +7,33 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import AuthenticatedPrincipal, get_current_principal, require_permission
+from app.api.dependencies import (
+    AuthenticatedPrincipal,
+    get_current_principal,
+    require_organization_permission,
+    require_permission,
+)
+from app.domain.authorization import ROLE_PERMISSIONS
+from app.domain.scoped_authorization import is_scoped_allowed
 from app.database import get_session
+from app.audit import record_audit
 from app.errors import ApiError
-from app.models import IamOrgClosure, IamOrgNode, IamPrincipal, IamPrincipalOrg
+from app.iam.sync import rebuild_domain_closure, reconcile_organization_snapshot
+from app.models import (
+    BffSession,
+    IamDepartment,
+    IamDomain,
+    IamOrgClosure,
+    IamOrgNode,
+    IamPrincipal,
+    IamPrincipalOrg,
+    IamSyncOperation,
+    IamTeam,
+    RoleAssignment,
+    ScopedRoleAssignment,
+)
+
+logger = logging.getLogger("platform.organizations")
 
 
 router = APIRouter()
@@ -37,6 +62,19 @@ class OrganizationMove(BaseModel):
 
 class MembershipChange(BaseModel):
     org_id: str
+
+
+class OrganizationArchive(BaseModel):
+    version: int = Field(ge=1)
+
+
+class PrincipalStatusChange(BaseModel):
+    status: str = Field(pattern=r"^(ACTIVE|DISABLED)$")
+
+
+class BatchStatusChange(BaseModel):
+    principal_ids: list[str] = Field(min_length=1, max_length=200)
+    status: str = Field(pattern=r"^(ACTIVE|DISABLED)$")
 
 
 def org_json(node: IamOrgNode) -> dict:
@@ -68,48 +106,8 @@ def keycloak_group_payload(node: IamOrgNode) -> dict:
     }
 
 
-def rebuild_domain_closure(session: Session, domain_id: str) -> None:
-    nodes = session.scalars(select(IamOrgNode).where(IamOrgNode.domain_id == domain_id)).all()
-    node_ids = [node.id for node in nodes]
-    if node_ids:
-        session.execute(
-            delete(IamOrgClosure).where(
-                IamOrgClosure.ancestor_id.in_(node_ids),
-                IamOrgClosure.descendant_id.in_(node_ids),
-            )
-        )
-    parents = {node.id: node.parent_id for node in nodes}
-    from app.domain.organization import build_closure_edges
-
-    session.add_all(
-        IamOrgClosure(ancestor_id=ancestor, descendant_id=descendant, depth=depth)
-        for ancestor, descendant, depth in build_closure_edges(parents)
-    )
-
-
-async def reconcile_organization_snapshot(request: Request, session: Session) -> int:
-    from app.domain.organization import flatten_keycloak_groups
-
-    rows = flatten_keycloak_groups(await request.app.state.iam_admin.list_groups())
-    domains: set[str] = set()
-    for raw in rows:
-        domains.add(raw["domain_id"])
-        node = session.get(IamOrgNode, raw["id"])
-        if node is None:
-            node = IamOrgNode(**raw)
-            session.add(node)
-        else:
-            for field, value in raw.items():
-                if field != "id":
-                    setattr(node, field, value)
-    session.flush()
-    for domain_id in domains:
-        rebuild_domain_closure(session, domain_id)
-    session.commit()
-    return len(rows)
-
-
 @router.post("/api/v1/org-nodes", status_code=status.HTTP_201_CREATED)
+# Deprecated: organization structure is maintained in Keycloak, not via this API.
 async def create_organization(
     body: OrganizationCreate,
     request: Request,
@@ -118,6 +116,24 @@ async def create_organization(
     session: Session = Depends(get_session),
 ) -> dict:
     require_permission(identity, "role.manage")
+    payload = body.model_dump()
+    existing_operation = session.get(IamSyncOperation, idempotency_key)
+    if existing_operation is not None:
+        if existing_operation.payload != payload:
+            raise ApiError(409, "IDEMPOTENCY_CONFLICT", "Idempotency key was already used with another payload")
+        node = session.get(IamOrgNode, existing_operation.payload.get("node_id", ""))
+        if node is None:
+            raise ApiError(409, "SYNC_OPERATION_PENDING", "The original operation has not completed")
+        return org_json(node)
+    operation = IamSyncOperation(
+        id=idempotency_key,
+        idempotency_key=idempotency_key,
+        operation_type="ORG_NODE_CREATE",
+        payload=payload,
+        status="PENDING",
+    )
+    session.add(operation)
+    session.flush()
     parent = session.get(IamOrgNode, body.parent_id)
     if parent is None or parent.status != "ACTIVE":
         raise ApiError(404, "ORG_PARENT_NOT_FOUND", "Active parent organization not found")
@@ -169,6 +185,9 @@ async def create_organization(
                 depth=edge.depth + 1,
             )
         )
+    operation.payload = {**operation.payload, "node_id": node.id}
+    operation.status = "COMPLETED"
+    operation.updated_at = datetime.now(UTC)
     session.commit()
     return org_json(node)
 
@@ -181,17 +200,32 @@ async def organization_tree(
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> list[dict]:
-    require_permission(identity, "role.manage")
     if not request.app.state.settings.testing:
         legacy = session.scalar(
             select(IamOrgNode.id).where(IamOrgNode.keycloak_group_id.like("legacy-%")).limit(1)
         )
         if legacy is not None:
-            await reconcile_organization_snapshot(request, session)
+            await reconcile_organization_snapshot(request.app.state.iam_admin, session)
     statement = select(IamOrgNode).where(IamOrgNode.parent_id == parent_id).order_by(
         IamOrgNode.sort_order, IamOrgNode.name
     )
-    return [org_json(row) for row in session.scalars(statement.limit(limit)).all()]
+    rows = session.scalars(statement.limit(limit)).all()
+    fixed_role_allowed = any(
+        "role.manage" in ROLE_PERMISSIONS[assignment.role]
+        for assignment in identity.authorization.assignments
+    )
+    has_scoped_permission = any(
+        "organization.read" in grant.permissions
+        for grant in identity.authorization.scoped_grants
+    )
+    if not fixed_role_allowed and not has_scoped_permission:
+        raise ApiError(403, "PERMISSION_DENIED", "You do not have permission for this operation")
+    return [
+        org_json(row)
+        for row in rows
+        if fixed_role_allowed
+        or is_scoped_allowed(session, identity.authorization.scoped_grants, "organization.read", row.id)
+    ]
 
 
 @router.post("/api/v1/iam/reconcile-organizations")
@@ -201,11 +235,13 @@ async def reconcile_organizations(
     session: Session = Depends(get_session),
 ) -> dict:
     require_permission(identity, "role.manage")
-    count = await reconcile_organization_snapshot(request, session)
+    count = await reconcile_organization_snapshot(request.app.state.iam_admin, session)
+    logger.info("iam organizations reconciled", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "synchronized": count})
     return {"synchronized": count, "status": "SYNCED"}
 
 
 @router.patch("/api/v1/org-nodes/{org_id}")
+# Deprecated: organization structure is maintained in Keycloak, not via this API.
 async def update_organization(
     org_id: str,
     body: OrganizationUpdate,
@@ -229,6 +265,7 @@ async def update_organization(
 
 
 @router.post("/api/v1/org-nodes/{org_id}/move")
+# Deprecated: organization structure is maintained in Keycloak, not via this API.
 async def move_organization(
     org_id: str,
     body: OrganizationMove,
@@ -267,10 +304,10 @@ async def organization_detail(
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> dict:
-    require_permission(identity, "role.manage")
     node = session.get(IamOrgNode, org_id)
     if node is None:
         raise ApiError(404, "ORG_NOT_FOUND", "Organization not found")
+    require_organization_permission(session, identity, "organization.read", node.id)
     edges = session.scalars(
         select(IamOrgClosure)
         .where(IamOrgClosure.descendant_id == org_id, IamOrgClosure.depth > 0)
@@ -279,6 +316,213 @@ async def organization_detail(
     result = org_json(node)
     result["ancestors"] = [edge.ancestor_id for edge in edges]
     return result
+
+
+@router.post("/api/v1/org-nodes/{org_id}/archive")
+# Deprecated: organization structure is maintained in Keycloak, not via this API.
+async def archive_organization(
+    org_id: str,
+    body: OrganizationArchive,
+    request: Request,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    node = session.get(IamOrgNode, org_id)
+    if node is None:
+        raise ApiError(404, "ORG_NOT_FOUND", "Organization not found")
+    if node.version != body.version:
+        raise ApiError(409, "VERSION_CONFLICT", "Organization was changed by another administrator")
+    if node.status == "ARCHIVED":
+        return org_json(node)
+    blockers: list[str] = []
+    if session.scalar(select(IamOrgNode.id).where(IamOrgNode.parent_id == node.id, IamOrgNode.status == "ACTIVE").limit(1)):
+        blockers.append("children")
+    if session.scalar(select(IamPrincipalOrg.id).where(IamPrincipalOrg.org_id == node.id, IamPrincipalOrg.status == "ACTIVE").limit(1)):
+        blockers.append("memberships")
+    if session.scalar(select(ScopedRoleAssignment.id).where(ScopedRoleAssignment.scope_org_id == node.id, ScopedRoleAssignment.status == "ACTIVE").limit(1)):
+        blockers.append("assignments")
+    if blockers:
+        raise ApiError(409, "ORG_ARCHIVE_BLOCKED", "Organization still has active dependencies", {"blockers": blockers})
+    if not request.app.state.settings.testing:
+        node.status = "ARCHIVED"
+        await request.app.state.iam_admin.update_group(node.keycloak_group_id, keycloak_group_payload(node))
+    node.status = "ARCHIVED"
+    node.version += 1
+    record_audit(
+        session,
+        request,
+        event_type="ORG_ARCHIVED",
+        category="ORGANIZATION",
+        actor_type="PRINCIPAL",
+        actor_id=identity.principal.id,
+        target_type="ORG_NODE",
+        target_id=node.id,
+        domain_id=node.domain_id,
+        department_id=None,
+        summary=f"Archived organization {node.org_code}",
+    )
+    session.commit()
+    return org_json(node)
+
+
+@router.post("/api/v1/org-nodes/{org_id}/restore")
+# Deprecated: organization structure is maintained in Keycloak, not via this API.
+async def restore_organization(
+    org_id: str,
+    request: Request,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    node = session.get(IamOrgNode, org_id)
+    if node is None:
+        raise ApiError(404, "ORG_NOT_FOUND", "Organization not found")
+    if node.parent_id is not None:
+        parent = session.get(IamOrgNode, node.parent_id)
+        if parent is not None and parent.status != "ACTIVE":
+            raise ApiError(409, "ORG_PARENT_INACTIVE", "Active parent organization is required")
+    node.status = "ACTIVE"
+    node.version += 1
+    if not request.app.state.settings.testing:
+        await request.app.state.iam_admin.update_group(node.keycloak_group_id, keycloak_group_payload(node))
+    record_audit(
+        session,
+        request,
+        event_type="ORG_RESTORED",
+        category="ORGANIZATION",
+        actor_type="PRINCIPAL",
+        actor_id=identity.principal.id,
+        target_type="ORG_NODE",
+        target_id=node.id,
+        domain_id=node.domain_id,
+        department_id=None,
+        summary=f"Restored organization {node.org_code}",
+    )
+    session.commit()
+    return org_json(node)
+
+
+@router.patch("/api/v1/principals/{principal_id}/status")
+async def change_principal_status(
+    principal_id: str,
+    body: PrincipalStatusChange,
+    request: Request,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    principal = session.get(IamPrincipal, principal_id)
+    if principal is None:
+        raise ApiError(404, "PRINCIPAL_NOT_FOUND", "Principal not found")
+    if body.status == "DISABLED":
+        active_system_admins = session.scalar(
+            select(RoleAssignment.id).where(
+                RoleAssignment.principal_id != principal_id,
+                RoleAssignment.role_code == "SYSTEM_ADMIN",
+                RoleAssignment.scope_type == "GLOBAL",
+                RoleAssignment.status == "ACTIVE",
+            ).limit(1)
+        )
+        target_is_global_admin = session.scalar(
+            select(RoleAssignment.id).where(
+                RoleAssignment.principal_id == principal_id,
+                RoleAssignment.role_code == "SYSTEM_ADMIN",
+                RoleAssignment.scope_type == "GLOBAL",
+                RoleAssignment.status == "ACTIVE",
+            ).limit(1)
+        )
+        if target_is_global_admin is not None and active_system_admins is None:
+            raise ApiError(409, "LAST_SYSTEM_ADMIN", "At least one active global system administrator is required")
+        if not request.app.state.settings.testing:
+            if not principal.keycloak_user_id:
+                raise ApiError(409, "KEYCLOAK_USER_ID_MISSING", "Principal has not been synchronized from Keycloak")
+            await request.app.state.iam_admin.update_user_enabled(principal.keycloak_user_id, False)
+        session.execute(delete(BffSession).where(BffSession.principal_id == principal_id))
+    elif not request.app.state.settings.testing and principal.keycloak_user_id:
+        await request.app.state.iam_admin.update_user_enabled(principal.keycloak_user_id, True)
+    principal.status = body.status
+    principal.authorization_version += 1
+    record_audit(
+        session,
+        request,
+        event_type="PRINCIPAL_STATUS_CHANGED",
+        category="IDENTITY",
+        actor_type="PRINCIPAL",
+        actor_id=identity.principal.id,
+        target_type="PRINCIPAL",
+        target_id=principal.id,
+        domain_id=principal.domain_id,
+        department_id=principal.department_id,
+        summary=f"Changed principal status to {body.status}",
+    )
+    session.commit()
+    return {"principal_id": principal.id, "status": principal.status}
+
+
+@router.post("/api/v1/principals/batch-status")
+async def batch_change_principal_status(
+    body: BatchStatusChange,
+    request: Request,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    failed: list[dict] = []
+    for principal_id in body.principal_ids:
+        principal = session.get(IamPrincipal, principal_id)
+        if principal is None:
+            failed.append({"id": principal_id, "reason": "Principal not found"})
+            continue
+        if body.status == "DISABLED":
+            active_system_admins = session.scalar(
+                select(RoleAssignment.id).where(
+                    RoleAssignment.principal_id != principal_id,
+                    RoleAssignment.role_code == "SYSTEM_ADMIN",
+                    RoleAssignment.scope_type == "GLOBAL",
+                    RoleAssignment.status == "ACTIVE",
+                ).limit(1)
+            )
+            target_is_global_admin = session.scalar(
+                select(RoleAssignment.id).where(
+                    RoleAssignment.principal_id == principal_id,
+                    RoleAssignment.role_code == "SYSTEM_ADMIN",
+                    RoleAssignment.scope_type == "GLOBAL",
+                    RoleAssignment.status == "ACTIVE",
+                ).limit(1)
+            )
+            if target_is_global_admin is not None and active_system_admins is None:
+                failed.append({"id": principal_id, "reason": "Last global system admin cannot be disabled"})
+                continue
+            if not request.app.state.settings.testing:
+                if not principal.keycloak_user_id:
+                    failed.append({"id": principal_id, "reason": "Not synchronized from Keycloak"})
+                    continue
+                await request.app.state.iam_admin.update_user_enabled(principal.keycloak_user_id, False)
+            session.execute(delete(BffSession).where(BffSession.principal_id == principal_id))
+        elif not request.app.state.settings.testing and principal.keycloak_user_id:
+            await request.app.state.iam_admin.update_user_enabled(principal.keycloak_user_id, True)
+        principal.status = body.status
+        principal.authorization_version += 1
+        record_audit(
+            session,
+            request,
+            event_type="PRINCIPAL_STATUS_CHANGED",
+            category="IDENTITY",
+            actor_type="PRINCIPAL",
+            actor_id=identity.principal.id,
+            target_type="PRINCIPAL",
+            target_id=principal.id,
+            domain_id=principal.domain_id,
+            department_id=principal.department_id,
+            summary=f"Batch: changed principal status to {body.status}",
+        )
+    session.commit()
+    return {
+        "total": len(body.principal_ids),
+        "succeeded": len(body.principal_ids) - len(failed),
+        "failed": failed,
+    }
 
 
 def _active_membership(session: Session, principal_id: str, membership_type: str) -> IamPrincipalOrg | None:
@@ -292,6 +536,7 @@ def _active_membership(session: Session, principal_id: str, membership_type: str
 
 
 @router.put("/api/v1/principals/{principal_id}/primary-org")
+# Deprecated: user-organization membership is maintained in Keycloak, not via this API.
 async def set_primary_organization(
     principal_id: str,
     body: MembershipChange,
@@ -343,6 +588,7 @@ async def set_primary_organization(
 
 
 @router.post("/api/v1/principals/{principal_id}/collaborations", status_code=status.HTTP_201_CREATED)
+# Deprecated: user-organization membership is maintained in Keycloak, not via this API.
 async def add_collaboration(
     principal_id: str,
     body: MembershipChange,
@@ -378,6 +624,56 @@ async def add_collaboration(
     return {"principal_id": principal_id, "org_id": org.id, "membership_type": "COLLABORATION"}
 
 
+@router.delete(
+    "/api/v1/principals/{principal_id}/collaborations/{org_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+# Deprecated: user-organization membership is maintained in Keycloak, not via this API.
+async def remove_collaboration(
+    principal_id: str,
+    org_id: str,
+    request: Request,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> None:
+    require_permission(identity, "role.manage")
+    principal = session.get(IamPrincipal, principal_id)
+    if principal is None:
+        raise ApiError(404, "PRINCIPAL_NOT_FOUND", "Principal not found")
+    membership = session.scalar(
+        select(IamPrincipalOrg).where(
+            IamPrincipalOrg.principal_id == principal_id,
+            IamPrincipalOrg.org_id == org_id,
+            IamPrincipalOrg.membership_type == "COLLABORATION",
+            IamPrincipalOrg.status == "ACTIVE",
+        )
+    )
+    if membership is not None:
+        if not request.app.state.settings.testing:
+            if not principal.keycloak_user_id:
+                raise ApiError(409, "KEYCLOAK_USER_ID_MISSING", "Principal has not been synchronized from Keycloak")
+            org = session.get(IamOrgNode, org_id)
+            await request.app.state.iam_admin.remove_user_from_group(
+                principal.keycloak_user_id, org.keycloak_group_id
+            )
+        membership.status = "INACTIVE"
+        principal.authorization_version += 1
+        record_audit(
+            session,
+            request,
+            event_type="PRINCIPAL_COLLABORATION_REMOVED",
+            category="IDENTITY",
+            actor_type="PRINCIPAL",
+            actor_id=identity.principal.id,
+            target_type="PRINCIPAL_ORG",
+            target_id=membership.id,
+            domain_id=principal.domain_id,
+            department_id=principal.department_id,
+            summary=f"Removed collaboration organization {org_id}",
+        )
+        session.commit()
+
+
 @router.get("/api/v1/principals/{principal_id}/organizations")
 async def principal_organizations(
     principal_id: str,
@@ -401,5 +697,57 @@ async def principal_organizations(
             {"org_id": row.org_id, "membership_type": row.membership_type}
             for row in memberships
             if row.membership_type == "COLLABORATION"
+        ],
+    }
+
+
+
+@router.get("/api/v1/principals/{principal_id}/org-context")
+async def principal_org_context(
+    principal_id: str,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    principal = session.get(IamPrincipal, principal_id)
+    if principal is None:
+        raise ApiError(404, "PRINCIPAL_NOT_FOUND", "Principal not found")
+    domain = session.get(IamDomain, principal.domain_id)
+    department = session.get(IamDepartment, principal.department_id) if principal.department_id else None
+    team = session.get(IamTeam, principal.team_id) if principal.team_id else None
+    primary_org = (
+        session.get(IamOrgNode, principal.primary_org_id) if principal.primary_org_id else None
+    )
+    primary_org_path: list[dict] = []
+    if primary_org is not None:
+        rows = session.execute(
+            select(IamOrgClosure, IamOrgNode)
+            .join(IamOrgNode, IamOrgNode.id == IamOrgClosure.ancestor_id)
+            .where(IamOrgClosure.descendant_id == primary_org.id)
+            .order_by(IamOrgClosure.depth.desc())
+        ).all()
+        primary_org_path = [
+            {"id": node.id, "name": node.name, "org_type": node.org_type}
+            for _closure, node in rows
+        ]
+    collaboration_rows = session.execute(
+        select(IamPrincipalOrg, IamOrgNode)
+        .join(IamOrgNode, IamOrgNode.id == IamPrincipalOrg.org_id)
+        .where(
+            IamPrincipalOrg.principal_id == principal_id,
+            IamPrincipalOrg.status == "ACTIVE",
+            IamPrincipalOrg.membership_type == "COLLABORATION",
+        )
+    ).all()
+    return {
+        "principal_id": principal.id,
+        "domain": {"id": domain.id, "name": domain.name} if domain else None,
+        "department": {"id": department.id, "name": department.name} if department else None,
+        "team": {"id": team.id, "name": team.name} if team else None,
+        "primary_org": {"id": primary_org.id, "name": primary_org.name} if primary_org else None,
+        "primary_org_path": primary_org_path,
+        "collaborations": [
+            {"org_id": org.id, "name": org.name, "membership_type": membership.membership_type}
+            for membership, org in collaboration_rows
         ],
     }

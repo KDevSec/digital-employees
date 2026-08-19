@@ -21,6 +21,8 @@ def build_closure_edges(parents: dict[str, str | None]) -> set[tuple[str, str, i
 
 def flatten_keycloak_groups(groups: list[dict]) -> list[dict]:
     """Normalize nested Keycloak groups, including the V0.1 legacy attributes."""
+    if not groups:
+        return []
     rows: list[dict] = []
 
     def first(attributes: dict, key: str) -> str | None:
@@ -64,3 +66,17 @@ def flatten_keycloak_groups(groups: list[dict]) -> list[dict]:
     for root in groups:
         visit(root, None, None)
     return rows
+
+
+def descendant_org_ids(session, org_ids: set[str]) -> set[str]:
+    """Return the transitive closure of org node ids (including the selected ids)."""
+    if not org_ids:
+        return set()
+    from sqlalchemy import select
+
+    from app.models import IamOrgClosure
+
+    rows = session.scalars(
+        select(IamOrgClosure.descendant_id).where(IamOrgClosure.ancestor_id.in_(org_ids))
+    ).all()
+    return set(rows) | set(org_ids)

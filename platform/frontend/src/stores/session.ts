@@ -22,9 +22,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   async function logout(): Promise<void> {
-    await api<void>('/auth/logout', { method: 'POST' })
-    me.value = null
-    window.location.assign('/')
+    window.location.assign('/auth/logout')
   }
 
   function can(permission: string): boolean {

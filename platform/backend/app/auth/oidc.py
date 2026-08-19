@@ -1,6 +1,8 @@
 import base64
+import asyncio
 import hashlib
 import logging
+import time
 import secrets
 from dataclasses import asdict, dataclass
 from urllib.parse import urlencode
@@ -9,15 +11,41 @@ from uuid import uuid4
 import httpx
 import jwt
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.errors import ApiError
 from app.domain.authorization import RoleCode, ScopeType
-from app.models import IamDepartment, IamDomain, IamPrincipal, IamTeam, RoleAssignment, utc_now
+from app.iam.sync import reconcile_organization_snapshot
+from app.models import (
+    IamDepartment,
+    IamDomain,
+    IamOrgClosure,
+    IamOrgNode,
+    IamPrincipal,
+    IamTeam,
+    RoleAssignment,
+    RoleAssignmentDepartment,
+    utc_now,
+)
 
 
 logger = logging.getLogger(__name__)
+
+
+def _builtin_role_for_username(username: str, department_id: str | None) -> tuple[RoleCode, ScopeType, list[str]]:
+    if username == "system.admin":
+        return RoleCode.SYSTEM_ADMIN, ScopeType.GLOBAL, []
+    if username == "platform.admin":
+        return RoleCode.PLATFORM_ADMIN, ScopeType.GLOBAL, []
+    if username == "department.admin":
+        return RoleCode.DEPARTMENT_ADMIN, ScopeType.DEPARTMENT_SET, ([department_id] if department_id else [])
+    if username == "security.admin":
+        return RoleCode.SECURITY_ADMIN, ScopeType.ALL_DEPARTMENTS, []
+    if username == "audit.admin":
+        return RoleCode.AUDIT_ADMIN, ScopeType.ALL_DEPARTMENTS, []
+    return RoleCode.EMPLOYEE, ScopeType.SELF, []
 
 
 class InvalidOidcFlow(ValueError):
@@ -48,10 +76,14 @@ class OidcFlowCodec:
 
 
 class OidcClient:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, iam_admin=None) -> None:
         self.settings = settings
+        self.iam_admin = iam_admin
         self._discovery: dict | None = None
         self._jwks: dict | None = None
+        self._directory_sync_at: float = 0.0
+        self._directory_sync_count: int = 0
+        self._directory_sync_lock = asyncio.Lock()
 
     def internalize(self, url: str) -> str:
         public = self.settings.oidc_issuer.rstrip("/")
@@ -137,6 +169,32 @@ class OidcClient:
             raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC token is invalid") from exc
 
     async def sync_directory(self, session: Session) -> int:
+        ttl = self.settings.directory_sync_ttl_seconds
+        now = time.monotonic()
+        if ttl > 0 and self._directory_sync_at and (now - self._directory_sync_at) < ttl:
+            return self._directory_sync_count
+        async with self._directory_sync_lock:
+            # Re-check inside the lock to avoid redundant syncs from concurrent requests.
+            if ttl > 0 and self._directory_sync_at and (time.monotonic() - self._directory_sync_at) < ttl:
+                return self._directory_sync_count
+            count = await self._sync_directory(session)
+            self._directory_sync_at = time.monotonic()
+            self._directory_sync_count = count
+            return count
+
+    async def _sync_directory(self, session: Session) -> int:
+        # Sync the Keycloak group tree first so user org membership can be resolved
+        # against IamOrgNode. Users belong to orgs via group membership, not attributes.
+        if self.iam_admin is not None:
+            await reconcile_organization_snapshot(self.iam_admin, session)
+            group_to_org = {
+                n.keycloak_group_id: n.id
+                for n in session.scalars(
+                    select(IamOrgNode).where(IamOrgNode.status == "ACTIVE")
+                ).all()
+            }
+        else:
+            group_to_org = {}
         document = await self.discovery()
         async with httpx.AsyncClient(timeout=15) as client:
             token_response = await client.post(
@@ -155,22 +213,46 @@ class OidcClient:
             admin_root = issuer.split("/realms/", 1)[0]
             users_response = await client.get(
                 f"{admin_root}/admin/realms/{realm_name}/users",
-                params={"max": 1000},
+                params={"max": 1000, "briefRepresentation": "false"},
                 headers={"Authorization": f"Bearer {token}"},
             )
         if users_response.status_code != 200:
             raise ApiError(503, "IAM_SYNC_UNAVAILABLE", "IAM directory synchronization is unavailable")
+        raw_users = [
+            u for u in users_response.json()
+            if not str(u.get("username", "")).startswith("service-account-")
+        ]
+        # Fetch all group memberships concurrently (bounded) instead of N sequential requests.
+        memberships_by_user: dict[str, list[dict]] = {}
+        if self.iam_admin is not None:
+            user_ids = [u["id"] for u in raw_users if u.get("id")]
+            memberships_by_user = await self.iam_admin.list_user_groups_batch(user_ids)
         count = 0
-        for raw_user in users_response.json():
+        for raw_user in raw_users:
             username = str(raw_user.get("username", ""))
-            if username.startswith("service-account-"):
-                continue
             attributes = raw_user.get("attributes") or {}
 
             def attribute(name: str):
                 value = attributes.get(name)
                 return value[0] if isinstance(value, list) and value else value
 
+            primary_org_id = attribute("primary_org_id")
+            domain_id = attribute("domain_id")
+            department_id = attribute("department_id")
+            team_id = attribute("team_id")
+            # Derive org membership from Keycloak group memberships (authoritative).
+            if self.iam_admin is not None and raw_user.get("id"):
+                memberships = memberships_by_user.get(raw_user["id"], [])
+                derived = self._derive_org_from_groups(session, memberships, group_to_org)
+                if derived:
+                    primary_org_id = derived.get("primary_org_id") or primary_org_id
+                    domain_id = derived.get("domain_id") or domain_id
+                    department_id = derived.get("department_id") or department_id
+                    team_id = derived.get("team_id") or team_id
+            # Fallback: when group membership is unavailable, use the deepest
+            # explicit org attribute (team > department > domain) as primary org.
+            if not primary_org_id:
+                primary_org_id = team_id or department_id or primary_org_id
             claims = {
                 "iss": self.settings.oidc_issuer,
                 "sub": raw_user["id"],
@@ -180,19 +262,53 @@ class OidcClient:
                     value for value in [raw_user.get("firstName"), raw_user.get("lastName")] if value
                 ) or username,
                 "email": raw_user.get("email"),
-                "domain_id": attribute("domain_id"),
+                "domain_id": domain_id,
                 "domain_name": attribute("domain_name"),
-                "department_id": attribute("department_id"),
+                "department_id": department_id,
                 "department_name": attribute("department_name"),
-                "team_id": attribute("team_id"),
+                "team_id": team_id,
                 "team_name": attribute("team_name"),
-                "primary_org_id": attribute("primary_org_id"),
+                "primary_org_id": primary_org_id,
             }
             principal = self.sync_principal(session, claims, self.settings)
             principal.status = "ACTIVE" if raw_user.get("enabled", False) else "DISABLED"
             count += 1
         session.commit()
         return count
+
+    def _derive_org_from_groups(
+        self, session: Session, memberships: list[dict], group_to_org: dict[str, str]
+    ) -> dict | None:
+        """Map a user's Keycloak groups to org nodes and derive primary org + domain/dept/team."""
+        org_ids = [group_to_org.get(str(group.get("id"))) for group in memberships]
+        org_ids = [oid for oid in org_ids if oid]
+        if not org_ids:
+            return None
+        # Primary org = the deepest node (most ancestors) among the user's memberships.
+        depth_rows = session.execute(
+            select(IamOrgClosure.descendant_id, func.count(IamOrgClosure.ancestor_id).label("depth"))
+            .where(IamOrgClosure.descendant_id.in_(org_ids))
+            .group_by(IamOrgClosure.descendant_id)
+        ).all()
+        depth_map = {str(row[0]): int(row[1]) for row in depth_rows}
+        primary_org_id = max(org_ids, key=lambda oid: depth_map.get(oid, 1))
+        # Ancestor chain root->...->primary (depth asc = self first, root last).
+        path_rows = session.execute(
+            select(IamOrgNode.id, IamOrgNode.org_type)
+            .join(IamOrgClosure, IamOrgClosure.ancestor_id == IamOrgNode.id)
+            .where(IamOrgClosure.descendant_id == primary_org_id)
+            .order_by(IamOrgClosure.depth.asc())
+        ).all()
+        path = [(str(row[0]), row[1]) for row in path_rows]
+        domain_id = next((nid for nid, t in path if t == "DOMAIN"), None)
+        department_id = next((nid for nid, t in path if t == "DEPARTMENT"), None)
+        team_id = next((nid for nid, t in path if t == "TEAM"), None)
+        return {
+            "primary_org_id": primary_org_id,
+            "domain_id": domain_id,
+            "department_id": department_id,
+            "team_id": team_id,
+        }
 
     @staticmethod
     def sync_principal(session: Session, claims: dict, settings: Settings) -> IamPrincipal:
@@ -258,17 +374,37 @@ class OidcClient:
                 principal.primary_org_id = str(claims["primary_org_id"])
             principal.synced_at = utc_now()
         session.flush()
+        username = str(claims.get("preferred_username") or principal.username or subject)
+        role_code, scope_type, department_ids = _builtin_role_for_username(
+            username, principal.department_id or principal.primary_org_id
+        )
         assignment = session.query(RoleAssignment).filter_by(principal_id=principal.id, status="ACTIVE").first()
         if assignment is None:
-            session.add(
-                RoleAssignment(
-                    id=str(uuid4()),
-                    principal_id=principal.id,
-                    role_code=RoleCode.EMPLOYEE,
-                    scope_type=ScopeType.SELF,
-                    status="ACTIVE",
-                    created_by="iam-sync",
-                )
+            assignment = RoleAssignment(
+                id=str(uuid4()),
+                principal_id=principal.id,
+                role_code=role_code,
+                scope_type=scope_type,
+                domain_id=domain_id,
+                status="ACTIVE",
+                created_by="iam-sync",
             )
+            session.add(assignment)
             session.flush()
+        elif assignment.created_by == "iam-sync":
+            assignment.role_code = role_code
+            assignment.scope_type = scope_type
+            assignment.domain_id = domain_id
+        if assignment.created_by == "iam-sync":
+            assignment.departments = [
+                existing for existing in assignment.departments if existing.department_id in set(department_ids)
+            ]
+            existing_ids = {item.department_id for item in assignment.departments}
+            for department_id_value in department_ids:
+                if department_id_value not in existing_ids:
+                    assignment.departments.append(
+                        RoleAssignmentDepartment(
+                            role_assignment_id=assignment.id, department_id=department_id_value
+                        )
+                    )
         return principal

@@ -4,21 +4,22 @@ export interface NavigationItem {
   permission?: string
 }
 
-const navigation: NavigationItem[] = [
-  { label: '总览', path: '/app/overview' },
-  { label: '工作台', path: '/app/workbenches', permission: 'workbench.read' },
-  { label: '接入申请', path: '/app/enrollments', permission: 'workbench.enrollment.review' },
-  { label: '审计', path: '/app/audit', permission: 'audit' },
-  { label: '安装包', path: '/app/packages', permission: 'package.manage' },
-  { label: '组织管理', path: '/app/organization', permission: 'role.manage' },
-  { label: '权限配置', path: '/app/permissions', permission: 'role.manage' },
-  { label: '平台设置', path: '/app/settings', permission: 'platform.settings.manage' },
-]
-
-export function navigationForPermissions(permissions: string[]): NavigationItem[] {
+export function navigationForPermissions(
+  permissions: string[],
+  t: (key: string) => string,
+): NavigationItem[] {
+  const nav: NavigationItem[] = [
+    { label: t('nav.overview'), path: '/app/overview' },
+    { label: t('nav.workbenches'), path: '/app/workbenches', permission: 'workbench.read' },
+    { label: t('nav.enrollments'), path: '/app/enrollments', permission: 'workbench.enrollment.review' },
+    { label: t('nav.audit'), path: '/app/audit', permission: 'audit.read' },
+    { label: t('nav.packages'), path: '/app/packages', permission: 'package.manage' },
+    { label: t('nav.users'), path: '/app/users', permission: 'role.manage' },
+    { label: t('nav.systemLogs'), path: '/app/system-logs', permission: 'system.logs.read' },
+    { label: t('nav.settings'), path: '/app/settings', permission: 'platform.settings.manage' },
+  ]
   const allowed = new Set(permissions)
-  const hasAudit = permissions.some((permission) => permission.startsWith('audit.'))
-  return navigation.filter(
-    (item) => !item.permission || (item.permission === 'audit' ? hasAudit : allowed.has(item.permission)),
+  return nav.filter(
+    (item) => !item.permission || allowed.has(item.permission),
   )
 }
