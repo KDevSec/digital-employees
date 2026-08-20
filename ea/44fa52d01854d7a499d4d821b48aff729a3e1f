@@ -1,0 +1,14 @@
+.gitignore
+  h_14993d1572361c 18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ea44fa52d01854d7a499d4d821b48aff729a3e1f",
+  "prompts": {},
+  "humans": {
+    "h_14993d1572361c": {
+      "author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
