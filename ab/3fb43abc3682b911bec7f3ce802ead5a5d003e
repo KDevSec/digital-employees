@@ -1,0 +1,18 @@
+.gitignore
+  h_14993d1572361c 7-10
+docs/research/QoderWake二进制源码结构拆解-对0.1的可借鉴点-2026-08-20.md
+  h_14993d1572361c 1-351
+docs/research/工作台独立安装部署与托盘启动器方案调研-2026-08-20.md
+  h_14993d1572361c 1-839
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "ab3fb43abc3682b911bec7f3ce802ead5a5d003e",
+  "prompts": {},
+  "humans": {
+    "h_14993d1572361c": {
+      "author": "ly <ly1989abc@126.com>"
+    }
+  }
+}
