@@ -15,3 +15,6 @@ playwright-report/
 tools/.bin/
 workbench/data/
 .agents/
+
+# 参考项目源码（第三方产品提取物，仅本地调研用，永不入库）
+reference-projects/
