@@ -408,13 +408,13 @@ Windows 侧不是"一个二进制"，而是**三个独立升级的件**：
 
 结论：**Windows 侧把三种 keepalive 路径全部预置在包里（WinSW 服务 / 计划任务 / 托盘看门狗），但本机实际生效的只有托盘看门狗，且 daemon 是以 `--no-keepalive` 被拉起的。** 也就是说它把"保活"的责任从 OS 上移到了自己的托盘进程里。
 
-**为什么这么选（推测但有证据支撑）**：计划任务与服务都需要一次注册动作（服务还需管理员），而托盘进程自己就能完成"探活 + 拉起 + 去重"，且能给用户一个可见入口。代价是：**托盘进程被杀则全链断**，没有 OS 级兼底。
+**为什么这么选（推测但有证据支撑）**：计划任务与服务都需要一次注册动作（服务还需管理员），而托盘进程自己就能完成"探活 + 拉起 + 去重"，且能给用户一个可见入口。代价是：**托盘进程被杀则全链断**，没有 OS 级兜底。
 
 **对 0.1 的修正后口径**：
 
 1. Windows 的 keepalive **不以计划任务为默认路径**，而是"托盘看门狗为默认 + 服务为可选升级"。计划任务当第三条备选。
-2. 既然默认路径是托盘，那么**托盘自身的存活就是单点**。必须在 T4 验收里加一条：手动结束托盘进程后，服务能不能恢复？如果不能，必须开 launchAtLogin 或服务兼底。
-3. §5.3 的四条反直觉默认值（`PT0S` / 电源 / 空闲）**仍然成立且仍要拄**，只是适用于我们选择计划任务路径时。
+2. 既然默认路径是托盘，那么**托盘自身的存活就是单点**。必须在 T4 验收里加一条：手动结束托盘进程后，服务能不能恢复？如果不能，必须开 launchAtLogin 或服务兜底。
+3. §5.3 的四条反直觉默认值（`PT0S` / 电源 / 空闲）**仍然成立且仍要抄**，只是适用于我们选择计划任务路径时。
 
 ### 8.3 WinSW 服务包装：`service.xml` 字段实证
 
@@ -432,7 +432,7 @@ Windows 侧不是"一个二进制"，而是**三个独立升级的件**：
 | `<onfailure>` ×3 | restart 10s → restart 30s → none | **退避式重试且有上限**，不无限重启 |
 | `<resetfailure>` | `1 hour` | 一小时内无故障则清零计数器 |
 
-**三条直接可択**：
+**三条直接可抄**：
 
 1. **服务指向 bootstrapper，不指向业务二进制**。这是自更新与服务注册解耦的关键 —— 否则每次升级都要重注册服务（需管理员）。
 2. **`onfailure` 三步退避后停手**。systemd 那边我们已用 `StartLimitBurst=5`，Windows 服务路径要用多段 `onfailure` 达到同效。
@@ -493,7 +493,7 @@ Windows 侧不是"一个二进制"，而是**三个独立升级的件**：
 
 **对 0.1 的三条硬要求**：
 
-1. **pending update 必须有过期与兼底应用时机**。不能只依赖"下次重启"。至少要有：空闲窗口主动应用 / 超过 N 天未应用则丢弃重下。
+1. **pending update 必须有过期与兜底应用时机**。不能只依赖"下次重启"。至少要有：空闲窗口主动应用 / 超过 N 天未应用则丢弃重下。
 2. **pending 状态必须对用户可见**。托盘菜单要能看到"0.2.4 已就绪，重启后生效"并提供一个立即重启按钮。
 3. **磁盘预算要有上限与清理**。785 MB 的 profile 里 327 MB 是一份没用上的更新包 —— 我们要在启动时做一次"陈旧 pending / 旧版备份 / 日志"的 GC。
 
@@ -509,7 +509,7 @@ Windows 侧不是"一个二进制"，而是**三个独立升级的件**：
 
 **87 KB 这个数字直接回答了主报告 C-4（壳与服务独立）的技术选型问题**：托盘壳不需要任何 UI 框框。它只做四件事（从日志反推）：托盘图标与菜单、探活 daemon、拉起 daemon、开浏览器。任何带 webview 的方案（Electron 100+ MB、Tauri 3–10 MB）在这个职责下都是过度设计。
 
-托盘日志里读出的看门狗语义（直接可択）：
+托盘日志里读出的看门狗语义（直接可抄）：
 
 ```
 run: qoderwake-bootstrapper.exe
@@ -520,7 +520,7 @@ runtime activity resolved: conversationTasks=0 triggerTasks=0 preciseConversatio
 daemon process exists but health is not ready; skipping duplicate watchdog start   ← 8/1–8/14 出现 ≈19 次
 ```
 
-**四条直接択的设计**：
+**四条直接抄的设计**：
 
 1. **探活不是"进程在不在"，而是"health 就不就绪"**。`daemon process exists but health is not ready` 这行出现 19 次，说明真实世界里"进程活着但不能服务"是**常态而非异常**。只看 PID 的看门狗等于没看门狗。
 2. **探活到"进程在但不健康"时选择 skip 而不是重启**。这是对的 —— daemon 可能正在做漫长的启动（实测 11 秒）或迁移，盲重启会造成重启风暴。
@@ -549,7 +549,7 @@ daemon process exists but health is not ready; skipping duplicate watchdog start
 
 **四条启示**：
 
-1. **我们确认不要双端口（§6.3 已列），但要理解他为何需要第二个**：浏览器中继的安全域与 daemon 不同（前者要接受来自页面上下文的连接）。如果我们未来真要做浏览器集成，分端口比在同一端口上做路径级鲉鱼更安全。**双端口不是随意，是安全域隔离。**
+1. **我们确认不要双端口（§6.3 已列），但要理解他为何需要第二个**：浏览器中继的安全域与 daemon 不同（前者要接受来自页面上下文的连接）。如果我们未来真要做浏览器集成，分端口比在同一端口上做路径级隔离更安全。**双端口不是随意，是安全域隔离。**
 2. **Native Messaging Host 是个很巧的免端口方案**：stdio 通道、由 Chrome 拉起、`allowed_origins` 白名单靠浏览器强制 —— 比自己开 HTTP 端口再验 Origin 安全得多。如果我们做浏览器侧能力，优先这条路。
 3. **只注册了 Chrome 没注册 Edge** 是个现成的教训：国内企业 Windows 环境 Edge 占比很高，这直接意味着功能对一部分用户默默失效。**注册要覆盖 Chrome + Edge + 国产 Chromium 系**。
 4. **`__` 前缀的隐藏子命令是个好约定**：`__daemon`、`__browser_native_host` —— 与用户面 `start` / `stop` 区分开，不进 `--help`。我们的 CLI 可以直接用这个约定。
@@ -603,19 +603,19 @@ capabilities:
       hookType / sourcetype
       identity.sourceScopeIdField          ← 多租户识别字段
       configSchema: { … }                  ← 标准 JSON Schema（含 pattern 校验）
-      uiSchema:                            ← 宕主渲染表单的布局声明
+      uiSchema:                            ← 宿主渲染表单的布局声明
         layout: [[…], […]]                  二维数组 = 行/列
         fields.<name>: { widget, label, placeholder }
       defaults: { … }
       runtime.module: "…"                  ← 入口模块
 ```
 
-**这是本次实证对 UPP 设计最直接可用的一份实例。四条可択**：
+**这是本次实证对 UPP 设计最直接可用的一份实例。四条可抄**：
 
 1. **`schemaVersion` 带命名空间而不是裸版本号**（`qoderwake.plugin.v1` 而不是 `"1"`）。好处是一份 JSON 落在地上也能自证身份。UPP 应用 `upp.plugin.v1` 这个形式。
-2. **`capabilities` 分类嵌套而不是平铺列表**（`capabilities.trigger.webhookEventSources[]`）。宕主只需读自己认识的能力分类，不认识的整块忽略 —— **能力前向兼容的关键**。
-3. **`configSchema`（JSON Schema）+ `uiSchema`（布局）分开**。插件只声明"我需要哪些配置、长什么样"，**宕主负责渲染表单** —— 插件不带前端代码、不能注入 UI。这比 `agent-loops` 那种自带 1 MB `ui/management.js` bundle 安全得多。**UPP 应强制声明式 UI，禁止插件带前端 bundle。**
-4. **`identity.sourceScopeIdField`**：插件声明"我的事件里哪个字段是租户/仓库身份"，宕主拿它做路由与隔离。多租户从第一天就在 schema 里，而不是后加。
+2. **`capabilities` 分类嵌套而不是平铺列表**（`capabilities.trigger.webhookEventSources[]`）。宿主只需读自己认识的能力分类，不认识的整块忽略 —— **能力前向兼容的关键**。
+3. **`configSchema`（JSON Schema）+ `uiSchema`（布局）分开**。插件只声明"我需要哪些配置、长什么样"，**宿主负责渲染表单** —— 插件不带前端代码、不能注入 UI。这比 `agent-loops` 那种自带 1 MB `ui/management.js` bundle 安全得多。**UPP 应强制声明式 UI，禁止插件带前端 bundle。**
+4. **`identity.sourceScopeIdField`**：插件声明"我的事件里哪个字段是租户/仓库身份"，宿主拿它做路由与隔离。多租户从第一天就在 schema 里，而不是后加。
 
 另三个 `resources\` 子目录也值得记一笔：
 
@@ -623,7 +623,7 @@ capabilities:
 |------|------|------|
 | `security\tool-guard-rules\dangerous_shell_commands.json` | 21,330 B | **危险命令拦截规则作为数据外置**，可随渠道更新而不需发版。我们的 tool guard 应照做 |
 | `sqlite-vec\windows-x64\vec0.dll` | 304,112 B | **本地向量检索走 sqlite 扩展**而不是引入向量库 —— 与我们记忆子系统选型相关 |
-| `builtin-skills\qoderwake-assistant\` | `SKILL.md` 32,510 B + `references/cli-commands.md` 30,264 B | **把自己的 CLI 用法写成 skill 给 agent 读** —— 即 agent 通过自家 CLI 反向驱动宕主（与 Multica 的 "Multica CLI skill" 同一思路）|
+| `builtin-skills\qoderwake-assistant\` | `SKILL.md` 32,510 B + `references/cli-commands.md` 30,264 B | **把自己的 CLI 用法写成 skill 给 agent 读** —— 即 agent 通过自家 CLI 反向驱动宿主（与 Multica 的 "Multica CLI skill" 同一思路）|
 
 ### 8.9 运行时状态文件、日志与磁盘
 
@@ -638,7 +638,7 @@ capabilities:
 | `native-shell-version` / `windows-tray-path` / `windows-tray-first-launch` / `windows-tray-launch-at-login-defaulted` | 单值/时间戳 | **哨兵文件记录"这个一次性动作已做过"** |
 | `com.qoder.work.connector.json` / `browser-native-messaging-host.bat` | — | Chrome 通道（§8.7）|
 
-**两条直接択**：
+**两条直接抄**：
 
 1. **`daemon.workers.json` 这份账本是必需品**。字段里同时有 `pid` 与 **`pgid`** —— 因为杀一个 agent 会话要杀整个进程组（agent CLI 下面还有它自己拉的 shell / 编译器）。`lastSeenAt` 支持 daemon 重启后判定哪些 worker 是孤儿。**这是我们必须在 0.1 就做的，因为一旦孤儿进程积累，用户机器会被拖坠且无从排查。**
 2. **哨兵文件比配置项更适合记录一次性动作**。`windows-tray-launch-at-login-defaulted` 区分了"用户选了 false"与"我们默认过一次且用户没改"—— 这两种状态在单个布尔配置项里无法表达，导致的 bug 是"用户关了自启，升级后又被打开"。
@@ -657,7 +657,7 @@ capabilities:
 | `.pending-update` | **327.2 MB 悬挂 15 天** | §8.5 |
 | `.qoderwake` 总计 | **785.8 MB** | 一个"已安装到 C:\Software"的软件在用户目录又占 785 MB |
 
-其余日志分层是对的，可択：`qoderwake.log`（主）/ `qoderwake_lifecycle.log`（生命周期）/ `qoderwake-tray.log`（壳）/ `conversation-trace.log`（业务追踪）—— **四类日志各自成文件，因为他们的读者不同（开发 / 运维 / 支持 / 业务）**。
+其余日志分层是对的，可抄：`qoderwake.log`（主）/ `qoderwake_lifecycle.log`（生命周期）/ `qoderwake-tray.log`（壳）/ `conversation-trace.log`（业务追踪）—— **四类日志各自成文件，因为他们的读者不同（开发 / 运维 / 支持 / 业务）**。
 
 ### 8.10 Windows 实证带来的新增与修正动作清单
 
@@ -667,7 +667,7 @@ capabilities:
 | W-2 | T4 验收加"杀掉托盘进程后服务能否恢复" | 主报告 §13 | P0 |
 | W-3 | 看门狗探活必须是 health 而非 PID；"进程在但不健康"时 skip 不重启 | 主报告 §7.3 | P0 |
 | W-4 | 所有拉起路径经过 bootstrapper；服务/任务指向 bootstrapper 不指向业务二进制 | 主报告 §6 | P0 |
-| W-5 | pending update 需过期 + 空闲窗口兼底应用 + 用户可见且可手动触发 | 主报告 §9 | P0 |
+| W-5 | pending update 需过期 + 空闲窗口兜底应用 + 用户可见且可手动触发 | 主报告 §9 | P0 |
 | W-6 | 启动时做一次磁盘 GC（陈旧 pending / 旧备份 / 日志），profile 磁盘预算设上限 | 主报告 §9 | P1 |
 | W-7 | 日志轮转属于日志子系统，所有启动路径一律生效（roll-by-size + keepFiles） | T10 | P0 |
 | W-8 | 托盘壳用原生小二进制（参考值：87 KB 就够），不引 webview 框框 | 主报告 §6 C-4 | P0 |
