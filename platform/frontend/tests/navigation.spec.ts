@@ -5,9 +5,13 @@ import { navigationForPermissions } from '../src/navigation'
 
 const t = i18n.global.t.bind(i18n.global)
 
+function flatPaths(tree: ReturnType<typeof navigationForPermissions>): string[] {
+  return [...tree.standalone, ...tree.groups.flatMap((g) => g.items)].map((i) => i.path)
+}
+
 describe('navigationForPermissions', () => {
   it('shows the merged user management page and no standalone organization/permissions pages to a system administrator', () => {
-    const items = navigationForPermissions(
+    const tree = navigationForPermissions(
       [
         'workbench.read',
         'workbench.enrollment.review',
@@ -20,21 +24,22 @@ describe('navigationForPermissions', () => {
       t,
     )
 
-    expect(items.map((item) => item.path)).toEqual([
+    expect(flatPaths(tree)).toEqual([
       '/app/overview',
       '/app/workbenches',
       '/app/enrollments',
-      '/app/audit',
       '/app/packages',
-      '/app/users',
+      '/app/audit',
       '/app/system-logs',
+      '/app/users',
+      '/app/feedback',
       '/app/settings',
     ])
   })
 
   it('shows only overview and own workbenches to an employee', () => {
     expect(
-      navigationForPermissions(['workbench.read', 'workbench.enroll'], t).map((item) => item.path),
-    ).toEqual(['/app/overview', '/app/workbenches'])
+      flatPaths(navigationForPermissions(['workbench.read', 'workbench.enroll'], t)),
+    ).toEqual(['/app/overview', '/app/workbenches', '/app/feedback'])
   })
 })

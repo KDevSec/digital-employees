@@ -1,9 +1,10 @@
 from datetime import datetime
+import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select, true
+from sqlalchemy import exists, false, func, or_, select, true
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import AuthenticatedPrincipal, get_current_principal, require_permission
@@ -12,7 +13,7 @@ from app.database import get_session
 from app.domain.authorization import ROLE_PERMISSIONS, ScopeType
 from app.domain.organization import descendant_org_ids
 from app.errors import ApiError
-from app.logging_config import apply_log_dir, apply_log_level
+from app.logging_config import apply_log_level, apply_log_rotation
 from app.models import (
     AuditEvent,
     IamDepartment,
@@ -145,8 +146,6 @@ async def iam_all_departments(
     session: Session = Depends(get_session),
 ) -> PaginatedResponse:
     require_iam_reader(identity)
-    if not request.app.state.settings.testing:
-        await request.app.state.oidc.sync_directory(session)
     stmt = select(IamDepartment)
     if domain_id:
         stmt = stmt.where(IamDepartment.domain_id == domain_id)
@@ -215,6 +214,8 @@ async def iam_principals(
     domain_id: str | None = None,
     department_id: str | None = None,
     team_id: str | None = None,
+    status: str | None = Query(default=None, max_length=20),
+    role_code: str | None = Query(default=None, max_length=40),
     department_ids: list[str] | None = Query(default=None),
     offset: int = Query(default=0, ge=0, le=10000),
     limit: int = Query(default=20, ge=1, le=100),
@@ -222,8 +223,6 @@ async def iam_principals(
     session: Session = Depends(get_session),
 ) -> PaginatedResponse:
     require_iam_reader(identity)
-    if not request.app.state.settings.testing:
-        await request.app.state.oidc.sync_directory(session)
     statement = select(IamPrincipal)
     if query:
         pattern = f"%{query}%"
@@ -243,6 +242,18 @@ async def iam_principals(
     if department_ids:
         descendant_ids = descendant_org_ids(session, set(department_ids))
         statement = statement.where(IamPrincipal.department_id.in_(descendant_ids))
+    if status:
+        statement = statement.where(IamPrincipal.status == status)
+    if role_code:
+        statement = statement.where(
+            exists(
+                select(RoleAssignment.id).where(
+                    RoleAssignment.principal_id == IamPrincipal.id,
+                    RoleAssignment.role_code == role_code,
+                    RoleAssignment.status == "ACTIVE",
+                )
+            )
+        )
     total = session.scalar(select(func.count()).select_from(statement.subquery()))
     rows = session.scalars(statement.order_by(IamPrincipal.display_name).offset(offset).limit(limit)).all()
     dept_ids = {r.department_id for r in rows if r.department_id}
@@ -308,7 +319,7 @@ class SettingsUpdate(BaseModel):
     challenge_ttl_seconds: int | None = Field(default=None, ge=60, le=900)
     machine_token_ttl_seconds: int | None = Field(default=None, ge=60, le=300)
     heartbeat_offline_seconds: int | None = Field(default=None, ge=30, le=3600)
-    directory_sync_ttl_seconds: int | None = Field(default=None, ge=0, le=3600)
+    directory_sync_ttl_seconds: int | None = Field(default=None, ge=30, le=3600)
     oidc_issuer: str | None = Field(default=None, min_length=1, max_length=500)
     oidc_realm: str | None = Field(default=None, min_length=1, max_length=200)
     oidc_client_id: str | None = Field(default=None, min_length=1, max_length=200)
@@ -316,6 +327,9 @@ class SettingsUpdate(BaseModel):
     platform_base_url: str | None = Field(default=None, min_length=1, max_length=500)
     log_level: str | None = Field(default=None, pattern="^(DEBUG|INFO|WARNING|ERROR)$")
     log_dir: str | None = Field(default=None, min_length=1, max_length=500)
+    log_max_mb: int | None = Field(default=None, ge=1, le=512)
+    log_retention_days: int | None = Field(default=None, ge=1, le=90)
+    log_compress: bool | None = Field(default=None)
 
 
 SETTINGS_KEYS = tuple(SettingsUpdate.model_fields)
@@ -364,10 +378,13 @@ async def update_platform_settings(
         setattr(request.app.state.settings, key, value)
     if body.log_level:
         apply_log_level(body.log_level)
-    if body.log_dir:
-        from pathlib import Path
-
-        apply_log_dir(Path(body.log_dir))
+    if (
+        body.log_dir
+        or body.log_max_mb is not None
+        or body.log_retention_days is not None
+        or body.log_compress is not None
+    ):
+        apply_log_rotation(request.app.state.settings)
     record_audit(
         session,
         request,
@@ -495,20 +512,13 @@ async def audit_events(
     )
 
 
-@router.post("/api/v1/iam/sync")
+@router.post("/api/v1/iam/sync", status_code=status.HTTP_202_ACCEPTED)
 async def iam_sync(
     request: Request,
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> dict:
     require_permission(identity, "role.manage")
-    try:
-        await request.app.state.oidc.sync_directory(session)
-        org_nodes_synced = session.scalar(select(func.count()).select_from(IamOrgNode)) or 0
-    except RuntimeError as e:
-        raise ApiError(502, "IAM_SYNC_FAILED", f"IAM synchronization failed: {e}") from e
-    except Exception as e:
-        raise ApiError(500, "IAM_SYNC_ERROR", f"Unexpected error during IAM sync: {e}") from e
     record_audit(
         session,
         request,
@@ -520,7 +530,8 @@ async def iam_sync(
         target_id=None,
         domain_id=identity.principal.domain_id,
         department_id=identity.principal.department_id,
-        summary=f"IAM sync: {org_nodes_synced} org nodes synchronized",
+        summary="IAM directory sync triggered",
     )
     session.commit()
-    return {"principals_synced": True, "org_nodes_synced": org_nodes_synced, "status": "COMPLETED"}
+    asyncio.create_task(request.app.state.oidc.run_background_sync_once(request.app.state.settings))
+    return {"status": "SYNCING"}

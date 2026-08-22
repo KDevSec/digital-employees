@@ -100,3 +100,23 @@ async def test_settings_include_log_options(
     )
     assert resp.status_code == 200
     assert resp.json()["log_level"] == "DEBUG"
+
+
+async def test_settings_log_rotation_fields(client: AsyncClient, system_headers):
+    resp = await client.get("/api/v1/platform-settings", headers=system_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["log_max_mb"] == 10
+    assert data["log_retention_days"] == 7
+    assert data["log_compress"] is True
+
+    resp = await client.put(
+        "/api/v1/platform-settings",
+        headers=system_headers,
+        json={"log_max_mb": 5, "log_retention_days": 14, "log_compress": False},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["log_max_mb"] == 5
+    assert body["log_retention_days"] == 14
+    assert body["log_compress"] is False

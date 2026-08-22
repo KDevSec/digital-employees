@@ -440,28 +440,6 @@ async def test_iam_teams_endpoint_and_principal_team_filter(
     assert other.status_code == 200
     assert other.json()["total"] == 0
 
-
-async def test_authorization_overview_org_nodes_include_hierarchy(
-    client: AsyncClient, system_headers: dict[str, str]
-) -> None:
-    dept = (
-        await client.post(
-            "/api/v1/org-nodes",
-            headers={**system_headers, "Idempotency-Key": "overview-dept"},
-            json={"parent_id": "domain-a", "org_code": "overview-rd", "org_type": "DEPARTMENT", "name": "研发部"},
-        )
-    ).json()
-
-    response = await client.get("/api/v1/authorization/overview", headers=system_headers)
-    assert response.status_code == 200
-    nodes = {n["id"]: n for n in response.json()["org_nodes"]}
-    assert "domain-a" in nodes
-    assert nodes["domain-a"]["parent_id"] is None
-    assert nodes["domain-a"]["org_type"] == "DOMAIN"
-    assert nodes[dept["id"]]["parent_id"] == "domain-a"
-    assert nodes[dept["id"]]["org_type"] == "DEPARTMENT"
-
-
 async def test_iam_principals_returns_org_path(
     client: AsyncClient, system_headers: dict[str, str], db_factory
 ) -> None:

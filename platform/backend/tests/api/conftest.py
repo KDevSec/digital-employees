@@ -115,6 +115,29 @@ def db_factory() -> sessionmaker[Session]:
                 ),
             ]
         )
+        session.add_all(
+            [
+                PermissionDefinition(code="feedback.manage", resource_type="feedback", action="manage", description="管理与处置问题反馈", risk_level="HIGH", delegable=False),
+                IamPrincipal(
+                    id="platform-user",
+                    issuer="https://iam.test/realms/digital",
+                    subject="sub-platform",
+                    username="platform",
+                    display_name="Platform Admin",
+                    domain_id=domain.id,
+                    department_id=department.id,
+                    status="ACTIVE",
+                ),
+                RoleAssignment(
+                    id="role-platform",
+                    principal_id="platform-user",
+                    role_code=RoleCode.PLATFORM_ADMIN,
+                    scope_type=ScopeType.GLOBAL,
+                    status="ACTIVE",
+                    created_by="bootstrap",
+                ),
+            ]
+        )
     return factory
 
 
@@ -141,6 +164,7 @@ async def client(db_factory: sessionmaker[Session], tmp_path: Path):
         token = request.headers.get("Authorization", "").removeprefix("Bearer ")
         principal_id = {
             "test-system": "system-user",
+            "test-platform": "platform-user",
             "test-employee": "employee-user",
             "test-dept-admin": "dept-admin-user",
             "test-audit-admin": "audit-admin-user",
@@ -177,3 +201,7 @@ def dept_admin_headers() -> dict[str, str]:
 @pytest.fixture
 def audit_admin_headers() -> dict[str, str]:
     return {"Authorization": "Bearer test-audit-admin"}
+
+@pytest.fixture
+def platform_headers() -> dict[str, str]:
+    return {"Authorization": "Bearer test-platform"}

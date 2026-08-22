@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 import time
 import logging
@@ -19,6 +20,7 @@ from app.api.roles import router as roles_router
 from app.api.organizations import router as organizations_router
 from app.api.custom_roles import router as custom_roles_router
 from app.api.system_logs import router as system_logs_router
+from app.api.feedback import router as feedback_router
 from app.iam import KeycloakAdminClient
 from app.models import AuditEvent
 
@@ -33,7 +35,18 @@ def create_app(settings: Settings | None = None, audit_session_factory=None) -> 
         app.state.audit_session_factory = audit_session_factory or get_session_factory(
             application_settings.database_url
         )
-        yield
+        sync_task = None
+        if not application_settings.testing:
+            sync_task = asyncio.create_task(app.state.oidc.run_background_sync(application_settings))
+        try:
+            yield
+        finally:
+            if sync_task is not None:
+                sync_task.cancel()
+                try:
+                    await sync_task
+                except asyncio.CancelledError:
+                    pass
 
     app = FastAPI(title="Digital Employees Management Platform", version="0.1.0", lifespan=lifespan)
     app.state.settings = application_settings
@@ -114,6 +127,7 @@ def create_app(settings: Settings | None = None, audit_session_factory=None) -> 
     app.include_router(custom_roles_router)
     app.include_router(enrollment_router)
     app.include_router(system_logs_router)
+    app.include_router(feedback_router)
 
     install_error_handlers(app)
     return app

@@ -16,6 +16,7 @@ const props = defineProps<{
   parentId: string | null
   selectedIds: string[]
   level?: number
+  disabledTypes?: string[]
 }>()
 const emit = defineEmits<{ toggle: [id: string] }>()
 
@@ -56,6 +57,7 @@ function toggleExpand(id: string) {
         <input
           type="checkbox"
           :checked="selectedIds.includes(node.id)"
+          :disabled="disabledTypes?.includes(node.org_type)"
           @change="emit('toggle', node.id)"
         />
         <span class="org-scope-name" :class="{ 'org-scope-domain': node.org_type === 'DOMAIN' }">{{ node.name }}</span>

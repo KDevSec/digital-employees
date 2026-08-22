@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     challenge_ttl_seconds: int = Field(default=300, ge=60, le=900)
     machine_token_ttl_seconds: int = Field(default=300, ge=60, le=300)
     heartbeat_offline_seconds: int = Field(default=90, ge=30, le=3600)
-    directory_sync_ttl_seconds: int = Field(default=60, ge=0, le=3600)
+    directory_sync_ttl_seconds: int = Field(default=60, ge=30, le=3600)
     enrollment_ttl_hours: int = Field(default=24, ge=1, le=168)
     max_package_bytes: int = Field(default=100 * 1024 * 1024, ge=1)
     bootstrap_system_username: str = "system.admin"
@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(default=10, ge=0, le=50)
     log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR)$")
     log_dir: Path = Path("/var/log/platform")
+    log_max_mb: int = Field(default=10, ge=1, le=512)
+    log_retention_days: int = Field(default=7, ge=1, le=90)
+    log_compress: bool = True
     testing: bool = False
 
     @field_validator("platform_base_url", "workbench_base_url", "oidc_issuer")

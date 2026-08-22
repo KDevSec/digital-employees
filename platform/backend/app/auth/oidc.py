@@ -84,6 +84,7 @@ class OidcClient:
         self._directory_sync_at: float = 0.0
         self._directory_sync_count: int = 0
         self._directory_sync_lock = asyncio.Lock()
+        self._logout_jtis: dict[str, float] = {}
 
     def internalize(self, url: str) -> str:
         public = self.settings.oidc_issuer.rstrip("/")
@@ -168,6 +169,45 @@ class OidcClient:
             logger.warning("OIDC token validation failed: %s: %s", type(exc).__name__, exc)
             raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC token is invalid") from exc
 
+    BACKCHANNEL_LOGOUT_EVENT = "http://schemas.openid.net/event/backchannel-logout"
+
+    async def validate_logout_token(self, token: str) -> dict:
+        try:
+            header = jwt.get_unverified_header(token)
+            jwks = await self.jwks()
+            raw_key = next(key for key in jwks["keys"] if key.get("kid") == header.get("kid"))
+            key = jwt.PyJWK.from_dict(raw_key).key
+            claims = jwt.decode(
+                token,
+                key,
+                algorithms=["RS256", "PS256"],
+                audience=self.settings.oidc_client_id,
+                issuer=self.settings.oidc_issuer,
+                options={"require": ["iss", "aud", "iat", "exp"]},
+            )
+        except (jwt.PyJWTError, KeyError, StopIteration, ValueError, TypeError) as exc:
+            self._jwks = None
+            logger.warning("OIDC logout token validation failed: %s: %s", type(exc).__name__, exc)
+            raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC logout token is invalid") from exc
+        events = claims.get("events")
+        if not isinstance(events, dict) or self.BACKCHANNEL_LOGOUT_EVENT not in events:
+            raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC logout token is missing backchannel-logout event")
+        if "nonce" in claims:
+            raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC logout token must not contain nonce")
+        if not claims.get("sub") and not claims.get("sid"):
+            raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC logout token must contain sub or sid")
+        jti = claims.get("jti")
+        if jti:
+            self._prune_logout_jtis(time.time())
+            if jti in self._logout_jtis:
+                raise ApiError(401, "PERSON_SESSION_INVALID", "OIDC logout token replay detected")
+            self._logout_jtis[jti] = float(claims.get("exp", 0))
+        return claims
+
+    def _prune_logout_jtis(self, now: float) -> None:
+        for key in [k for k, exp in self._logout_jtis.items() if exp <= now]:
+            self._logout_jtis.pop(key, None)
+
     async def sync_directory(self, session: Session) -> int:
         ttl = self.settings.directory_sync_ttl_seconds
         now = time.monotonic()
@@ -181,6 +221,25 @@ class OidcClient:
             self._directory_sync_at = time.monotonic()
             self._directory_sync_count = count
             return count
+
+    async def run_background_sync_once(self, settings: Settings) -> None:
+        """Trigger one directory sync in the background; never raises."""
+        from app.database import get_session_factory
+
+        try:
+            session_factory = get_session_factory(settings.database_url)
+            with session_factory() as session:
+                count = await self.sync_directory(session)
+            logger.info("background directory sync done", extra={"sync_count": count})
+        except Exception:
+            logger.exception("background directory sync failed")
+
+    async def run_background_sync(self, settings: Settings) -> None:
+        """Periodically sync directory for the app lifetime; never raises."""
+        ttl = settings.directory_sync_ttl_seconds or 60
+        while True:
+            await self.run_background_sync_once(settings)
+            await asyncio.sleep(ttl)
 
     async def _sync_directory(self, session: Session) -> int:
         # Sync the Keycloak group tree first so user org membership can be resolved

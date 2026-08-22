@@ -25,18 +25,33 @@ update_client_urls() {
   client_name=$1
   redirect_uri=$2
   web_origin=$3
+  post_logout_uri=$4
+  backchannel_url=$5
+
   internal_id=$("$kcadm" get clients -r digital-employees -q "clientId=$client_name" --fields id --format csv --noquotes | head -n 1 | tr -d '\r')
   if [ -z "$internal_id" ]; then
     echo "Keycloak client not found: $client_name" >&2
     exit 1
   fi
+
+  # kcadm deep-merges attributes; set only the keys we own.
+  client_attrs='{"pkce.code.challenge.method":"S256"'
+  if [ -n "$post_logout_uri" ]; then
+    client_attrs="$client_attrs,\"post.logout.redirect.uris\":\"$post_logout_uri\""
+  fi
+  if [ -n "$backchannel_url" ]; then
+    client_attrs="$client_attrs,\"backchannel.logout.url\":\"$backchannel_url\""
+  fi
+  client_attrs="$client_attrs}"
+
   "$kcadm" update "clients/$internal_id" -r digital-employees \
     -s "redirectUris=[\"$redirect_uri\"]" \
-    -s "webOrigins=[\"$web_origin\"]" >/dev/null
+    -s "webOrigins=[\"$web_origin\"]" \
+    -s "attributes=$client_attrs" >/dev/null
 }
 
-update_client_urls platform-web "$platform_url/auth/callback" "$platform_url"
-update_client_urls workbench-desktop "$workbench_url/auth/callback" "$workbench_url"
+update_client_urls platform-web "$platform_url/auth/callback" "$platform_url" "$platform_url/" "${PLATFORM_INTERNAL_URL}/auth/backchannel-logout"
+update_client_urls workbench-desktop "$workbench_url/auth/callback" "$workbench_url" "" ""
 
 # Existing realms are not re-imported, so keep the IAM service account's least-privilege
 # group/user management roles synchronized as part of every deployment.
