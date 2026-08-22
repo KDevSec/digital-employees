@@ -18,3 +18,4 @@ workbench/data/
 .ieidev/
 # 参考项目源码（仅本地调研用）
 reference-projects/
+specs/
