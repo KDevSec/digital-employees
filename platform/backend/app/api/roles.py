@@ -87,6 +87,8 @@ async def create_role_assignment(
             select(IamOrgNode).where(IamOrgNode.id.in_(body.department_ids), IamOrgNode.status == "ACTIVE")
         ).all()
         node_domains = {n.domain_id for n in nodes}
+        if any(n.org_type == "DOMAIN" for n in nodes):
+            raise ApiError(422, "ROLE_SCOPE_INVALID", "Root domain node cannot be selected as department scope")
         if len(nodes) != len(set(body.department_ids)):
             raise ApiError(422, "ROLE_SCOPE_INVALID", "Departments must exist in the selected domain")
         if len(node_domains) > 1:
@@ -97,28 +99,55 @@ async def create_role_assignment(
         body.domain_id = derived_domain
     elif body.scope_type is ScopeType.DEPARTMENT_SET:
         raise ApiError(422, "ROLE_SCOPE_INVALID", "DEPARTMENT_SET requires departments")
-    duplicate = session.scalar(
-        select(RoleAssignment).where(
-            RoleAssignment.principal_id == body.principal_id,
-            RoleAssignment.role_code == body.role_code,
-            RoleAssignment.scope_type == body.scope_type,
-            RoleAssignment.domain_id == body.domain_id,
-            RoleAssignment.status == "ACTIVE",
+    scope_nodes = sorted(set(body.department_ids))
+    if body.scope_type is ScopeType.DEPARTMENT_SET:
+        existing = session.scalar(
+            select(RoleAssignment).where(
+                RoleAssignment.principal_id == body.principal_id,
+                RoleAssignment.role_code == body.role_code,
+                RoleAssignment.scope_type == ScopeType.DEPARTMENT_SET,
+                RoleAssignment.domain_id == body.domain_id,
+                RoleAssignment.status == "ACTIVE",
+            )
         )
-    )
-    if duplicate:
-        raise ApiError(409, "ROLE_ASSIGNMENT_EXISTS", "An equivalent active assignment already exists")
-    item = RoleAssignment(
-        id=str(uuid4()),
-        principal_id=body.principal_id,
-        role_code=body.role_code,
-        scope_type=body.scope_type,
-        domain_id=body.domain_id,
-        status="ACTIVE",
-        created_by=identity.principal.id,
-        departments=[RoleAssignmentDepartment(department_id=value) for value in sorted(set(body.department_ids))],
-    )
-    session.add(item)
+        if existing is not None:
+            existing.departments = [RoleAssignmentDepartment(department_id=value) for value in scope_nodes]
+            item = existing
+        else:
+            item = RoleAssignment(
+                id=str(uuid4()),
+                principal_id=body.principal_id,
+                role_code=body.role_code,
+                scope_type=body.scope_type,
+                domain_id=body.domain_id,
+                status="ACTIVE",
+                created_by=identity.principal.id,
+                departments=[RoleAssignmentDepartment(department_id=value) for value in scope_nodes],
+            )
+            session.add(item)
+    else:
+        duplicate = session.scalar(
+            select(RoleAssignment).where(
+                RoleAssignment.principal_id == body.principal_id,
+                RoleAssignment.role_code == body.role_code,
+                RoleAssignment.scope_type == body.scope_type,
+                RoleAssignment.domain_id == body.domain_id,
+                RoleAssignment.status == "ACTIVE",
+            )
+        )
+        if duplicate:
+            raise ApiError(409, "ROLE_ASSIGNMENT_EXISTS", "An equivalent active assignment already exists")
+        item = RoleAssignment(
+            id=str(uuid4()),
+            principal_id=body.principal_id,
+            role_code=body.role_code,
+            scope_type=body.scope_type,
+            domain_id=body.domain_id,
+            status="ACTIVE",
+            created_by=identity.principal.id,
+            departments=[RoleAssignmentDepartment(department_id=value) for value in scope_nodes],
+        )
+        session.add(item)
     record_audit(
         session,
         request,

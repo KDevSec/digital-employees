@@ -1,0 +1,117 @@
+{
+  "realm": "digital-employees",
+  "defaultPassword": "Horse~test@2026",
+  "temporaryPassword": true,
+  "users": [
+    {
+      "username": "system.admin",
+      "email": "system.admin@example.test",
+      "firstName": "系统",
+      "lastName": "管理员",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/总经理室"
+      ]
+    },
+    {
+      "username": "platform.admin",
+      "email": "platform.admin@example.test",
+      "firstName": "平台",
+      "lastName": "管理员",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部"
+      ]
+    },
+    {
+      "username": "department.admin",
+      "email": "department.admin@example.test",
+      "firstName": "部门",
+      "lastName": "管理员",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处"
+      ]
+    },
+    {
+      "username": "security.admin",
+      "email": "security.admin@example.test",
+      "firstName": "安全",
+      "lastName": "管理员",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/安全平台组"
+      ]
+    },
+    {
+      "username": "audit.admin",
+      "email": "audit.admin@example.test",
+      "firstName": "审计",
+      "lastName": "管理员",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部"
+      ]
+    },
+    {
+      "username": "employee",
+      "email": "employee@example.test",
+      "firstName": "普通",
+      "lastName": "员工",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/安全平台组/CBB团队"
+      ]
+    },
+    {
+      "username": "huo.wen",
+      "email": "huo.wen@ieisystem.test",
+      "firstName": "文",
+      "lastName": "霍",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/安全平台组/CBB团队"
+      ]
+    },
+    {
+      "username": "tang.chao",
+      "email": "tang.chao@ieisystem.test",
+      "firstName": "超",
+      "lastName": "唐",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/安全平台组/KDevSec团队"
+      ]
+    },
+    {
+      "username": "wei.zhiwei",
+      "email": "wei.zhiwei@ieisystem.test",
+      "firstName": "志伟",
+      "lastName": "魏",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/安全平台组/KSec团队"
+      ]
+    },
+    {
+      "username": "wang.deming",
+      "email": "wang.deming@ieisystem.test",
+      "firstName": "德明",
+      "lastName": "王",
+      "enabled": true,
+      "password": "Horse~test@2026",
+      "groups": [
+        "/ieisystem/系统软件产品部/研发一处/KOS组"
+      ]
+    }
+  ]
+}

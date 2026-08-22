@@ -15,6 +15,7 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/app/overview' },
         { path: 'overview', component: () => import('./features/overview/OverviewPage.vue') },
+        { path: 'feedback', component: () => import('./features/feedback/FeedbackPage.vue') },
         { path: 'workbenches', component: () => import('./features/workbenches/WorkbenchesPage.vue'), meta: { permission: 'workbench.read' } },
         { path: 'enrollments', component: () => import('./features/enrollments/EnrollmentsPage.vue'), meta: { permission: 'workbench.enrollment.review' } },
         { path: 'audit', component: () => import('./features/audit/AuditPage.vue'), meta: { permission: 'audit.read' } },

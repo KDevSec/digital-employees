@@ -54,3 +54,32 @@ def transition_package(current: PackageStatus, target: PackageStatus) -> Package
     if target not in PACKAGE_TRANSITIONS.get(current, frozenset()):
         raise InvalidTransition(f"cannot transition package from {current} to {target}")
     return target
+
+
+class FeedbackStatus(StrEnum):
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    RESOLVED = "RESOLVED"
+    CLOSED = "CLOSED"
+
+
+FEEDBACK_TRANSITIONS = {
+    FeedbackStatus.OPEN: frozenset(
+        {FeedbackStatus.IN_PROGRESS, FeedbackStatus.RESOLVED, FeedbackStatus.CLOSED}
+    ),
+    FeedbackStatus.IN_PROGRESS: frozenset(
+        {FeedbackStatus.OPEN, FeedbackStatus.RESOLVED, FeedbackStatus.CLOSED}
+    ),
+    FeedbackStatus.RESOLVED: frozenset({FeedbackStatus.OPEN, FeedbackStatus.CLOSED}),
+    FeedbackStatus.CLOSED: frozenset({FeedbackStatus.OPEN}),
+}
+
+
+def transition_feedback(
+    current: FeedbackStatus, target: FeedbackStatus
+) -> FeedbackStatus:
+    if target not in FEEDBACK_TRANSITIONS.get(current, frozenset()):
+        raise InvalidTransition(
+            f"cannot transition feedback from {current} to {target}"
+        )
+    return target

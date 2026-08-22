@@ -1,3 +1,4 @@
+import time
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -486,132 +487,36 @@ async def revoke_role_grant(
         session.commit()
 
 
-@router.get("/api/v1/authorization/overview")
-async def authorization_overview(
+_SCOPE_OPTIONS_TTL = 60.0
+_scope_options_cache: tuple[float, dict] | None = None
+
+
+@router.get("/api/v1/authorization/scope-options")
+async def authorization_scope_options(
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> dict:
+    global _scope_options_cache
     require_permission(identity, "role.manage")
-
-    # Built-in roles with permission definitions and assignment counts
-    role_labels: dict[str, str] = {
-        "SYSTEM_ADMIN": "系统管理员",
-        "PLATFORM_ADMIN": "平台管理员",
-        "DEPARTMENT_ADMIN": "部门管理员",
-        "SECURITY_ADMIN": "安全管理员",
-        "AUDIT_ADMIN": "审计管理员",
-        "EMPLOYEE": "员工",
-    }
-    assignment_counts: dict[str, int] = {}
-    count_rows = session.execute(
-        select(RoleAssignment.role_code, func.count(RoleAssignment.id))
-        .where(RoleAssignment.status == "ACTIVE")
-        .group_by(RoleAssignment.role_code)
-    ).all()
-    assignment_counts = {row[0]: row[1] for row in count_rows}
-
-    all_permissions = session.scalars(
-        select(PermissionDefinition).where(PermissionDefinition.status == "ACTIVE")
-    ).all()
-    perm_by_code: dict[str, dict] = {
-        p.code: {
-            "code": p.code,
-            "resource_type": p.resource_type,
-            "action": p.action,
-            "description": p.description,
-            "risk_level": p.risk_level,
-        }
-        for p in all_permissions
-    }
-
-    builtin_roles = []
-    for role_code in RoleCode:
-        perms = sorted(ROLE_PERMISSIONS[role_code])
-        builtin_roles.append({
-            "role_code": role_code.value,
-            "label": role_labels.get(role_code.value, role_code.value),
-            "permissions": [perm_by_code.get(p, {"code": p}) for p in perms],
-            "assignment_count": assignment_counts.get(role_code.value, 0),
-        })
-
-    # Custom roles
-    custom_roles = []
-    custom_role_rows = session.scalars(
-        select(CustomRole).where(CustomRole.status == "ACTIVE").order_by(CustomRole.name)
-    ).all()
-    perm_codes_by_role: dict[str, list[str]] = {}
-    if custom_role_rows:
-        role_ids = [r.id for r in custom_role_rows]
-        all_perm_rows = session.execute(
-            select(CustomRolePermission.role_id, CustomRolePermission.permission_code)
-            .where(CustomRolePermission.role_id.in_(role_ids))
-        ).all()
-        for role_id, code in all_perm_rows:
-            perm_codes_by_role.setdefault(role_id, []).append(code)
-    for role in custom_role_rows:
-        custom_roles.append(role_json(role, perm_codes_by_role.get(role.id, [])))
-
-    # Fixed role assignments
-    fixed_rows = session.scalars(
-        select(RoleAssignment).where(RoleAssignment.status == "ACTIVE")
-    ).all()
-    principal_ids = {ra.principal_id for ra in fixed_rows}
-    principals_map: dict[str, IamPrincipal] = {}
-    if principal_ids:
-        principals_map = {
-            p.id: p
-            for p in session.scalars(
-                select(IamPrincipal).where(IamPrincipal.id.in_(principal_ids))
-            ).all()
-        }
-    fixed_assignments = []
-    for ra in fixed_rows:
-        principal = principals_map.get(ra.principal_id)
-        fixed_assignments.append({
-            "id": ra.id,
-            "principal_id": ra.principal_id,
-            "principal_name": principal.display_name if principal else ra.principal_id,
-            "principal_username": principal.username if principal else "",
-            "role_code": ra.role_code,
-            "scope_type": ra.scope_type,
-            "domain_id": ra.domain_id,
-            "status": ra.status,
-        })
-
-    # Scoped grants
-    scoped_rows = session.scalars(
-        select(ScopedRoleAssignment).where(ScopedRoleAssignment.status == "ACTIVE")
-    ).all()
-    scoped_grants = [grant_json(g) for g in scoped_rows]
-
-    # Domains for filter
+    now = time.monotonic()
+    if _scope_options_cache is not None and _scope_options_cache[0] > now:
+        return _scope_options_cache[1]
     domains = [
         {"id": d.id, "name": d.name}
         for d in session.scalars(select(IamDomain).order_by(IamDomain.name)).all()
     ]
-
-    # Org nodes for scope display
     org_nodes = [
         {"id": n.id, "name": n.name, "domain_id": n.domain_id, "parent_id": n.parent_id, "org_type": n.org_type}
         for n in session.scalars(
             select(IamOrgNode).where(IamOrgNode.status == "ACTIVE").order_by(IamOrgNode.name)
         ).all()
     ]
-
-    # Principals for assignment
-    principals = [
-        {"id": p.id, "display_name": p.display_name, "username": p.username, "domain_id": p.domain_id}
-        for p in session.scalars(
-            select(IamPrincipal).where(IamPrincipal.status == "ACTIVE").order_by(IamPrincipal.display_name)
+    custom_roles = [
+        {"id": r.id, "name": r.name, "code": r.code}
+        for r in session.scalars(
+            select(CustomRole).where(CustomRole.status == "ACTIVE").order_by(CustomRole.name)
         ).all()
     ]
-
-    return {
-        "builtin_roles": builtin_roles,
-        "custom_roles": custom_roles,
-        "fixed_assignments": fixed_assignments,
-        "scoped_grants": scoped_grants,
-        "domains": domains,
-        "org_nodes": org_nodes,
-        "principals": principals,
-    }
+    payload = {"domains": domains, "org_nodes": org_nodes, "custom_roles": custom_roles}
+    _scope_options_cache = (now + _SCOPE_OPTIONS_TTL, payload)
+    return payload

@@ -29,6 +29,7 @@ from app.models import (
     IamPrincipalOrg,
     IamSyncOperation,
     IamTeam,
+    CustomRole,
     RoleAssignment,
     ScopedRoleAssignment,
 )
@@ -750,4 +751,180 @@ async def principal_org_context(
             {"org_id": org.id, "name": org.name, "membership_type": membership.membership_type}
             for membership, org in collaboration_rows
         ],
+    }
+
+
+@router.get("/api/v1/principals/{principal_id}/authorizations")
+async def principal_authorizations(
+    principal_id: str,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    principal = session.get(IamPrincipal, principal_id)
+    if principal is None:
+        raise ApiError(404, "PRINCIPAL_NOT_FOUND", "Principal not found")
+    fixed_rows = session.scalars(
+        select(RoleAssignment).where(
+            RoleAssignment.principal_id == principal_id,
+            RoleAssignment.status == "ACTIVE",
+        )
+    ).all()
+    fixed_assignments = []
+    for ra in fixed_rows:
+        fixed_assignments.append({
+            "id": ra.id,
+            "principal_id": ra.principal_id,
+            "role_code": ra.role_code,
+            "scope_type": ra.scope_type,
+            "domain_id": ra.domain_id,
+            "department_ids": [d.department_id for d in ra.departments],
+            "status": ra.status,
+        })
+    scoped_rows = session.scalars(
+        select(ScopedRoleAssignment).where(
+            ScopedRoleAssignment.subject_type == "PRINCIPAL",
+            ScopedRoleAssignment.subject_id == principal_id,
+            ScopedRoleAssignment.status == "ACTIVE",
+        )
+    ).all()
+    role_ids = {g.role_id for g in scoped_rows}
+    org_ids = {g.scope_org_id for g in scoped_rows}
+    role_names = {
+        r.id: r.name
+        for r in session.scalars(select(CustomRole).where(CustomRole.id.in_(tuple(role_ids)))).all()
+    } if role_ids else {}
+    org_names = {
+        o.id: o.name
+        for o in session.scalars(select(IamOrgNode).where(IamOrgNode.id.in_(tuple(org_ids)))).all()
+    } if org_ids else {}
+    scoped_grants = []
+    for g in scoped_rows:
+        scoped_grants.append({
+            "id": g.id,
+            "role_id": g.role_id,
+            "role_name": role_names.get(g.role_id, g.role_id),
+            "scope_org_id": g.scope_org_id,
+            "scope_org_name": org_names.get(g.scope_org_id, g.scope_org_id),
+            "scope_include_descendants": g.scope_include_descendants,
+            "status": g.status,
+        })
+    logger.info(
+        "principal authorizations loaded",
+        extra={"actor_id": identity.principal.id, "target_principal_id": principal_id},
+    )
+    return {"fixed_assignments": fixed_assignments, "scoped_grants": scoped_grants}
+
+@router.get("/api/v1/principals/{principal_id}/detail")
+async def principal_detail(
+    principal_id: str,
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> dict:
+    require_permission(identity, "role.manage")
+    principal = session.get(IamPrincipal, principal_id)
+    if principal is None:
+        raise ApiError(404, "PRINCIPAL_NOT_FOUND", "Principal not found")
+    domain = session.get(IamDomain, principal.domain_id)
+    department = session.get(IamDepartment, principal.department_id) if principal.department_id else None
+    team = session.get(IamTeam, principal.team_id) if principal.team_id else None
+    primary_org = session.get(IamOrgNode, principal.primary_org_id) if principal.primary_org_id else None
+    primary_org_path: list[dict] = []
+    if primary_org is not None:
+        rows = session.execute(
+            select(IamOrgClosure, IamOrgNode)
+            .join(IamOrgNode, IamOrgNode.id == IamOrgClosure.ancestor_id)
+            .where(IamOrgClosure.descendant_id == primary_org.id)
+            .order_by(IamOrgClosure.depth.desc())
+        ).all()
+        primary_org_path = [
+            {"id": node.id, "name": node.name, "org_type": node.org_type}
+            for _closure, node in rows
+        ]
+    collaboration_rows = session.execute(
+        select(IamPrincipalOrg, IamOrgNode)
+        .join(IamOrgNode, IamOrgNode.id == IamPrincipalOrg.org_id)
+        .where(
+            IamPrincipalOrg.principal_id == principal_id,
+            IamPrincipalOrg.status == "ACTIVE",
+            IamPrincipalOrg.membership_type == "COLLABORATION",
+        )
+    ).all()
+    fixed_rows = session.scalars(
+        select(RoleAssignment).where(
+            RoleAssignment.principal_id == principal_id,
+            RoleAssignment.status == "ACTIVE",
+        )
+    ).all()
+    fixed_assignments = [
+        {
+            "id": ra.id,
+            "principal_id": ra.principal_id,
+            "role_code": ra.role_code,
+            "scope_type": ra.scope_type,
+            "domain_id": ra.domain_id,
+            "department_ids": [d.department_id for d in ra.departments],
+            "status": ra.status,
+        }
+        for ra in fixed_rows
+    ]
+    scoped_rows = session.scalars(
+        select(ScopedRoleAssignment).where(
+            ScopedRoleAssignment.subject_type == "PRINCIPAL",
+            ScopedRoleAssignment.subject_id == principal_id,
+            ScopedRoleAssignment.status == "ACTIVE",
+        )
+    ).all()
+    role_ids = {g.role_id for g in scoped_rows}
+    org_ids = {g.scope_org_id for g in scoped_rows}
+    role_names = {
+        r.id: r.name
+        for r in session.scalars(select(CustomRole).where(CustomRole.id.in_(tuple(role_ids)))).all()
+    } if role_ids else {}
+    org_names = {
+        o.id: o.name
+        for o in session.scalars(select(IamOrgNode).where(IamOrgNode.id.in_(tuple(org_ids)))).all()
+    } if org_ids else {}
+    scoped_grants = [
+        {
+            "id": g.id,
+            "role_id": g.role_id,
+            "role_name": role_names.get(g.role_id, g.role_id),
+            "scope_org_id": g.scope_org_id,
+            "scope_org_name": org_names.get(g.scope_org_id, g.scope_org_id),
+            "scope_include_descendants": g.scope_include_descendants,
+            "status": g.status,
+        }
+        for g in scoped_rows
+    ]
+    logger.info(
+        "principal detail loaded",
+        extra={"actor_id": identity.principal.id, "target_principal_id": principal_id},
+    )
+    return {
+        "identity": {
+            "id": principal.id,
+            "username": principal.username,
+            "display_name": principal.display_name,
+            "email": principal.email,
+            "domain_id": principal.domain_id,
+            "domain_name": domain.name if domain else "",
+            "department_id": principal.department_id,
+            "team_id": principal.team_id,
+            "primary_org_id": principal.primary_org_id,
+            "status": principal.status,
+            "synced_at": principal.synced_at.isoformat() if principal.synced_at else None,
+        },
+        "org_context": {
+            "domain": {"id": domain.id, "name": domain.name} if domain else None,
+            "department": {"id": department.id, "name": department.name} if department else None,
+            "team": {"id": team.id, "name": team.name} if team else None,
+            "primary_org": {"id": primary_org.id, "name": primary_org.name} if primary_org else None,
+            "primary_org_path": primary_org_path,
+            "collaborations": [
+                {"org_id": org.id, "name": org.name, "membership_type": membership.membership_type}
+                for membership, org in collaboration_rows
+            ],
+        },
+        "authorizations": {"fixed_assignments": fixed_assignments, "scoped_grants": scoped_grants},
     }

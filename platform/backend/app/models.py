@@ -202,7 +202,7 @@ class RoleAssignment(Base):
 class RoleAssignmentDepartment(Base):
     __tablename__ = "role_assignment_department"
     role_assignment_id: Mapped[str] = mapped_column(ForeignKey("role_assignment.id"), primary_key=True)
-    department_id: Mapped[str] = mapped_column(ForeignKey("iam_department.id"), primary_key=True)
+    department_id: Mapped[str] = mapped_column(ForeignKey("iam_org_node.id"), primary_key=True)
 
 
 class WorkbenchPackage(Base):
@@ -342,3 +342,22 @@ class BffSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     id_token: Mapped[str | None] = mapped_column(Text)
+    sid: Mapped[str | None] = mapped_column(String(255), index=True)
+
+
+class ProblemFeedback(Base):
+    __tablename__ = "problem_feedback"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    title: Mapped[str] = mapped_column(String(200))
+    category: Mapped[str] = mapped_column(String(20), index=True)
+    description: Mapped[str] = mapped_column(Text)
+    contact: Mapped[str | None] = mapped_column(String(200))
+    priority: Mapped[str] = mapped_column(String(20), default="MEDIUM", index=True)
+    status: Mapped[str] = mapped_column(String(20), default="OPEN", index=True)
+    submitter_principal_id: Mapped[str] = mapped_column(ForeignKey("iam_principal.id"), index=True)
+    domain_id: Mapped[str] = mapped_column(String(64), index=True)
+    department_id: Mapped[str | None] = mapped_column(String(64))
+    admin_reply: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
