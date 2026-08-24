@@ -13,7 +13,7 @@
       "name": "管理平台",
       "enabled": true,
       "publicClient": false,
-      "secret": "platform-dev-secret",
+      "secret": "${OIDC_CLIENT_SECRET}",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
@@ -72,7 +72,7 @@
       "name": "管理平台 IAM 目录同步",
       "enabled": true,
       "publicClient": false,
-      "secret": "platform-iam-sync-secret",
+      "secret": "${IAM_SYNC_CLIENT_SECRET}",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false

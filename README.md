@@ -7,12 +7,12 @@
 需要已启动的 Docker Engine：
 
 ```bash
-./tools/build.sh
+./tools/compose.sh build
 ```
 
 ### 国内/受限网络首次拉取基础镜像
 
-`up.sh`/`build.sh` 首次构建需从镜像仓库拉取基础镜像（python/node/nginx/postgres/keycloak）。若拉取超时（`context deadline exceeded`），在部署机执行一次加速器配置脚本：
+`up.sh`/`compose.sh build` 首次构建需从镜像仓库拉取基础镜像（python/node/nginx/postgres/keycloak）。若拉取超时（`context deadline exceeded`），在部署机执行一次加速器配置脚本：
 
 ```bash
 sudo ./tools/configure-mirrors.sh   # 写入 /etc/docker/daemon.json 镜像加速器并预拉取基础镜像
