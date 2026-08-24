@@ -23,3 +23,4 @@ reference-projects/
 # 单体编译的嵌入源（S-01），提交进仓；web 包的构建中间产物 dist/ 已被上面的 dist/ 覆盖
 *.exe
 packages/workbench-service/scripts/smoke.log
+packages/workbench-tray/scripts/tray-smoke.log
