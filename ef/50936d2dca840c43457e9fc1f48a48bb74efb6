@@ -1,0 +1,45 @@
+packages/workbench-tray/internal/actions/actions.go
+  s_cbda167ad90f41::t_caa447a6f5c601 63,67,82,86-87
+  s_cbda167ad90f41::t_9807e21bc45fe9 12-14
+  s_cbda167ad90f41::t_eeb3aca5eeb14e 24
+  s_cbda167ad90f41::t_44d40960dd1eb0 54-56
+packages/workbench-tray/internal/actions/actions_test.go
+  s_cbda167ad90f41::t_189c22c8a4b5da 82-105
+packages/workbench-tray/scripts/tray-smoke.sh
+  s_cbda167ad90f41::t_8a1d8af1bb1769 60-61
+packages/workbench-tray/internal/autostart/autostart.go
+  s_cbda167ad90f41::t_7c42c07e6de2ab 24-27
+packages/workbench-tray/main.go
+  s_cbda167ad90f41::t_1168713a4c09ca 141-144
+  s_cbda167ad90f41::t_2c4aa12dbd4c2c 407-411,429-431,435-436,440
+  s_cbda167ad90f41::t_d44c8e7ed4cc94 456-459,461-465,467-472,474-475
+  s_cbda167ad90f41::t_2d294fdc0f313d 488-490,500-511
+  s_cbda167ad90f41::t_bba4a1dd581346 127-131
+  s_cbda167ad90f41::t_1f660d0a46a081 333-335
+  s_cbda167ad90f41::t_4d59870c166cec 544-545,548-549
+  s_cbda167ad90f41::t_f1aec69afcda0d 288-289,292-297
+  s_cbda167ad90f41::t_fa85e85da9d122 525-528
+packages/workbench-tray/internal/contract/contract.go
+  s_cbda167ad90f41::t_be7e432363a117 1-4
+  s_cbda167ad90f41::t_378e1294b273db 56-78
+packages/workbench-tray/internal/contract/contract_test.go
+  s_cbda167ad90f41::t_53b379a91c7f7e 165-221
+packages/workbench-tray/go.mod
+  s_cbda167ad90f41::t_852eb37b098a73 6-7,9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ef50936d2dca840c43457e9fc1f48a48bb74efb6",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
