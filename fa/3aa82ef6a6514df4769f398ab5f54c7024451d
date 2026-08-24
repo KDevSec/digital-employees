@@ -1,0 +1,19 @@
+docs/research/S3-Linux侧Spike报告-2026-08-24.md
+  s_bcca92b129270f::t_e34c5305322b58 1-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "fa3aa82ef6a6514df4769f398ab5f54c7024451d",
+  "prompts": {},
+  "sessions": {
+    "s_bcca92b129270f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a59b8fa5-35f2-429a-ae56-4efb88c66e7c",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
