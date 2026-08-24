@@ -1,0 +1,21 @@
+.gitignore
+  s_cbda167ad90f41::t_581598caa3a63d 26
+packages/workbench-tray/scripts/tray-smoke.sh
+  s_cbda167ad90f41::t_86fa782f1cd15f 1-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "980a28ff4a74920b92f616390d51b5aafd5344e8",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
