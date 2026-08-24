@@ -1,0 +1,36 @@
+packages/workbench-service/src/runtime/instance.ts
+  s_cbda167ad90f41::t_c9423b835dc6b8 90-97
+  s_cbda167ad90f41::t_ef9133224d6371 20-21,30-36,40
+  s_cbda167ad90f41::t_1810cffb644005 66-68
+packages/workbench-service/test/config.test.ts
+  s_cbda167ad90f41::t_4ce2c0c7070382 65-69
+packages/workbench-service/test/instance.test.ts
+  s_cbda167ad90f41::t_17128923e590b5 105-124
+  s_cbda167ad90f41::t_8baf116202cda7 48-59
+packages/workbench-service/src/config/load.ts
+  s_cbda167ad90f41::t_01a7f57812eee4 20-25
+packages/workbench-service/src/config/schema.ts
+  s_cbda167ad90f41::t_2745b45b90ab71 21-22
+packages/workbench-service/src/runtime/contracts.ts
+  s_cbda167ad90f41::t_0a8714e3969c08 97,99
+  s_cbda167ad90f41::t_d60b8bebd7403b 117,119-126,128-132
+packages/workbench-service/test/contracts.test.ts
+  s_cbda167ad90f41::t_8ffefd0963f542 1
+  s_cbda167ad90f41::t_ad861247db18e2 107-138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "cbf6fc6b914c0cd23907b9d6e9f31adf78a16589",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
