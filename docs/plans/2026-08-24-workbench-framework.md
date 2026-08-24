@@ -120,7 +120,7 @@ health 参数形状 `{reachable, app?, status?, elapsedMs, consecutiveFails}`（
 **Files:** Create: `src/server/registry.ts`、`src/server/hono-adapter.ts`、`src/server/guard.ts`、`src/server/endpoints.ts`、`test/server.test.ts`
 
 **Step 1 失败测试** 断言：
-- `createRegistry()` 注册 `GET /healthz` 后经 `toHonoApp(registry)` 用 `app.request('/healthz')` 得 200 JSON `{app:'workbench',status:'ok',version,pid,uptime,dataDir}`（dataDir 为 profile 路径字符串）
+- `createRegistry()` 注册 `GET /healthz` 后经 `toHonoApp(registry)` 用 `app.request('/healthz')` 得 200 JSON `{app:'workbench',status:'ok',version,pid,uid,uptime,dataDir}`（dataDir 为 profile 路径字符串；**uid 必含**——Wave 1 审查裁决：幂等判定 health.uid===handle.uid 的必需契约，设计 §8/§10.2 已同步回写）
 - Host 白名单：`app.request('/', {headers:{Host:'evil.com'}})` → 403；`Host:'localhost:19980'` 与 `'127.0.0.1:19980'` → 放行
 - `GET /api/events` → 204；`GET /api/activity` → `{conversationTasks:0, triggerTasks:0}`（硬值，D-8）
 - registry 上注册未声明路由 → 类型层不可（ts strict）；Hono 符号**只出现在 hono-adapter.ts**（grep 断言：`grep -L "from 'hono'" src/server/registry.ts src/server/endpoints.ts` 无输出——即这两个文件不 import hono）
@@ -183,7 +183,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 **Files:** Create: `packages/workbench-service/scripts/smoke.sh`
 
 **Step 1** 冒烟脚本（git-bash）顺序断言，任一步失败 set -e 退出：
-1. `WORKBENCH_HOME=$(mktemp -d) bun run src/main.ts start &` → sleep 2 → `curl -s localhost:19980/healthz` 含 `"app":"workbench"`
+1. `WORKBENCH_HOME=$(mktemp -d) bun run src/main.ts start &` → sleep 2 → `curl -s localhost:19980/healthz` 含 `"app":"workbench"` 且含 `"uid"`
 2. 重复 `start`（同 HOME）→ 退出码 0 且进程数仍 1（幂等）
 3. `curl -H 'Host: evil.com' localhost:19980/healthz` → 403
 4. `bun run src/main.ts status` 输出 JSON 含 port
