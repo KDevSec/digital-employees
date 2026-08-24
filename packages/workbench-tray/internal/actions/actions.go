@@ -9,8 +9,8 @@ import (
 	"workbench-tray/internal/brand"
 )
 
-// restartHealthWaitMs Restart 中段「等 healthz」预算（设计 §4.1：重启 = stop && start（等 healthz）；
-// 与 §4.2 左键直达的 15s 同款预算）
+// restartHealthWaitMs Restart 末段「等 healthz 就绪」预算（设计 §4.1：重启 = stop && start（等 healthz），
+// 等待发生在 start 之后——重启以就绪收尾；与 §4.2 左键直达的 15s 同款预算）
 const restartHealthWaitMs = 15000
 
 // Kind CLI 动作种类
@@ -35,7 +35,10 @@ func Start() Action { return Action{Kind: KindStart} }
 // Stop 停止服务
 func Stop() Action { return Action{Kind: KindStop} }
 
-// Restart 重启服务（stop && start，中段等 healthz，见 BuildCliArgs）
+// Restart 重启服务（stop && start（等 healthz）——设计 §4.1。
+// 段序裁决（2026-08-25 协调人，采纳运行时语义观察）：health-wait 段在 start 之后——
+// 若置于 stop 与 start 之间，等待的是已停止的服务，必然空转满预算 exit 1 才执行 start
+// （重启延迟 +15s 且中段永远"失败"）；「等 healthz」的意图是重启以就绪收尾
 func Restart() Action { return Action{Kind: KindRestart} }
 
 // HealthWait 等 /healthz 就绪（内部子命令，左键直达「不让用户看到浏览器连接失败」的关键）。
@@ -51,7 +54,7 @@ func HealthWait(timeoutMs int) Action {
 //
 //	Stop        → [["stop"]]
 //	Start       → [["start"]]
-//	Restart     → [["stop"], ["__health-wait","15000"], ["start"]]
+//	Restart     → [["stop"], ["start"], ["__health-wait","15000"]]
 //	HealthWait  → [["__health-wait","<ms>"]]
 //
 // 多段而非扁平拼接：Restart 三段有依赖，扁平展开成 ["stop","start"] 时 commander 会把
@@ -70,8 +73,8 @@ func BuildCliArgs(a Action) [][]string {
 	case KindRestart:
 		return [][]string{
 			{"stop"},
-			{"__health-wait", strconv.Itoa(restartHealthWaitMs)},
 			{"start"},
+			{"__health-wait", strconv.Itoa(restartHealthWaitMs)}, // 末段：重启以就绪收尾
 		}
 	case KindHealthWait:
 		return [][]string{{"__health-wait", strconv.Itoa(a.TimeoutMs)}}
