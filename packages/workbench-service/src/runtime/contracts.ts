@@ -15,8 +15,8 @@ const SERVICE_PORT = 'service.port'
 const RELIABILITY_JSON = 'reliability.json'
 const INSTALLATION_ID = 'installation-id'
 
-/** 构建期注入的 commit id（bun build --define / 环境变量），缺省 'dev' */
-const BUILD_COMMIT_ID_ENV = 'WORKBENCH_BUILD_COMMIT_ID'
+/** 构建期注入的 commit id：build.sh 以 --define "process.env.WORKBENCH_BUILD_COMMIT_ID=..." 在编译期把
+ *  该字面量成员表达式替换为常量（实测 computed access 不被 define 命中）；直跑时退化为运行时 env，缺省 'dev' */
 
 /** 发现契约：run/service.json（设计 §6.1） */
 export interface ServiceHandle {
@@ -56,7 +56,9 @@ export interface ReliabilityState {
 export type ReliabilityInput = Partial<Pick<ReliabilityState, 'runId' | 'startedAt' | 'cleanStop'>>
 
 function currentBuildCommitId(): string {
-  return process.env[BUILD_COMMIT_ID_ENV] ?? 'dev'
+  // 字面量成员表达式：build.sh 以 --define "process.env.WORKBENCH_BUILD_COMMIT_ID=..." 编译期固化；
+  // 直跑（bun run/vitest）时退化为运行时 env 读取，缺省 'dev'
+  return process.env.WORKBENCH_BUILD_COMMIT_ID ?? 'dev'
 }
 
 /** 原子写：先写同目录临时文件，再 rename 覆盖目标 */

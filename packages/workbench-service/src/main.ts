@@ -36,6 +36,10 @@ import { createRegistry } from './server/registry'
 import { registerEndpoints } from './server/endpoints'
 import { toHonoApp } from './server/hono-adapter'
 
+// S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
+// vitest 不支持该导入属性——endpoints 侧经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
+import indexHtml from '../web-dist/index.html' with { type: 'text' }
+
 // ---------- profile 目录（模块级仅路径解析：零 IO、零抛错——stop/status 不依赖 config） ----------
 
 /** env 覆盖入口（测试/冒烟关键）：WORKBENCH_HOME > ~/.workbench */
@@ -178,6 +182,7 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     uid: rt.uid,
     dataDir: profileDir,
     uptime: () => Date.now() - startedAtMs,
+    indexHtml,
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

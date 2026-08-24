@@ -19,6 +19,7 @@ workbench/data/
 # 参考项目源码（仅本地调研用）
 reference-projects/
 # 构建产物与可执行体（workbench 框架增量）
+# 注意：web-dist/ 不忽略——packages/workbench-service/web-dist/index.html 是
+# 单体编译的嵌入源（S-01），提交进仓；web 包的构建中间产物 dist/ 已被上面的 dist/ 覆盖
 *.exe
-web-dist/
 packages/workbench-service/scripts/smoke.log

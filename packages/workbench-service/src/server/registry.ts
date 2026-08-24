@@ -15,6 +15,8 @@ export interface Res {
   status: number
   json?: unknown
   text?: string
+  /** HTML body（S-01 嵌入页）：adapter 以 text/html; charset=utf-8 透传 */
+  html?: string
 }
 
 export type Handler = (ctx: Ctx) => Res | Promise<Res>

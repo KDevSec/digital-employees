@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 服务冒烟（Task 9，bun 直跑未编译）——八场景全链验证：
+# 服务冒烟（Task 9 建 8 场景，Task 11 增编译版）——九场景全链验证：
 #   1 起服务 healthz（app+uid 契约）
 #   2 幂等：二次 start 退出码 0 且 pid 不变
 #   3 Host 白名单 403
@@ -8,6 +8,8 @@
 #   5.5 坏 config：stop/status 仍可用，start 退出码 78（友好文案非裸堆栈）
 #   6 干净 stop 后重启无 crash_detected（负向）；kill -9 后重启记 crash_detected（正向）
 #   7 端口被第三方占用 → start 退出码 78（conflict 分支）
+#   8 编译版全链（Task 11）：build.sh 单体编译 → exe start healthz → / 嵌入页
+#     → buildCommitId 注入 → 二次 start 幂等 → stop 拒连（未装 Bun 语义下独立完成）
 # 环境事实（Windows + git-bash 实测）：
 #   - 跨进程信号不可投递：硬杀用 taskkill //F //PID（git-bash kill 不识别原生 pid）
 #   - WORKBENCH_NO_BROWSER=1 抑制 rundll32 开真浏览器
@@ -160,5 +162,61 @@ cat "$WORKBENCH_HOME/start5.log"
 [ "$RC" -eq 78 ] || { echo "FAIL: 端口占用下 start 退出码 $RC（期望 78）"; exit 1; }
 echo "PASS 场景 7 (conflict → 78)"
 
+# ---------- 场景 8: 编译版全链（Task 11 / S-01） ----------
+
+echo "=== 场景 8: 编译版全链——build.sh 单体编译 + exe 独立运行 ==="
+# 释放场景 7 的端口占用方（occupier 仍持有 19980）
+if [ -n "$OCCUPIER_PID" ]; then
+  taskkill //F //PID "$OCCUPIER_PID" >/dev/null 2>&1 || true
+  OCCUPIER_PID=""
+fi
+sleep 1
+
+echo "--- 8a: bash scripts/build.sh 产出 dist/workbench.exe ---"
+bash scripts/build.sh >"$WORKBENCH_HOME/build.log" 2>&1
+[ -f dist/workbench.exe ] || { echo "FAIL: dist/workbench.exe 未产出"; cat "$WORKBENCH_HOME/build.log"; exit 1; }
+EXE_SIZE="$(ls -la dist/workbench.exe | awk '{print $5}')"
+echo "  (workbench.exe ${EXE_SIZE} bytes, 构建日志见 $WORKBENCH_HOME/build.log)"
+echo "PASS 8a (单体编译产出)"
+
+echo "--- 8b: exe 后台 start → healthz 含 app+uid；/ 返回嵌入页；buildCommitId 已注入 ---"
+./dist/workbench.exe start >"$WORKBENCH_HOME/exe-start1.log" 2>&1 &
+wait_healthz
+BODY="$(curl -sf --max-time 2 "$BASE/healthz")"
+echo "$BODY"
+echo "$BODY" | grep -q '"app":"workbench"' || { echo "FAIL: exe healthz 缺 app=workbench"; cat "$WORKBENCH_HOME/exe-start1.log"; exit 1; }
+echo "$BODY" | grep -q '"uid"' || { echo "FAIL: exe healthz 缺 uid"; exit 1; }
+PAGE="$(curl -sf --max-time 2 "$BASE/")"
+# 注意：页面 ~91KB > 64KB 管道缓冲，grep -q 早退会让 echo 收 SIGPIPE(141)，
+# 叠加 set -o pipefail 误判失败——大内容断言用 grep -c（读完全部输入）
+echo "$PAGE" | grep -c '数字员工工作台' >/dev/null || {
+  echo "FAIL: / 返回内容缺「数字员工工作台」（嵌入未生效）"
+  echo "  诊断: PAGE 字符数=${#PAGE} 头部=[$(printf '%s' "$PAGE" | head -c 120)]"
+  curl -s --max-time 2 -o /dev/null -w '  诊断: http_code=%{http_code} size=%{size_download}
+' "$BASE/" || true
+  cat "$WORKBENCH_HOME/exe-start1.log"
+  exit 1
+}
+EXPECTED_COMMIT="$(git rev-parse --short HEAD)"
+grep -q "\"buildCommitId\": \"${EXPECTED_COMMIT}\"" "$RUN_DIR/service.json" || {
+  echo "FAIL: service.json buildCommitId != ${EXPECTED_COMMIT}（--define 注入未生效）"
+  cat "$RUN_DIR/service.json"
+  exit 1
+}
+echo "PASS 8b (healthz app+uid + / 嵌入页 + buildCommitId=${EXPECTED_COMMIT})"
+
+echo "--- 8c: 二次 start 幂等（rc 0）→ stop → healthz 拒连 ---"
+set +e
+./dist/workbench.exe start >"$WORKBENCH_HOME/exe-start2.log" 2>&1
+RC=$?
+set -e
+[ "$RC" -eq 0 ] || { echo "FAIL: exe 二次 start 退出码 $RC（期望 0）"; cat "$WORKBENCH_HOME/exe-start2.log"; exit 1; }
+./dist/workbench.exe stop
+if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then
+  echo "FAIL: exe stop 后 healthz 仍可达"
+  exit 1
+fi
+echo "PASS 8c (幂等 + stop 拒连)"
+
 echo ""
-echo "=== 冒烟全部通过（8/8 场景） ==="
+echo "=== 冒烟全部通过（9/9 场景：8 原场景 + 编译版全链） ==="

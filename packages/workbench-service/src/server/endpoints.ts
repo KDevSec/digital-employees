@@ -13,6 +13,8 @@ export interface EndpointDeps {
   dataDir: string
   /** 进程启动毫秒时刻（healthz.uptime 由它现算） */
   uptime: () => number
+  /** 嵌入的 Web 壳单文件页（S-01/D-6：main 组装以 text import 注入，测试注入真实产物） */
+  indexHtml: string
 }
 
 /** GET /healthz —— C-4 契约：{app,status,version,pid,uid,uptime,dataDir}，uid 必含（a540c56）。 */
@@ -41,7 +43,13 @@ export function activityHandler(_ctx: Ctx): Res {
   return { status: 200, json: { conversationTasks: 0, triggerTasks: 0 } }
 }
 
+/** GET / —— 嵌入的 Web 壳单文件页（S-01：路径取 brand.homepagePath 单源）。 */
+export function rootHandler(deps: EndpointDeps) {
+  return (_ctx: Ctx): Res => ({ status: 200, html: deps.indexHtml })
+}
+
 export function registerEndpoints(reg: RouteRegistry, deps: EndpointDeps): void {
+  reg.get(brand.homepagePath, rootHandler(deps))
   reg.get('/healthz', healthzHandler(deps))
   reg.get('/api/events', eventsHandler)
   reg.get('/api/activity', activityHandler)

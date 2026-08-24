@@ -35,6 +35,12 @@ async function dispatch(c: { req: { path: string; header: (name: string) => stri
   if (res.json !== undefined) {
     return Response.json(res.json, { status: res.status })
   }
+  if (res.html !== undefined) {
+    return new Response(res.html, {
+      status: res.status,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    })
+  }
   // 204/205/304 不得携带 body（Fetch 规范），无 text 时传 null 才能构造合法 Response
   return new Response(res.text ?? null, { status: res.status })
 }
