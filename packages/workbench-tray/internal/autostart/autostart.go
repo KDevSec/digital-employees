@@ -5,9 +5,12 @@ package autostart
 
 import "path/filepath"
 
-// Decision 一次自启注册的判定结果
+// Decision 一次自启注册的判定结果。Register 是双侧语义（设计 §5 注册/注销）：
+//   - true  = 确保 HKCU Run 键存在（注册；键已在则幂等无操作）
+//   - false = 确保 HKCU Run 键不存在（注销；键不在则无操作）——不是「跳过不管」：
+//     用户关过自启后若只跳过不注销，键会残留，升级后自启复活（W-16 同类事故换形态）
 type Decision struct {
-	Register      bool // 确保 HKCU Run 键存在（幂等——键在则不重写）
+	Register      bool
 	WriteSentinel bool // 写哨兵文件（首次默认注册时记录「默认开过、用户没表态」）
 }
 

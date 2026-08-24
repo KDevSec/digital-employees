@@ -14,9 +14,9 @@ func TestShouldRegister(t *testing.T) {
 		want               Decision
 	}{
 		{"首次默认注册_注册并写哨兵", false, true, Decision{Register: true, WriteSentinel: true}},
-		{"用户关过自启_升级跳过不重开", true, false, Decision{}},
+		{"用户关过自启_注销语义（Register=false=确保键不存在）升级不重开", true, false, Decision{}},
 		{"哨兵在设置开_幂等注册不重写哨兵", true, true, Decision{Register: true}},
-		{"未表态且设置关_不注册不写哨兵", false, false, Decision{}},
+		{"未表态且设置关_注销语义_不注册不写哨兵", false, false, Decision{}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -18,4 +18,7 @@ const (
 	CompanyName = "Placeholder"
 	// TrayLogName 壳日志文件名（<profile>/logs/ 下）
 	TrayLogName = "tray.log"
+	// LoopbackHost 网络边界：壳与服务只连 127.0.0.1（设计 §7），无任何外部连接。
+	// probe/actions/menu 三包共用的单一常量（M-4 上提）
+	LoopbackHost = "127.0.0.1"
 )

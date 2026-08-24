@@ -15,9 +15,6 @@ import (
 	"workbench-tray/internal/contract"
 )
 
-// loopbackHost 网络边界：壳只连 127.0.0.1（设计 §7），无任何外部连接
-const loopbackHost = "127.0.0.1"
-
 // ProbeTimeout 探活请求超时（设计 §3：2s）
 const ProbeTimeout = 2 * time.Second
 
@@ -38,7 +35,7 @@ type ProbeResult struct {
 
 // HealthzURL 纯函数：端口 → healthz 地址
 func HealthzURL(port int) string {
-	return "http://" + loopbackHost + ":" + strconv.Itoa(port) + "/healthz"
+	return "http://" + brand.LoopbackHost + ":" + strconv.Itoa(port) + "/healthz"
 }
 
 // DefaultClient 生产用 client（ProbeTimeout 超时）
@@ -75,6 +72,11 @@ func Probe(client Client, port int) ProbeResult {
 	}
 }
 
+// validPort 端口有效性（对齐 TS 侧 zod 的 min(1)/max(65535)）：越界视为无效，发现链落下一级
+func validPort(p int) bool {
+	return p > 0 && p <= 65535
+}
+
 // DiscoverPort 端口发现链（设计 §3，三级 fallback）：
 //  1. <profileDir>/run/service.json 的 port（运行时事实，最权威）
 //  2. <profileDir>/config.json 的 network.port（用户配置，与 TS 侧 load.ts 路径对齐）
@@ -83,19 +85,21 @@ func Probe(client Client, port int) ProbeResult {
 // service.json 损坏/版本不符/端口无效时按不存在处理，落到下一级（advisory 契约，fresh 自愈）。
 func DiscoverPort(profileDir string) int {
 	if data, err := os.ReadFile(filepath.Join(profileDir, "run", "service.json")); err == nil {
-		if h, err := contract.ParseServiceHandle(data); err == nil && h.Port > 0 {
+		if h, err := contract.ParseServiceHandle(data); err == nil && validPort(h.Port) {
 			return h.Port
 		}
 	}
 	if data, err := os.ReadFile(filepath.Join(profileDir, "config.json")); err == nil {
-		if p, err := contract.ParseConfigPort(data); err == nil && p > 0 {
+		if p, err := contract.ParseConfigPort(data); err == nil && validPort(p) {
 			return p
 		}
 	}
 	return brand.DefaultPort
 }
 
-// ProfileDir 壳侧 profile 目录解析：env WORKBENCH_HOME > ~/.workbench（与 TS 侧 main.ts 同语义）。
+// ProfileDir 壳侧 profile 目录解析：env WORKBENCH_HOME > ~/.workbench。
+// 语义差异：Go 侧空串=未设（走默认）；TS 侧 `process.env.WORKBENCH_HOME ?? ...` 的 ?? 只排除
+// null/undefined，空串是有效值——但 Windows 上环境变量设为空串实际不可达，真实环境两侧行为一致。
 func ProfileDir() string {
 	if v := os.Getenv("WORKBENCH_HOME"); v != "" {
 		return v

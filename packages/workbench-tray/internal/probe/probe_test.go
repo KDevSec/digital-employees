@@ -190,3 +190,29 @@ func TestProfileDir(t *testing.T) {
 		}
 	})
 }
+
+// TestDiscoverPortPortRange 端口有效性上界（对齐 TS 侧 zod max(65535)）：越界视为无效落下一级
+func TestDiscoverPortPortRange(t *testing.T) {
+	t.Run("service.json端口超上限_视为无效落二级", func(t *testing.T) {
+		dir := t.TempDir()
+		writeT(t, filepath.Join(dir, "run", "service.json"), `{"schemaVersion":1,"app":"workbench","pid":1,"port":65536}`)
+		writeT(t, filepath.Join(dir, "config.json"), `{"network":{"port":5555}}`)
+		if got := DiscoverPort(dir); got != 5555 {
+			t.Fatalf("DiscoverPort = %d, want 5555（port>65535 视为无效）", got)
+		}
+	})
+	t.Run("config.json端口超上限_落默认", func(t *testing.T) {
+		dir := t.TempDir()
+		writeT(t, filepath.Join(dir, "config.json"), `{"network":{"port":70000}}`)
+		if got := DiscoverPort(dir); got != brand.DefaultPort {
+			t.Fatalf("DiscoverPort = %d, want %d（config 端口越界落默认）", got, brand.DefaultPort)
+		}
+	})
+	t.Run("边界_65535有效", func(t *testing.T) {
+		dir := t.TempDir()
+		writeT(t, filepath.Join(dir, "run", "service.json"), `{"schemaVersion":1,"app":"workbench","pid":1,"port":65535}`)
+		if got := DiscoverPort(dir); got != 65535 {
+			t.Fatalf("DiscoverPort = %d, want 65535（上界含端）", got)
+		}
+	})
+}

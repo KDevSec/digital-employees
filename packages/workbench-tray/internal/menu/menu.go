@@ -5,11 +5,9 @@ package menu
 import (
 	"strconv"
 
+	"workbench-tray/internal/brand"
 	"workbench-tray/internal/statemachine"
 )
-
-// loopbackHost 状态项地址前缀（与 probe/actions 同一网络边界常量语义：只连 127.0.0.1）
-const loopbackHost = "127.0.0.1"
 
 // ItemID 菜单项标识
 type ItemID uint8
@@ -86,7 +84,7 @@ func MenuModelFor(state statemachine.State, port int, hasPendingUpdate bool) Men
 	statusText := "探测中…"
 	switch state {
 	case statemachine.Green:
-		statusText = "运行中 · " + loopbackHost + ":" + strconv.Itoa(port)
+		statusText = "运行中 · " + brand.LoopbackHost + ":" + strconv.Itoa(port)
 	case statemachine.Yellow:
 		statusText = "启动中…"
 	case statemachine.Gray:

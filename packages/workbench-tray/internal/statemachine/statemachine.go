@@ -90,6 +90,8 @@ func Next(s State, ev Event) Transition {
 		if s == Gray {
 			return Transition{State: Gray}
 		}
+		// 双条件接管。GREEN 直转红是防御分支：计数清零纪律下不可达（GREEN 收到首败即转
+		// YELLOW，fails 单调升时不会以 ≥3 回到 GREEN）——保留判定让错误调用方也得到正确裁决
 		if s != Red && e.Fails >= TakeoverFails && e.ElapsedMs >= ColdStartBudgetMs {
 			return Transition{State: Red, ShouldRecover: true}
 		}

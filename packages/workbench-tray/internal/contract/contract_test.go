@@ -2,7 +2,15 @@ package contract
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"strconv"
+	"strings"
 	"testing"
+
+	"workbench-tray/internal/brand"
 )
 
 // TestParseServiceHandleRoundTrip 全字段往返：Go struct → JSON → Parse → 相等（锁 json tag 与 TS 字段名一致）
@@ -101,4 +109,56 @@ func TestParseConfigPort(t *testing.T) {
 			t.Fatalf("ParseConfigPort 坏 JSON 无 error")
 		}
 	})
+}
+
+// ---------- 跨语言契约绊网（I-3，沿 Wave 3 先例：镜像变受检查镜像） ----------
+
+// readRepoFile runtime.Caller 定位本测试源文件后上溯到仓库根再拼相对路径——
+// 不依赖测试进程 cwd，`go test ./...` 任意目录发起均可跑。
+func readRepoFile(t *testing.T, rel ...string) string {
+	t.Helper()
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatalf("runtime.Caller 失败：无法定位仓库根")
+	}
+	// thisFile = <repo>/packages/workbench-tray/internal/contract/contract_test.go → 上溯 5 级 = 仓库根
+	repoRoot := thisFile
+	for i := 0; i < 5; i++ {
+		repoRoot = filepath.Dir(repoRoot)
+	}
+	path := filepath.Join(append([]string{repoRoot}, rel...)...)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("读 %s 失败（跨语言契约绊网要求 TS 源在场）: %v", path, err)
+	}
+	return string(data)
+}
+
+// TestCrossLanguageContractSync 跨语言契约绊网：直接读 TS 侧源文本做存在性断言——
+// TS 侧改品牌值 / ServiceHandle 字段名 → 本测试红，强制同步 Go 侧镜像（手写同步的检查闭环）。
+func TestCrossLanguageContractSync(t *testing.T) {
+	brandTs := readRepoFile(t, "packages", "workbench-service", "src", "brand.ts")
+	contractsTs := readRepoFile(t, "packages", "workbench-service", "src", "runtime", "contracts.ts")
+
+	// brand 四镜像值（AppName/DisplayName/DefaultPort/ProfileName）在 brand.ts 文本中出现
+	for _, v := range []string{brand.AppName, brand.DisplayName, strconv.Itoa(brand.DefaultPort), brand.ProfileName} {
+		if !strings.Contains(brandTs, v) {
+			t.Errorf("brand.ts 不再包含镜像值 %q——TS/Go 品牌镜像漂移，需同步 internal/brand/brand.go", v)
+		}
+	}
+
+	// ServiceHandle 全部 json tag 字段名在 contracts.ts 文本中出现（反射取实际 tag，不手抄清单）
+	typ := reflect.TypeOf(ServiceHandle{})
+	if n := typ.NumField(); n != 10 {
+		t.Fatalf("ServiceHandle 字段数 = %d, want 10——增删字段必须同步 TS 侧 ServiceHandle 与本绊网", n)
+	}
+	for i := 0; i < typ.NumField(); i++ {
+		name := strings.Split(typ.Field(i).Tag.Get("json"), ",")[0]
+		if name == "" {
+			t.Fatalf("ServiceHandle 字段 %s 缺 json tag", typ.Field(i).Name)
+		}
+		if !strings.Contains(contractsTs, name) {
+			t.Errorf("contracts.ts 不再包含字段名 %q——run/ 契约漂移，需同步 internal/contract/contract.go", name)
+		}
+	}
 }

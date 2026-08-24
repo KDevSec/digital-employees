@@ -13,6 +13,8 @@ func TestNext(t *testing.T) {
 		// GREEN：健康态
 		{"GREEN+ProbeOk_保持绿", Green, ProbeOk{}, Transition{State: Green}},
 		{"GREEN+首次失败_转黄", Green, ProbeFail{Fails: 1}, Transition{State: Yellow}},
+		// 防御分支：计数清零纪律下不可达（GREEN 收到首败即转 YELLOW，fails 单调升时不会以 ≥3 回到 GREEN）；
+		// 保留双条件判定，使状态机对「计数未清零」的错误调用方也给出正确裁决而非误判
 		{"GREEN+双条件_直接转红", Green, ProbeFail{Fails: 3, ElapsedMs: 30000}, Transition{State: Red, ShouldRecover: true}},
 
 		// YELLOW：黄态硬规则——skip 不重启（冷启动窗口内重启必成重启风暴）
@@ -44,8 +46,11 @@ func TestNext(t *testing.T) {
 		{"RED+UserStop_落灰", Red, UserStop{}, Transition{State: Gray}},
 		{"Starting+UserStop_落灰", Starting, UserStop{}, Transition{State: Gray}},
 
-		// UserStart：非灰态不改变状态（探活是唯一事实源）
+		// UserStart：非灰态不改变状态（探活是唯一事实源）——矩阵补格：Yellow/Red/Starting 同样无操作
 		{"GREEN+UserStart_无操作", Green, UserStart{}, Transition{State: Green}},
+		{"YELLOW+UserStart_无操作", Yellow, UserStart{}, Transition{State: Yellow}},
+		{"RED+UserStart_无操作", Red, UserStart{}, Transition{State: Red}},
+		{"Starting+UserStart_无操作", Starting, UserStart{}, Transition{State: Starting}},
 	}
 
 	for _, tt := range tests {
