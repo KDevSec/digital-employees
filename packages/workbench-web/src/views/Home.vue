@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { fetchHealthz, interpretHealth, versionLine } from '../api/health'
+import { fetchHealthz, interpretHealth, versionLineGated } from '../api/health'
 import type { HealthBadge, HealthzJson } from '../api/health'
 
-/** 轮询间隔（设计 §4.2：占位页轮询 /healthz） */
+/** 轮询间隔（计划文档 Task 10：健康徽章 2s 轮询 fetchHealthz → interpretHealth 渲染） */
 const POLL_MS = 2000
 
 const badge = ref<HealthBadge>(interpretHealth(null))
-const version = ref<string>(versionLine(null))
+const version = ref<string>(versionLineGated(null))
 let timer: ReturnType<typeof setInterval> | undefined
 
 async function refresh(): Promise<void> {
   const json: HealthzJson | null = await fetchHealthz()
   badge.value = interpretHealth(json)
-  // 端口从页面自身地址推导（页面即由服务伺服）；无端口（默认 80）时不展示端口段
-  const port = Number(window.location.port)
-  version.value = versionLine(json ? { version: json.version, port: port || undefined } : null)
+  // 端口从页面自身地址推导（页面即由服务伺服）；无端口（默认 80）时不展示端口段。
+  // 版本行经健康门控：外国占用者带 version 也不显示
+  const port = Number(window.location.port) || undefined
+  version.value = versionLineGated(json, port)
 }
 
 onMounted(() => {

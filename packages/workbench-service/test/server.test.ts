@@ -6,6 +6,7 @@ import { toHonoApp } from '../src/server/hono-adapter'
 import { isLocalHost } from '../src/server/guard'
 import { createRegistry } from '../src/server/registry'
 import { registerEndpoints } from '../src/server/endpoints'
+import { brand } from '../src/brand'
 
 function buildApp(overrides: Partial<Parameters<typeof registerEndpoints>[1]> = {}) {
   const registry = createRegistry()
@@ -173,5 +174,13 @@ describe('嵌入源 web-dist/index.html（提交进仓的编译期资产，S-01�
     expect(html).toContain('数字员工工作台')
     expect(html).not.toMatch(/<script\s+src=/)
     expect(html).not.toMatch(/<link\s+rel="stylesheet"\s+href=/)
+  })
+
+  it('品牌镜像防漂移：web 包的 APP_ID/标题镜像与 service brand 单源一致（品牌 sweep 漏改时此处红）', () => {
+    const html = readEmbeddedIndexHtml()
+    // web 包 src/api/health.ts 的 APP_ID 镜像（interpretHealth 判自家 app 的字面量）
+    expect(html).toContain(brand.app)
+    // web 包 Home.vue 的标题镜像（文案写死，见计划 Task 10）
+    expect(html).toContain(brand.displayName)
   })
 })

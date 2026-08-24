@@ -46,15 +46,23 @@ export function versionLine(info: { version?: string; port?: number } | null): s
 }
 
 /**
- * 单次 healthz 抓取（2s 超时，失败/非 2xx 归一 null）。
- * 缺省同源请求 `/healthz`（页面由服务自身伺服）；显式传 port 时打 127.0.0.1:<port>。
+ * 版本行（健康门控）：仅健康态（自家 app + ok）才展示版本——
+ * 外国占用者应答 healthz 带 version 时不得误显示其版本，一律「版本未知」。
  */
-export async function fetchHealthz(port?: number): Promise<HealthzJson | null> {
-  const url = port ? `http://127.0.0.1:${port}/healthz` : '/healthz'
+export function versionLineGated(json: HealthzJson | null, port?: number): string {
+  if (!interpretHealth(json).ok) return versionLine(null)
+  return versionLine(json ? { version: json.version, port } : null)
+}
+
+/**
+ * 单次 healthz 抓取（2s 超时，失败/非 2xx 归一 null）。
+ * 同源相对路径请求 `/healthz`（页面由服务自身伺服；dev 由 Vite 代理到 127.0.0.1:19980）。
+ */
+export async function fetchHealthz(): Promise<HealthzJson | null> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 2000)
   try {
-    const res = await fetch(url, { signal: controller.signal })
+    const res = await fetch('/healthz', { signal: controller.signal })
     if (!res.ok) return null
     return (await res.json()) as HealthzJson
   } catch {

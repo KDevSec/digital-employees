@@ -15,9 +15,6 @@ const SERVICE_PORT = 'service.port'
 const RELIABILITY_JSON = 'reliability.json'
 const INSTALLATION_ID = 'installation-id'
 
-/** 构建期注入的 commit id：build.sh 以 --define "process.env.WORKBENCH_BUILD_COMMIT_ID=..." 在编译期把
- *  该字面量成员表达式替换为常量（实测 computed access 不被 define 命中）；直跑时退化为运行时 env，缺省 'dev' */
-
 /** 发现契约：run/service.json（设计 §6.1） */
 export interface ServiceHandle {
   schemaVersion: 1

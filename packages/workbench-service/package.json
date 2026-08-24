@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "build": "bash scripts/build.sh"
   },
   "dependencies": {
