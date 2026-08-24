@@ -1,0 +1,20 @@
+{
+  "name": "@workbench/service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "build": "bash scripts/build.sh"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "zod": "^3",
+    "commander": "^12"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^2",
+    "@types/bun": "latest"
+  }
+}

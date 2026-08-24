@@ -18,3 +18,6 @@ workbench/data/
 .ieidev/
 # 参考项目源码（仅本地调研用）
 reference-projects/
+# 构建产物与可执行体（workbench 框架增量）
+*.exe
+web-dist/

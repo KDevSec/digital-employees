@@ -1,0 +1,7 @@
+{
+  "name": "digital-employees",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}
