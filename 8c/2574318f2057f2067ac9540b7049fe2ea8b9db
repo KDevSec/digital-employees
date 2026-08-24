@@ -1,0 +1,21 @@
+packages/workbench-tray/versioninfo/versioninfo.json
+  s_cbda167ad90f41::t_3b3c17a33ba40f 1-43
+packages/workbench-tray/scripts/build-tray.sh
+  s_cbda167ad90f41::t_b5299315a9ef31 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8c2574318f2057f2067ac9540b7049fe2ea8b9db",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
