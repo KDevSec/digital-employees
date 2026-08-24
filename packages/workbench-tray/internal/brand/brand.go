@@ -10,6 +10,8 @@ const (
 	DisplayName = "数字员工工作台"
 	// DefaultPort 默认监听端口（D-022，端口发现链的最终 fallback）
 	DefaultPort = 19980
+	// ProfileName 用户目录下的 profile 目录名（镜像 TS 侧 brand.profileName）
+	ProfileName = ".workbench"
 	// RunKeyName HKCU Run 键值名（品牌占位）
 	RunKeyName = "WorkbenchTray"
 	// CompanyName VersionInfo 占位（品牌定后换）
