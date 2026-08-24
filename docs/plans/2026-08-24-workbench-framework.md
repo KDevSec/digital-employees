@@ -2,6 +2,29 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
+## 执行记录（2026-08-25 收官，Task 17 verification 全绿）
+
+**执行方式**：subagent-driven-development，5 波（Tasks 1-4 / 5-9 / 10-11 / 12-15 / 16），每波实现者 + spec 审查 + 质量审查 + 修复 + 复审循环；用户授权全自主（睡眠中）。
+
+**新鲜验证证据（Task 17 亲跑）**：service 101/101 测试 + typecheck 0 错；web 11/11 + typecheck 0 错；tray 8 包全 ok（0 失败）+ vet/gofmt 零输出；服务冒烟 9/9（healthz C-4 七字段含 uid、buildCommitId 注入、幂等/403/停止/崩溃/坏config 78/端口冲突 78/编译版全链）；托盘冒烟 S0b–S5 全过（四态流转 42s、红态自愈恰一次、W-2 杀壳同 pid、HKCU 注册+清理恢复、VersionInfo 四字段、6.47MB<8MB）；架构纪律 grep（hono 单点/Bun API 单点/品牌单源）；无进程/端口/Run 键残留。
+
+**质量环产出**：3 项契约裁决落盘（healthz+uid a540c56、D-035 崩溃检测时序、Restart 段序）；2 个跨语言绊网（品牌镜像 + ServiceHandle/Activity 字段，双向对抗实证）；2 个实证级缺陷被审查抓住（Restart 扁平契约被 commander 吞参、左键同步阻塞消息循环 17s）。
+
+**与设计的差异记录**（Task 17 第 3 步，供后续对齐或设计回写）：
+| # | 差异 | 处置 |
+|---|------|------|
+| 1 | Windows 跨进程 SIGTERM=硬杀（handler 不执行）→ stop 走 CLI 自行簿记（保留 reliability 供崩溃判定） | 平台事实，已注释落码 |
+| 2 | 菜单 Visible→Disabled 映射（systray re-show 尾插乱序实证）；pending 项不创建（U 系列未落地恒 false） | 简化裁决，U 系列接入时改按 pending 创建 |
+| 3 | 检查更新菜单占位（traylog 记 update_check_pending） | U 系列落地后接 |
+| 4 | TR-07 无 GUI 确认窗（activity 恒零跳过停止并记日志） | 业务填充时补窗口框架 |
+| 5 | traylog 目录名 internal/traylog（设计 §2 写 logging/） | 命名微偏 |
+| 6 | 托盘日志轮转未落（追加模式） | 挂 T-Q4 |
+| 7 | §3.1「每步含步号」事件未实现 | V0.1 简版口径 |
+| 8 | brand.CompanyName 与 versioninfo.json 双事实源 | 品牌 sweep 时统一（Placeholder 占位） |
+| 9 | activity 解析失败仍执行 stop（保守方向相反，V0.1 风险≈0） | 记账 |
+| 10 | Bun API 限 main.ts（设计说 storage/runtime 两目录——V0.1 无 storage，main.ts 为组装根） | 结构性合理偏差 |
+| 11 | 人眼验收项：四色图标实际显示、菜单点击链路、左键开浏览器 | GUI 不可脚本化，用户醒来验收 |
+
 **Goal:** 把 spike 验证过的形态工程化为可用框架——workbench-service 单体骨架（healthz/CLI/契约文件/单实例/日志/优雅退出）+ 内嵌 Vue Web 壳 + workbench-tray 托盘全量，三者端到端闭环。
 
 **Architecture:** TS/Hono 服务经框架无关 route-registry 组装（Bun `--compile` 单体，前端产物 text-import 嵌入）；Go/fyne-systray 托盘只经契约（HTTP /healthz + run/service.json + CLI 子命令）遥控服务；全部路径经依赖注入可测试。设计依据：[框架增量设计](2026-08-24-workbench-framework-design.md) + [服务本体详细设计](../design/详细设计/工作台服务本体详细设计-v0.1.md) + [托盘壳详细设计](../design/详细设计/托盘壳详细设计-v0.1.md)。
