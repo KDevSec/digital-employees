@@ -153,6 +153,15 @@ describe('__health-wait（内部子命令：托盘/安装脚本消费）', () =>
     await program.parseAsync(['node', 'workbench', '__health-wait', '150'])
     expect(exits).toEqual([1])
   })
+
+  it('非数字参数（NaN）→ 守卫直接退出 1，不死循环', async () => {
+    const { deps, exits } = makeCliDeps({ probeHealthz: async () => false })
+    const program = buildProgram(deps)
+    const t0 = Date.now()
+    await program.parseAsync(['node', 'workbench', '__health-wait', 'abc'])
+    expect(exits).toEqual([1])
+    expect(Date.now() - t0).toBeLessThan(2000) // 无守卫时 Date.now()>=NaN 恒 false → 死循环
+  })
 })
 
 describe('help 面（隐藏内部命令，设计 §4：__ 前缀不进 --help）', () => {

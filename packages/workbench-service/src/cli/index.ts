@@ -100,7 +100,12 @@ export function buildProgram(deps: CliDeps): Command {
     .command('__health-wait [ms]', { hidden: true })
     .description('内部：等待 /healthz 就绪（托盘/安装脚本消费）')
     .action(async (ms: string | undefined) => {
-      const budget = Number(ms ?? 15000)
+      const budget = ms === undefined ? 15000 : Number(ms)
+      if (!Number.isFinite(budget) || budget < 0) {
+        // NaN/负数守卫：Date.now() >= NaN 恒 false，无守卫会死循环
+        deps.exit(1)
+        return
+      }
       const deadline = Date.now() + budget
       for (;;) {
         if (await deps.probeHealthz()) {

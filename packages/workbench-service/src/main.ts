@@ -1,11 +1,11 @@
 /**
  * main 组装（S-02/S-13/S-14）：CLI 命令面 + 真实依赖注入。
  * 本文件不经单元测试覆盖（runStartup/runShutdown/CLI 均为注入可测的纯编排），
- * 端到端正确性由 scripts/smoke.sh 七场景冒烟验证。
+ * 端到端正确性由 scripts/smoke.sh 冒烟验证（含坏 config 78 场景）。
  *
  * 平台事实（Windows 实测 2026-08-24）：跨进程 process.kill(pid,'SIGTERM') 是硬杀
  * （TerminateProcess），目标进程的 SIGTERM handler 不会执行——因此 `stop` 子命令在
- * 确认端口释放后自行完成善后簿记（markCleanStop + 删发现契约），见 stopCommand。
+ * kill 前做 healthz 身份校验（防误杀）、确认端口释放后自行完成善后簿记，见 stopCommand。
  */
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -28,7 +28,7 @@ import {
   writeServiceHandle,
 } from './runtime/contracts'
 import type { ServiceHandle } from './runtime/contracts'
-import { ExitError, FIRST_RUN_SENTINEL, runShutdown, runStartup } from './runtime/lifecycle'
+import { ExitError, runShutdown, runStartup } from './runtime/lifecycle'
 import type { ShutdownDeps, StartupDeps } from './runtime/lifecycle'
 import { TAKEOVER_MIN_CONSECUTIVE_FAILS } from './runtime/instance'
 import type { HealthSnapshot } from './runtime/instance'
@@ -36,7 +36,7 @@ import { createRegistry } from './server/registry'
 import { registerEndpoints } from './server/endpoints'
 import { toHonoApp } from './server/hono-adapter'
 
-// ---------- profile 目录与初始化 ----------
+// ---------- profile 目录（模块级仅路径解析：零 IO、零抛错——stop/status 不依赖 config） ----------
 
 /** env 覆盖入口（测试/冒烟关键）：WORKBENCH_HOME > ~/.workbench */
 const profileDir = process.env.WORKBENCH_HOME ?? join(homedir(), brand.profileName)
@@ -44,15 +44,57 @@ const runDir = join(profileDir, 'run')
 const logsDir = join(profileDir, 'logs')
 const sentinelsDir = join(runDir, 'sentinels')
 
-mkdirSync(profileDir, { recursive: true })
-mkdirSync(logsDir, { recursive: true })
-mkdirSync(sentinelsDir, { recursive: true })
-writeSample(profileDir) // config.sample.json（首启生成，幂等覆盖）
-
-const config = loadConfig(profileDir)
-const logger: Logger = createLogger(logsDir)
-const uid = getOrCreateInstallationId(profileDir)
 let startedAtMs = Date.now()
+
+// ---------- 守护路径运行时（惰性初始化，I-3：急切初始化会使坏 config 连累 stop/status） ----------
+
+/** start/__daemon 路径的重依赖集合（config/logger/uid） */
+interface ServiceRuntime {
+  config: WorkbenchConfig
+  logger: Logger
+  uid: string
+}
+
+let serviceRuntime: ServiceRuntime | null = null
+
+/**
+ * 守护路径专用初始化：目录树 + config.sample.json + config（加载失败 → ExitError 78，
+ * 设计 §4 契约：配置/环境错误=78）+ logger + installation-id。
+ * stop/status/portal/activity 一律不经此函数——config 损坏时它们仍须可用。
+ */
+function initServiceRuntime(): ServiceRuntime {
+  if (serviceRuntime) return serviceRuntime
+  mkdirSync(profileDir, { recursive: true })
+  mkdirSync(logsDir, { recursive: true })
+  mkdirSync(sentinelsDir, { recursive: true })
+  writeSample(profileDir) // config.sample.json（首启生成，幂等覆盖）
+  const logger = createLogger(logsDir)
+  let config: WorkbenchConfig
+  try {
+    config = loadConfig(profileDir)
+  } catch (err) {
+    logger.close()
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new ExitError(
+      78,
+      `配置文件无法加载（${join(profileDir, 'config.json')}）：${detail}。请修正该文件后重试；删除它则回退默认配置。`,
+    )
+  }
+  const uid = getOrCreateInstallationId(profileDir)
+  serviceRuntime = { config, logger, uid }
+  return serviceRuntime
+}
+
+/** 探测端口解析（不抛错，status/activity/portal/__health-wait 用）：句柄优先，无句柄试读 config，坏 config 走默认端口 */
+function resolveProbePort(): number {
+  const handle = readServiceHandle(runDir)
+  if (handle) return handle.port
+  try {
+    return loadConfig(profileDir).network.port
+  } catch {
+    return brand.defaultPort
+  }
+}
 
 // ---------- 真实依赖实现 ----------
 
@@ -128,12 +170,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function startRealServer(cfg: WorkbenchConfig): ReturnType<typeof Bun.serve> {
+function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
   registerEndpoints(registry, {
     version: brand.version,
     pid: process.pid,
-    uid,
+    uid: rt.uid,
     dataDir: profileDir,
     uptime: () => Date.now() - startedAtMs,
   })
@@ -184,33 +226,38 @@ function verifyPortReleased(port: number): Promise<boolean> {
   })
 }
 
-const startupDeps: StartupDeps = {
-  loadConfig: () => structuredClone(config),
-  readReliability: () => readReliability(runDir),
-  readServiceHandle: () => readServiceHandle(runDir),
-  probeHealth: probeHealthSnapshot,
-  clearRunDir: clearRunDirFull,
-  startServer: startRealServer,
-  writeServiceHandle: (_server, cfg) =>
-    writeServiceHandle(runDir, { pid: process.pid, port: cfg.network.port, uid, version: brand.version }),
-  writeReliability: (handle) => writeReliability(runDir, { runId: handle.instanceId }),
-  logger,
-  openBrowser,
-  sentinelExists: (name) => existsSync(sentinelPath(name)),
-  writeSentinel: (name) => {
-    mkdirSync(sentinelsDir, { recursive: true })
-    writeFileSync(sentinelPath(name), `${new Date().toISOString()}\n`, 'utf8')
-  },
+function buildStartupDeps(rt: ServiceRuntime): StartupDeps {
+  return {
+    loadConfig: () => structuredClone(rt.config),
+    readReliability: () => readReliability(runDir),
+    readServiceHandle: () => readServiceHandle(runDir),
+    probeHealth: probeHealthSnapshot,
+    clearRunDir: clearRunDirFull,
+    startServer: (cfg) => startRealServer(cfg, rt),
+    writeServiceHandle: (_server, cfg) =>
+      writeServiceHandle(runDir, { pid: process.pid, port: cfg.network.port, uid: rt.uid, version: brand.version }),
+    writeReliability: (handle) => writeReliability(runDir, { runId: handle.instanceId }),
+    logger: rt.logger,
+    openBrowser,
+    sentinelExists: (name) => existsSync(sentinelPath(name)),
+    writeSentinel: (name) => {
+      mkdirSync(sentinelsDir, { recursive: true })
+      writeFileSync(sentinelPath(name), `${new Date().toISOString()}\n`, 'utf8')
+    },
+  }
 }
 
 // ---------- 守护路径（start / __daemon / 无子命令） ----------
 
 async function daemonEntry(_opts: StartOptions): Promise<number> {
+  let rt: ServiceRuntime | null = null
   try {
-    const outcome = await runStartup(startupDeps)
+    rt = initServiceRuntime()
+    const runtime = rt // const 捕获：闭包内保持非空收窄
+    const outcome = await runStartup(buildStartupDeps(runtime))
     if (outcome.server === null) {
       // idempotent（已开主页）/ starting（另一实例启动中）→ 静默退出 0
-      logger.close()
+      runtime.logger.close()
       return 0
     }
     const server = outcome.server as ReturnType<typeof Bun.serve>
@@ -225,20 +272,20 @@ async function daemonEntry(_opts: StartOptions): Promise<number> {
       },
       clearRunDir: clearDiscoveryFiles,
       verifyPortReleased,
-      logger,
+      logger: runtime.logger,
     }
     const handleSignal = (signal: 'SIGTERM' | 'SIGINT'): void => {
       if (shuttingDown) return
       shuttingDown = true
       void runShutdown(shutdownDeps)
         .then(() => {
-          logger.close()
+          runtime.logger.close()
           // 设计 §4：SIGTERM 退出码 143（systemd SuccessExitStatus 配套）；Ctrl+C 正常 0
           process.exit(signal === 'SIGTERM' ? 143 : 0)
         })
         .catch((err) => {
           console.error(`优雅退出失败：`, err)
-          logger.close()
+          runtime.logger.close()
           process.exit(1)
         })
     }
@@ -250,10 +297,10 @@ async function daemonEntry(_opts: StartOptions): Promise<number> {
   } catch (err) {
     if (err instanceof ExitError) {
       console.error(err.message)
-      logger.close()
+      rt?.logger.close()
       return err.code
     }
-    logger.close()
+    rt?.logger.close()
     throw err
   }
 }
@@ -278,6 +325,28 @@ async function stopCommand(): Promise<number> {
     return 0
   }
   const { pid, port } = handle
+
+  // 0. 身份校验（kill 前确认端口上的服务确实是本工作台且 pid 与契约一致，防误杀）：
+  //    - 可达但非自家 app → 拒杀（句柄过期/端口被占），退出 1
+  //    - 可达且自家 → 校验 healthz 自报 pid 与契约一致后才杀
+  //    - 不可达（僵尸句柄）→ 无法核身，按契约记录执行（pid 可能已被 OS 复用）
+  const identity = await fetchHealth(port)
+  if (identity.reachable) {
+    if (identity.app !== brand.app) {
+      console.error(
+        `拒绝停止：端口 ${port} 上的服务不是本工作台（healthz 自报 app=${identity.app ?? '未知'}）。run/service.json 可能已过期，请检查端口占用。`,
+      )
+      return 1
+    }
+    if (identity.pid !== undefined && identity.pid !== pid) {
+      console.error(
+        `拒绝停止：端口 ${port} 上服务的 pid（${identity.pid}）与契约记录（${pid}）不一致，疑似陈旧句柄。`,
+      )
+      return 1
+    }
+  } else {
+    console.log(`（healthz 不可达：契约 pid ${pid} 可能已复用，无法核身，按契约记录执行停止）`)
+  }
 
   // 1. 对句柄 pid 发 SIGTERM（Windows 实测为硬杀——服务进程收不到信号，善后由本命令完成）
   let killIssued = true
@@ -309,7 +378,7 @@ async function stopCommand(): Promise<number> {
 
 async function statusCommand(): Promise<string> {
   const handle = readServiceHandle(runDir)
-  const port = handle ? handle.port : config.network.port
+  const port = handle ? handle.port : resolveProbePort()
   const health = await fetchHealth(port)
   const own = health.reachable && health.app === brand.app
   const base: Record<string, unknown> = {
@@ -330,8 +399,7 @@ async function statusCommand(): Promise<string> {
 }
 
 async function portalCommand(opts: { printUrl: boolean }): Promise<number> {
-  const handle = readServiceHandle(runDir)
-  const port = handle ? handle.port : config.network.port
+  const port = resolveProbePort()
   const url = `http://127.0.0.1:${port}`
   if (opts.printUrl) {
     console.log(url)
@@ -342,8 +410,7 @@ async function portalCommand(opts: { printUrl: boolean }): Promise<number> {
 }
 
 async function activityCommand(): Promise<string> {
-  const handle = readServiceHandle(runDir)
-  const port = handle ? handle.port : config.network.port
+  const port = resolveProbePort()
   const health = await fetchHealth(port)
   if (health.reachable && health.app === brand.app) {
     // 服务在跑：转发 /api/activity（TR-07 优雅停服判据的数据源）
@@ -371,7 +438,7 @@ const cliDeps: CliDeps = {
   portal: portalCommand,
   activity: activityCommand,
   probeHealthz: async () => {
-    const one = await fetchHealth(config.network.port)
+    const one = await fetchHealth(resolveProbePort())
     return one.reachable && one.app === brand.app
   },
   exit: (code) => process.exit(code),
@@ -381,6 +448,6 @@ buildProgram(cliDeps)
   .parseAsync(process.argv)
   .catch((err: unknown) => {
     console.error('未分类错误：', err)
-    logger.close()
+    serviceRuntime?.logger.close()
     process.exit(1)
   })

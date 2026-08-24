@@ -119,13 +119,14 @@ describe('runStartup（S-13 启动序列编排，设计 §3.1）', () => {
     expect(outcome.handle).toEqual(fakeHandle)
   })
 
-  it('reliability.cleanStop=false → 先记 lifecycle crash_detected 再读句柄', async () => {
+  it('fresh + cleanStop=false → 判定（probeHealth）之后、起服务之前记 crash_detected（D-035 晚记）', async () => {
     const { deps, calls, lifecycleEvents } = makeDeps({ reliability: crashedReliability })
     await runStartup(deps)
 
     const crashIdx = calls.indexOf('lifecycle:crash_detected')
     expect(crashIdx).toBeGreaterThanOrEqual(0)
-    expect(calls.indexOf('readServiceHandle')).toBeGreaterThan(crashIdx)
+    expect(crashIdx).toBeGreaterThan(calls.indexOf('probeHealth')) // 单实例判定之后
+    expect(crashIdx).toBeLessThan(calls.indexOf('startServer')) // 起服务之前
     const ev = lifecycleEvents.find((e) => e.event === 'crash_detected')
     expect(ev?.payload).toMatchObject({ runId: 'run-old' })
   })
@@ -229,6 +230,66 @@ describe('runStartup 五分支（S-06 判定接入）', () => {
     expect(outcome.action).toBe('fresh')
     expect(calls).not.toContain('clearRunDir')
     expect(calls).toContain('startServer')
+  })
+})
+
+describe('runStartup 崩溃检测时序（D-035：早读暂存、晚记——仅 fresh/takeover 接管分支记录）', () => {
+  it('幂等（handle + own health + cleanStop=false）→ 返回 0 且 lifecycle 无 crash_detected（钉住）', async () => {
+    // 运行中实例的 cleanStop=false 是常态；旧时序会在幂等分支误记 crash（runId 指向健康实例）
+    const { deps, calls, lifecycleEvents } = makeDeps({
+      handle: fakeHandle,
+      reliability: crashedReliability,
+      health: { reachable: true, app: 'workbench', uid: 'u1', pid: 111, pidAlive: true },
+    })
+    const outcome = await runStartup(deps)
+
+    expect(outcome.action).toBe('idempotent')
+    expect(outcome.server).toBeNull()
+    expect(calls).not.toContain('lifecycle:crash_detected')
+    expect(lifecycleEvents.find((e) => e.event === 'crash_detected')).toBeUndefined()
+    expect(calls).not.toContain('startServer')
+  })
+
+  it('starting（另一实例启动中）+ cleanStop=false → 不记 crash_detected', async () => {
+    const { deps, lifecycleEvents } = makeDeps({
+      handle: fakeHandle,
+      reliability: crashedReliability,
+      health: { reachable: false, pidAlive: true, consecutiveFails: 1, elapsedMs: 1_000 },
+    })
+    await runStartup(deps)
+    expect(lifecycleEvents.find((e) => e.event === 'crash_detected')).toBeUndefined()
+  })
+
+  it('takeover + cleanStop=false → clearRunDir 之后记（早读暂存值——文件已被删）', async () => {
+    const { deps, calls, lifecycleEvents } = makeDeps({
+      handle: fakeHandle,
+      reliability: crashedReliability,
+      health: { reachable: false, pidAlive: true, consecutiveFails: 3, elapsedMs: 31_000 },
+    })
+    const outcome = await runStartup(deps)
+
+    expect(outcome.action).toBe('takeover')
+    const crashIdx = calls.indexOf('lifecycle:crash_detected')
+    expect(crashIdx).toBeGreaterThan(calls.indexOf('clearRunDir'))
+    expect(crashIdx).toBeLessThan(calls.indexOf('startServer'))
+    // 值来自接管前暂存（reliability.json 已被 clearRunDir 删除）
+    expect(lifecycleEvents.find((e) => e.event === 'crash_detected')?.payload).toMatchObject({
+      runId: 'run-old',
+    })
+  })
+
+  it('conflict + cleanStop=false → 先记 port_conflict（含占用方）再抛 78，不记 crash_detected', async () => {
+    const { deps, lifecycleEvents } = makeDeps({
+      handle: fakeHandle,
+      reliability: crashedReliability,
+      health: { reachable: true, app: 'someone-else', uid: 'u1', pid: 222, pidAlive: true },
+    })
+    await expect(runStartup(deps)).rejects.toMatchObject({ code: 78 })
+
+    expect(lifecycleEvents.find((e) => e.event === 'crash_detected')).toBeUndefined()
+    const ev = lifecycleEvents.find((e) => e.event === 'port_conflict')
+    expect(ev?.payload).toMatchObject({ port: 19980 })
+    expect(ev?.payload).toMatchObject({ occupant: { pid: 222, app: 'someone-else' } })
   })
 })
 

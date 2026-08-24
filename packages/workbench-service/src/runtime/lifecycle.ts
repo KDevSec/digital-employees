@@ -34,7 +34,7 @@ export interface StartupDeps {
   readReliability(): ReliabilityState | null | Promise<ReliabilityState | null>
   readServiceHandle(): ServiceHandle | null | Promise<ServiceHandle | null>
   probeHealth(handle: ServiceHandle | null): HealthSnapshot | Promise<HealthSnapshot>
-  /** 清 run/ 契约文件（takeover 与退出路径使用） */
+  /** 清 run/ 契约（**takeover 接管路径**：删全部四件套——service.json/service.pid/service.port/reliability.json；reliability 随即由 writeReliability 重写，故可删） */
   clearRunDir(): void | Promise<void>
   startServer(config: WorkbenchConfig): unknown | Promise<unknown>
   /** 写发现契约 run/service.json，返回完整句柄（供 banner 与 reliability 关联） */
@@ -66,14 +66,13 @@ export async function runStartup(deps: StartupDeps): Promise<StartupOutcome> {
   const config = await deps.loadConfig()
   const port = config.network.port
 
-  // 2. 崩溃检测（上次 cleanStop=false 即视为异常退出，记 lifecycle 供排障）
+  // 2. 崩溃检测【读】（D-035：早读暂存——takeover 的 clearRunDir 会删掉 reliability.json，
+  //    值必须先读入；crash_detected 事件延后到第 4.5 步、仅接管分支记录）
   const reliability = await deps.readReliability()
-  if (reliability !== null && detectCrash(reliability)) {
-    deps.logger.lifecycle('crash_detected', {
-      runId: reliability.runId,
-      startedAt: reliability.startedAt,
-    })
-  }
+  const crashedInfo =
+    reliability !== null && detectCrash(reliability)
+      ? { runId: reliability.runId, startedAt: reliability.startedAt }
+      : null
 
   // 3. 单实例判定
   const handle = await deps.readServiceHandle()
@@ -86,7 +85,8 @@ export async function runStartup(deps: StartupDeps): Promise<StartupOutcome> {
       await deps.openBrowser(port)
       return { server: null, config, action: 'idempotent' }
     case 'conflict':
-      // 第三方占用：78 退出，文案含占用方信息（describeAction）
+      // 第三方占用：记 port_conflict（设计 §11 事件表）后以 78 退出，文案含占用方信息
+      deps.logger.lifecycle('port_conflict', { port, occupant: action.occupant ?? null })
       throw new ExitError(EXIT_CONFIG_ERROR, describeAction(action, handle))
     case 'starting':
       // 另一实例启动中：静默返回（main 退出 0）
@@ -98,6 +98,13 @@ export async function runStartup(deps: StartupDeps): Promise<StartupOutcome> {
       break
     case 'fresh':
       break
+  }
+
+  // 4.5 崩溃检测【记】（D-035，设计 §3.1）：仅 fresh/takeover（真正接管上一运行）记
+  //     crash_detected——本进程即将重写 reliability；幂等/启动中分支的 cleanStop=false
+  //     属健康实例常态，不记（防运维日志噪声、runId 指向健康实例）
+  if (crashedInfo) {
+    deps.logger.lifecycle('crash_detected', crashedInfo)
   }
 
   // 4. 起服务 + 写契约（healthz 可达性由 startServer 内部 listen 回调保证）
@@ -129,7 +136,7 @@ export interface ShutdownDeps {
   port: number
   markCleanStop(): void | Promise<void>
   serverStop(): void | Promise<void>
-  /** 删 run/ 契约文件（service.json/service.pid/service.port/reliability.json） */
+  /** 删发现契约三件套（service.json/service.pid/service.port），**保留 reliability.json**——cleanStop 已在上一 步置 true，供下次启动判崩溃（设计 §14 与 StartupDeps.clearRunDir 是两种不同注入语义） */
   clearRunDir(): void | Promise<void>
   verifyPortReleased(port: number): boolean | Promise<boolean>
   logger?: { lifecycle(event: string, payload?: Record<string, unknown>): void }
