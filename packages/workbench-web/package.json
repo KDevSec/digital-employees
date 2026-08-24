@@ -1,0 +1,23 @@
+{
+  "name": "@workbench/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "vue": "^3",
+    "vue-router": "^4",
+    "pinia": "^2"
+  },
+  "devDependencies": {
+    "vite": "^5",
+    "@vitejs/plugin-vue": "^5",
+    "vite-plugin-singlefile": "^2",
+    "vitest": "^2",
+    "typescript": "^5"
+  }
+}
