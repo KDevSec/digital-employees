@@ -1,0 +1,35 @@
+packages/workbench-web/src/api/health.ts
+  s_cbda167ad90f41::t_1e1d880c99ffcc 49-56,59,61,65
+  s_cbda167ad90f41::t_6e5e5598cd3c62 48
+packages/workbench-service/src/main.ts
+  s_cbda167ad90f41::t_6c5938d41b429f 41-44
+packages/workbench-service/package.json
+  s_cbda167ad90f41::t_1928ebf860b425 8
+packages/workbench-service/web-dist/index.html
+  s_cbda167ad90f41::t_6dbb229a8b040a 11,15,19,23,27,31,35-36
+packages/workbench-web/test/health.test.ts
+  s_cbda167ad90f41::t_692aa76b8a4f02 2,26-33,44-65
+packages/workbench-web/src/views/Home.vue
+  s_cbda167ad90f41::t_933fd6c7d62e93 3,6,10,16-19
+packages/workbench-service/test/server.test.ts
+  s_cbda167ad90f41::t_37c430c7426dfa 9
+  s_cbda167ad90f41::t_83f3a91c716014 178-185
+packages/workbench-web/package.json
+  s_cbda167ad90f41::t_2d9f0fbcf7a77f 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2bc3f84c8f87eb9199debeb3dfc41275406c9426",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
