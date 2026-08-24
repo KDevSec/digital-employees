@@ -1,0 +1,29 @@
+docs/README.md
+  s_cbda167ad90f41::t_21bac5c8093893 44-45
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_cbda167ad90f41::t_187f0e77dabab2 472
+  s_cbda167ad90f41::t_a8371f9c7a307e 310-312
+docs/design/详细设计/工作台服务本体详细设计-v0.1.md
+  s_cbda167ad90f41::t_1859e869be99d0 405
+  s_cbda167ad90f41::t_fc8ca782b118bf 290-291
+docs/research/M0技术验证Spike报告-2026-08-24.md
+  s_cbda167ad90f41::t_b9fa3a6ce48ba7 1-151
+docs/design/详细设计/托盘壳详细设计-v0.1.md
+  s_cbda167ad90f41::t_9705402cb24211 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7d1e3342b1ffa334f4f446f208edb86f29bff10e",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
