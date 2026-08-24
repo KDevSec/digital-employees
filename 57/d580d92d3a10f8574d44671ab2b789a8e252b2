@@ -1,0 +1,21 @@
+packages/workbench-tray/internal/actions/actions_test.go
+  s_cbda167ad90f41::t_df1fa225551c7e 11,20
+docs/plans/2026-08-24-workbench-framework.md
+  s_cbda167ad90f41::t_320ae38ea4dd31 251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "57d580d92d3a10f8574d44671ab2b789a8e252b2",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
