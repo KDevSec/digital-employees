@@ -21,3 +21,4 @@ reference-projects/
 # 构建产物与可执行体（workbench 框架增量）
 *.exe
 web-dist/
+packages/workbench-service/scripts/smoke.log
