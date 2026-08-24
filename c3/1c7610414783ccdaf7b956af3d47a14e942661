@@ -1,0 +1,31 @@
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_cbda167ad90f41::t_03a219229af558 197
+  s_cbda167ad90f41::t_1161915dd2d1ad 469
+  s_cbda167ad90f41::t_d4b1ce7dceaed1 202
+  s_cbda167ad90f41::t_2fb9c296052131 445
+docs/design/设计决策记录-2026-08-13.md
+  s_cbda167ad90f41::t_0cbbf3cdbddcad 243-249
+docs/design/详细设计/员工安装与底座适配详细设计-v0.1.md
+  s_cbda167ad90f41::t_76ba024d7657c5 177,181-182
+  s_cbda167ad90f41::t_5762a65b4c235f 53,55-61
+  s_cbda167ad90f41::t_407716e45db545 75,79,85
+  s_cbda167ad90f41::t_29927b98ea38c0 6-7,12
+  s_cbda167ad90f41::t_724c2d0d09337e 87,89-94,96-100
+  s_cbda167ad90f41::t_34d4c5c898937e 225,227,229-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c31c7610414783ccdaf7b956af3d47a14e942661",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
