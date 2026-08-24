@@ -15,6 +15,9 @@ python3 tools/realm-import/import.py
 
 # 4. 停止
 ./tools/down.sh
+
+# 5. 停止并清理无用 Docker 层（防止 overlay2 膨胀）
+./tools/down.sh --prune
 ```
 
 ## 环境配置
@@ -51,6 +54,8 @@ python3 tools/realm-import/import.py
 | `up.sh` | 启动全部容器 + 健康检查 + Keycloak URL 同步 | `./tools/up.sh` |
 | `down.sh` | 停止全部容器（保留数据） | `./tools/down.sh` |
 | `down.sh -v` | 停止并删除全部数据卷 | `./tools/down.sh --volumes` |
+| `down.sh -p` | 停止后自动清理悬空镜像和构建缓存（同 `--prune`） | `./tools/down.sh -p` |
+| `down.sh -P` | 停止后清理所有未使用镜像（同 `--prune-all`，含基础镜像，需重新拉取） | `./tools/down.sh -P` |
 
 ### 构建与测试
 
@@ -65,6 +70,7 @@ python3 tools/realm-import/import.py
 | 脚本 | 作用 | 用法 |
 |------|------|------|
 | `compose.sh` | docker-compose 封装，自动加载 `.env` | `./tools/compose.sh <command>` |
+| `prune.sh` | 清理 Docker 悬空镜像、构建缓存和无用层 | `./tools/prune.sh [--all] [--containers] [--dry-run]` |
 | `runtime-env.sh` | 可 source 的环境加载脚本，读取 `PUBLIC_HOST` | 由其他脚本自动 source |
 | `sync-keycloak-urls.sh` | 根据 `PUBLIC_HOST` 更新 Keycloak client 重定向 URI + 同步 service account 角色 | `up.sh` 自动调用 |
 | `wait-for-http.sh` | 轮询 HTTP 端点直到就绪或超时 | `./tools/wait-for-http.sh <url> <timeout>` |
@@ -94,6 +100,15 @@ python3 tools/realm-import/import.py # 导入组织+用户
 ./tools/down.sh --volumes             # 删除数据卷
 ./tools/up.sh                         # 从零启动
 python3 tools/realm-import/import.py  # 重新导入
+
+# 日常开发：停止后清理旧构建层，防止 /var/lib/docker/overlay2 无限增长
+./tools/down.sh -p
+
+# 手动清理（不停止容器，只删悬空镜像和构建缓存，安全）
+./tools/prune.sh
+
+# 预览将回收多少空间而不实际删除
+./tools/prune.sh --dry-run
 
 # 测试
 ./tools/test-unit.sh                 # 单元测试
