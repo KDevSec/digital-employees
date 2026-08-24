@@ -94,11 +94,9 @@ export function writeServiceHandle(runDir: string, input: ServiceHandleInput): S
   return handle
 }
 
-/** 读发现契约；文件不存在 → null */
+/** 读发现契约；文件不存在或损坏 JSON → null（advisory 读不懂按不存在，自愈为 fresh） */
 export function readServiceHandle(runDir: string): ServiceHandle | null {
-  const filePath = join(runDir, SERVICE_JSON)
-  if (!existsSync(filePath)) return null
-  return JSON.parse(readFileSync(filePath, 'utf8')) as ServiceHandle
+  return readJsonOrNull<ServiceHandle>(join(runDir, SERVICE_JSON))
 }
 
 /**
@@ -116,11 +114,22 @@ export function writeReliability(runDir: string, input: ReliabilityInput = {}): 
   return state
 }
 
-/** 读崩溃检测契约；文件不存在 → null */
+/** 读崩溃检测契约；文件不存在或损坏 JSON → null（损坏视为无记录，不算崩溃） */
 export function readReliability(runDir: string): ReliabilityState | null {
-  const filePath = join(runDir, RELIABILITY_JSON)
+  return readJsonOrNull<ReliabilityState>(join(runDir, RELIABILITY_JSON))
+}
+
+/**
+ * 读 JSON 文件；不存在或解析失败（损坏）一律返回 null——
+ * run/ 契约文件是 advisory 产物，读不懂时按不存在处理（fresh 自愈），不抛裸异常。
+ */
+function readJsonOrNull<T>(filePath: string): T | null {
   if (!existsSync(filePath)) return null
-  return JSON.parse(readFileSync(filePath, 'utf8')) as ReliabilityState
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8')) as T
+  } catch {
+    return null
+  }
 }
 
 /** 正常退出前调用：置 cleanStop=true（无记录时不创建） */

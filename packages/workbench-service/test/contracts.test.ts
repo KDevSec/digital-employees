@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -103,5 +103,37 @@ describe('getOrCreateInstallationId（装机稳定 ID）', () => {
     expect(first).toMatch(UUID_RE)
     expect(existsSync(join(profileDir, 'installation-id'))).toBe(true)
     expect(getOrCreateInstallationId(profileDir)).toBe(first)
+  })
+
+  it('空文件 → 重新生成 UUID 并落盘', () => {
+    writeFileSync(join(profileDir, 'installation-id'), '', 'utf8')
+    const id = getOrCreateInstallationId(profileDir)
+    expect(id).toMatch(UUID_RE)
+    expect(getOrCreateInstallationId(profileDir)).toBe(id)
+  })
+
+  it('坏内容（非空非 UUID）→ 返回原文且不覆写（锁定当前行为）', () => {
+    writeFileSync(join(profileDir, 'installation-id'), 'legacy-id-123', 'utf8')
+    expect(getOrCreateInstallationId(profileDir)).toBe('legacy-id-123')
+    expect(readFileSync(join(profileDir, 'installation-id'), 'utf8').trim()).toBe('legacy-id-123')
+  })
+})
+
+describe('契约文件容错（advisory 读不懂按不存在，自愈为 fresh）', () => {
+  it('readServiceHandle：损坏 JSON → null', () => {
+    mkdirSync(runDir, { recursive: true })
+    writeFileSync(join(runDir, 'service.json'), '{ not valid json !!', 'utf8')
+    expect(readServiceHandle(runDir)).toBeNull()
+  })
+
+  it('readReliability：损坏 JSON → null', () => {
+    mkdirSync(runDir, { recursive: true })
+    writeFileSync(join(runDir, 'reliability.json'), '<<<corrupt>>>', 'utf8')
+    expect(readReliability(runDir)).toBeNull()
+  })
+
+  it('markCleanStop：无记录时不创建文件', () => {
+    markCleanStop(runDir)
+    expect(existsSync(join(runDir, 'reliability.json'))).toBe(false)
   })
 })

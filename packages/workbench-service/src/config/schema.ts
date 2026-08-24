@@ -18,4 +18,5 @@ export const configSchema = z
 
 export type WorkbenchConfig = z.infer<typeof configSchema>
 
-export const defaultConfig: WorkbenchConfig = { network: { port: brand.defaultPort } }
+/** 默认值单一来源：由 schema 推导（schema 改默认即生效，避免双来源漂移） */
+export const defaultConfig: WorkbenchConfig = configSchema.parse({})

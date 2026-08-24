@@ -46,6 +46,18 @@ describe('decideInstanceAction（S-06 五分支，表驱动，纯函数零 IO）
       expected: 'conflict',
     },
     {
+      name: '可达且 app 匹配但 uid 缺失 → conflict（钉住 healthz 必含 uid 的契约依赖，a540c56）',
+      handle,
+      health: health({ reachable: true, app: 'workbench', pidAlive: true }),
+      expected: 'conflict',
+    },
+    {
+      name: '可达且 app/uid 匹配但句柄 pid 已死 → idempotent（守护进程换 pid 拉起的场景）',
+      handle,
+      health: health({ reachable: true, app: 'workbench', uid: 'u1', pidAlive: false }),
+      expected: 'idempotent',
+    },
+    {
       name: '句柄在、pid 活、不可达、fails≥3 且 elapsed≥30s → takeover（清 run/ 接管）',
       handle,
       health: health({ pidAlive: true, consecutiveFails: 3, elapsedMs: 30000 }),
@@ -88,6 +100,26 @@ describe('describeAction（文案函数）', () => {
     const text = describeAction(action, handle)
     expect(text).toContain('78')
     expect(text).toContain('19980')
+  })
+
+  it('conflict 文案优先使用占用方自报 pid（health.pid）', () => {
+    const action = decideInstanceAction(
+      handle,
+      health({ reachable: true, app: 'someone-else', uid: 'u2', pid: 999, pidAlive: true }),
+    )
+    const text = describeAction(action, handle)
+    expect(text).toContain('78')
+    expect(text).toContain('999')
+  })
+
+  it('conflict 文案：占用方 pid 缺失时退回句柄关联 pid', () => {
+    const action = decideInstanceAction(
+      handle,
+      health({ reachable: true, app: 'someone-else', uid: 'u2', pidAlive: true }),
+    )
+    const text = describeAction(action, handle)
+    expect(text).toContain('78')
+    expect(text).toContain('123')
   })
 
   it('五个分支文案均非空，且 fresh + null 句柄不抛错', () => {

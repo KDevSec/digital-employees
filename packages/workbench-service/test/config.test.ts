@@ -62,6 +62,11 @@ describe('loadConfig', () => {
     )
     expect(loadConfig(dir).network.port).toBe(1234)
   })
+
+  it('非法 JSON → 抛出 message 含文件路径的 Error', () => {
+    writeFileSync(join(dir, 'config.json'), '{ broken', 'utf8')
+    expect(() => loadConfig(dir)).toThrow(/config\.json/)
+  })
 })
 
 describe('writeSample', () => {

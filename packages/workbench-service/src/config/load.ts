@@ -17,7 +17,12 @@ export function loadConfig(profileDir: string): WorkbenchConfig {
   const configPath = join(profileDir, CONFIG_FILE)
   if (!existsSync(configPath)) return structuredClone(defaultConfig)
 
-  const raw: unknown = JSON.parse(readFileSync(configPath, 'utf8'))
+  let raw: unknown
+  try {
+    raw = JSON.parse(readFileSync(configPath, 'utf8'))
+  } catch (err) {
+    throw new Error(`配置文件不是合法 JSON: ${configPath}`, { cause: err })
+  }
   if (isPlainObject(raw) && COMMENT_KEY in raw) {
     const { [COMMENT_KEY]: _comment, ...rest } = raw
     return configSchema.parse(rest)

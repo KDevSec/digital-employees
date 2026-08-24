@@ -17,6 +17,8 @@ export interface HealthSnapshot {
   app?: string
   /** 占用方 /healthz 自报的 uid（不可达时缺省） */
   uid?: string
+  /** 占用方 /healthz 自报的 pid（conflict 文案优先使用，缺失时退回句柄关联 pid） */
+  pid?: number
   /** 句柄记录的 pid 是否存活 */
   pidAlive: boolean
   /** 连续探测失败次数 */
@@ -25,10 +27,17 @@ export interface HealthSnapshot {
   elapsedMs: number
 }
 
+/** 冲突时占用方自报身份（来自 /healthz 响应，字段可能缺省） */
+export interface ConflictOccupant {
+  pid?: number
+  app?: string
+  uid?: string
+}
+
 export type InstanceAction =
   | { kind: 'fresh' }
   | { kind: 'idempotent' }
-  | { kind: 'conflict' }
+  | { kind: 'conflict'; occupant?: ConflictOccupant }
   | { kind: 'takeover' }
   | { kind: 'starting' }
 
@@ -54,7 +63,9 @@ export function decideInstanceAction(
   if (health.reachable) {
     const isOwn =
       health.app === brand.app && health.uid !== undefined && health.uid === handle.uid
-    return isOwn ? { kind: 'idempotent' } : { kind: 'conflict' }
+    return isOwn
+      ? { kind: 'idempotent' }
+      : { kind: 'conflict', occupant: { pid: health.pid, app: health.app, uid: health.uid } }
   }
 
   if (!health.pidAlive) return { kind: 'fresh' }
@@ -76,8 +87,14 @@ export function describeAction(action: InstanceAction, handle: HandleSnapshot | 
         : '未发现运行中的服务，启动新实例'
     case 'idempotent':
       return `服务已在运行（pid ${pid}，端口 ${port}），幂等处理：打开主页后以退出码 0 退出`
-    case 'conflict':
-      return `端口 ${port} 已被非本服务的进程占用（app/uid 不匹配，关联 pid ${pid}），将以退出码 78 退出；请检查端口占用或修改配置中的端口`
+    case 'conflict': {
+      const occupantPid = action.occupant?.pid
+      const detail =
+        occupantPid !== undefined
+          ? `占用方 pid ${occupantPid}，app/uid 不匹配`
+          : `app/uid 不匹配，关联 pid ${pid}`
+      return `端口 ${port} 已被非本服务的进程占用（${detail}），将以退出码 78 退出；请检查端口占用或修改配置中的端口`
+    }
     case 'takeover':
       return `旧实例僵死（pid ${pid}，健康检查连续失败 ${TAKEOVER_MIN_CONSECUTIVE_FAILS} 次且超过 ${TAKEOVER_ELAPSED_BUDGET_MS / 1000}s），清理 run/ 后接管`
     case 'starting':
