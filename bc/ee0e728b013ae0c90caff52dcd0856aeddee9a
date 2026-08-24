@@ -1,0 +1,25 @@
+packages/workbench-service/src/config/load.ts
+  s_cbda167ad90f41::t_a9d0b780d823c1 1-45
+packages/workbench-service/test/config.test.ts
+  s_cbda167ad90f41::t_0e46005e1f3285 1-81
+packages/workbench-service/src/config/schema.ts
+  s_cbda167ad90f41::t_6853af4dff9a96 1-21
+packages/workbench-service/src/brand.ts
+  s_cbda167ad90f41::t_519797d2a6b39b 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "bcee0e728b013ae0c90caff52dcd0856aeddee9a",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
