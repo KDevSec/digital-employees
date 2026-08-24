@@ -1,0 +1,31 @@
+packages/workbench-service/tsconfig.json
+  s_cbda167ad90f41::t_bdfc0e37204438 1-16
+package.json
+  s_cbda167ad90f41::t_b56471b1e05c20 1-7
+packages/workbench-service/vitest.config.ts
+  s_cbda167ad90f41::t_fc4bcc196ed072 1-7
+packages/workbench-service/package.json
+  s_cbda167ad90f41::t_0eb90dd9d9a99b 1-20
+.gitignore
+  s_cbda167ad90f41::t_b05e99e4aba62c 21-23
+packages/workbench-service/test/smoke.test.ts
+  s_cbda167ad90f41::t_070106a7f7cc34 1-7
+bun.lock
+  s_cbda167ad90f41::t_5c2d91cf2af1d4 1-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8604a7944740108a3eca5728174ab0bfbfe4214e",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
