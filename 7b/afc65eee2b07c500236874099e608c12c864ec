@@ -1,0 +1,25 @@
+docs/design/详细设计/托盘壳详细设计-v0.1.md
+  s_cbda167ad90f41::t_e8138df4857765 140
+  s_cbda167ad90f41::t_3cc2e64d0aa900 23
+docs/design/设计决策记录-2026-08-13.md
+  s_cbda167ad90f41::t_9e98e1a45e5e40 195,197-199
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_cbda167ad90f41::t_3ce598879bd217 274
+  s_cbda167ad90f41::t_42c940700be7d1 437
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7bafc65eee2b07c500236874099e608c12c864ec",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
