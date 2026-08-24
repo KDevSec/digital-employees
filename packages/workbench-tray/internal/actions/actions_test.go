@@ -8,7 +8,7 @@ import (
 )
 
 // TestBuildCliArgs 多段 CLI 契约：返回「按序执行的多条 CLI 调用」，每段一次 exec.Command。
-// Restart 三段（stop → 等 healthz → start）扁平展开会被 commander 当位置参数吞掉——只停不起。
+// Restart 三段（stop → start → 等 healthz 收尾）扁平展开会被 commander 当位置参数吞掉——只停不起。
 func TestBuildCliArgs(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -17,7 +17,7 @@ func TestBuildCliArgs(t *testing.T) {
 	}{
 		{"Stop", Stop(), [][]string{{"stop"}}},
 		{"Start", Start(), [][]string{{"start"}}},
-		{"Restart_三段", Restart(), [][]string{{"stop"}, {"__health-wait", "15000"}, {"start"}}},
+		{"Restart_三段_以就绪收尾", Restart(), [][]string{{"stop"}, {"start"}, {"__health-wait", "15000"}}},
 		{"HealthWait_15000", HealthWait(15000), [][]string{{"__health-wait", "15000"}}},
 		{"HealthWait_2000", HealthWait(2000), [][]string{{"__health-wait", "2000"}}},
 	}

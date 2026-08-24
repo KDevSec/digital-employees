@@ -248,7 +248,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 **Files:** Create: `internal/actions/actions.go`、`internal/actions/actions_test.go`、`internal/menu/menu.go`、`internal/menu/menu_test.go`
 
 **Step 1 失败测试**：
-- actions：`BuildCliArgs(action)` 纯函数——`Stop`→`["stop"]`、`Start`→`["start"]`、`Restart`→`["stop","start"]`、`HealthWait(15000)`→`["__health-wait","15000"]`；`OpenBrowserURL(port)` → `http://127.0.0.1:<port>`；`DataDirPath(profile)`/`LogsDirPath(profile)` 路径拼接
+- actions：`BuildCliArgs(action) [][]string` 纯函数（**多段调用**，Wave 4 审查裁定：扁平展开会被 commander 吞位置参数）——`Stop`→`[["stop"]]`、`Start`→`[["start"]]`、`Restart`→`[["stop"],["start"],["__health-wait","15000"]]`（health-wait 后置：重启以就绪收尾）、`HealthWait(15000)`→`[["__health-wait","15000"]]`；`OpenBrowserURL(port)` → `http://127.0.0.1:<port>`；`DataDirPath(profile)`/`LogsDirPath(profile)` 路径拼接
 - menu：`MenuModelFor(state, port, hasPendingUpdate)` 纯函数——GREEN 时 stop/restart 可见、start 隐藏；GRAY 反之；YELLOW 全禁用（防抖）；RED 显示重启+查看日志；状态项文本 `运行中 · 127.0.0.1:<port>`；pending 项仅在 hasPendingUpdate 时出现
 
 **Step 2 实现**：纯函数 + 薄执行层（exec.Command(exe, args...)、explorer 打开目录——执行层不单测，冒烟覆盖）。
