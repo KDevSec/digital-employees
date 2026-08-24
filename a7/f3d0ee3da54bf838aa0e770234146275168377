@@ -1,0 +1,26 @@
+packages/workbench-tray/internal/brand/brand.go
+  s_cbda167ad90f41::t_269d1c8ce909a6 1-19
+packages/workbench-tray/internal/statemachine/statemachine_test.go
+  s_cbda167ad90f41::t_269d1c8ce909a6 1-69
+packages/workbench-tray/go.mod
+  s_cbda167ad90f41::t_269d1c8ce909a6 1-3
+packages/workbench-tray/internal/statemachine/statemachine.go
+  s_cbda167ad90f41::t_b4ffe0db7f2c0f 75-83,85-109
+  s_cbda167ad90f41::t_269d1c8ce909a6 1-74,84,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a7f3d0ee3da54bf838aa0e770234146275168377",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
