@@ -1,0 +1,47 @@
+packages/workbench-service/src/runtime/contracts.ts
+  s_cbda167ad90f41::t_896ae516ead48a 59-61
+  s_cbda167ad90f41::t_cb27cd11779811 18-19
+packages/workbench-service/scripts/smoke.sh
+  s_cbda167ad90f41::t_bef43d662aa273 2,11-12,165-185,188-189,200-220,222
+  s_cbda167ad90f41::t_c76c323e42d807 190-192
+  s_cbda167ad90f41::t_58d330a29cadfa 186-187,193-199
+.gitignore
+  s_cbda167ad90f41::t_9a9b5ae5444c03 22-23
+packages/workbench-service/scripts/build.sh
+  s_cbda167ad90f41::t_1cc0946fefe1f7 1-23
+packages/workbench-service/test/server.test.ts
+  s_cbda167ad90f41::t_cad443fa8828e9 18,24-26
+  s_cbda167ad90f41::t_194b8c94e59a90 169-177
+  s_cbda167ad90f41::t_c83e9529358ba1 66-79
+  s_cbda167ad90f41::t_74f60113e842db 27-28
+packages/workbench-service/src/env.d.ts
+  s_cbda167ad90f41::t_3df170b7080c67 1-8
+packages/workbench-service/web-dist/index.html
+  s_cbda167ad90f41::t_c1cf12095c47ec 1-41
+packages/workbench-service/src/server/endpoints.ts
+  s_cbda167ad90f41::t_10f0345138d8ba 16-17
+  s_cbda167ad90f41::t_62511ced1ab189 46-50,52
+packages/workbench-service/src/main.ts
+  s_cbda167ad90f41::t_2104e717a4d25d 185
+  s_cbda167ad90f41::t_6c735425b78446 39-42
+packages/workbench-service/src/server/hono-adapter.ts
+  s_cbda167ad90f41::t_6409e34bcdd5e4 38-43
+packages/workbench-service/src/server/registry.ts
+  s_cbda167ad90f41::t_41c25a10942ee3 18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "830630411309126f77743d24ec8fde00581357f5",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
