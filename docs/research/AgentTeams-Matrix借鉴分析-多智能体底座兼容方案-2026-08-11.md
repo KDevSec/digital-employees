@@ -5,7 +5,7 @@
 > 目的：分析阿里云 AgentTeams 产品及其 Matrix 特性，评估可借鉴的架构设计
 > 依据：AgentTeams 产品页 + 帮助文档 + Qwen-Agent GitHub 仓库实测 + 深度调研 workflow 四路并行结果 + 数字员工套件 2.0 现有设计文档
 
-> **⚠️ v2 修订说明**：v1 版本基于 WebSearch 结果对 Matrix 协议做了多处错误判断（详见 [深度调研报告](AgentTeams-Matrix深度调研报告-2026-08-12.md)）。v2 基于深度调研 workflow 的实证结果全面修正。主要变化：① Matrix 不是 AI Agent 通信协议而是 matrix.org IM 协议；② Qwen-Agent 无 AgentTeam 模块；③ 借鉴源从单一 Matrix 转为多源混合（FIPA ACL + Swarm + LangGraph + A2A）；④ 员工形态定调为单 Agent（[Q 20260812-054528](.ieidev/memory/shared/决策日志.md)），handoff 协议范围收窄。
+> **⚠️ v2 修订说明**：v1 版本基于 WebSearch 结果对 Matrix 协议做了多处错误判断（详见 [深度调研报告](AgentTeams-Matrix深度调研报告-2026-08-12.md)）。v2 基于深度调研 workflow 的实证结果全面修正。主要变化：① Matrix 不是 AI Agent 通信协议而是 matrix.org IM 协议；② Qwen-Agent 无 AgentTeam 模块；③ 借鉴源从单一 Matrix 转为多源混合（FIPA ACL + Swarm + LangGraph + A2A）；④ 员工形态定调为单 Agent（[Q 20260812-054528](../design/设计决策记录-2026-08-13.md)），handoff 协议范围收窄。
 
 ---
 
@@ -47,7 +47,7 @@ AgentTeams 是阿里云"一站式企业多智能体治理与协作平台"，定�
 | Agent 定义 | 平台内 Worker 模板 | AGENTS.md + SKILL.md（开放标准） |
 | 事件/Hook | 不支持 CC Hooks | CC Hooks 规范（CQO 实时拦截依赖） |
 | 开放程度 | 闭源 SaaS（无私有化部署） | 全开放标准（UPP v0.2 薄封装） |
-| Agent 形态 | Worker（可纳管异构存量 Agent） | **单 Agent + 多 Skill**（[Q 20260812-054528](.ieidev/memory/shared/决策日志.md)） |
+| Agent 形态 | Worker（可纳管异构存量 Agent） | **单 Agent + 多 Skill**（[Q 20260812-054528](../design/设计决策记录-2026-08-13.md)） |
 
 **结论**：AgentTeams 是潜在竞争对手/纳管平台而非底座——它可纳管 Claude Code 作为存量 Agent（官方原文点名"OpenClaw、QwenPaw、Claude Code、自研 Agent 等"混编），意味着可能成为数字员工套件的外部纳管者。不适合作为第九个底座（无 CC Hooks → CQO 无法工作；云 vs 本地根本矛盾；9 个云产品依赖）。
 
@@ -114,7 +114,7 @@ Federation（联邦）  → 远期跨团队/跨组织 agent 协作
 
 ## 3. 一、员工间 handoff 协议标准化
 
-### 3.1 形态定调：单 Agent（[Q 20260812-054528](.ieidev/memory/shared/决策日志.md)）
+### 3.1 形态定调：单 Agent（[Q 20260812-054528](../design/设计决策记录-2026-08-13.md)）
 
 2.0 员工形态 = **单 Agent + 多 Skill**：
 - 一个员工 = 一个 Agent（主人设 AGENTS.md），不再有"能力 agent .md"子文件
@@ -342,7 +342,7 @@ Phase 3（P2，8-12 周）——生态扩展（方向调整）
 1. **保持文件基底**：不引入消息中间件，不破坏零网络依赖
 2. **保持开放标准优先**：借鉴但不绑定任何单一协议
 3. **编排引擎不动**：ieidev_core（R1/R2/R3）不被替代
-4. **单 Agent 形态**：员工 = 一个 Agent + 多 Skill，不存在"能力 sub-agent"层（[Q 20260812-054528](.ieidev/memory/shared/决策日志.md)）
+4. **单 Agent 形态**：员工 = 一个 Agent + 多 Skill，不存在"能力 sub-agent"层（[Q 20260812-054528](../design/设计决策记录-2026-08-13.md)）
 
 ### 7.3 待决策
 
