@@ -1,0 +1,121 @@
+docs/archive/design/登录与认证设计-v0.1.md
+  s_cbda167ad90f41::t_293e1c7d97b10b 5
+  s_cbda167ad90f41::t_83875ea4b34d14 6
+  s_cbda167ad90f41::t_162cc881e928f2 9
+docs/research/运行时架构选型-工作台自跑vs安装到底座-2026-08-12.md
+  s_cbda167ad90f41::t_34566ac56069b7 6
+docs/research/AgentTeams-Matrix借鉴分析-多智能体底座兼容方案-2026-08-11.md
+  s_cbda167ad90f41::t_754b25cab2dbde 8,50,117,345
+docs/research/新仓MVP规划+技术调研结论-2026-08-12.md
+  s_cbda167ad90f41::t_6c46d7478631d7 7
+  s_cbda167ad90f41::t_0fc66916f3ce57 265,321-322
+  s_cbda167ad90f41::t_00e35af5df5c29 6
+  s_cbda167ad90f41::t_2a8842cd51b19f 5
+CLAUDE.md
+  s_cbda167ad90f41::t_67c0e3fd2a5f07 30
+docs/design/概要设计/UPP通用插件协议规范-v0.3-开放标准薄封装.md
+  s_cbda167ad90f41::t_d1a0cc40def326 7-8,10-12,37-48,143-144,231-253,344,370-374
+docs/design/详细设计/登录与认证设计-v0.2.md
+  s_cbda167ad90f41::t_9d3cdb12896622 9
+  s_cbda167ad90f41::t_0891712034543e 6-8
+  s_cbda167ad90f41::t_4fa08ac18efd2a 10-12
+  s_cbda167ad90f41::t_cdecbdb7ece637 1-5,13-218
+docs/design/详细设计/托盘壳详细设计-v0.1.md
+  s_cbda167ad90f41::t_8f25a008e18971 10
+  s_cbda167ad90f41::t_eef1200c1ab811 8
+  s_cbda167ad90f41::t_47ea2056f28281 5-7
+  s_cbda167ad90f41::t_aed995fdff8b18 9
+  s_cbda167ad90f41::t_68e0530a007b4f 11-13
+  s_cbda167ad90f41::t_96d4a9f632f3c2 1-4,14-154
+docs/design/详细设计/员工安装与底座适配详细设计-v0.1.md
+  s_cbda167ad90f41::t_c1ba32d325866c 8
+  s_cbda167ad90f41::t_7d1553a615dc74 45
+  s_cbda167ad90f41::t_14d0bf654823a1 9
+  s_cbda167ad90f41::t_7a591cf30527a0 5-7
+  s_cbda167ad90f41::t_df0f4fef1f568d 10-12,42-44
+  s_cbda167ad90f41::t_b2101e0a55ea3f 46-48
+  s_cbda167ad90f41::t_845004ccde61f8 1-4,13-41,49-243
+docs/research/Multica深度调研-底座调用与协同编排-2026-08-20.md
+  s_cbda167ad90f41::t_ca080e0c1aa64a 6
+docs/research/AgentTeams-Matrix深度调研报告-2026-08-12.md
+  s_cbda167ad90f41::t_dd16bae27b86e8 6,163,433
+docs/README.md
+  s_cbda167ad90f41::t_ec7e7a571f41e6 19,22,69,72
+  s_cbda167ad90f41::t_0ff79618421f12 1-8,12,15-17,20-21,44-52,54-66
+  s_cbda167ad90f41::t_2129dfda9544f1 9-11,13-14,18,23-43,53,67-68,70-71
+docs/design/详细设计/shared-protocol详细设计-v0.1.md
+  s_cbda167ad90f41::t_d043c0ec20e642 8
+  s_cbda167ad90f41::t_bb8b3476625edc 9
+  s_cbda167ad90f41::t_bf6717d14bf527 5-7
+  s_cbda167ad90f41::t_7f6cedb7cdc990 10-12
+  s_cbda167ad90f41::t_0a8664da71e995 1-4,13-267
+docs/research/记忆与适配技术调研汇总-2026-08-12.md
+  s_cbda167ad90f41::t_9b3294a4b154db 479-480
+docs/design/详细设计/工作台服务本体详细设计-v0.1.md
+  s_cbda167ad90f41::t_3b88c06fa52fca 8
+  s_cbda167ad90f41::t_1307c3aa7c6193 367
+  s_cbda167ad90f41::t_af0d93e155c29d 5-7
+  s_cbda167ad90f41::t_aae975660b6e36 9-11,364-366
+  s_cbda167ad90f41::t_3c3450f3973dc7 368-370
+  s_cbda167ad90f41::t_e2acb44c9b3002 1-4,12-363,371-500
+docs/research/工作台独立安装部署与托盘启动器方案调研-2026-08-20.md
+  s_cbda167ad90f41::t_5e4b6689241cb9 9
+docs/design/详细设计/员工业务与前端详细设计-v0.1.md
+  s_cbda167ad90f41::t_8011a4850ac98f 10
+  s_cbda167ad90f41::t_bb5b62e65f6cae 9
+  s_cbda167ad90f41::t_a029a18b2780dc 8
+  s_cbda167ad90f41::t_696e7cffc2754a 76
+  s_cbda167ad90f41::t_916683bd5afa3f 5-7
+  s_cbda167ad90f41::t_0f0c20bc66529a 11-13,73-75
+  s_cbda167ad90f41::t_9864ca9004432c 77-79
+  s_cbda167ad90f41::t_51537356e4b7c6 1-4,14-72,80-269
+docs/design/详细设计/管理平台V0.1当前实现架构.md
+  s_cbda167ad90f41::t_a0bfe11593ab66 122
+  s_cbda167ad90f41::t_031e04df50e960 111-112
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_cbda167ad90f41::t_6696323c64e418 374
+  s_cbda167ad90f41::t_68772b8f1cbec3 375
+  s_cbda167ad90f41::t_d1a0cc40def326 1-236,238-358,361-363,365,367-371,378-468
+  s_cbda167ad90f41::t_5d2e41f3de59d4 237,364
+  s_cbda167ad90f41::t_70677fafccf21c 359,377
+  s_cbda167ad90f41::t_c0607f1dd14d6a 366
+  s_cbda167ad90f41::t_37e5ea529a824c 372
+  s_cbda167ad90f41::t_ea0635be8bda51 376
+  s_cbda167ad90f41::t_f50bd92469078a 373
+  s_cbda167ad90f41::t_ebc2489c08d608 360
+docs/design/概要设计/数字员工套件2.0架构白皮书-v0.8.md
+  s_cbda167ad90f41::t_d1a0cc40def326 7-8,11-12,144,190,215-216,328,457,534,541,562-569,608-611
+docs/research/数字员工多底座适配调研报告-开放标准与UPP再审视-2026-08-10.md
+  s_cbda167ad90f41::t_8f01edb1645962 190
+  s_cbda167ad90f41::t_830cb5eaa180fc 223
+  s_cbda167ad90f41::t_6b8714300b486d 222
+  s_cbda167ad90f41::t_a08588a0b8af90 224
+  s_cbda167ad90f41::t_42b13d77ad8968 51
+  s_cbda167ad90f41::t_557d6f799926a0 31
+  s_cbda167ad90f41::t_8b20710b2ab2c3 39
+docs/design/设计决策记录-2026-08-13.md
+  s_cbda167ad90f41::t_5eebe6142c0a1c 28-29,128-242
+  s_cbda167ad90f41::t_da51166db8622d 6
+docs/archive/design/交接提示词-深度调研待办-2026-08-13.md
+  s_cbda167ad90f41::t_348d73f01fb761 165-167
+docs/design/概要设计/员工安装与底座适配设计-v0.1.md
+  s_cbda167ad90f41::t_07a16b56c30219 10,25
+docs/design/概要设计/员工运行与展示设计-v0.1.md
+  s_cbda167ad90f41::t_995da49ea93cfe 10,343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "7b14be6248e7e01e57694e4970a9ede94463403c",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
