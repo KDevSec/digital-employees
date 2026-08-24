@@ -12,7 +12,6 @@ attributes from each user's group membership and sets them on the Keycloak
 user so that OIDC token claims include correct org context.
 """
 
-from __future__ import annotations
 
 import json
 import os
