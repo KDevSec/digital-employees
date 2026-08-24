@@ -1,0 +1,34 @@
+packages/workbench-service/src/server/registry.ts
+  s_cbda167ad90f41::t_fa57fc45a82632 1-45
+packages/workbench-service/src/server/endpoints.ts
+  s_cbda167ad90f41::t_3775ca66a8be12 1-48
+packages/workbench-service/src/server/hono-adapter.ts
+  s_cbda167ad90f41::t_895ac9466a0195 5,9,11-13,15-17,22-25,27-36,38-39
+  s_cbda167ad90f41::t_180b731d26fec9 1-4,6-8,10,14,18-20,37,40
+  s_cbda167ad90f41::t_ca166a8fbd140e 21,26
+packages/workbench-service/src/server/guard.ts
+  s_cbda167ad90f41::t_4a72497a53867b 1-16
+packages/workbench-service/test/server.test.ts
+  s_cbda167ad90f41::t_0bdbe9bf3422b9 126,134-136
+  s_cbda167ad90f41::t_029a15f6309573 146
+  s_cbda167ad90f41::t_7e0bb7d104193e 2-114,124-125,127-133,137-145,147-148
+  s_cbda167ad90f41::t_f5da5ce1bfbb1e 1
+  s_cbda167ad90f41::t_de1e960ca8e85a 115-116,118-119,121-123
+  s_cbda167ad90f41::t_8f071fafad61ff 117,120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7736f96d1396cc919443e7fb0d4778c11e25142f",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
