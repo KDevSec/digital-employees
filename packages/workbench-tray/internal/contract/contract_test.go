@@ -162,3 +162,60 @@ func TestCrossLanguageContractSync(t *testing.T) {
 		}
 	}
 }
+
+// TestParseActivity TR-07 活动任务契约：{conversationTasks, triggerTasks}（与 TS 侧
+// /api/activity handler 及 activityCommand 兜底输出字段名严格对齐）。
+// 正常/非零/坏 JSON/空输入四象限 + Total 判据。
+func TestParseActivity(t *testing.T) {
+	cases := []struct {
+		name    string
+		data    string
+		want    ActivityInfo
+		wantErr bool
+	}{
+		{"零值_服务不在跑", `{"conversationTasks":0,"triggerTasks":0}`, ActivityInfo{0, 0}, false},
+		{"非零_在飞任务", `{"conversationTasks":2,"triggerTasks":3}`, ActivityInfo{2, 3}, false},
+		{"仅会话任务非零", `{"conversationTasks":1,"triggerTasks":0}`, ActivityInfo{1, 0}, false},
+		{"坏JSON", `{"conversationTasks":`, ActivityInfo{}, true},
+		{"空输入", ``, ActivityInfo{}, true},
+		{"非对象", `[]`, ActivityInfo{}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := ParseActivity([]byte(c.data))
+			if c.wantErr {
+				if err == nil {
+					t.Fatalf("ParseActivity(%q) 应报错，got %+v", c.data, got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ParseActivity(%q) 意外报错: %v", c.data, err)
+			}
+			if got != c.want {
+				t.Fatalf("ParseActivity(%q) = %+v, want %+v", c.data, got, c.want)
+			}
+		})
+	}
+}
+
+// TestActivityInfoTotal Total = 会话 + 触发器在飞数（TR-07 停止判据的唯一聚合口径）
+func TestActivityInfoTotal(t *testing.T) {
+	if got := (ActivityInfo{ConversationTasks: 2, TriggerTasks: 3}).Total(); got != 5 {
+		t.Errorf("Total() = %d, want 5", got)
+	}
+	if got := (ActivityInfo{}).Total(); got != 0 {
+		t.Errorf("零值 Total() = %d, want 0", got)
+	}
+}
+
+// TestActivityContractFieldSyncWithTs 跨语言绊网（沿 TestCrossLanguageContractSync 手法）：
+// activity 字段名在 TS 侧 endpoints.ts 的 /api/activity handler 中出现——TS 改名 → 本测试红
+func TestActivityContractFieldSyncWithTs(t *testing.T) {
+	endpointsTs := readRepoFile(t, "packages", "workbench-service", "src", "server", "endpoints.ts")
+	for _, name := range []string{"conversationTasks", "triggerTasks"} {
+		if !strings.Contains(endpointsTs, name) {
+			t.Errorf("endpoints.ts 不再包含 activity 字段名 %q——TS/Go 活动契约漂移，需同步 contract.ActivityInfo", name)
+		}
+	}
+}

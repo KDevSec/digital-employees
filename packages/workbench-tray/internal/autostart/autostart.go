@@ -21,7 +21,10 @@ type Decision struct {
 //	(哨兵有, 设置开) → 幂等注册（Run 键可能被外部清掉，补上），不重写哨兵
 //	(哨兵无, 设置关) → 不注册不写哨兵：用户从未表态且设置已关
 //
-// 用户开关落在 Service 的 settings.json（system.launchAtLogin），壳读该文件后调本函数。
+// 用户开关落在 Service 的 settings.json 的 system.tray.enabled（壳自启，即本函数入参
+// userSettingEnabled）。注意与 system.launchAtLogin（服务守护开关）并存——两份独立配置
+// （设计 §5/D-027/C-4）：壳自启（HKCU Run）与 Service 守护（计划任务）互不隶属，
+// 卸载互不影响；本包只裁壳自启这一份。
 func ShouldRegister(sentinelExists, userSettingEnabled bool) Decision {
 	if !userSettingEnabled {
 		return Decision{}

@@ -79,3 +79,27 @@ func TestPaths(t *testing.T) {
 		t.Fatalf("LogsDirPath(%q) = %q, want %q", profile, got, want)
 	}
 }
+
+// TestActivityConstructor Activity 动作构造与 CLI 段（TR-07 活动检查的执行层入口）：
+// 段形状与 stop/start 同为单段，消费侧不手写
+func TestActivityConstructor(t *testing.T) {
+	got := BuildCliArgs(Activity())
+	want := [][]string{{"activity"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("BuildCliArgs(Activity()) = %q, want %q", got, want)
+	}
+}
+
+// TestHealthWaitBudgetMsSingleSource 就绪等待预算单源：Restart 末段与左键直达共用
+// actions.HealthWaitBudgetMs（main.go 不得再写 15000 字面量——审查 I-2 双常量消除）
+func TestHealthWaitBudgetMsSingleSource(t *testing.T) {
+	if HealthWaitBudgetMs != 15000 {
+		t.Errorf("HealthWaitBudgetMs = %d, want 15000（设计 §4.2：15s）", HealthWaitBudgetMs)
+	}
+	segs := BuildCliArgs(Restart())
+	last := segs[len(segs)-1]
+	want := []string{"__health-wait", strconv.Itoa(HealthWaitBudgetMs)}
+	if !reflect.DeepEqual(last, want) {
+		t.Errorf("Restart 末段 = %q, want %q（应引用 HealthWaitBudgetMs 常量）", last, want)
+	}
+}

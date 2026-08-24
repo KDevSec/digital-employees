@@ -9,9 +9,9 @@ import (
 	"workbench-tray/internal/brand"
 )
 
-// restartHealthWaitMs Restart 末段「等 healthz 就绪」预算（设计 §4.1：重启 = stop && start（等 healthz），
-// 等待发生在 start 之后——重启以就绪收尾；与 §4.2 左键直达的 15s 同款预算）
-const restartHealthWaitMs = 15000
+// HealthWaitBudgetMs 「等 healthz 就绪」预算（设计 §4.2：15s）——Restart 末段与
+// 左键直达共用单一常量（组装层不得再写 15000 字面量，审查 I-2 双常量消除）
+const HealthWaitBudgetMs = 15000
 
 // Kind CLI 动作种类
 type Kind uint8
@@ -21,6 +21,7 @@ const (
 	KindStop
 	KindRestart
 	KindHealthWait
+	KindActivity
 )
 
 // Action 一次用户意图（纯数据）；一个意图可能对应多条按序执行的 CLI 调用（如 Restart）
@@ -50,16 +51,20 @@ func HealthWait(timeoutMs int) Action {
 	return Action{Kind: KindHealthWait, TimeoutMs: timeoutMs}
 }
 
+// Activity 查活动任务（TR-07 停止前检查的数据源）；输出解析在 contract.ParseActivity
+func Activity() Action { return Action{Kind: KindActivity} }
+
 // BuildCliArgs 动作 → 按序执行的多条 workbench CLI 调用（每段一次 exec.Command）：
 //
 //	Stop        → [["stop"]]
 //	Start       → [["start"]]
 //	Restart     → [["stop"], ["start"], ["__health-wait","15000"]]
 //	HealthWait  → [["__health-wait","<ms>"]]
+//	Activity    → [["activity"]]
 //
 // 多段而非扁平拼接：Restart 三段有依赖，扁平展开成 ["stop","start"] 时 commander 会把
 // start 当 stop 的位置参数静默吞掉——重启只停不起（审查 I-1 实证缺陷）。
-// 执行层（Wave 5）按序循环执行，顺序不可乱：
+// 执行层（组装 main.go）按序循环执行，顺序不可乱：
 //
 //	for _, args := range actions.BuildCliArgs(a) {
 //	    if err := exec.Command(exe, args...).Run(); err != nil { ... }
@@ -74,10 +79,12 @@ func BuildCliArgs(a Action) [][]string {
 		return [][]string{
 			{"stop"},
 			{"start"},
-			{"__health-wait", strconv.Itoa(restartHealthWaitMs)}, // 末段：重启以就绪收尾
+			{"__health-wait", strconv.Itoa(HealthWaitBudgetMs)}, // 末段：重启以就绪收尾
 		}
 	case KindHealthWait:
 		return [][]string{{"__health-wait", strconv.Itoa(a.TimeoutMs)}}
+	case KindActivity:
+		return [][]string{{"activity"}}
 	default:
 		return nil
 	}

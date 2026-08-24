@@ -57,7 +57,8 @@ cleanup() {
   fi
   rm -rf "$WORKBENCH_HOME"
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM # INT/TERM 加固：HKCU 真实副作用下 Ctrl+C 也走恢复原值；
+                            # cleanup 全程幂等（|| true），与 EXIT 重复触发无害
 
 # ---------- 工具 ----------
 

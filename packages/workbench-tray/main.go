@@ -41,8 +41,6 @@ const (
 	trayVersion = "0.1.0"
 	// probeInterval 探活间隔（设计 §3 默认 5s；黄态加密 2s 是 T-Q1 开放问题，M3 实测冷启动分布后定）
 	probeInterval = 5 * time.Second
-	// openHealthWaitMs 左键直达/重启的就绪等待预算（设计 §4.2：15s）
-	openHealthWaitMs = 15000
 	// createNoWindow CREATE_NO_WINDOW：GUI 壳（-H windowsgui）拉起控制台子进程不闪黑窗
 	createNoWindow = 0x08000000
 	// cliOutMaxLimit CLI 段输出进 traylog 的截断上限（防巨包刷爆日志）
@@ -126,8 +124,11 @@ func (a *app) onReady() {
 	a.applyIfNeededLocked() // 初始 Starting 态联动（图标/状态项「探测中…」）
 	a.mu.Unlock()
 	// 左键单击直达（TR-04）：v1.12.2 即有 SetOnTapped（Windows WM_LBUTTONUP），
-	// 设置后左键不再弹菜单（菜单归右键）——设计 §4.2 的左键语义
-	systray.SetOnTapped(a.openWorkbench)
+	// 设置后左键不再弹菜单（菜单归右键）——设计 §4.2 的左键语义。
+	// I-1（Wave 5 审查修复）：回调在 wndProc 线程同步执行，probe(≤2s) + health-wait(≤15s)
+	// 会阻塞消息循环——期间菜单弹不出、Windows 判 hung。必须 go 异步化；
+	// 全链服务幂等（单实例判定五分支），并发双 start 安全（审查已论证）
+	systray.SetOnTapped(func() { go a.openWorkbench() })
 	go a.watchSignals()
 	go a.watchMenu()
 	go a.probeLoop()
@@ -137,7 +138,10 @@ func (a *app) onExit() {
 	_ = a.logger.Close()
 }
 
-// watchSignals SIGTERM/SIGINT → 退壳（记 tray.quit；服务不停——服务独立生存，归 OS 守护）
+// watchSignals SIGTERM/SIGINT → 退壳（记 tray.quit；服务不停——服务独立生存，归 OS 守护）。
+// 注：windowsgui 构建下控制台信号不可达（无控制台可投递），真实退出路径走
+// WM_CLOSE/WM_ENDSESSION → wndProc → systray 退出回调；本路径保留供 -H console
+// 调试形态（开发期不带旗标跑 go build 时 Ctrl+C 可退）
 func (a *app) watchSignals() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
@@ -281,18 +285,17 @@ func (a *app) applyStateLocked() {
 // ---------- 红态恢复（TR-05：恰好一次） ----------
 
 // recoverOnce 红态接管（设计 §3）：壳只做一件事——调 workbench start 一次；
-// 不做循环自愈（进程级归 OS 守护，壳只补 health 级这一层）
+// 不做循环自愈（进程级归 OS 守护，壳只补 health 级这一层）。
+// CLI 段形状消费 actions 纯模块（I-2：组装层不手写段），事件名保持冒烟契约稳定
 func (a *app) recoverOnce() {
 	a.logger.Event("recover.start", map[string]any{"exe": a.serviceExe})
-	cmd := exec.Command(a.serviceExe, "start")
-	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
-	if err := cmd.Start(); err != nil {
-		a.logger.Event("recover.start_failed", map[string]any{"error": err.Error()})
-		return
+	for _, seg := range actions.BuildCliArgs(actions.Start()) {
+		if pid, err := a.spawnDaemon(seg); err != nil {
+			a.logger.Event("recover.start_failed", map[string]any{"error": err.Error()})
+		} else {
+			a.logger.Event("recover.start_spawned", map[string]any{"pid": pid})
+		}
 	}
-	a.logger.Event("recover.start_spawned", map[string]any{"pid": cmd.Process.Pid})
-	// start 是前台 daemon 形态（S-02）：子进程与服务同寿命，异步 Wait 回收句柄不阻塞探活
-	go func() { _ = cmd.Wait() }()
 }
 
 // ---------- 菜单构建与回调（TR-03） ----------
@@ -327,6 +330,9 @@ var menuNames = map[menu.ItemID]string{
 }
 
 func (a *app) buildMenu() {
+	// 无锁写 a.items 的初始化顺序不变量：buildMenu 在 onReady 里先于全部读方 goroutine
+	// （probeLoop/watchMenu/菜单回调/左键协程）启动——map 建好后才有并发读者，无竞态；
+	// U 系列若需运行期增删菜单项（pending 项动态创建），必须改为持 mu 或专用锁
 	a.items[menu.ItemStatus] = systray.AddMenuItem("探测中…", "服务状态")
 	a.items[menu.ItemOpen] = systray.AddMenuItem("打开工作台", "打开默认浏览器（= 左键单击行为）")
 	a.items[menu.ItemCopyURL] = systray.AddMenuItem("复制访问地址", "复制 http://127.0.0.1:<port>")
@@ -398,7 +404,11 @@ func (a *app) onMenu(id menu.ItemID) {
 func (a *app) runAction(name string, act actions.Action) {
 	for _, seg := range actions.BuildCliArgs(act) {
 		if isDaemonSegment(seg) {
-			a.spawnDaemon(seg)
+			if _, err := a.spawnDaemon(seg); err != nil {
+				a.logger.Event("action.segment_failed", map[string]any{
+					"action": name, "args": seg, "error": err.Error(),
+				})
+			}
 			continue
 		}
 		if _, err := a.runCli(seg); err != nil {
@@ -416,16 +426,18 @@ func isDaemonSegment(seg []string) bool {
 	return len(seg) > 0 && seg[0] == "start"
 }
 
-// spawnDaemon 常驻 CLI 段：Start() 不等待，goroutine Wait 回收句柄
-func (a *app) spawnDaemon(seg []string) {
+// spawnDaemon 常驻 CLI 段：Start() 不等待，goroutine Wait 回收句柄。
+// 返回 pid 供调用方日志归因（recover / 动作 start 段 / 左键拉起）
+func (a *app) spawnDaemon(seg []string) (int, error) {
 	cmd := exec.Command(a.serviceExe, seg...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
 	if err := cmd.Start(); err != nil {
-		a.logger.Event("action.segment_failed", map[string]any{"args": seg, "error": err.Error()})
-		return
+		a.logger.Event("cli.spawn_failed", map[string]any{"args": seg, "error": err.Error()})
+		return 0, err
 	}
 	a.logger.Event("cli.spawn", map[string]any{"args": seg, "pid": cmd.Process.Pid})
 	go func() { _ = cmd.Wait() }()
+	return cmd.Process.Pid, nil
 }
 
 // runCli 单段 CLI exec（等退出码；CREATE_NO_WINDOW 防 GUI 壳拉子进程闪黑窗），输出截断记 traylog
@@ -441,20 +453,26 @@ func (a *app) runCli(args []string) ([]byte, error) {
 	return out, err
 }
 
-// stopWithActivityCheck TR-07 停止前活动检查：exec workbench activity →
-// conversationTasks + triggerTasks > 0 时跳过停止。确认窗需要窗口框架（V0.1 无 GUI 框架），
-// 窗口留业务填充——当前策略是保守跳过（V0.1 在飞任务恒为零，链路即验收面）
+// stopWithActivityCheck TR-07 停止前活动检查：activity 段输出 → contract.ParseActivity
+// （字段名契约单源）→ Total() > 0 时跳过停止。确认窗需要窗口框架（V0.1 无 GUI 框架），
+// 窗口留业务填充——当前策略是保守跳过（V0.1 在飞任务恒为零，链路即验收面）。
+// 解析失败仍停（审查 M-8 记账：activity 命令失败/坏输出极罕见，V0.1 风险≈0）
 func (a *app) stopWithActivityCheck() {
-	out, err := a.runCli([]string{"activity"})
-	if err == nil {
-		var act struct {
-			ConversationTasks int `json:"conversationTasks"`
-			TriggerTasks      int `json:"triggerTasks"`
+	for _, seg := range actions.BuildCliArgs(actions.Activity()) {
+		out, err := a.runCli(seg)
+		if err != nil {
+			a.logger.Event("activity.probe_failed", map[string]any{"args": seg, "error": err.Error()})
+			continue
 		}
-		if json.Unmarshal(out, &act) == nil && act.ConversationTasks+act.TriggerTasks > 0 {
+		info, perr := contract.ParseActivity(out)
+		if perr != nil {
+			a.logger.Event("activity.parse_failed", map[string]any{"error": perr.Error()})
+			continue
+		}
+		if info.Total() > 0 {
 			a.logger.Event("stop_confirmed_needed", map[string]any{
-				"conversationTasks": act.ConversationTasks,
-				"triggerTasks":      act.TriggerTasks,
+				"conversationTasks": info.ConversationTasks,
+				"triggerTasks":      info.TriggerTasks,
 			})
 			return
 		}
@@ -467,7 +485,9 @@ func (a *app) stopWithActivityCheck() {
 }
 
 // openWorkbench 左键直达/打开工作台（TR-04，设计 §4.2）：
-// 就绪直开；未就绪「拉起 + 等 healthz（15s）+ 开浏览器」——不让用户看到浏览器连接失败
+// 就绪直开；未就绪「拉起 + 等 healthz（15s）+ 开浏览器」——不让用户看到浏览器连接失败。
+// CLI 段全部消费 actions 纯模块（I-2）：预算统一引用 actions.HealthWaitBudgetMs，
+// 组装层不手写段与 15000 字面量
 func (a *app) openWorkbench() {
 	a.logger.Event("tray.open", nil)
 	port := probe.DiscoverPort(a.profileDir)
@@ -477,11 +497,18 @@ func (a *app) openWorkbench() {
 	}
 	a.logger.Event("open.starting", map[string]any{"port": port})
 	a.setStatusTitle("启动中…") // 等待期间状态项（Task 16）
-	a.spawnDaemon([]string{"start"})
-	if _, err := a.runCli([]string{"__health-wait", fmt.Sprintf("%d", openHealthWaitMs)}); err != nil {
-		// 超时不开浏览器（白屏比不开更糟）；失败气泡留 GUI 框架，V0.1 记日志
-		a.logger.Event("open.failed", map[string]any{"port": port, "error": err.Error()})
-		return
+	for _, seg := range actions.BuildCliArgs(actions.Start()) {
+		if _, err := a.spawnDaemon(seg); err != nil {
+			a.logger.Event("open.failed", map[string]any{"port": port, "error": err.Error()})
+			return
+		}
+	}
+	for _, seg := range actions.BuildCliArgs(actions.HealthWait(actions.HealthWaitBudgetMs)) {
+		if _, err := a.runCli(seg); err != nil {
+			// 超时不开浏览器（白屏比不开更糟）；失败气泡留 GUI 框架，V0.1 记日志
+			a.logger.Event("open.failed", map[string]any{"port": port, "error": err.Error()})
+			return
+		}
 	}
 	a.openBrowser(port)
 }
@@ -495,8 +522,10 @@ func (a *app) openBrowser(port int) {
 	}
 	url := actions.OpenBrowserURL(port)
 	a.logger.Event("open.browser", map[string]any{"url": url})
-	// rundll32 是 GUI 子系统进程（无黑窗），Start 即返不阻塞菜单回调
-	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	// rundll32 是 GUI 子系统进程（无黑窗）。go Run：不阻塞回调 + 回收句柄；
+	// 惯常非零退出码不判（浏览器接管后的生命周期不归壳）
+	cmd := exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	go func() { _ = cmd.Run() }()
 }
 
 // copyURL 复制地址到剪贴板。任务指令原形 cmd /c echo <url> | clip——改 clip stdin 直灌：
@@ -512,10 +541,12 @@ func (a *app) copyURL() {
 	}
 }
 
-// explorerOpen 打开目录：explorer 立即返回且惯常回传非零退出码——只 Start 不 Run 不判错
+// explorerOpen 打开目录：explorer 立即返回且惯常回传非零退出码——go Run 不阻塞回调
+// 且回收句柄，退出码不判（打开失败由 explorer 自身弹窗兜底）
 func (a *app) explorerOpen(path string) {
 	a.logger.Event("menu.explorer", map[string]any{"path": path})
-	_ = exec.Command("explorer", path).Start()
+	cmd := exec.Command("explorer", path)
+	go func() { _ = cmd.Run() }()
 }
 
 // setStatusTitle 左键等待期间的乐观状态项文本（状态机仍是唯一事实源，下轮 tick 会重放真实态）
