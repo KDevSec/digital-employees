@@ -1,0 +1,28 @@
+packages/workbench-tray/internal/autostart/autostart.go
+  s_cbda167ad90f41::t_ad270334fb001b 1,4-5,7-9,11-13,22,30-31,36,41
+  s_cbda167ad90f41::t_76d779ce2262ee 2-3,6,10,14-21,23-29,32-35,37-40,42-45
+packages/workbench-tray/internal/icons/icons_test.go
+  s_cbda167ad90f41::t_d85c4c2d8e9bc8 1-79,83-126
+  s_cbda167ad90f41::t_da92c68d108d39 80-82
+packages/workbench-tray/internal/icons/icons.go
+  s_cbda167ad90f41::t_d85c4c2d8e9bc8 1-2,4-7,20-21,25,30,40,48
+  s_cbda167ad90f41::t_76d779ce2262ee 3,8-19,22-24,26-29,31-39,41-47,49-84
+packages/workbench-tray/internal/autostart/autostart_test.go
+  s_cbda167ad90f41::t_ad270334fb001b 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e0591ab0644cb7df33a7ecfeaa1d1924002c9b9f",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
