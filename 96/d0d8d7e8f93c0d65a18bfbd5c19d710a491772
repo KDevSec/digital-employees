@@ -1,0 +1,21 @@
+docs/design/详细设计/工作台服务本体详细设计-v0.1.md
+  s_cbda167ad90f41::t_1af9afc7411ce5 111-112,120-121,132-137
+docs/design/设计决策记录-2026-08-13.md
+  s_cbda167ad90f41::t_adada0b3b9dd31 242-248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "96d0d8d7e8f93c0d65a18bfbd5c19d710a491772",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
