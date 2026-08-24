@@ -1,0 +1,26 @@
+docs/research/S2-Windows守护调度语义Spike报告-2026-08-24.md
+  s_cbda167ad90f41::t_b3292c42d50e13 1-79
+docs/design/详细设计/工作台服务本体详细设计-v0.1.md
+  s_cbda167ad90f41::t_7b2e801ef6b199 290,292,294-301,311
+  s_cbda167ad90f41::t_3f313f97373fe7 312
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_cbda167ad90f41::t_b612820e6b333a 473
+docs/design/设计决策记录-2026-08-13.md
+  s_cbda167ad90f41::t_e7f4fa8c72c714 206-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e197f42cf0484f992440bac6dee13a9d55e36e64",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
