@@ -1,0 +1,19 @@
+docs/research/S1员工上岗最小闭环Spike报告-2026-08-24.md
+  s_4144e6bcaffa28::t_00c7edcfc44e3d 1-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "da76e39a0549f203eecedc186731597b7049b1af",
+  "prompts": {},
+  "sessions": {
+    "s_4144e6bcaffa28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2dc3a21-6bf7-4319-b48f-2cb8ad29c161",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
