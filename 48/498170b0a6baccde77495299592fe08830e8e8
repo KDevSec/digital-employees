@@ -1,0 +1,43 @@
+packages/workbench-web/vitest.config.ts
+  s_cbda167ad90f41::t_86cc397959168c 1-8
+packages/workbench-web/test/health.test.ts
+  s_cbda167ad90f41::t_3c871929377b47 1-36
+packages/workbench-web/index.html
+  s_cbda167ad90f41::t_249838a5203c8a 1-12
+packages/workbench-web/src/views/Home.vue
+  s_cbda167ad90f41::t_94861cff39661a 1-88
+packages/workbench-web/src/env.d.ts
+  s_cbda167ad90f41::t_c267b0dae6333f 1-7
+packages/workbench-web/src/api/health.ts
+  s_cbda167ad90f41::t_613e8d9b7563ba 1-65
+packages/workbench-web/src/router/index.ts
+  s_cbda167ad90f41::t_9b64e33940228f 1-8
+packages/workbench-web/package.json
+  s_cbda167ad90f41::t_ea0d7f9d037e00 1-23
+packages/workbench-web/src/main.ts
+  s_cbda167ad90f41::t_e08287e2ea7ece 1-6
+packages/workbench-web/tsconfig.json
+  s_cbda167ad90f41::t_c89c0de4a418d6 1-16
+packages/workbench-web/src/App.vue
+  s_cbda167ad90f41::t_172169e028354c 1-7
+packages/workbench-web/vite.config.ts
+  s_cbda167ad90f41::t_850dd4b37d55fa 1-15
+bun.lock
+  s_cbda167ad90f41::t_1ee2de1180fa2f 22-37,40-47,154-155,170-189,192-193,196-197,208-209,214-215,224-225,230-231,236-237,248-251,274-275,284-285,288-293,297-300
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "48498170b0a6baccde77495299592fe08830e8e8",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
