@@ -1,0 +1,19 @@
+workbench/workbench-service/scripts/install.ps1
+  s_cbda167ad90f41::t_dea69ec02f49bf 15-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2c7f3fbe50da0fb509f4f24b84ad4e6652e0d028",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
