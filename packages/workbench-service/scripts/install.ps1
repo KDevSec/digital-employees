@@ -15,10 +15,11 @@ Write-Host "== 数字员工工作台安装（per-user，全程免提权） =="
 Write-Host "安装目录: $InstallDir"
 
 # 1. 落盘双制品
-if (-not (Test-Path 'dist\workbench.exe')) { throw "dist\workbench.exe 不存在——先跑 bash scripts/build.sh 与 build-tray.sh" }
+foreach ($f in 'dist\workbench.exe', 'dist\workbench-daemon.exe', 'dist\workbench-tray.exe') { if (-not (Test-Path $f)) { throw "$f 不存在——先跑 bash scripts/build.sh 与 build-tray.sh" } }
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Copy-Item 'dist\workbench.exe' (Join-Path $InstallDir 'workbench.exe') -Force
 Copy-Item 'dist\workbench-tray.exe' (Join-Path $InstallDir 'workbench-tray.exe') -Force
+Copy-Item 'dist\workbench-daemon.exe' (Join-Path $InstallDir 'workbench-daemon.exe') -Force
 Write-Host "[1/4] 双制品已落盘（$((Get-Item (Join-Path $InstallDir 'workbench.exe')).Length) + $((Get-Item (Join-Path $InstallDir 'workbench-tray.exe')).Length) bytes）"
 
 # 2. 注册计划任务（非提权——时间触发器实测可注册）
@@ -28,17 +29,10 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 # S2 定稿：重复触发器 = 崩溃恢复主力（实测 43s 拉回）；RepetitionDuration 用有限时长（MaxValue 超 XML 范围）
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(30) `
   -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 365)
-# 黑窗闪现根治（安装实测反馈）：Bun 编译的是 console 程序，任务每分钟拉起会闪黑窗。
-# wscript（GUI 子系统）+ VBS Run style 0 隐藏运行；True=等待——服务作为任务实例存活，IgnoreNew 生效
-$vbs = Join-Path $InstallDir 'daemon-hidden.vbs'
-@'
-' daemon-hidden.vbs —— 计划任务动作入口：隐藏控制台运行 workbench __daemon（防每分钟黑窗闪现）
-Dim shell, exePath
-Set shell = CreateObject("WScript.Shell")
-exePath = WScript.Arguments(0)
-shell.Run """" & exePath & """" & " __daemon", 0, True
-'@ | Out-File $vbs -Encoding ascii -Force
-Register-ScheduledTask -TaskName $TaskName -Action (New-ScheduledTaskAction -Execute 'wscript.exe' -Argument ('"' + $vbs + '" "' + $exe + '"')) `
+# 黑窗闪现根治（安装实测反馈 + VBS 查杀风险修正）：守护走 GUI 子系统变体 workbench-daemon.exe
+# （PE Subsystem CUI->GUI，编译期翻转）——零控制台闪现、无脚本（VBS+wscript+隐藏+任务=恶意软件 TTP，且微软正废弃 VBScript）
+$daemon = Join-Path $InstallDir 'workbench-daemon.exe'
+Register-ScheduledTask -TaskName $TaskName -Action (New-ScheduledTaskAction -Execute $daemon -Argument '__daemon') `
   -Trigger $trigger -Settings $settings -Force | Out-Null
 Write-Host "[2/4] 计划任务 $TaskName 已注册（每分钟重复触发守护；免提权）"
 
