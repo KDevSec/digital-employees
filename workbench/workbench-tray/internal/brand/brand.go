@@ -17,7 +17,7 @@ const (
 	ProfileName = ".devzero"
 	// RunKeyName HKCU Run 键值名
 	RunKeyName = "DevZeroTray"
-	// CompanyName VersionInfo 占位（品牌定后换）
+	// CompanyName 公司主体名待定，暂以 "Placeholder" 占位（占位与品牌显示名无关，显示名单源是 DisplayName）
 	CompanyName = "Placeholder"
 	// TrayLogName 壳日志文件名（<profile>/logs/ 下）
 	TrayLogName = "tray.log"
@@ -25,3 +25,6 @@ const (
 	// probe/actions/menu 三包共用的单一常量（M-4 上提）
 	LoopbackHost = "127.0.0.1"
 )
+
+// 环境变量名 WORKBENCH_HOME / WORKBENCH_NO_BROWSER / WORKBENCH_BUILD_COMMIT_ID 为内部
+// 测试/构建基础设施名（非用户可见品牌面），保留 workbench 前缀，不在品牌重命名映射内。

@@ -1,6 +1,6 @@
 /**
  * 双轨日志（S-08，设计 §11）：
- * - logs/workbench.log  运行明细（开发读）
+ * - logs/devzero.log  运行明细（开发读）
  * - logs/lifecycle.log  生命周期（启停横幅/崩溃/升级/GC——只记生命周期，运维读）
  * 统一 JSONL：{ts, event, payload?}；全 UTF-8 无 BOM（W-17）；
  * 轮转属日志子系统（W-7）：按 maxBytes 超限 rename 为 .1（简版保留 1 份）。
@@ -43,7 +43,7 @@ export function createLogger(logsDir: string, options: LoggerOptions = {}): Logg
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES
   mkdirSync(logsDir, { recursive: true })
 
-  const run: Track = { file: join(logsDir, 'workbench.log'), closed: false }
+  const run: Track = { file: join(logsDir, 'devzero.log'), closed: false }
   const life: Track = { file: join(logsDir, 'lifecycle.log'), closed: false }
 
   function write(track: Track, event: string, payload?: Record<string, unknown>): void {

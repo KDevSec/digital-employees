@@ -54,7 +54,7 @@ func HealthWait(timeoutMs int) Action {
 // Activity 查活动任务（TR-07 停止前检查的数据源）；输出解析在 contract.ParseActivity
 func Activity() Action { return Action{Kind: KindActivity} }
 
-// BuildCliArgs 动作 → 按序执行的多条 workbench CLI 调用（每段一次 exec.Command）：
+// BuildCliArgs 动作 → 按序执行的多条 devzero CLI 调用（每段一次 exec.Command）：
 //
 //	Stop        → [["stop"]]
 //	Start       → [["start"]]

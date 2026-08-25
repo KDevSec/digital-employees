@@ -245,7 +245,7 @@ done
 [ "$REVIVED" -eq 1 ] || { echo "FAIL: 托盘启动后 20s 内服务未复活（launch_revive）"; tail -5 "$TRAY_LOG"; exit 1; }
 grep -q 'tray.launch_revive' "$TRAY_LOG" || { echo "FAIL: tray.log 无 tray.launch_revive 事件"; exit 1; }
 sleep 6
-grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$HOME/.devzero/logs/tray.log"; exit 1; }
+grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$TRAY_LOG"; exit 1; }
 echo "PASS S6 (launch_revive: 托盘独立启动 -> 服务 ${i}s 内复活 -> GREEN)"
 
 # ---------- S7: 单实例 + 唤醒重定向（方案 B，2026-08-25 用户裁决） ----------

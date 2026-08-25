@@ -4,7 +4,11 @@
  * fetchHealthz 不硬编码端口——同源相对路径请求，dev 由 Vite 代理到 127.0.0.1:19980。
  */
 
-/** 本工作台的 app 标识（与 service 侧 brand.app 单源对应；跨包无法 import，此处镜像） */
+/**
+ * 本工作台的 app 标识（与 service 侧 brand.app 单源对应；跨包无法 import，此处镜像）。
+ * 三方内部契约标识：service healthz / tray 契约测试 / web 健康徽章三方同步判定「自家服务」，
+ * 不在品牌重命名映射内（app 契约值保持 'workbench'，改名需三方同步）。
+ */
 const APP_ID = 'workbench'
 
 /** /healthz JSON（C-4 契约形状，字段全可选——外部对象不可信） */
