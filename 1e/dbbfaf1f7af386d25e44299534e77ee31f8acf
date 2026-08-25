@@ -1,0 +1,35 @@
+workbench/workbench-service/test/logging.test.ts
+  s_aad8def6d411b5::t_107f92d4dcca4b 27,33,49,63,72,76,78,86,91,98,134,138,149-150,162-163,173-174,185-186,203
+workbench/workbench-tray/internal/actions/actions.go
+  s_aad8def6d411b5::t_73bce816a12fc4 57
+workbench/workbench-tray/internal/contract/contract.go
+  s_aad8def6d411b5::t_73bce816a12fc4 57
+workbench/workbench-tray/internal/statemachine/statemachine.go
+  s_aad8def6d411b5::t_73bce816a12fc4 65
+workbench/workbench-tray/main.go
+  s_aad8def6d411b5::t_30d727a3624bcc 322-324,329
+workbench/workbench-web/src/api/health.ts
+  s_aad8def6d411b5::t_4a89fa44704eba 7-11
+workbench/workbench-tray/scripts/tray-smoke.sh
+  s_aad8def6d411b5::t_20edadc8c411ae 248
+workbench/workbench-tray/internal/brand/brand.go
+  s_aad8def6d411b5::t_4a89fa44704eba 20,28-30
+workbench/workbench-service/src/logging/logger.ts
+  s_aad8def6d411b5::t_107f92d4dcca4b 3,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1edbbfaf1f7af386d25e44299534e77ee31f8acf",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

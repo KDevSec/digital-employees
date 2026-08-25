@@ -1,0 +1,19 @@
+.gitignore
+  s_46f7f3afbb6303::t_ea50ae9df07774 30-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "770b34873c58193a0b1941ec1bf29a8ff71f74de",
+  "prompts": {},
+  "sessions": {
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

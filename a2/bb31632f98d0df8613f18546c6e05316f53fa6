@@ -1,0 +1,30 @@
+workbench/workbench-service/src/brand.ts
+  s_aad8def6d411b5::t_bedb6df07e5888 9
+workbench/workbench-installer/scripts/build-installer.sh
+  s_aad8def6d411b5::t_f486d97110fa8e 17
+docs/plans/2026-08-25-真安装包-design.md
+  s_aad8def6d411b5::t_f486d97110fa8e 75
+workbench/workbench-installer/scripts/installer-smoke.sh
+  s_aad8def6d411b5::t_7d6b3074a4e9e1 42-43
+  s_aad8def6d411b5::t_39d9ffb2934044 132-133,135,137-138
+  s_aad8def6d411b5::t_0d3c3297a2778b 134
+  s_aad8def6d411b5::t_bedb6df07e5888 136
+docs/plans/2026-08-25-真安装包.md
+  s_aad8def6d411b5::t_f486d97110fa8e 663,667,686-693
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a2bb31632f98d0df8613f18546c6e05316f53fa6",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

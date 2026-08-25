@@ -1,0 +1,23 @@
+docs/design/设计决策记录-2026-08-13.md
+  s_aad8def6d411b5::t_55915c384b7561 284-305
+docs/plans/2026-08-25-真安装包.md
+  s_aad8def6d411b5::t_92c0442490c115 588-589
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_aad8def6d411b5::t_45eedccc861036 261
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "de796addd9daa806ac2634e5a9345c7d797bbee3",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

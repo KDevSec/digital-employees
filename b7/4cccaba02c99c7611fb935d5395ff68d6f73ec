@@ -1,0 +1,20 @@
+workbench/workbench-installer/workbench.iss
+  s_aad8def6d411b5::t_2f2df5cbf5d844 81-84
+  s_aad8def6d411b5::t_18f05735fa00aa 107,115-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "b74cccaba02c99c7611fb935d5395ff68d6f73ec",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

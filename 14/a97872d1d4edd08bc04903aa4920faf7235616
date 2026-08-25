@@ -1,0 +1,87 @@
+workbench/workbench-tray/internal/actions/actions.go
+  s_aad8def6d411b5::t_667c02d42a55cf 9
+workbench/workbench-tray/scripts/tray-smoke.sh
+  s_aad8def6d411b5::t_150b534d7ac986 30,32-33,40,51-53,122,143,222,237,239,248,255,258
+workbench/workbench-web/package.json
+  s_aad8def6d411b5::t_bc68d0f112086d 2
+workbench/workbench-tray/go.mod
+  s_aad8def6d411b5::t_667c02d42a55cf 1
+workbench/workbench-service/src/main.ts
+  s_aad8def6d411b5::t_e4de1bce91183b 48
+workbench/workbench-service/scripts/smoke.sh
+  s_aad8def6d411b5::t_e6c411adedbab3 230
+  s_aad8def6d411b5::t_5ef918878d8a01 226,228-229,234,243-244,261,265
+workbench/workbench-service/scripts/flip-subsystem.ts
+  s_aad8def6d411b5::t_92de5963c6f7cf 2,5
+workbench/workbench-tray/main.go
+  s_aad8def6d411b5::t_24c10bf57f7c2d 143
+  s_aad8def6d411b5::t_3871c52c639e4e 59
+  s_aad8def6d411b5::t_8988674b0eafbc 50-51
+  s_aad8def6d411b5::t_d718195ad0e248 322,328
+  s_aad8def6d411b5::t_3f69af90f23811 1,4,346
+  s_aad8def6d411b5::t_667c02d42a55cf 28-37
+  s_aad8def6d411b5::t_4289c2dfca1908 451
+workbench/workbench-tray/scripts/build-tray.sh
+  s_aad8def6d411b5::t_f1c72b9f7b7257 3-4,7,12-13
+workbench/workbench-service/src/cli/index.ts
+  s_aad8def6d411b5::t_6b360d67df474f 33,35
+workbench/workbench-tray/internal/menu/menu.go
+  s_aad8def6d411b5::t_667c02d42a55cf 8-9
+workbench/workbench-tray/internal/traylog/traylog.go
+  s_aad8def6d411b5::t_667c02d42a55cf 13
+workbench/workbench-tray/internal/brand/brand.go
+  s_aad8def6d411b5::t_35de95aa431199 7,13,17-19
+  s_aad8def6d411b5::t_1bd79c6e61c8e3 8-10
+workbench/workbench-service/src/brand.ts
+  s_aad8def6d411b5::t_1bd79c6e61c8e3 6,8,12-13
+workbench/workbench-tray/internal/probe/probe.go
+  s_aad8def6d411b5::t_583bc10181177a 100
+  s_aad8def6d411b5::t_667c02d42a55cf 14-15
+workbench/workbench-tray/internal/autostart/autostart_test.go
+  s_aad8def6d411b5::t_583bc10181177a 39
+workbench/workbench-tray/internal/traylog/traylog_test.go
+  s_aad8def6d411b5::t_667c02d42a55cf 12
+workbench/workbench-service/test/cli.test.ts
+  s_aad8def6d411b5::t_3bd5bd81564649 59,67,74-75,84,92,110,118,127,134,145,154,162
+workbench/workbench-web/src/views/Home.vue
+  s_aad8def6d411b5::t_bc68d0f112086d 34
+workbench/workbench-service/test/server.test.ts
+  s_aad8def6d411b5::t_3bd5bd81564649 17,43,67,72,172,174
+workbench/workbench-web/index.html
+  s_aad8def6d411b5::t_bc68d0f112086d 6
+workbench/workbench-service/package.json
+  s_aad8def6d411b5::t_8dbef23ad9892e 2
+workbench/workbench-tray/internal/contract/contract_test.go
+  s_aad8def6d411b5::t_667c02d42a55cf 13
+workbench/workbench-service/web-dist/index.html
+  s_aad8def6d411b5::t_17986fec4e1f15 1-6,35-41
+workbench/workbench-tray/versioninfo/versioninfo.json
+  s_aad8def6d411b5::t_36393938241410 24,26,29,31
+workbench/workbench-service/scripts/build.sh
+  s_aad8def6d411b5::t_d1803bf6cd5dd6 5-6,29,32,37,40,43,45
+workbench/workbench-service/src/config/load.ts
+  s_aad8def6d411b5::t_1c3db01dad9d4b 40
+workbench/workbench-tray/internal/probe/probe_test.go
+  s_aad8def6d411b5::t_583bc10181177a 172,180
+  s_aad8def6d411b5::t_667c02d42a55cf 15
+workbench/workbench-tray/internal/menu/menu_test.go
+  s_aad8def6d411b5::t_667c02d42a55cf 6
+bun.lock
+  s_aad8def6d411b5::t_e438de3183e05d 9,23,48-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "14a97872d1d4edd08bc04903aa4920faf7235616",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
