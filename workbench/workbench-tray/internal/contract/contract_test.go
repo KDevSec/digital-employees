@@ -210,12 +210,13 @@ func TestActivityInfoTotal(t *testing.T) {
 }
 
 // TestActivityContractFieldSyncWithTs 跨语言绊网（沿 TestCrossLanguageContractSync 手法）：
-// activity 字段名在 TS 侧 endpoints.ts 的 /api/activity handler 中出现——TS 改名 → 本测试红
+// activity 字段名在 TS 侧 routes/infra.ts 的 /api/activity handler 中出现——TS 改名 → 本测试红
+// （I0-5 T1 路由分域注册：handler 自 endpoints.ts 迁入 routes/infra.ts，绊网随迁）
 func TestActivityContractFieldSyncWithTs(t *testing.T) {
-	endpointsTs := readRepoFile(t, "workbench", "workbench-service", "src", "server", "endpoints.ts")
+	infraRoutesTs := readRepoFile(t, "workbench", "workbench-service", "src", "server", "routes", "infra.ts")
 	for _, name := range []string{"conversationTasks", "triggerTasks"} {
-		if !strings.Contains(endpointsTs, name) {
-			t.Errorf("endpoints.ts 不再包含 activity 字段名 %q——TS/Go 活动契约漂移，需同步 contract.ActivityInfo", name)
+		if !strings.Contains(infraRoutesTs, name) {
+			t.Errorf("routes/infra.ts 不再包含 activity 字段名 %q——TS/Go 活动契约漂移，需同步 contract.ActivityInfo", name)
 		}
 	}
 }

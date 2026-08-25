@@ -1,7 +1,7 @@
 /**
  * 框架无关路由表（S-12，设计 §1.2）。
  * 本文件【禁止 import hono】——HTTP 框架只允许出现在 hono-adapter.ts 单点。
- * 业务端点（endpoints.ts）与守卫（guard.ts）只面向本模块的 Ctx/Res 形状。
+ * 业务端点（routes/ 目录各域文件）与守卫（guard.ts）只面向本模块的 Ctx/Res 形状。
  */
 
 export interface Ctx {
