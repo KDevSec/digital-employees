@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 安装包冒烟（设计 §6）——真 setup.exe 全链真机验证：
-#   S1 静默首装 / S2 覆盖升级（中断窗口 ≤15s 硬断言）/ S3 卸载保留数据 / S4 卸载清除数据
+#   S1 静默首装 / S2 覆盖升级（中断窗口 ≤20s 硬断言）/ S3 卸载保留数据 / S4 卸载清除数据
 #
 # 环境事实（沿 tray-smoke.sh 教训 + 安装器特有；setup/unins000 三坑 2026-08-25 判别实验实测）：
 #   - 安装器固定路径真实落盘（%LOCALAPPDATA%\Programs\devzero）——不可 mktemp 隔离，
@@ -140,7 +140,7 @@ echo "PASS S1 静默首装（三制品 + 任务 + 快捷方式 + healthz + 托�
 
 # ---- S2: 覆盖升级（S1 末态 = 服务+托盘在跑 + 任务已禁用 = 「旧版在跑」前提天然成立） ----
 echo ""
-echo "=== S2: 覆盖升级——旧版在跑时再执行 setup，中断窗口 ≤15s ==="
+echo "=== S2: 覆盖升级——旧版在跑时再执行 setup，中断窗口 ≤20s ==="
 S2_LOG="$WORKBENCH_HOME/innosetup-s2.log"
 S2_LOG_WIN="$(cygpath -w "$S2_LOG")" # /LOG= 须 Windows 路径（坑②，同 S1）
 s2_fail() { # S2 专用 FAIL：cleanup 会删 $WORKBENCH_HOME——Inno 日志先全文摘录到冒烟日志留痕（诊断耗时大头/文件锁）
@@ -157,7 +157,7 @@ curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 || { echo "FAIL: S2 前提
 S2_INODE_BEFORE="$(stat -c %i "$INSTALL_DIR/devzero.exe" 2>/dev/null)" || { echo "FAIL: S2 前置——$INSTALL_DIR/devzero.exe stat 失败"; exit 1; }
 S2_T0=$SECONDS
 S2_DOWN_AT="" # 首个不可达时刻即锁定，不可达期间不覆盖——计划稿此处逐次覆盖，任意长窗口都会被测成 ≈1 个轮询间隔（假 PASS）
-S2_UP_AT=""   # 恢复点 = down 后首个可达时刻。测量误差双向 ±1 个观测粒度（down 迟观测缩窗、up 迟观测扩窗），非单向保守；15s 线 vs 11-14s 实测下误差 ≤1s 无实质影响（Task 4 review Minor 2 修正原「过估保守侧」不变式表述）
+S2_UP_AT=""   # 恢复点 = down 后首个可达时刻。测量误差双向 ±1 个观测粒度（down 迟观测缩窗、up 迟观测扩窗），非单向保守；20s 线 vs 实测 11-18s 下误差 ≤1s 无实质影响（Task 4 review Minor 2 修正原「过估保守侧」不变式表述）
 S2_RECOVERED=0
 S2_DEADLINE_AT=$(( S2_T0 + 60 )) # 首装实测 ~14s、恢复链实测可晚于 setup 退出 ~2s；60s 只兜异常慢机
 ( MSYS2_ARG_CONV_EXCL="*" "$SETUP_EXE" /VERYSILENT /SUPPRESSMSGBOXES "/LOG=$S2_LOG_WIN" ) & # 坑①：后台调用尤其必坑——无 EXCL 则 /VERYSILENT 被 MSYS 转 POSIX 路径，setup 收不到静默参数弹向导，后台挂死
@@ -189,7 +189,7 @@ fi
 [ -n "$S2_DOWN_AT" ] || echo "（注：轮询粒度内未见中断——窗口极短，视为通过）"
 if [ -n "$S2_DOWN_AT" ]; then
   S2_WINDOW=$(( S2_UP_AT - S2_DOWN_AT ))
-  [ "$S2_WINDOW" -le 15 ] || s2_fail "S2 中断窗口 ${S2_WINDOW}s > 15s（裁决 3 预算 8s+余量）——down t+$((S2_DOWN_AT - S2_T0))s / up t+$((S2_UP_AT - S2_T0))s；耗时大头看日志时间戳（判别实验：解压落盘 ~7s 为大头，ssPostInstall 任务注册仅 ~0.4s——ewWaitUntilTerminated 嫌疑在暖缓存下不成立）"
+  [ "$S2_WINDOW" -le 20 ] || s2_fail "S2 中断窗口 ${S2_WINDOW}s > 20s（用户裁决 C 2026-08-25：lzma2 降档+线放宽双保险）——down t+$((S2_DOWN_AT - S2_T0))s / up t+$((S2_UP_AT - S2_T0))s；耗时大头看日志时间戳（判别实验：解压落盘 ~7s 为大头，ssPostInstall 任务注册仅 ~0.4s——ewWaitUntilTerminated 嫌疑在暖缓存下不成立）"
 fi
 [ "$(stat -c %i "$INSTALL_DIR/devzero.exe")" != "$S2_INODE_BEFORE" ] || s2_fail "S2 落盘文件未更新（devzero.exe 文件 ID 未变——覆盖空转？）"
 tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -i devzero-tray >/dev/null || s2_fail "S2 覆盖后托盘未恢复"
@@ -200,7 +200,7 @@ if ! schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null; then
 fi
 S2_WINDOW_TXT=""
 [ -n "$S2_DOWN_AT" ] && S2_WINDOW_TXT="实测 $((S2_UP_AT - S2_DOWN_AT))s / "
-echo "PASS S2 覆盖升级（中断窗口 ${S2_WINDOW_TXT}≤15s + 文件已更新 + 服务托盘已恢复）"
+echo "PASS S2 覆盖升级（中断窗口 ${S2_WINDOW_TXT}≤20s + 文件已更新 + 服务托盘已恢复）"
 
 # S3/S4 由后续任务补充
 echo ""
