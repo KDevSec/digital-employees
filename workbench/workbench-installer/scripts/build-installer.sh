@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # DevZero 安装包构建（设计 §4 构建链）：
-#   1. 前置检查：三制品已在 workbench-service/dist（不代跑上游构建，对齐 build-tray.sh 形态）
+#   1. 前置检查：三制品已在 workbench-service/dist（不代跑上游构建——与 build-tray.sh
+#      缺制品时代跑 service 的策略相反：安装包要求三制品齐备的确定性输入，缺哪个提示操作者跑哪个）
 #   2. 版本注入：读 workbench-service/package.json version -> iscc -D（安装包版本 = 服务主版本线）
 #   3. iscc 编译 -> dist/devzero-setup-<version>-x64.exe + 同名 .sha256（平台上传 U-02 直接消费）
 #   4. signtool 挂点（裁决 4 预留位）：WORKBENCH_SIGN_CERT 存在才签名，否则跳过
