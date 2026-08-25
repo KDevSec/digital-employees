@@ -28,11 +28,23 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 # S2 定稿：重复触发器 = 崩溃恢复主力（实测 43s 拉回）；RepetitionDuration 用有限时长（MaxValue 超 XML 范围）
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(30) `
   -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 365)
-Register-ScheduledTask -TaskName $TaskName -Action (New-ScheduledTaskAction -Execute $exe -Argument '__daemon') `
+# 黑窗闪现根治（安装实测反馈）：Bun 编译的是 console 程序，任务每分钟拉起会闪黑窗。
+# wscript（GUI 子系统）+ VBS Run style 0 隐藏运行；True=等待——服务作为任务实例存活，IgnoreNew 生效
+$vbs = Join-Path $InstallDir 'daemon-hidden.vbs'
+@'
+' daemon-hidden.vbs —— 计划任务动作入口：隐藏控制台运行 workbench __daemon（防每分钟黑窗闪现）
+Dim shell, exePath
+Set shell = CreateObject("WScript.Shell")
+exePath = WScript.Arguments(0)
+shell.Run """" & exePath & """" & " __daemon", 0, True
+'@ | Out-File $vbs -Encoding ascii -Force
+Register-ScheduledTask -TaskName $TaskName -Action (New-ScheduledTaskAction -Execute 'wscript.exe' -Argument ('"' + $vbs + '" "' + $exe + '"')) `
   -Trigger $trigger -Settings $settings -Force | Out-Null
 Write-Host "[2/4] 计划任务 $TaskName 已注册（每分钟重复触发守护；免提权）"
 
 # 3. 经计划任务拉起服务（同时验证注册正确）
+# 安装意图=要运行：清可能存在的 user-stopped 哨兵（CLI stop 落的），否则 __daemon 见哨兵秒退
+Remove-Item (Join-Path $env:USERPROFILE '.workbench\run\sentinels\user-stopped') -ErrorAction SilentlyContinue
 schtasks /Run /TN $TaskName | Out-Null
 $healthz = "http://127.0.0.1:19980/healthz"
 $ready = $false

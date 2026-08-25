@@ -17,10 +17,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.." # packages/workbench-service
 
-PORT=19980
+# 冒烟用独立端口（避免与机器上真实安装运行的 19980 实例冲突——独立 profile 的 uid 不同会误判 conflict/78）
+PORT="${WORKBENCH_SMOKE_PORT:-19981}"
 BASE="http://127.0.0.1:$PORT"
 export WORKBENCH_HOME="$(mktemp -d)"
 export WORKBENCH_NO_BROWSER=1
+mkdir -p "$WORKBENCH_HOME"
+printf '{\n  "_comment": "smoke 专用端口隔离",\n  "network": { "port": %s }\n}\n' "$PORT" > "$WORKBENCH_HOME/config.json"
 RUN_DIR="$WORKBENCH_HOME/run"
 PROFILE_DIR="$WORKBENCH_HOME"
 LIFECYCLE_LOG="$WORKBENCH_HOME/logs/lifecycle.log"
@@ -126,6 +129,26 @@ echo "PASS 场景 5.7 (哨兵落盘 → __daemon 秒退 ${DAEMON_ELAPSED}ms 不�
 bun run src/main.ts stop >/dev/null 2>&1
 sleep 1
 
+echo "=== 场景 5.8: 调度器路径不开浏览器（安装实测反馈：每分钟弹标签页缺口） ==="
+# 服务在跑的状态下：__daemon（幂等分支）不得产生 browser.open 事件；用户 start（幂等分支）要产生
+( bun run src/main.ts start >"$WORKBENCH_HOME/s58-start1.log" 2>&1 & )
+for i in $(seq 1 15); do curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 && break; sleep 1; done
+curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 || { echo "FAIL: 5.8 前置——服务未起"; exit 1; }
+BROWSER_BEFORE=$(grep -c 'browser.open' "$PROFILE_DIR/logs/lifecycle.log" 2>/dev/null || echo 0)
+bun run src/main.ts __daemon
+[ $? -eq 0 ] || { echo "FAIL: __daemon 幂等路径退出码非 0"; exit 1; }
+BROWSER_AFTER_DAEMON=$(grep -c 'browser.open' "$PROFILE_DIR/logs/lifecycle.log" 2>/dev/null || echo 0)
+[ "$BROWSER_AFTER_DAEMON" -eq "$BROWSER_BEFORE" ] || { echo "FAIL: __daemon 幂等路径产生了 browser.open 事件（$BROWSER_BEFORE -> $BROWSER_AFTER_DAEMON）"; exit 1; }
+bun run src/main.ts start >/dev/null 2>&1
+START_RC=$?
+[ "$START_RC" -eq 0 ] || { echo "FAIL: 用户 start 幂等路径退出码 $START_RC"; exit 1; }
+BROWSER_AFTER_START=$(grep -c 'browser.open' "$PROFILE_DIR/logs/lifecycle.log" 2>/dev/null || echo 0)
+[ "$BROWSER_AFTER_START" -gt "$BROWSER_AFTER_DAEMON" ] || { echo "FAIL: 用户 start 幂等路径未产生 browser.open 事件"; exit 1; }
+echo "PASS 场景 5.8 (__daemon 幂等不开浏览器: $BROWSER_BEFORE->$BROWSER_AFTER_DAEMON；用户 start 开: ->$BROWSER_AFTER_START)"
+# 停回干净态
+bun run src/main.ts stop >/dev/null 2>&1
+sleep 1
+
 echo "=== 场景 5.5: 坏 config.json → stop/status 仍可用，start 退出码 78（友好文案） ==="
 echo '{"network": {"port": "not-a-number"}}' >"$WORKBENCH_HOME/config.json"
 set +e
@@ -145,7 +168,11 @@ grep -q '配置' "$WORKBENCH_HOME/badcfg-start.log" || { echo "FAIL: 78 输出�
 if grep -qE '^\s+at ' "$WORKBENCH_HOME/badcfg-start.log"; then
   echo "FAIL: 78 输出含裸堆栈帧"; exit 1
 fi
-rm "$WORKBENCH_HOME/config.json" # 恢复默认（后续场景不受影响）
+printf '{
+  "_comment": "smoke 专用端口隔离",
+  "network": { "port": %s }
+}
+' "$PORT" > "$WORKBENCH_HOME/config.json" # 恢复冒烟端口配置（非默认端口，不能删了事）
 echo "PASS 场景 5.5 (stop/status 可用 + start 78 友好文案)"
 
 echo "=== 场景 6: 干净 stop 后重启无 crash_detected；kill -9 后重启记 crash_detected ==="
@@ -175,7 +202,7 @@ echo "PASS 场景 6 (负向无 crash + kill 后有 crash)"
 echo "=== 场景 7: 端口被第三方占用 → start 退出码 78 ==="
 kill_service # 留下陈旧 service.json（conflict 判定需要句柄存在），端口腾给占用方
 sleep 1
-bun -e 'Bun.serve({port:19980, hostname:"127.0.0.1", fetch: () => new Response("occupier")}); console.log(process.pid)' >"$WORKBENCH_HOME/occupier.out" 2>&1 &
+WB_SMOKE_PORT="$PORT" bun -e "Bun.serve({port:Number(process.env.WB_SMOKE_PORT), hostname:\"127.0.0.1\", fetch: () => new Response(\"occupier\")}); console.log(process.pid)" >"$WORKBENCH_HOME/occupier.out" 2>&1 &
 sleep 1.5
 OCCUPIER_PID="$(head -1 "$WORKBENCH_HOME/occupier.out" | grep -o '[0-9]*')"
 set +e
@@ -189,7 +216,7 @@ echo "PASS 场景 7 (conflict → 78)"
 # ---------- 场景 8: 编译版全链（Task 11 / S-01） ----------
 
 echo "=== 场景 8: 编译版全链——build.sh 单体编译 + exe 独立运行 ==="
-# 释放场景 7 的端口占用方（occupier 仍持有 19980）
+# 释放场景 7 的端口占用方（occupier 仍持有占用端口）
 if [ -n "$OCCUPIER_PID" ]; then
   taskkill //F //PID "$OCCUPIER_PID" >/dev/null 2>&1 || true
   OCCUPIER_PID=""

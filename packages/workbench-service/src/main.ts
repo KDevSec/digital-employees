@@ -246,7 +246,11 @@ function buildStartupDeps(rt: ServiceRuntime): StartupDeps {
       writeServiceHandle(runDir, { pid: process.pid, port: cfg.network.port, uid: rt.uid, version: brand.version }),
     writeReliability: (handle) => writeReliability(runDir, { runId: handle.instanceId }),
     logger: rt.logger,
-    openBrowser,
+    openBrowser: (port) => {
+      // 可观测：用户面浏览器打开意图（WORKBENCH_NO_BROWSER=1 抑制实际动作但保留事件——冒烟断言用）
+      rt.logger.lifecycle('browser.open', { url: `http://127.0.0.1:${port}`, suppressed: process.env.WORKBENCH_NO_BROWSER === '1' })
+      openBrowser(port)
+    },
     sentinelExists: (name) => existsSync(sentinelPath(name)),
     writeSentinel: (name) => {
       mkdirSync(sentinelsDir, { recursive: true })
@@ -280,7 +284,14 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
   try {
     rt = initServiceRuntime()
     const runtime = rt // const 捕获：闭包内保持非空收窄
-    const outcome = await runStartup(buildStartupDeps(runtime))
+    const startupDeps = buildStartupDeps(runtime)
+    if (opts.daemon === true) {
+      // 调度器路径（__daemon）永不开浏览器：重复触发守护每分钟拉起时若服务已在跑（任务实例外），
+      // 幂等分支会开浏览器——用户每分钟吃一个新标签页（安装实测反馈）。浏览器只属于用户显式动作
+      // （start/portal/托盘左键/install）。首启哨兵同理：只写哨兵，不打扰。
+      startupDeps.openBrowser = () => {}
+    }
+    const outcome = await runStartup(startupDeps)
     if (outcome.server === null) {
       // idempotent（已开主页）/ starting（另一实例启动中）→ 静默退出 0
       runtime.logger.close()
