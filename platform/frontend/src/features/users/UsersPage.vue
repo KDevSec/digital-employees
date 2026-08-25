@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { api } from '../../api'
 import Pagination from '../../shell/Pagination.vue'
 import OrgScopeTree from './OrgScopeTree.vue'
-import type { PaginatedResponse } from '../../types'
+import type { PaginatedResponse, PrincipalAuthorizations, PrincipalDetail, ScopeOptions } from '../../types'
 
 interface Principal {
   id: string
@@ -21,24 +21,6 @@ interface Principal {
   roles: string[]
 }
 
-interface Domain { id: string; name: string }
-interface OrgNode { id: string; name: string; domain_id: string; org_type: string; parent_id: string | null }
-
-interface BuiltinRole { role_code: string; label: string }
-interface CustomRole { id: string; domain_id: string; name: string; code: string }
-interface FixedAssignment { id: string; principal_id: string; role_code: string; scope_type: string; domain_id: string | null }
-interface ScopedGrant {
-  id: string; role_id: string; subject_type: string; subject_id: string
-  scope_org_id: string; scope_include_descendants: boolean; status: string
-}
-interface Overview {
-  builtin_roles: BuiltinRole[]
-  custom_roles: CustomRole[]
-  fixed_assignments: FixedAssignment[]
-  scoped_grants: ScopedGrant[]
-  domains: Domain[]
-  org_nodes: OrgNode[]
-}
 interface OrgContext {
   domain: { id: string; name: string } | null
   department: { id: string; name: string } | null
@@ -68,26 +50,40 @@ const selectedIds = ref<Set<string>>(new Set())
 const selectedUser = ref<Principal | null>(null)
 const showDetail = ref(false)
 const orgContext = ref<OrgContext | null>(null)
-const orgContextLoading = ref(false)
+const detailLoading = ref(false)
+const principalAuth = ref<PrincipalAuthorizations | null>(null)
+const authLoading = ref(false)
+const syncedAt = ref<string | null>(null)
 
-const overview = ref<Overview | null>(null)
+const scopeOptions = ref<ScopeOptions | null>(null)
 const showPermPanel = ref(false)
 const permUser = ref<Principal | null>(null)
 const permMessage = ref('')
 
-const builtinRoleOptions = computed<BuiltinRole[]>(() => overview.value?.builtin_roles ?? [])
-const customRoleOptions = computed<CustomRole[]>(() => overview.value?.custom_roles ?? [])
-const orgNodeOptions = computed<OrgNode[]>(() => overview.value?.org_nodes ?? [])
+const builtinRoleOptions = [
+  { role_code: 'SYSTEM_ADMIN', label: t('app.roles.SYSTEM_ADMIN') },
+  { role_code: 'PLATFORM_ADMIN', label: t('app.roles.PLATFORM_ADMIN') },
+  { role_code: 'DEPARTMENT_ADMIN', label: t('app.roles.DEPARTMENT_ADMIN') },
+  { role_code: 'SECURITY_ADMIN', label: t('app.roles.SECURITY_ADMIN') },
+  { role_code: 'AUDIT_ADMIN', label: t('app.roles.AUDIT_ADMIN') },
+  { role_code: 'EMPLOYEE', label: t('app.roles.EMPLOYEE') },
+]
+const customRoleOptions = computed(() => scopeOptions.value?.custom_roles ?? [])
+const orgNodeOptions = computed(() => scopeOptions.value?.org_nodes ?? [])
 
-const roleNameMap = computed<Record<string, string>>(() =>
-  Object.fromEntries(builtinRoleOptions.value.map((r) => [r.role_code, r.label])),
-)
 const customRoleNameMap = computed<Record<string, string>>(() =>
   Object.fromEntries(customRoleOptions.value.map((r) => [r.id, r.name])),
 )
 const orgNodeNameMap = computed<Record<string, string>>(() =>
   Object.fromEntries(orgNodeOptions.value.map((o) => [o.id, o.name])),
 )
+const orgNodeDomainMap = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const n of orgNodeOptions.value) {
+    map[n.id] = n.domain_id
+  }
+  return map
+})
 
 const permForm = reactive({
   kind: 'builtin' as 'builtin' | 'custom',
@@ -101,39 +97,6 @@ const permForm = reactive({
 
 const rolesNeedingScope = new Set(['DEPARTMENT_ADMIN', 'SECURITY_ADMIN', 'AUDIT_ADMIN'])
 
-function rolesForPrincipal(user: Principal) {
-  const fixed = (overview.value?.fixed_assignments ?? []).filter((a) => a.principal_id === user.id)
-  const scoped = (overview.value?.scoped_grants ?? []).filter(
-    (g) => g.subject_type === 'PRINCIPAL' && g.subject_id === user.id,
-  )
-  return { fixed, scoped }
-}
-
-const filteredPrincipals = computed(() => {
-  let list = principals.value
-  if (search.value) {
-    const q = search.value.toLowerCase()
-    list = list.filter(
-      (p) =>
-        p.display_name.toLowerCase().includes(q) ||
-        p.username.toLowerCase().includes(q) ||
-        (p.email && p.email.toLowerCase().includes(q)) ||
-        p.department_name.toLowerCase().includes(q),
-    )
-  }
-  if (filterStatus.value) list = list.filter((p) => p.status === filterStatus.value)
-  if (filterRole.value) list = list.filter((p) => p.roles.includes(filterRole.value))
-  return list
-})
-
-const orgNodeDomainMap = computed<Record<string, string>>(() => {
-  const map: Record<string, string> = {}
-  for (const n of orgNodeOptions.value) {
-    map[n.id] = n.domain_id
-  }
-  return map
-})
-
 
 async function load() {
   loading.value = true
@@ -142,6 +105,8 @@ async function load() {
     params.set('offset', String(offset.value))
     params.set('limit', String(limit.value))
     if (search.value) params.set('query', search.value)
+    if (filterStatus.value) params.set('status', filterStatus.value)
+    if (filterRole.value) params.set('role_code', filterRole.value)
     for (const orgId of filterOrgIds.value) params.append('department_ids', orgId)
     const paged = await api<PaginatedResponse<Principal>>(`/api/v1/iam/principals?${params}`)
     principals.value = paged.items
@@ -159,10 +124,34 @@ function onPageChange() {
   load()
 }
 
+function onSearch() {
+  offset.value = 0
+  load()
+}
+
+function onFilterChange() {
+  offset.value = 0
+  load()
+}
+
 function toggleFilterOrg(id: string) {
   const idx = filterOrgIds.value.indexOf(id)
   if (idx >= 0) filterOrgIds.value.splice(idx, 1)
   else filterOrgIds.value.push(id)
+}
+
+async function ensureScopeOptions() {
+  if (scopeOptions.value === null) {
+    scopeOptions.value = await api<ScopeOptions>('/api/v1/authorization/scope-options')
+  }
+  if (!permForm.domain_id && scopeOptions.value.domains.length > 0) permForm.domain_id = scopeOptions.value.domains[0].id
+  if (!permForm.role_id && scopeOptions.value.custom_roles.length > 0) permForm.role_id = scopeOptions.value.custom_roles[0].id
+  if (!permForm.scope_org_id && scopeOptions.value.org_nodes.length > 0) permForm.scope_org_id = scopeOptions.value.org_nodes[0].id
+}
+
+async function showOrgFilterPanel() {
+  showOrgFilter.value = !showOrgFilter.value
+  if (showOrgFilter.value) await ensureScopeOptions()
 }
 
 function applyOrgFilter() {
@@ -178,28 +167,38 @@ function clearOrgFilter() {
   load()
 }
 
-async function loadOverview() {
-  overview.value = await api<Overview>('/api/v1/authorization/overview')
-  if (!permForm.domain_id && overview.value.domains.length > 0) permForm.domain_id = overview.value.domains[0].id
-  if (!permForm.role_id && overview.value.custom_roles.length > 0) permForm.role_id = overview.value.custom_roles[0].id
-  if (!permForm.scope_org_id && overview.value.org_nodes.length > 0) permForm.scope_org_id = overview.value.org_nodes[0].id
-}
-
 function openDetail(user: Principal) {
   selectedUser.value = user
   showDetail.value = true
   orgContext.value = null
-  loadOrgContext(user.id)
+  principalAuth.value = null
+  syncedAt.value = null
+  loadDetail(user.id)
 }
 
-async function loadOrgContext(principalId: string) {
-  orgContextLoading.value = true
+async function loadDetail(principalId: string) {
+  detailLoading.value = true
   try {
-    orgContext.value = await api<OrgContext>(`/api/v1/principals/${principalId}/org-context`)
+    const detail = await api<PrincipalDetail>(`/api/v1/principals/${principalId}/detail`)
+    orgContext.value = detail.org_context
+    principalAuth.value = detail.authorizations
+    syncedAt.value = detail.identity.synced_at
   } catch {
     orgContext.value = null
+    principalAuth.value = null
   } finally {
-    orgContextLoading.value = false
+    detailLoading.value = false
+  }
+}
+
+async function loadAuthorizations(principalId: string) {
+  authLoading.value = true
+  try {
+    principalAuth.value = await api<PrincipalAuthorizations>(`/api/v1/principals/${principalId}/authorizations`)
+  } catch {
+    principalAuth.value = null
+  } finally {
+    authLoading.value = false
   }
 }
 
@@ -207,6 +206,8 @@ function closeDetail() {
   showDetail.value = false
   selectedUser.value = null
   orgContext.value = null
+  principalAuth.value = null
+  syncedAt.value = null
 }
 
 async function openPermPanel(user: Principal) {
@@ -218,7 +219,13 @@ async function openPermPanel(user: Principal) {
   permForm.department_ids = []
   permForm.scope_include_descendants = true
   if (!permForm.domain_id) permForm.domain_id = user.domain_id
-  if (overview.value === null) await loadOverview()
+  principalAuth.value = null
+  await Promise.all([ensureScopeOptions(), loadAuthorizations(user.id)])
+  const existing = principalAuth.value?.fixed_assignments.find((a) => a.role_code === 'DEPARTMENT_ADMIN')
+  if (existing) {
+    permForm.role_code = 'DEPARTMENT_ADMIN'
+    permForm.department_ids = [...existing.department_ids]
+  }
 }
 
 function toggleDepartment(id: string) {
@@ -282,7 +289,7 @@ async function submitAssignment() {
       })
     }
     permMessage.value = t('users.perm.assigned')
-    await loadOverview()
+    await loadAuthorizations(permUser.value.id)
     await load()
   } catch (e: any) {
     permMessage.value = e.message || t('errors.saveFailed')
@@ -293,7 +300,7 @@ async function revokeFixed(id: string) {
   permMessage.value = ''
   try {
     await api(`/api/v1/role-assignments/${id}`, { method: 'DELETE' })
-    await loadOverview()
+    if (permUser.value) await loadAuthorizations(permUser.value.id)
     await load()
   } catch (e: any) {
     permMessage.value = e.message || t('errors.saveFailed')
@@ -304,7 +311,7 @@ async function revokeScoped(id: string) {
   permMessage.value = ''
   try {
     await api(`/api/v1/role-grants/${id}`, { method: 'DELETE' })
-    await loadOverview()
+    if (permUser.value) await loadAuthorizations(permUser.value.id)
   } catch (e: any) {
     permMessage.value = e.message || t('errors.saveFailed')
   }
@@ -387,11 +394,11 @@ function statusLabel(status: string) {
 }
 
 function roleLabel(role: string) {
-  return roleNameMap.value[role] || role
+  return t(`app.roles.${role}`, role)
 }
 
 onMounted(async () => {
-  await Promise.all([load(), loadOverview()])
+  await load()
 })
 </script>
 
@@ -415,7 +422,7 @@ onMounted(async () => {
     <div class="toolbar">
       <input v-model="search" class="field" style="max-width: 260px" :placeholder="t('users.searchPlaceholder')" @keyup.enter="offset = 0; load()">
       <div class="org-filter">
-        <button type="button" class="field org-filter-btn" @click="showOrgFilter = !showOrgFilter">
+        <button type="button" class="field org-filter-btn" @click="showOrgFilterPanel">
           {{ t('users.orgFilter') }}<span v-if="filterOrgIds.length" class="org-filter-count">{{ filterOrgIds.length }}</span>
         </button>
         <div v-if="showOrgFilter" class="org-filter-popover">
@@ -432,19 +439,19 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-      <select v-model="filterStatus" class="field" style="max-width: 140px">
+      <select v-model="filterStatus" class="field" style="max-width: 140px" @change="onFilterChange">
         <option value="">{{ t('users.allStatuses') }}</option>
         <option value="ACTIVE">{{ t('users.active') }}</option>
         <option value="DISABLED">{{ t('users.disabled') }}</option>
       </select>
-      <select v-model="filterRole" class="field" style="max-width: 180px">
+      <select v-model="filterRole" class="field" style="max-width: 180px" @change="onFilterChange">
         <option value="">{{ t('users.allRoles') }}</option>
         <option v-for="r in builtinRoleOptions" :key="r.role_code" :value="r.role_code">{{ r.label }}</option>
       </select>
     </div>
 
     <div v-if="selectedIds.size > 0" class="batch-bar">
-      <span>{{ t('pagination.showing', { from: 0, to: 0, total: 0 }).replace(/\d+-\d+ of \d+/, `${selectedIds.size} selected`) }}</span>
+      <span>{{ t('users.selectedCount', { count: selectedIds.size }) }}</span>
       <button class="button small danger" type="button" @click="batchToggleStatus('DISABLED')">{{ t('users.disable') }}</button>
       <button class="button small" type="button" @click="batchToggleStatus('ACTIVE')">{{ t('users.enable') }}</button>
     </div>
@@ -464,8 +471,8 @@ onMounted(async () => {
         </thead>
         <tbody>
           <tr v-if="loading"><td colspan="7" class="empty">{{ t('users.loading') }}</td></tr>
-          <tr v-else-if="filteredPrincipals.length === 0"><td colspan="7" class="empty">{{ t('users.noData') }}</td></tr>
-          <tr v-for="user in filteredPrincipals" :key="user.id">
+          <tr v-else-if="principals.length === 0"><td colspan="7" class="empty">{{ t('users.noData') }}</td></tr>
+          <tr v-for="user in principals" :key="user.id">
             <td><input type="checkbox" :checked="selectedIds.has(user.id)" @change="toggleSelect(user)"></td>
             <td style="cursor: pointer" @click="openDetail(user)">
               <div style="display: flex; align-items: center; gap: 9px">
@@ -503,10 +510,11 @@ onMounted(async () => {
             <dt>{{ t('users.detail.domain') }}</dt><dd>{{ selectedUser.domain_name }}</dd>
             <dt>{{ t('users.detail.department') }}</dt><dd>{{ selectedUser.org_path || selectedUser.department_name || '-' }}</dd>
             <dt>{{ t('users.detail.status') }}</dt><dd><span class="badge" :class="statusBadge(selectedUser.status)">{{ statusLabel(selectedUser.status) }}</span></dd>
+            <dt>{{ t('users.detail.syncedAt') }}</dt><dd>{{ syncedAt || '-' }}</dd>
           </dl>
 
           <h3 class="section-title">{{ t('users.org.title') }}</h3>
-          <p v-if="orgContextLoading" class="hint">{{ t('users.loading') }}</p>
+          <p v-if="detailLoading" class="hint">{{ t('users.loading') }}</p>
           <dl v-else-if="orgContext" class="detail-list">
             <dt>{{ t('users.org.structure') }}</dt>
             <dd>
@@ -531,6 +539,17 @@ onMounted(async () => {
           </dl>
           <p v-else class="hint">{{ t('users.org.unavailable') }}</p>
 
+          <h3 class="section-title">{{ t('users.perm.current') }}</h3>
+          <p v-if="detailLoading" class="hint">{{ t('users.loading') }}</p>
+          <dl v-else-if="principalAuth && (principalAuth.fixed_assignments.length || principalAuth.scoped_grants.length)" class="detail-list">
+            <dt>{{ t('users.colRoles') }}</dt>
+            <dd>
+              <span v-for="a in principalAuth.fixed_assignments" :key="a.id" class="badge" style="margin-right: 4px">{{ roleLabel(a.role_code) }}</span>
+              <span v-for="g in principalAuth.scoped_grants" :key="g.id" class="badge" style="margin-right: 4px">{{ g.role_name }}</span>
+            </dd>
+          </dl>
+          <p v-else class="hint">{{ t('users.perm.none') }}</p>
+
           <div class="drawer-actions">
             <button class="button primary" type="button" @click="openPermPanel(selectedUser)">{{ t('users.perm.setTitle') }}</button>
             <button class="button danger" type="button" @click="toggleStatus(selectedUser)">{{ selectedUser.status === 'ACTIVE' ? t('users.detail.disableUser') : t('users.detail.enableUser') }}</button>
@@ -549,28 +568,23 @@ onMounted(async () => {
           <p v-if="permMessage" class="notice" :class="{ error: permMessage.includes('失败') || permMessage.includes('need') }">{{ permMessage }}</p>
 
           <h3 class="section-title">{{ t('users.perm.current') }}</h3>
-          <ul class="role-list" v-if="permUser">
-            <li v-for="a in rolesForPrincipal(permUser).fixed" :key="a.id">
+          <p v-if="authLoading" class="hint">{{ t('users.loading') }}</p>
+          <ul class="role-list" v-else-if="principalAuth">
+            <li v-for="a in principalAuth.fixed_assignments" :key="a.id">
               <span class="badge">{{ roleLabel(a.role_code) }}</span>
               <small class="scope">{{ a.scope_type }}</small>
               <button class="button small danger" type="button" @click="revokeFixed(a.id)">{{ t('users.perm.revoke') }}</button>
             </li>
-            <li v-for="g in rolesForPrincipal(permUser).scoped" :key="g.id">
-              <span class="badge">{{ customRoleNameMap[g.role_id] || g.role_id }}</span>
-              <small class="scope">{{ orgNodeNameMap[g.scope_org_id] || g.scope_org_id }}{{ g.scope_include_descendants ? ' +' + t('users.perm.descendants') : '' }}</small>
+            <li v-for="g in principalAuth.scoped_grants" :key="g.id">
+              <span class="badge">{{ g.role_name }}</span>
+              <small class="scope">{{ g.scope_org_name }}{{ g.scope_include_descendants ? ' +' + t('users.perm.descendants') : '' }}</small>
               <button class="button small danger" type="button" @click="revokeScoped(g.id)">{{ t('users.perm.revoke') }}</button>
             </li>
-            <li v-if="rolesForPrincipal(permUser).fixed.length === 0 && rolesForPrincipal(permUser).scoped.length === 0" class="hint">{{ t('users.perm.none') }}</li>
+            <li v-if="principalAuth.fixed_assignments.length === 0 && principalAuth.scoped_grants.length === 0" class="hint">{{ t('users.perm.none') }}</li>
           </ul>
 
           <h3 class="section-title">{{ t('users.perm.assignTitle') }}</h3>
-          <div class="kind-toggle">
-            <button class="button" :class="{ primary: permForm.kind === 'builtin' }" type="button" @click="permForm.kind = 'builtin'">{{ t('users.perm.builtin') }}</button>
-            <button class="button" :class="{ primary: permForm.kind === 'custom' }" type="button" @click="permForm.kind = 'custom'">{{ t('users.perm.custom') }}</button>
-          </div>
-
           <form class="assign-form" @submit.prevent="submitAssignment">
-            <template v-if="permForm.kind === 'builtin'">
               <label>{{ t('users.perm.role') }}
                 <select v-model="permForm.role_code" class="field">
                   <option v-for="r in builtinRoleOptions" :key="r.role_code" :value="r.role_code">{{ r.label }}</option>
@@ -585,27 +599,12 @@ onMounted(async () => {
                     :nodes="orgNodeOptions"
                     :parent-id="null"
                     :selected-ids="permForm.department_ids"
+                    :disabled-types="['DOMAIN']"
                     @toggle="toggleDepartment"
                   />
                 </div>
                 <p class="hint">{{ t('users.perm.scopeHint') }}</p>
               </div>
-            </template>
-            <template v-else>
-              <label>{{ t('users.perm.role') }}
-                <select v-model="permForm.role_id" class="field">
-                  <option v-for="r in customRoleOptions" :key="r.id" :value="r.id">{{ r.name }}</option>
-                </select>
-              </label>
-              <label>{{ t('users.perm.scopeOrg') }}
-                <select v-model="permForm.scope_org_id" class="field">
-                  <option v-for="o in orgNodeOptions" :key="o.id" :value="o.id">{{ o.name }}</option>
-                </select>
-              </label>
-              <label class="check-row">
-                <input v-model="permForm.scope_include_descendants" type="checkbox"> {{ t('users.perm.includeDescendants') }}
-              </label>
-            </template>
             <div class="form-actions">
               <button class="button primary" type="submit">{{ t('users.perm.assign') }}</button>
               <button class="button" type="button" @click="showPermPanel = false">{{ t('users.perm.cancel') }}</button>

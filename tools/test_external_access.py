@@ -21,7 +21,7 @@ def compose_config(public_host: str) -> dict:
     return json.loads(result.stdout)
 
 
-def test_realm_uses_runtime_placeholders_and_strong_passwords() -> None:
+def test_realm_uses_runtime_placeholders_and_no_hardcoded_users() -> None:
     realm = json.loads((ROOT / "iam/realm/digital-employees-realm.json").read_text())
     clients = {client["clientId"]: client for client in realm["clients"]}
 
@@ -30,11 +30,40 @@ def test_realm_uses_runtime_placeholders_and_strong_passwords() -> None:
     assert clients["workbench-desktop"]["redirectUris"] == ["${WORKBENCH_PUBLIC_URL}/auth/callback"]
     assert clients["workbench-desktop"]["webOrigins"] == ["${WORKBENCH_PUBLIC_URL}"]
 
+    # Approach B: no demo users with credentials in realm JSON
     people = [user for user in realm["users"] if user.get("credentials")]
-    assert people
-    assert {credential["value"] for user in people for credential in user["credentials"]} == {
-        DEFAULT_PASSWORD
-    }
+    assert not people
+    # Only the IAM sync service account remains (no credentials)
+    assert len(realm["users"]) == 1
+    assert realm["users"][0]["username"] == "service-account-platform-iam-sync"
+
+
+def test_sync_script_updates_post_logout_redirect_and_pkce_attributes() -> None:
+    script = (ROOT / "tools/sync-keycloak-urls.sh").read_text()
+
+    assert "post.logout.redirect.uris" in script
+    assert "pkce.code.challenge.method" in script
+    assert "update_client_urls platform-web" in script
+    assert 'update_client_urls workbench-desktop' in script
+
+
+def test_logout_redirect_uri_matches_sync_script_for_any_public_host() -> None:
+    # Logout works only if Keycloak's platform-web attributes["post.logout.redirect.uris"]
+    # equals the post_logout_redirect_uri the backend sends: f"{platform_base_url}/".
+    # Both must derive from the same PUBLIC_HOST. This asserts the invariant generically,
+    # without depending on how Keycloak is externally reached (host/port may differ per env).
+    script = (ROOT / "tools/sync-keycloak-urls.sh").read_text()
+    assert 'platform_url="http://$PUBLIC_HOST:18000"' in script
+    assert '"$platform_url/"' in script  # 4th arg: post_logout_uri for platform-web
+
+    for public_host in ("192.168.153.128", "10.23.45.67", "platform.example.com"):
+        services = compose_config(public_host)["services"]
+        platform_base = services["platform-api"]["environment"]["PLATFORM_PLATFORM_BASE_URL"]
+        backend_post_logout = f"{platform_base}/"  # auth.py: post_logout_redirect_uri = {base}/
+        sync_script_value = f"http://{public_host}:18000/"   # platform_url + "/"
+        assert backend_post_logout == sync_script_value, (
+            f"mismatch for {public_host}: backend={backend_post_logout} sync={sync_script_value}"
+        )
 
 
 def test_compose_derives_every_public_url_from_each_selected_host() -> None:
@@ -97,3 +126,17 @@ def test_oidc_callback_authorization_code_is_not_written_to_nginx_access_log() -
     general_auth = nginx.index("location /auth/")
     assert callback < general_auth
     assert "access_log off;" in nginx[callback:general_auth]
+
+
+def test_sync_script_configures_backchannel_logout_url() -> None:
+    script = (ROOT / "tools/sync-keycloak-urls.sh").read_text()
+    assert "backchannel.logout.url" in script
+    # The back-channel URL is server-to-server (Keycloak -> platform); use the
+    # docker-internal service address so it works even when PUBLIC_HOST=127.0.0.1.
+    assert "${PLATFORM_INTERNAL_URL}/auth/backchannel-logout" in script
+
+
+def test_compose_keycloak_has_platform_internal_url() -> None:
+    for public_host in ("192.168.153.128", "127.0.0.1"):
+        services = compose_config(public_host)["services"]
+        assert services["keycloak"]["environment"]["PLATFORM_INTERNAL_URL"] == "http://platform-api:8000"

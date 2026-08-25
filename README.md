@@ -7,8 +7,18 @@
 需要已启动的 Docker Engine：
 
 ```bash
-./tools/build.sh
+./tools/compose.sh build
 ```
+
+### 国内/受限网络首次拉取基础镜像
+
+`up.sh`/`compose.sh build` 首次构建需从镜像仓库拉取基础镜像（python/node/nginx/postgres/keycloak）。若拉取超时（`context deadline exceeded`），在部署机执行一次加速器配置脚本：
+
+```bash
+sudo ./tools/configure-mirrors.sh   # 写入 /etc/docker/daemon.json 镜像加速器并预拉取基础镜像
+```
+
+镜像版本钉死（非 latest），拉取一次缓存后后续 `up.sh --build` 命中本地缓存、不再联网。完全离线环境改用 `docker save`/`docker load` 离线导入。
 
 ## 部署
 

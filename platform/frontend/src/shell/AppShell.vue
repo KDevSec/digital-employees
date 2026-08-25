@@ -7,7 +7,7 @@ import { useSessionStore } from '../stores/session'
 
 const { t } = useI18n()
 const session = useSessionStore()
-const items = computed(() => navigationForPermissions(session.permissions, t))
+const tree = computed(() => navigationForPermissions(session.permissions, t))
 
 const roleNames = computed(() => {
   const roles = session.me?.roles ?? []
@@ -28,7 +28,11 @@ const roleNames = computed(() => {
     <aside class="sidebar">
       <RouterLink class="brand inverse" to="/"><span class="brand-mark light">数</span><span>{{ t('app.brand') }}</span></RouterLink>
       <nav>
-        <RouterLink v-for="item in items" :key="item.path" :to="item.path">{{ item.label }}</RouterLink>
+        <RouterLink v-for="item in tree.standalone" :key="item.path" :to="item.path">{{ item.label }}</RouterLink>
+        <div v-for="group in tree.groups" :key="group.label" class="nav-group">
+          <p class="nav-group-label">{{ group.label }}</p>
+          <RouterLink v-for="item in group.items" :key="item.path" :to="item.path">{{ item.label }}</RouterLink>
+        </div>
       </nav>
       <div class="environment"><span class="status-dot"></span>{{ t('app.environment') }}</div>
     </aside>
@@ -41,3 +45,9 @@ const roleNames = computed(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.nav-group { margin-top: 14px; }
+.nav-group-label { margin: 0 0 4px; padding: 0 12px; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
+.nav-group :deep(a) { display: block; }
+</style>

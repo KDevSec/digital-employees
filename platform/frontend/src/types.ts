@@ -102,3 +102,83 @@ export interface SystemLog {
   trace_id?: string
   message: string
 }
+
+export interface ProblemFeedback {
+  id: string
+  title: string
+  category: string
+  description: string
+  contact?: string | null
+  priority: string
+  status: string
+  submitter_principal_id: string
+  submitter_display_name?: string
+  admin_reply?: string | null
+  created_at: string
+  updated_at: string
+  resolved_at?: string | null
+}
+
+export interface FeedbackCreate {
+  title: string
+  category: string
+  description: string
+  priority: string
+  contact?: string
+}
+
+export interface FixedAuthorization {
+  id: string
+  principal_id: string
+  role_code: string
+  scope_type: string
+  domain_id?: string
+  department_ids: string[]
+  status: string
+}
+
+export interface ScopedAuthorization {
+  id: string
+  role_id: string
+  role_name: string
+  scope_org_id: string
+  scope_org_name: string
+  scope_include_descendants: boolean
+  status: string
+}
+
+export interface PrincipalAuthorizations {
+  fixed_assignments: FixedAuthorization[]
+  scoped_grants: ScopedAuthorization[]
+}
+
+export interface ScopeOptions {
+  domains: { id: string; name: string }[]
+  org_nodes: { id: string; name: string; domain_id: string; parent_id: string | null; org_type: string }[]
+  custom_roles: { id: string; name: string; code: string }[]
+}
+
+export interface PrincipalDetail {
+  identity: {
+    id: string
+    username: string
+    display_name: string
+    email: string | null
+    domain_id: string
+    domain_name: string
+    department_id: string | null
+    team_id: string | null
+    primary_org_id: string | null
+    status: string
+    synced_at: string | null
+  }
+  org_context: {
+    domain: { id: string; name: string } | null
+    department: { id: string; name: string } | null
+    team: { id: string; name: string } | null
+    primary_org: { id: string; name: string } | null
+    primary_org_path: { id: string; name: string; org_type: string }[]
+    collaborations: { org_id: string; name: string; membership_type: string }[]
+  }
+  authorizations: PrincipalAuthorizations
+}

@@ -30,3 +30,14 @@ def test_platform_web_client_allows_post_logout_redirect() -> None:
     # Keycloak 26 ClientRepresentation has no top-level postLogoutRedirectUris field;
     # the logout redirect URIs are stored in attributes["post.logout.redirect.uris"].
     assert "${PLATFORM_PUBLIC_URL}/" in platform_web["attributes"]["post.logout.redirect.uris"]
+
+
+def test_platform_web_client_configures_backchannel_logout() -> None:
+    doc = _realm_doc()
+    platform_web = next(client for client in doc["clients"] if client["clientId"] == "platform-web")
+    # Back-Channel Logout: Keycloak POSTs a logout_token to this URL when a session
+    # ends (admin-forced logout / user logout / idle timeout) so the platform can
+    # revoke the matching local BFF session.
+    assert platform_web["attributes"]["backchannel.logout.url"] == (
+        "${PLATFORM_INTERNAL_URL}/auth/backchannel-logout"
+    )

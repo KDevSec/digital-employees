@@ -3,7 +3,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse, Response
 from urllib.parse import urlencode
 from sqlalchemy import func, select
@@ -16,7 +16,7 @@ from app.auth.sessions import new_session_token, session_token_hash
 from app.database import get_session
 from app.domain.authorization import RoleCode, ScopeType
 from app.errors import ApiError
-from app.models import BffSession, RoleAssignment
+from app.models import BffSession, IamPrincipal, RoleAssignment
 
 logger = logging.getLogger("platform.auth")
 
@@ -100,6 +100,7 @@ async def callback(
             principal_id=principal.id,
             expires_at=datetime.now(UTC) + timedelta(hours=8),
             id_token=tokens.get("id_token"),
+            sid=claims.get("sid"),
         )
     )
     record_audit(
@@ -173,3 +174,45 @@ async def logout(
         response = RedirectResponse("/", status_code=302)
     response.delete_cookie(SESSION_COOKIE, path="/")
     return response
+
+
+@router.post("/auth/backchannel-logout")
+async def backchannel_logout(
+    request: Request,
+    logout_token: str = Form(...),
+    session: Session = Depends(get_session),
+) -> Response:
+    claims = await request.app.state.oidc.validate_logout_token(logout_token)
+    sid = claims.get("sid")
+    sub = claims.get("sub")
+    if sid:
+        rows = session.scalars(select(BffSession).where(BffSession.sid == sid)).all()
+    elif sub:
+        rows = session.scalars(
+            select(BffSession)
+            .join(IamPrincipal, IamPrincipal.id == BffSession.principal_id)
+            .where(IamPrincipal.issuer == claims["iss"], IamPrincipal.subject == sub)
+        ).all()
+    else:
+        rows = []
+    for row in rows:
+        session.delete(row)
+    record_audit(
+        session,
+        request,
+        event_type="BACKCHANNEL_LOGOUT",
+        category="AUTH",
+        actor_type="SYSTEM",
+        actor_id="keycloak",
+        target_type="BFF_SESSION",
+        target_id=sid or sub,
+        domain_id=None,
+        department_id=None,
+        summary="Revoked BFF session via OIDC back-channel logout",
+    )
+    session.commit()
+    logger.info(
+        "back-channel logout revoked sessions",
+        extra={"trace_id": request.state.trace_id, "sid": sid, "sub": sub, "revoked": len(rows)},
+    )
+    return Response(status_code=200)

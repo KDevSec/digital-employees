@@ -50,6 +50,7 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
         {
             "role.manage",
             "platform.settings.manage",
+            "feedback.manage",
             "system.logs.read",
             "audit.read",
             "package.manage",
@@ -62,6 +63,7 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
     RoleCode.PLATFORM_ADMIN: frozenset(
         {
             "platform.settings.manage",
+            "feedback.manage",
             "package.manage",
             "workbench.read",
             "workbench.enroll",
