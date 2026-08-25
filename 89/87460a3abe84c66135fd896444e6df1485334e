@@ -1,0 +1,21 @@
+docs/plans/2026-08-25-i0-webshell-design.md
+  s_2c1150e19dee71::t_2954011706b16b 1-84
+docs/plans/2026-08-25-i0-webshell.md
+  s_2c1150e19dee71::t_3d05d0dfff4784 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8987460a3abe84c66135fd896444e6df1485334e",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
