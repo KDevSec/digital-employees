@@ -22,7 +22,9 @@ SetupIconFile=assets\devzero.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 OutputDir=..\workbench-service\dist
 OutputBaseFilename=devzero-setup-{#MyAppVersion}-x64
-Compression=lzma2/max
+; lzma2/max 解压实测 ~7s 是中断窗口大头（Task 4 判别实验），降档换窗口余量；
+; 代价 setup 变大（下载一次性成本 vs 每次升级的中断体验）——用户裁决 C 2026-08-25
+Compression=lzma2/fast
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64compatible
 InfoBeforeFile=assets\infobefore.txt
