@@ -1,0 +1,21 @@
+workbench/workbench-tray/versioninfo/versioninfo.json
+  s_aad8def6d411b5::t_c7c087e539c5d6 6,12
+workbench/workbench-installer/scripts/build-installer.sh
+  s_aad8def6d411b5::t_0ada436941f478 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "f352dad2851907224910daf020a1a688df1b893b",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
