@@ -254,6 +254,12 @@ if [ "$s3_done" -ne 1 ]; then
 fi
 [ -d "$WORKBENCH_HOME" ] || s34_fail "S3 数据目录被误删（应默认保留）" "$S3_LOG"
 [ -f "$WORKBENCH_HOME/keep-marker" ] || s34_fail "S3 数据目录内容被误删（keep-marker 丢失）" "$S3_LOG"
+# 日志内容断言（同 S1/S2 形态；Task 5 review Minor 2 补强）：error/exception 零容忍；
+# 定向 grep「优雅停服」——该词只出现在 iss 前置清理的失败留痕行（未执行/退出码非 0），
+# S3 场景服务在跑（S2 末态），stop 应成功零留痕；命中 = 停服链路异常靠 taskkill 兜底救场
+if grep -i "error\|exception" "$S3_LOG" >/dev/null || grep "优雅停服" "$S3_LOG" >/dev/null; then
+  s34_fail "S3 Inno 日志含 error/exception 或优雅停服失败留痕" "$S3_LOG"
+fi
 echo "PASS S3 静默卸载默认保留数据（安装目录/计划任务/Run 键/快捷方式已清，数据完整）"
 
 # ---- S4: 卸载·清除数据（/DELETEDATA=1 显式通道，裁决 2） ----
@@ -279,21 +285,25 @@ taskkill //F //IM devzero-daemon.exe >/dev/null 2>&1 || true
 sleep 1 # taskkill //F 后句柄释放有瞬时窗口（沿 cleanup 模式）
 S4_UNINST_LOG="$S4_LOG_DIR/innosetup-s4-uninst.log"
 S4_UNINST_LOG_WIN="$(cygpath -w "$S4_UNINST_LOG")" # 坑②
-# 坑①：/DELETEDATA=1 与 /VERYSILENT 同样被 MSYS 当 POSIX 路径转换——EXCL 全参数原样直达
-if ! MSYS2_ARG_CONV_EXCL="*" "$UNINSTALLER" /VERYSILENT /DELETEDATA=1 "/LOG=$S4_UNINST_LOG_WIN"; then
+# 坑①：/DELETEDATA=1 与 /VERYSILENT 同样被 MSYS 当 POSIX 路径转换——EXCL 全参数原样直达。
+# /DELETEDATA=1 放末位（Task 5 review Minor 1）：ParamStr 差一边界正是计划稿 0..ParamCount-1
+# 循环漏扫的位置（参数恰在末位时静默失效）——放末位让断言覆盖该修复针对的场景
+if ! MSYS2_ARG_CONV_EXCL="*" "$UNINSTALLER" /VERYSILENT "/LOG=$S4_UNINST_LOG_WIN" /DELETEDATA=1; then
   s34_fail "S4 unins000 退出码非 0" "$S4_UNINST_LOG"
 fi
 # 坑③：unins000 异步——轮询「安装目录+数据目录」都消失（30s 预算）；断言分开报，失败模式
 # 可区分（卸载没完成 vs /DELETEDATA=1 没生效）
-s4_done=0
 s4_deadline=$((SECONDS + 30))
 while [ "$SECONDS" -lt "$s4_deadline" ]; do
   if [ ! -d "$INSTALL_DIR" ] && [ ! -d "$WORKBENCH_HOME" ]; then
-    s4_done=1
     break
   fi
   sleep 1
 done
 [ ! -d "$INSTALL_DIR" ] || s34_fail "S4 安装目录 30s 内未删（unins000 异步未完成）" "$S4_UNINST_LOG"
 [ ! -d "$WORKBENCH_HOME" ] || s34_fail "S4 数据目录未删（/DELETEDATA=1 未生效？）" "$S4_UNINST_LOG"
+# 日志内容断言（同 S1/S2/S3 形态；Task 5 review Minor 2）：两份日志 error/exception 零容忍
+if grep -i "error\|exception" "$S4_UNINST_LOG" >/dev/null || grep -i "error\|exception" "$S4_INSTALL_LOG" >/dev/null; then
+  s34_fail "S4 Inno 日志含 error/exception" "$S4_UNINST_LOG"
+fi
 echo "PASS S4 /DELETEDATA=1 卸载清除数据（安装目录+数据目录均删）"
