@@ -7,21 +7,21 @@ import { describe, expect, it, vi } from 'vitest'
  * 测试环境说明（node 纯逻辑，无 jsdom——D-10 组件测试环境 T2 才引入）：
  * - router/index.ts 顶层 createWebHistory() 依赖 window.history，node 环境不可用，
  *   以 createMemoryHistory 顶替——本测试只验证「路由表来自域汇总」的装配事实，不测 history 策略；
- * - .vue 组件无插件参与（vitest.config 与 vite.config 分离），以桩组件拦截 import——
- *   本测试只关心路由结构，组件渲染属 T2。
+ * - .vue 组件不经组件渲染（本测试只验路由装配结构），以桩组件拦截 import——
+ *   桩目标随 T2 换挂为 AccessView。
  */
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return { ...actual, createWebHistory: actual.createMemoryHistory }
 })
 
-vi.mock('../src/views/Home.vue', () => ({ default: { name: 'HomeStub' } }))
+vi.mock('../src/views/AccessView.vue', () => ({ default: { name: 'AccessViewStub' } }))
 
 import { router } from '../src/router'
 import { accessRoutes } from '../src/router/routes/access'
 
 describe('web 路由分域汇总（router/routes/access.ts + router/index.ts）', () => {
-  it('access 域文件导出路由数组包含 path "/"（暂装 Home 占位组件，T2 换挂 AccessView）', () => {
+  it('access 域文件导出路由数组包含 path "/"（I0-5 T2 起挂 F-03 AccessView）', () => {
     expect(accessRoutes.map((r) => r.path)).toContain('/')
   })
 

@@ -15,10 +15,12 @@
     "pinia": "^2"
   },
   "devDependencies": {
-    "vite": "^5",
     "@vitejs/plugin-vue": "^5",
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^30.0.1",
+    "typescript": "^5",
+    "vite": "^5",
     "vite-plugin-singlefile": "^2",
-    "vitest": "^2",
-    "typescript": "^5"
+    "vitest": "^2"
   }
 }

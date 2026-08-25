@@ -22,7 +22,7 @@ export interface HealthzJson {
   dataDir?: string
 }
 
-/** 徽章渲染状态（Home.vue 消费） */
+/** 徽章渲染状态（AccessView 健康徽章区消费；I0-5 T4 起顶栏 TopBar 消费） */
 export interface HealthBadge {
   ok: boolean
   badge: string
