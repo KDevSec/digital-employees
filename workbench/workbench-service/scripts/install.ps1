@@ -12,6 +12,12 @@ $TaskName = 'WorkbenchDaemon'
 $InstallDir = Join-Path $env:LOCALAPPDATA 'Programs\workbench'
 
 Write-Host "== 数字员工工作台安装（per-user，全程免提权） =="
+# 重装健壮性：运行中的服务锁着 workbench-daemon.exe（Copy-Item 会 IOException）——先优雅停止
+$existingDaemon = Join-Path $InstallDir 'workbench.exe'
+if (Test-Path $existingDaemon) {
+  try { $h = Invoke-RestMethod -Uri 'http://127.0.0.1:19980/healthz' -TimeoutSec 2 -ErrorAction Stop
+        if ($h.app -eq 'workbench') { & $existingDaemon stop | Out-Null; Start-Sleep 2 } } catch {}
+}
 Write-Host "安装目录: $InstallDir"
 
 # 1. 落盘双制品
