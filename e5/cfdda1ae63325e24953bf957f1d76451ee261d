@@ -1,0 +1,137 @@
+tools/down.sh
+  s_cbda167ad90f41::t_11be7e3614f368 2-9,12-49
+platform/backend/app/main.py
+  s_cbda167ad90f41::t_11be7e3614f368 1,23,38-49,130
+platform/backend/app/domain/authorization.py
+  s_cbda167ad90f41::t_11be7e3614f368 53,66
+platform/frontend/src/types.ts
+  s_cbda167ad90f41::t_11be7e3614f368 105-184
+platform/backend/app/api/core.py
+  s_cbda167ad90f41::t_11be7e3614f368 2,5,7,16,217-218,245-256,322,330-332,381-387,515,533,536-537
+tools/realm-import/org-structure.json
+  s_cbda167ad90f41::t_11be7e3614f368 1-133
+platform/backend/tests/api/test_feedback.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-146
+platform/backend/app/models.py
+  s_cbda167ad90f41::t_11be7e3614f368 205,345-363
+tools/compose.sh
+  s_cbda167ad90f41::t_11be7e3614f368 3-12,14,16
+tools/realm-import/README.md
+  s_cbda167ad90f41::t_11be7e3614f368 1-92
+platform/backend/app/api/system_logs.py
+  s_cbda167ad90f41::t_11be7e3614f368 1,4,11,17,21,24-43,45,51-59,74-96,100-109
+platform/backend/app/api/auth.py
+  s_cbda167ad90f41::t_11be7e3614f368 6,19,103,177-218
+platform/backend/tests/domain/test_realm_permissions.py
+  s_cbda167ad90f41::t_11be7e3614f368 33-43
+platform/frontend/src/locales/en.ts
+  s_cbda167ad90f41::t_11be7e3614f368 4-6,234,250,328-332,425-454
+platform/backend/app/config.py
+  s_cbda167ad90f41::t_11be7e3614f368 29,37-39
+platform/backend/app/auth/oidc.py
+  s_cbda167ad90f41::t_11be7e3614f368 87,172-210,225-243
+platform/backend/app/logging_config.py
+  s_cbda167ad90f41::t_11be7e3614f368 1,4,6-7,21-25,52-122,124,126-128,140,144-149,153,163,167-168,171,174-181,186-212
+platform/frontend/nginx.conf
+  s_cbda167ad90f41::t_11be7e3614f368 4
+platform/frontend/src/locales/zh-CN.ts
+  s_cbda167ad90f41::t_11be7e3614f368 4-6,241,257,335-339,432-461
+README.md
+  s_cbda167ad90f41::t_11be7e3614f368 10,13-22
+platform/backend/tests/api/test_backchannel_logout.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-175
+tools/sync-keycloak-urls.sh
+  s_cbda167ad90f41::t_11be7e3614f368 28-30,36-46,49-50,53-54
+platform/backend/tests/api/test_audit_and_logging.py
+  s_cbda167ad90f41::t_11be7e3614f368 103-122
+platform/frontend/src/api.ts
+  s_cbda167ad90f41::t_11be7e3614f368 18-23
+platform/frontend/tests/navigation.spec.ts
+  s_cbda167ad90f41::t_11be7e3614f368 8-11,14,27,32,34-35,42-43
+.gitignore
+  s_cbda167ad90f41::t_11be7e3614f368 27-28
+iam/realm/digital-employees-realm.json
+  s_cbda167ad90f41::t_11be7e3614f368 16,27-28,75
+platform/backend/app/api/organizations.py
+  s_cbda167ad90f41::t_11be7e3614f368 32,755-930
+platform/frontend/src/features/feedback/FeedbackPage.vue
+  s_cbda167ad90f41::t_11be7e3614f368 1-403
+platform/backend/app/errors.py
+  s_cbda167ad90f41::t_11be7e3614f368 1,6-9,21-24,28,42-75
+tools/runtime-env.sh
+  s_cbda167ad90f41::t_11be7e3614f368 5-11,13
+platform/backend/app/api/roles.py
+  s_cbda167ad90f41::t_11be7e3614f368 90-91,102-111,113-150
+platform/backend/tests/api/test_user_list_optimization.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-66
+tools/.env.example
+  s_cbda167ad90f41::t_11be7e3614f368 1-2,4-24
+tools/README.md
+  s_cbda167ad90f41::t_11be7e3614f368 1-116
+tools/test_external_access.py
+  s_cbda167ad90f41::t_11be7e3614f368 24,33,35-66,129-142
+platform/backend/tests/api/conftest.py
+  s_cbda167ad90f41::t_11be7e3614f368 118-140,167,204-207
+platform/backend/app/domain/states.py
+  s_cbda167ad90f41::t_11be7e3614f368 57-85
+platform/backend/app/migrations/versions/0002_add_bff_session_sid.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-31
+platform/backend/tests/domain/test_logout_token_validation.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-105
+tools/compose.yml
+  s_cbda167ad90f41::t_11be7e3614f368 6-7,10,24,28,31,33-35,51,57,59,62-63,87
+platform/frontend/tests/api.spec.ts
+  s_cbda167ad90f41::t_11be7e3614f368 1-49
+platform/backend/app/api/custom_roles.py
+  s_cbda167ad90f41::t_11be7e3614f368 1,490-495,499,501-503,514-517,520-522
+platform/frontend/src/features/users/OrgScopeTree.vue
+  s_cbda167ad90f41::t_11be7e3614f368 19,60
+tools/prune.sh
+  s_cbda167ad90f41::t_11be7e3614f368 1-97
+platform/frontend/src/features/settings/SettingsPage.vue
+  s_cbda167ad90f41::t_11be7e3614f368 4,19-21,25-28,36-38,45-53,62-70,75-79,88-92,94-131,135-136,142-158
+tools/realm-import/users.json
+  s_cbda167ad90f41::t_11be7e3614f368 1-117
+platform/frontend/src/features/users/UsersPage.vue
+  s_cbda167ad90f41::t_11be7e3614f368 7,53-56,58,63-72,80-86,108-109,127-136,143-156,174-176,179-180,182-185,188-199,201,209-210,222-228,292,303,314,397,401,425,442,447,454,474-475,513,517,542-552,571-573,578-580,583,602
+iam/postgres/init.sh
+  s_cbda167ad90f41::t_11be7e3614f368 1-8
+platform/frontend/tests/users-page.spec.ts
+  s_cbda167ad90f41::t_11be7e3614f368 54-55,64-80,82-83,178-238
+platform/backend/app/migrations/versions/0001_initial.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-4,7,18-55,57-86
+platform/backend/tests/api/test_department_admin_scope.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-126
+platform/backend/tests/api/test_user_management_refactor.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-168
+platform/backend/tests/domain/test_logging.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-85
+tools/DATABASE-GUIDE.md
+  s_cbda167ad90f41::t_11be7e3614f368 1-417
+platform/backend/app/api/feedback.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-254
+platform/frontend/src/router.ts
+  s_cbda167ad90f41::t_11be7e3614f368 18
+platform/frontend/src/navigation.ts
+  s_cbda167ad90f41::t_11be7e3614f368 7-42,46,48-53
+platform/frontend/src/shell/AppShell.vue
+  s_cbda167ad90f41::t_11be7e3614f368 10,31-35,48-53
+tools/realm-import/import.py
+  s_cbda167ad90f41::t_11be7e3614f368 1-453
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e5cfdda1ae63325e24953bf957f1d76451ee261d",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
