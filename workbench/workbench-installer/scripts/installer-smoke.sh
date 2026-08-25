@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# 安装包冒烟（设计 §6）——真 setup.exe 全链真机验证：
+#   S1 静默首装 / S2 覆盖升级（中断窗口 ≤15s 硬断言）/ S3 卸载保留数据 / S4 卸载清除数据
+#
+# 环境事实（沿 tray-smoke.sh 教训 + 安装器特有；setup/unins000 三坑 2026-08-25 判别实验实测）：
+#   - 安装器固定路径真实落盘（%LOCALAPPDATA%\Programs\devzero）——不可 mktemp 隔离，
+#     前置检查「已装即中止」保干净前提；cleanup 兜底静默卸载清场（红绿循环反复跑的前提）
+#   - WORKBENCH_HOME 隔离服务/托盘 profile（安装器卸载数据删除尊重同一变量——S3/S4 安全性依赖）
+#   - 计划任务 DevZeroDaemon 必须全程 DISABLE：daemon 经任务计划触发无环境继承，
+#     会用真实 ~/.devzero 抢 19980 端口干扰断言
+#   - Run 键真实写注册表（托盘 applyAutostart）——备份恢复原值，不留痕
+#   - WORKBENCH_NO_BROWSER=1 抑制开真浏览器；Inno /LOG 留安装日志供断言
+#   - setup/unins000 调用三坑（实测）：
+#     ① MSYS 把 /VERYSILENT 等单斜杠参数当 POSIX 路径转换（Task 1 的 iscc /D 同源坑，
+#        判别实验：cmd //c echo /VERYSILENT → "C:/Program Files/Git/VERYSILENT"）——
+#        本次调用用 MSYS2_ARG_CONV_EXCL="*" 关掉参数转换，参数原样直达 exe
+#     ② /LOG= 必须传 Windows 路径（cygpath -w）——$WORKBENCH_HOME 是 MSYS /tmp 形态，
+#        setup.exe 是 Windows 程序解析不了
+#     ③ unins000.exe 自复制到临时目录异步执行——返回 ≠ 完成（实测返回时目录仍在删），
+#        cleanup 必须轮询目录消失
+#   - bash 会阻塞等 setup.exe（GUI 子系统 exe）退出——实测首装 18s（lzma2 解压三制品）
+# 冒烟输出存 scripts/installer-smoke.log（gitignore，不提交）。
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)" # workbench/workbench-installer/scripts
+cd "$SCRIPT_DIR/../../workbench-service"    # 借 service 目录锚定 dist 与 package.json（版本号来源）
+
+SMOKE_LOG="$SCRIPT_DIR/installer-smoke.log"
+: > "$SMOKE_LOG"
+exec > >(tee -a "$SMOKE_LOG") 2>&1
+
+BASE="http://127.0.0.1:19980"
+RUN_KEY='HKCU\Software\Microsoft\Windows\CurrentVersion\Run'
+RUN_KEY_NAME="DevZeroTray" # 镜像 brand.RunKeyName（Go 侧唯一来源，脚本手写同步）
+TASK_NAME="DevZeroDaemon"  # 计划任务名（brand 重命名 Task R 定稿）
+INSTALL_DIR="$(cygpath -u "$LOCALAPPDATA")/Programs/devzero"
+UNINSTALLER="$INSTALL_DIR/unins000.exe"
+SETUP_EXE="$PWD/dist/devzero-setup-$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' package.json | head -1)-x64.exe"
+START_MENU_LNK="$(cygpath -u "$APPDATA")/Microsoft/Windows/Start Menu/Programs/DevZero.lnk"
+
+export WORKBENCH_HOME="$(mktemp -d)"
+export WORKBENCH_NO_BROWSER=1
+
+# ---- 前置防护 ----
+[ -f "$SETUP_EXE" ] || { echo "ABORT: $SETUP_EXE 不存在——先跑 build-installer.sh"; exit 1; }
+if [ -d "$INSTALL_DIR" ]; then
+  echo "ABORT: $INSTALL_DIR 已存在（已安装？）——先卸载再跑冒烟"; exit 1
+fi
+for proc in devzero.exe devzero-daemon.exe devzero-tray.exe; do
+  if tasklist //FI "IMAGENAME eq $proc" 2>/dev/null | grep -i "$proc" >/dev/null; then
+    echo "ABORT: 已有 $proc 在跑——请先关闭（冒烟会真实装/卸载同名安装，taskkill //IM 按进程名全局匹配会误杀）"
+    exit 1
+  fi
+done
+# Run 键原值备份（冒烟会真实写入 HKCU——托盘 applyAutostart 必须验真注册；清理时恢复原状，不留痕）
+PREV_RUN_VALUE="$(reg query "$RUN_KEY" //v "$RUN_KEY_NAME" 2>/dev/null | sed -n 's/.*REG_SZ[[:space:]]*//p' || true)"
+
+cleanup() {
+  # 1) 杀进程（解文件锁——静默卸载要删这些 exe；红阶段无进程，|| true 幂等）
+  taskkill //F //IM devzero-tray.exe >/dev/null 2>&1 || true
+  taskkill //F //IM devzero.exe >/dev/null 2>&1 || true
+  taskkill //F //IM devzero-daemon.exe >/dev/null 2>&1 || true
+  # 2) 删计划任务（红阶段任务不存在，|| true 幂等无害）
+  schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null 2>&1 || true
+  schtasks //Delete //TN "$TASK_NAME" //F >/dev/null 2>&1 || true
+  # 3) 兜底静默卸载（执行期修订：红绿循环要反复跑冒烟，INSTALL_DIR 必须清干净——
+  #    前置检查「已装即 ABORT」下一轮才过）
+  if [ -f "$UNINSTALLER" ]; then
+    sleep 1 # taskkill //F 后进程退出与句柄释放有瞬时窗口
+    MSYS2_ARG_CONV_EXCL="*" "$UNINSTALLER" /VERYSILENT /SUPPRESSMSGBOXES >/dev/null 2>&1 || true
+    # unins000.exe 自复制到临时目录异步删（见头部坑③）：轮询目录消失，60s 预算
+    local deadline=$((SECONDS + 60))
+    while [ -d "$INSTALL_DIR" ] && [ "$SECONDS" -lt "$deadline" ]; do
+      sleep 1
+    done
+  fi
+  if [ -d "$INSTALL_DIR" ]; then
+    echo "WARN: cleanup 静默卸载 60s 未清掉 $INSTALL_DIR——下轮冒烟前置检查会 ABORT，需人工排查"
+  else
+    echo "(cleanup: 安装已清场——机器无 devzero 安装残留)"
+  fi
+  # 4) 陈旧快捷方式是下轮 S1 断言的假 PASS 源——卸载器正常会删，此处兜底（幂等）
+  rm -f "$START_MENU_LNK" || true
+  # 5) Run 键恢复原值（备份为空则删除本键值——不留痕）
+  if [ -n "$PREV_RUN_VALUE" ]; then
+    reg add "$RUN_KEY" //v "$RUN_KEY_NAME" //t REG_SZ //d "$PREV_RUN_VALUE" //f >/dev/null 2>&1 || true
+  else
+    reg delete "$RUN_KEY" //v "$RUN_KEY_NAME" //f >/dev/null 2>&1 || true
+  fi
+  rm -rf "$WORKBENCH_HOME"
+}
+trap cleanup EXIT INT TERM # INT/TERM 加固：HKCU/计划任务真实副作用下 Ctrl+C 也走清场；
+                          # cleanup 全程幂等（|| true），与 EXIT 重复触发无害
+
+wait_healthz() { # 最多 Ns（默认 30）
+  local deadline=$((SECONDS + ${1:-30}))
+  until curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; do
+    if [ "$SECONDS" -ge "$deadline" ]; then return 1; fi
+    sleep 0.5
+  done
+}
+
+# ---- S1: 静默首装 ----
+echo "=== S1: setup /VERYSILENT 静默首装 ==="
+S1_LOG="$WORKBENCH_HOME/innosetup-s1.log"
+S1_LOG_WIN="$(cygpath -w "$S1_LOG")" # /LOG= 须 Windows 路径（坑②）
+if ! MSYS2_ARG_CONV_EXCL="*" "$SETUP_EXE" /VERYSILENT /SUPPRESSMSGBOXES "/LOG=$S1_LOG_WIN"; then
+  echo "FAIL: S1 setup.exe 退出码非 0（安装未完成——诊断：$S1_LOG）"
+  exit 1
+fi
+[ -f "$INSTALL_DIR/devzero.exe" ] && [ -f "$INSTALL_DIR/devzero-daemon.exe" ] && [ -f "$INSTALL_DIR/devzero-tray.exe" ] \
+  || { echo "FAIL: S1 三制品未落盘（$INSTALL_DIR）"; exit 1; }
+schtasks //Query //TN "$TASK_NAME" >/dev/null 2>&1 || {
+  echo "FAIL: S1 计划任务 $TASK_NAME 未注册（iss 尚无 [Code] 系统集成语义——TDD 红预期点）"
+  exit 1
+}
+[ -f "$START_MENU_LNK" ] || { echo "FAIL: S1 开始菜单快捷方式缺失（$START_MENU_LNK）"; exit 1; }
+wait_healthz || { echo "FAIL: S1 服务 30s 内未就绪（ssPostInstall 未恢复？）"; exit 1; }
+tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -i devzero-tray >/dev/null \
+  || { echo "FAIL: S1 托盘进程未起"; exit 1; }
+[ -f "$S1_LOG" ] || { echo "FAIL: S1 Inno 日志未生成（/LOG 参数未生效？）"; exit 1; }
+if grep -i "error\|exception" "$S1_LOG" >/dev/null; then
+  echo "FAIL: S1 Inno 日志含 error/exception："
+  grep -in "error\|exception" "$S1_LOG"
+  exit 1
+fi
+# 任务存在即禁用：daemon 经任务计划触发无环境继承，会用真实 ~/.devzero 抢 19980 端口，干扰后续场景
+schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null
+echo "PASS S1 静默首装（三制品 + 任务 + 快捷方式 + healthz + 托盘 + 日志无 error）"
+
+# S2/S3/S4 由后续任务补充
+echo ""
+echo "=== （S2/S3/S4 由后续任务补充） ==="
