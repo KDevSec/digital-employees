@@ -156,8 +156,8 @@ curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 || { echo "FAIL: S2 前提
 # 覆盖证据采样：Inno 保留源文件时间戳（见头部环境事实）→ mtime 断言不可用，采文件 ID（stat %i）
 S2_INODE_BEFORE="$(stat -c %i "$INSTALL_DIR/devzero.exe" 2>/dev/null)" || { echo "FAIL: S2 前置——$INSTALL_DIR/devzero.exe stat 失败"; exit 1; }
 S2_T0=$SECONDS
-S2_DOWN_AT="" # 最后可达点之后的首个不可达时刻：首个不可达即锁定，不可达期间不覆盖——计划稿此处逐次覆盖，任意长窗口都会被测成 ≈1 个轮询间隔（假 PASS）
-S2_UP_AT=""   # 恢复点 = down 后首个可达时刻；真窗口 ⊆ 测得窗口（过估 ≤1 个轮询间隔，保守侧利于硬断言）
+S2_DOWN_AT="" # 首个不可达时刻即锁定，不可达期间不覆盖——计划稿此处逐次覆盖，任意长窗口都会被测成 ≈1 个轮询间隔（假 PASS）
+S2_UP_AT=""   # 恢复点 = down 后首个可达时刻。测量误差双向 ±1 个观测粒度（down 迟观测缩窗、up 迟观测扩窗），非单向保守；15s 线 vs 11-14s 实测下误差 ≤1s 无实质影响（Task 4 review Minor 2 修正原「过估保守侧」不变式表述）
 S2_RECOVERED=0
 S2_DEADLINE_AT=$(( S2_T0 + 60 )) # 首装实测 ~14s、恢复链实测可晚于 setup 退出 ~2s；60s 只兜异常慢机
 ( MSYS2_ARG_CONV_EXCL="*" "$SETUP_EXE" /VERYSILENT /SUPPRESSMSGBOXES "/LOG=$S2_LOG_WIN" ) & # 坑①：后台调用尤其必坑——无 EXCL 则 /VERYSILENT 被 MSYS 转 POSIX 路径，setup 收不到静默参数弹向导，后台挂死
@@ -175,7 +175,7 @@ while [ "$SECONDS" -le "$S2_DEADLINE_AT" ]; do
   kill -0 "$S2_SETUP_PID" 2>/dev/null || break # setup 已退出：中断只可能源于它——恢复续等交 wait_healthz
   sleep 0.5
 done
-# setup 已退出（或 deadline 截断）仍不可达：wait_healthz 续等，恢复点补记（±0.5s 轮询粒度）
+# setup 已退出（或 deadline 截断）仍不可达：wait_healthz 续等，恢复点补记（bash SECONDS 为整数秒，测量粒度 ~1s）
 if [ -n "$S2_DOWN_AT" ] && [ "$S2_RECOVERED" -eq 0 ]; then
   wait_healthz 30 || s2_fail "S2 覆盖后服务 30s 未恢复（中断起点 t+$((S2_DOWN_AT - S2_T0))s）"
   S2_UP_AT=$SECONDS
@@ -183,6 +183,9 @@ if [ -n "$S2_DOWN_AT" ] && [ "$S2_RECOVERED" -eq 0 ]; then
 fi
 wait "$S2_SETUP_PID" || s2_fail "S2 setup 退出码非 0（文件锁失败？）"
 [ -f "$S2_LOG" ] || { echo "FAIL: S2 Inno 日志未生成（/LOG 参数未生效？——坑①/坑② 检查）"; exit 1; } # 同 S1：验 /LOG 管道（后台+EXCL 形态下尤其易碎）
+if grep -i "error\|exception" "$S2_LOG" >/dev/null; then # 同 S1 断言形态（内容检查），FAIL 走 s2_fail 顺带全文摘录
+  s2_fail "S2 Inno 日志含 error/exception"
+fi
 [ -n "$S2_DOWN_AT" ] || echo "（注：轮询粒度内未见中断——窗口极短，视为通过）"
 if [ -n "$S2_DOWN_AT" ]; then
   S2_WINDOW=$(( S2_UP_AT - S2_DOWN_AT ))
@@ -193,8 +196,7 @@ tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -i devzero-tray
 # S2 尾禁用任务（坑③）：ssPostInstall 的 Register-ScheduledTask -Force 重建后任务回到启用态且
 # +30s 首触发——daemon 无环境继承会用真实 ~/.devzero 抢 19980 端口干扰 S3/S4；沿 S1 尾模式再禁用
 if ! schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null; then
-  echo "FAIL: S2 尾计划任务 $TASK_NAME 禁用失败（后续场景会被无环境继承的 daemon 抢 19980 端口）"
-  exit 1
+  s2_fail "S2 尾计划任务 $TASK_NAME 禁用失败（后续场景会被无环境继承的 daemon 抢 19980 端口）" # 走 s2_fail：iss 任务注册失败的 Log 留痕行恰在此日志里（Task 4 review Minor 1——丢日志与 s2_fail 设计理由自相矛盾）
 fi
 S2_WINDOW_TXT=""
 [ -n "$S2_DOWN_AT" ] && S2_WINDOW_TXT="实测 $((S2_UP_AT - S2_DOWN_AT))s / "
