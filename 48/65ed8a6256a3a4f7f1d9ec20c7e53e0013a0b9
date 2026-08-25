@@ -1,0 +1,35 @@
+spike/src/smoke-client.ts
+  s_87ed3bb2f205c5::t_d9614d88106cf7 1-92
+spike/src/stdio-server.ts
+  s_87ed3bb2f205c5::t_96e860fa8747fb 1-12
+docs/research/MCP-server-Bun可行性Spike报告-2026-08-25.md
+  s_87ed3bb2f205c5::t_01279e7a3b539b 7
+  s_87ed3bb2f205c5::t_bad19efdf06e43 46
+  s_87ed3bb2f205c5::t_0dcc9218b025f6 1-6,8-45,47-210
+spike/README.md
+  s_87ed3bb2f205c5::t_8ea528b16fed83 1-45
+spike/src/tools.ts
+  s_87ed3bb2f205c5::t_976a502da82408 1-65
+spike/package.json
+  s_87ed3bb2f205c5::t_28943625527d6e 1-12
+spike/src/http-server.ts
+  s_87ed3bb2f205c5::t_2e0eca6104e28a 1-26
+spike/bun.lock
+  s_87ed3bb2f205c5::t_f5811ebc2d1dff 1-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4865ed8a6256a3a4f7f1d9ec20c7e53e0013a0b9",
+  "prompts": {},
+  "sessions": {
+    "s_87ed3bb2f205c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f57d0e5-1fec-4404-8350-0d351981908c",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
