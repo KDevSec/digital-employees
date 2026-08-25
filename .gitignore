@@ -24,5 +24,6 @@ reference-projects/
 *.exe
 workbench/workbench-service/scripts/smoke.log
 workbench/workbench-tray/scripts/tray-smoke.log
+workbench/workbench-installer/scripts/installer-smoke.log
 # specs 目录本地化（远程 64be90f：停止跟踪）
 specs/
