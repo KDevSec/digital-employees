@@ -78,9 +78,10 @@ begin
 end;
 
 // user-stopped 哨兵路径：WORKBENCH_HOME > %USERPROFILE%\.devzero（与服务 profile 解析同语义
-// ——冒烟隔离环境装删一致，否则隔离 profile 的哨兵删不到）。用 GetEnv+字符串拼接：
-// ExpandConstant 只解 Inno 常量，不认环境变量；返回值可能含正斜杠（MSYS 导出的 Windows
-// 形态路径），DeleteFile 走 Win32 API 兼容之，勿换 cmd del（del 把 / 当开关符）
+// ——冒烟隔离环境装删一致，否则隔离 profile 的哨兵删不到）。用 GetEnv+字符串拼接
+// （而非 ExpandConstant('{%...}') 环境变量常量）：要兼容 GetEnv 为空的回退分支，一处
+// 选型两分支同构。返回值可能含正斜杠（MSYS 导出的 Windows 形态路径），DeleteFile 走
+// Win32 API 兼容之，勿换 cmd del（del 把 / 当开关符）
 function UserStoppedSentinelPath(): String;
 var
   Home: String;
@@ -103,7 +104,7 @@ begin
   // exe 路径用 PowerShell 单引号字面量：双引号嵌套在 CreateProcess/PowerShell 双层解析下会碎
   // ——实测 \"\" 送达 PowerShell 是空串拼接（路径含空格即断，如带空格的用户名）；单引号经
   // 命令行层零干扰，实测含空格路径注册完整。{app} 必须 ExpandConstant（[Code] 字符串不自动展开）
-  Exec('powershell.exe', '-NoProfile -Command "' +
+  if not Exec('powershell.exe', '-NoProfile -Command "' +
     '$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries ' +
     '-ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -DontStopOnIdleEnd; ' +
     '$t = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(30) ' +
@@ -111,7 +112,12 @@ begin
     'Register-ScheduledTask -TaskName DevZeroDaemon ' +
     '-Action (New-ScheduledTaskAction -Execute ''' + ExpandConstant('{app}\devzero-daemon.exe') +
     ''' -Argument ''__daemon'') ' +
-    '-Trigger $t -Settings $s -Force"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    '-Trigger $t -Settings $s -Force"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    // Exec 不写 Inno 日志，失败必须显式 Log 留痕（冒烟能抓、装机现场只能靠 /LOG——
+    // 否则任务注册失败零感知，Task 3 review Minor 1）
+    Log('计划任务 DevZeroDaemon 注册失败：Exec 返回 False')
+  else if ResultCode <> 0 then
+    Log('计划任务 DevZeroDaemon 注册失败：PowerShell 退出码 ' + IntToStr(ResultCode));
   // 安装意图 = 要运行：清 user-stopped 哨兵（install.ps1:47 语义——否则 __daemon 见哨兵秒退）
   DeleteFile(UserStoppedSentinelPath());
   // 立即恢复（裁决 3：与用户解耦；托盘启动即活拉服务——服务幂等单实例判定）
