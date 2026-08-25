@@ -8,7 +8,7 @@
  * kill 前做 healthz 身份校验（防误杀）、确认端口释放后自行完成善后簿记，见 stopCommand。
  */
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -257,7 +257,25 @@ function buildStartupDeps(rt: ServiceRuntime): StartupDeps {
 
 // ---------- 守护路径（start / __daemon / 无子命令） ----------
 
-async function daemonEntry(_opts: StartOptions): Promise<number> {
+/** 「用户主动停止」哨兵：stop 落、start（用户显式）清、__daemon（调度器拉起）见即退。
+ *  解决重复触发器守护（S2 模型）下「stop 后下一次分钟级触发把服务拉活」——守护只救崩溃，不对抗用户意志。 */
+const USER_STOPPED_SENTINEL = 'user-stopped'
+
+async function daemonEntry(opts: StartOptions): Promise<number> {
+  // 调度器路径（__daemon）先查用户停止哨兵：存在则秒退，best-effort 记 lifecycle（profile 可能未初始化/已损坏）
+  if (opts.daemon === true && existsSync(sentinelPath(USER_STOPPED_SENTINEL))) {
+    const line = JSON.stringify({ ts: new Date().toISOString(), event: 'daemon.skipped_user_stopped', payload: { reason: 'user-stopped 哨兵在，尊重用户停止意志' } })
+    console.log(line)
+    try {
+      mkdirSync(logsDir, { recursive: true })
+      appendFileSync(join(logsDir, 'lifecycle.log'), line + '\n', 'utf8')
+    } catch { /* profile 不可写时仅 stdout（调度器不采集，无碍） */ }
+    return 0
+  }
+  // 用户显式启动（start / 裸跑）→ 清哨兵（上一次 stop 的意志到此为止）
+  if (opts.daemon !== true) {
+    try { rmSync(sentinelPath(USER_STOPPED_SENTINEL), { force: true }) } catch { /* 不存在/不可删均无害 */ }
+  }
   let rt: ServiceRuntime | null = null
   try {
     rt = initServiceRuntime()
@@ -376,9 +394,14 @@ async function stopCommand(): Promise<number> {
   }
 
   // 3. 善后簿记：cleanStop=true（防下次误报崩溃）+ 删发现契约三件套（保留 reliability.json）
+  // 4. 落「用户主动停止」哨兵：重复触发器守护（S2 模型）每分钟拉 __daemon 时见哨兵即退，防「停止后 1 分钟复活」
   markCleanStop(runDir)
   clearDiscoveryFiles()
-  console.log(`服务已停止（pid ${pid}，端口 ${port} 已释放）`)
+  try {
+    mkdirSync(sentinelsDir, { recursive: true })
+    writeFileSync(sentinelPath(USER_STOPPED_SENTINEL), `${new Date().toISOString()}\n`, 'utf8')
+  } catch { /* 哨兵写失败不阻断停止（下次触发会拉起——降级为已知缺陷，记 stderr */ }
+  console.log(`服务已停止（pid ${pid}，端口 ${port} 已释放；已标记用户主动停止，守护触发将不再自动拉起）`)
   return 0
 }
 

@@ -22,6 +22,7 @@ BASE="http://127.0.0.1:$PORT"
 export WORKBENCH_HOME="$(mktemp -d)"
 export WORKBENCH_NO_BROWSER=1
 RUN_DIR="$WORKBENCH_HOME/run"
+PROFILE_DIR="$WORKBENCH_HOME"
 LIFECYCLE_LOG="$WORKBENCH_HOME/logs/lifecycle.log"
 OCCUPIER_PID=""
 
@@ -101,6 +102,29 @@ fi
 [ ! -f "$RUN_DIR/service.json" ] || { echo "FAIL: stop 后 service.json 仍存在"; exit 1; }
 grep -q '"cleanStop": true' "$RUN_DIR/reliability.json" || { echo "FAIL: reliability.json cleanStop!=true"; exit 1; }
 echo "PASS 场景 5 (拒连 + 契约清理 + cleanStop=true)"
+
+echo "=== 场景 5.7: user-stopped 哨兵——stop 后 __daemon 秒退不复活；start 清哨兵恢复 ==="
+[ -f "$RUN_DIR/sentinels/user-stopped" ] || { echo "FAIL: stop 后 user-stopped 哨兵未落盘"; exit 1; }
+DAEMON_START=$(date +%s%3N)
+bun run src/main.ts __daemon
+DAEMON_RC=$?
+DAEMON_ELAPSED=$(( $(date +%s%3N) - DAEMON_START ))
+[ "$DAEMON_RC" -eq 0 ] || { echo "FAIL: __daemon 哨兵路径退出码 $DAEMON_RC（应 0）"; exit 1; }
+[ "$DAEMON_ELAPSED" -lt 3000 ] || { echo "FAIL: __daemon 哨兵路径耗时 ${DAEMON_ELAPSED}ms（应秒退 <3s，不能起服务）"; exit 1; }
+if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then
+  echo "FAIL: __daemon 哨兵路径后服务被拉起（healthz 可达）"
+  exit 1
+fi
+grep -q 'daemon.skipped_user_stopped' "$PROFILE_DIR/logs/lifecycle.log" || { echo "FAIL: lifecycle.log 无 daemon.skipped_user_stopped 事件"; exit 1; }
+# start（用户显式）清哨兵并起服务
+( bun run src/main.ts start >"$WORKBENCH_HOME/start-again.log" 2>&1 & )
+for i in $(seq 1 15); do curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 && break; sleep 1; done
+curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1 || { echo "FAIL: start 清哨兵后服务未恢复"; exit 1; }
+[ ! -f "$RUN_DIR/sentinels/user-stopped" ] || { echo "FAIL: start 后哨兵未被清除"; exit 1; }
+echo "PASS 场景 5.7 (哨兵落盘 → __daemon 秒退 ${DAEMON_ELAPSED}ms 不复活 → start 清哨兵恢复)"
+# 停回干净态供后续场景
+bun run src/main.ts stop >/dev/null 2>&1
+sleep 1
 
 echo "=== 场景 5.5: 坏 config.json → stop/status 仍可用，start 退出码 78（友好文案） ==="
 echo '{"network": {"port": "not-a-number"}}' >"$WORKBENCH_HOME/config.json"

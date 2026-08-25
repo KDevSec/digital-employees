@@ -121,18 +121,19 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
     expect(JSON.parse(printed)).toEqual({ conversationTasks: 0, triggerTasks: 0 })
   })
 
-  it('__daemon → 走 start（守护路径，本波与 start 同为前台 daemon 形态）', async () => {
+  it('__daemon → start 收到 {daemon:true}（调度器拉起路径：守护入口，须尊重 user-stopped 哨兵）', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
     await program.parseAsync(['node', 'workbench', '__daemon'])
-    expect(calls.some((c) => c.startsWith('start:'))).toBe(true)
+    expect(calls).toContain('start:{"daemon":true}')
   })
 
-  it('无子命令 → 默认走守护路径（设计 §4：被守护拉起时不带参）', async () => {
+  it('无子命令 → start 不带 daemon（用户显式运行/双击 exe：清哨兵的用户意图路径）', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
     await program.parseAsync(['node', 'workbench'])
     expect(calls.some((c) => c.startsWith('start:'))).toBe(true)
+    expect(calls).toContain('start:{}')
   })
 })
 
