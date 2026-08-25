@@ -1,5 +1,5 @@
 // Package brand 品牌唯一来源（Go 侧，换牌只改此文件）。
-// 与 TS 侧 packages/workbench-service/src/brand.ts 保持镜像；
+// 与 TS 侧 workbench/workbench-service/src/brand.ts 保持镜像；
 // 其余模块只允许 import brand 取值，不得硬编码端口/目录名/应用名。
 package brand
 

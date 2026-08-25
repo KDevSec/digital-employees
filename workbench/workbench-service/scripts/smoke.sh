@@ -15,7 +15,7 @@
 #   - WORKBENCH_NO_BROWSER=1 抑制 rundll32 开真浏览器
 set -euo pipefail
 
-cd "$(dirname "$0")/.." # packages/workbench-service
+cd "$(dirname "$0")/.." # workbench/workbench-service
 
 # 冒烟用独立端口（避免与机器上真实安装运行的 19980 实例冲突——独立 profile 的 uid 不同会误判 conflict/78）
 PORT="${WORKBENCH_SMOKE_PORT:-19981}"

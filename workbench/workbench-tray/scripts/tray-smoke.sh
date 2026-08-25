@@ -19,7 +19,7 @@
 # 冒烟输出存 scripts/tray-smoke.log（gitignore，不提交）。
 set -euo pipefail
 
-cd "$(dirname "$0")/.." # packages/workbench-tray
+cd "$(dirname "$0")/.." # workbench/workbench-tray
 
 SMOKE_LOG="scripts/tray-smoke.log"
 : > "$SMOKE_LOG"

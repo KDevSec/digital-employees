@@ -5,7 +5,7 @@
     "": {
       "name": "digital-employees",
     },
-    "packages/workbench-service": {
+    "workbench/workbench-service": {
       "name": "@workbench/service",
       "version": "0.1.0",
       "dependencies": {
@@ -19,7 +19,7 @@
         "vitest": "^2",
       },
     },
-    "packages/workbench-web": {
+    "workbench/workbench-web": {
       "name": "@workbench/web",
       "version": "0.1.0",
       "dependencies": {
@@ -187,9 +187,9 @@
 
     "@vue/shared": ["@vue/shared@3.5.41", "https://registry.npmmirror.com/@vue/shared/-/shared-3.5.41.tgz", {}, "sha512-IOnwSCma8j+9xJT6b8H0dEYidC80NsYmNMlZxRsukYcSoGaDBohog5hDxzeUXdFeGWFA++vWvxqOmrr96VlqMA=="],
 
-    "@workbench/service": ["@workbench/service@workspace:packages/workbench-service"],
+    "@workbench/service": ["@workbench/service@workspace:workbench/workbench-service"],
 
-    "@workbench/web": ["@workbench/web@workspace:packages/workbench-web"],
+    "@workbench/web": ["@workbench/web@workspace:workbench/workbench-web"],
 
     "assertion-error": ["assertion-error@2.0.1", "https://registry.npmmirror.com/assertion-error/-/assertion-error-2.0.1.tgz", {}, "sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA=="],
 

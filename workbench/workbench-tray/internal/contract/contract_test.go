@@ -121,7 +121,7 @@ func readRepoFile(t *testing.T, rel ...string) string {
 	if !ok {
 		t.Fatalf("runtime.Caller 失败：无法定位仓库根")
 	}
-	// thisFile = <repo>/packages/workbench-tray/internal/contract/contract_test.go → 上溯 5 级 = 仓库根
+	// thisFile = <repo>/workbench/workbench-tray/internal/contract/contract_test.go → 上溯 5 级 = 仓库根
 	repoRoot := thisFile
 	for i := 0; i < 5; i++ {
 		repoRoot = filepath.Dir(repoRoot)
@@ -137,8 +137,8 @@ func readRepoFile(t *testing.T, rel ...string) string {
 // TestCrossLanguageContractSync 跨语言契约绊网：直接读 TS 侧源文本做存在性断言——
 // TS 侧改品牌值 / ServiceHandle 字段名 → 本测试红，强制同步 Go 侧镜像（手写同步的检查闭环）。
 func TestCrossLanguageContractSync(t *testing.T) {
-	brandTs := readRepoFile(t, "packages", "workbench-service", "src", "brand.ts")
-	contractsTs := readRepoFile(t, "packages", "workbench-service", "src", "runtime", "contracts.ts")
+	brandTs := readRepoFile(t, "workbench", "workbench-service", "src", "brand.ts")
+	contractsTs := readRepoFile(t, "workbench", "workbench-service", "src", "runtime", "contracts.ts")
 
 	// brand 四镜像值（AppName/DisplayName/DefaultPort/ProfileName）在 brand.ts 文本中出现
 	for _, v := range []string{brand.AppName, brand.DisplayName, strconv.Itoa(brand.DefaultPort), brand.ProfileName} {
@@ -212,7 +212,7 @@ func TestActivityInfoTotal(t *testing.T) {
 // TestActivityContractFieldSyncWithTs 跨语言绊网（沿 TestCrossLanguageContractSync 手法）：
 // activity 字段名在 TS 侧 endpoints.ts 的 /api/activity handler 中出现——TS 改名 → 本测试红
 func TestActivityContractFieldSyncWithTs(t *testing.T) {
-	endpointsTs := readRepoFile(t, "packages", "workbench-service", "src", "server", "endpoints.ts")
+	endpointsTs := readRepoFile(t, "workbench", "workbench-service", "src", "server", "endpoints.ts")
 	for _, name := range []string{"conversationTasks", "triggerTasks"} {
 		if !strings.Contains(endpointsTs, name) {
 			t.Errorf("endpoints.ts 不再包含 activity 字段名 %q——TS/Go 活动契约漂移，需同步 contract.ActivityInfo", name)

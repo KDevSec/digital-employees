@@ -7,7 +7,7 @@
 #   3. go build -ldflags "-H windowsgui -s -w" -o ../workbench-service/dist/workbench-tray.exe
 set -euo pipefail
 
-cd "$(dirname "$0")/.." # packages/workbench-tray
+cd "$(dirname "$0")/.." # workbench/workbench-tray
 
 SERVICE_DIST="../workbench-service/dist/workbench.exe"
 TRAY_OUT="../workbench-service/dist/workbench-tray.exe"

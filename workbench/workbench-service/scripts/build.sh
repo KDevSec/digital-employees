@@ -11,7 +11,7 @@
 # contracts.ts 在运行时读 env；--define 才能把字面量成员表达式编译期替换）
 set -euo pipefail
 
-cd "$(dirname "$0")/.." # packages/workbench-service
+cd "$(dirname "$0")/.." # workbench/workbench-service
 
 # 1. 构建前端（若 web 包存在；缺失时沿用仓内 web-dist 现有产物）
 if [ -d "../workbench-web" ]; then

@@ -19,7 +19,7 @@
 |---|------|------|------|
 | D-1 | 本增量范围 | 服务骨架核心（S-01/02/04/06/07 简版/08/12/13 核心/14）+ Web 最小壳 + 托盘全量（TR-01~09）| 用户口径「先把框架搭起来：托盘程序和 web 服务」；路径 A（先骨架后托盘）已确认 |
 | D-2 | 出栈项 | 守护注册 guard/（涉提权交互须用户终端在场，S2 发现）、更新检查 U 系列、存储 sqlite/版本门/孤儿回收/磁盘 GC、认证 A 系列、全部员工业务 E/F/B | 提权交互用户不在场无法验证；YAGNI——业务增量再进 |
-| D-3 | monorepo 落位 | 仓根建 `packages/`：`workbench-service`（pnpm）+ `workbench-web`（pnpm）+ `workbench-tray`（Go module，pnpm 不感知）；现有 `workbench/`（auth demo）不动，A 系列增量再迁移 | 白皮书 §10.3 仓库结构；platform/iam 留仓根（现实混居，不迁移） |
+| D-3 | monorepo 落位 | 仓根建 `workbench/`（workspace 根）：`workbench-service` + `workbench-web` + `workbench-tray`（Go module，pnpm/bun 不感知）；旧 auth demo 改名 `workbench-demo/` 保留（**2026-08-25 用户裁决改名**，原 D-3 为 `packages/` + 旧 demo 占 `workbench/` 名） | 白皮书 §10.3 仓库结构；platform/iam 留仓根（现实混居，不迁移） |
 | D-4 | 品牌占位 | 品牌相关值**集中常量**：TS `src/brand.ts`、Go `internal/brand/brand.go`；占位值 npm scope `@workbench/*`、profile 目录 `~/.workbench/`、app 标识 `workbench`、VersionInfo CompanyName `Placeholder` | 品牌词待选（in 系候选）；集中常量使换牌成本 = 改两处文件 + sweep 文档 |
 | D-5 | 包管理与运行时 | `pnpm` workspaces 管依赖；`bun` 仅作 build（--compile）与运行时 | 设计 §7.1 技术栈基线；M0 已证 bun build 可行 |
 | D-6 | Web 壳深度 | Vite+Vue3+router+Pinia 骨架级：一个占位页（版本/健康状态/横幅），dev 代理 19980，build 产物以 `import ... with { type: "text" }` 嵌入单体 | M0 T5 已证嵌入形态（+2.2MB/1MB 资产）；「web 服务」名实相符但不做业务页面 |
@@ -42,7 +42,7 @@
 
 ```
 digital-employees/
-├── packages/
+├── workbench/            （workspace 根，2026-08-25 由 packages/ 改名）
 │   ├── workbench-service/          TS + Hono（Bun 编译单体）
 │   │   ├── src/
 │   │   │   ├── brand.ts            品牌常量（D-4）

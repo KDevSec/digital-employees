@@ -5,7 +5,7 @@
 #      —— 2026-08-25 安装实证：纯时间触发任务**非提权可注册**（S2 被拒的是 LogonTrigger/S4U 形态）
 #      开机自启：repeat 触发跨重启持续（365 天）；LogonTrigger 需一次提权，留后续版本增强
 #   3. 拉起服务（经计划任务，同时验证注册正确）+ 起托盘 + 开浏览器
-# 用法：在 packages/workbench-service 下执行  bash scripts/build.sh && bash ../workbench-tray/scripts/build-tray.sh
+# 用法：在 workbench/workbench-service 下执行  bash scripts/build.sh && bash ../workbench-tray/scripts/build-tray.sh
 #       然后  powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 $ErrorActionPreference = 'Stop'
 $TaskName = 'WorkbenchDaemon'

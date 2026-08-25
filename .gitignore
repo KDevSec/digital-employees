@@ -13,16 +13,16 @@ __pycache__/
 test-results/
 playwright-report/
 tools/.bin/
-workbench/data/
+workbench-demo/data/
 .agents/
 .ieidev/
 # 参考项目源码（仅本地调研用）
 reference-projects/
 # 构建产物与可执行体（workbench 框架增量）
-# 注意：web-dist/ 不忽略——packages/workbench-service/web-dist/index.html 是
+# 注意：web-dist/ 不忽略——workbench/workbench-service/web-dist/index.html 是
 # 单体编译的嵌入源（S-01），提交进仓；web 包的构建中间产物 dist/ 已被上面的 dist/ 覆盖
 *.exe
-packages/workbench-service/scripts/smoke.log
-packages/workbench-tray/scripts/tray-smoke.log
+workbench/workbench-service/scripts/smoke.log
+workbench/workbench-tray/scripts/tray-smoke.log
 # specs 目录本地化（远程 64be90f：停止跟踪）
 specs/

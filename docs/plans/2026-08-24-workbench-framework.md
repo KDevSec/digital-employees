@@ -36,9 +36,9 @@
 **目录总览（最终态）:**
 
 ```
-packages/workbench-service/   src/{brand,cli,server,runtime,config,logging}/ main.ts  test/  scripts/{build.sh,smoke.sh}
-packages/workbench-web/       src/{App.vue,main.ts,router/,views/,components/}  vite.config.ts
-packages/workbench-tray/      main.go  internal/{brand,statemachine,probe,contract,actions,menu,autostart,icons,logging}/
+workbench/workbench-service/   src/{brand,cli,server,runtime,config,logging}/ main.ts  test/  scripts/{build.sh,smoke.sh}
+workbench/workbench-web/       src/{App.vue,main.ts,router/,views/,components/}  vite.config.ts
+workbench/workbench-tray/      main.go  internal/{brand,statemachine,probe,contract,actions,menu,autostart,icons,logging}/
 pnpm-workspace 无需（用根 package.json workspaces）
 ```
 
@@ -48,14 +48,14 @@ pnpm-workspace 无需（用根 package.json workspaces）
 
 ### Task 1: Monorepo 脚手架 + 首个测试跑通
 
-**Files:** Create: `package.json`（根）、`packages/workbench-service/package.json`、`packages/workbench-service/tsconfig.json`、`packages/workbench-service/vitest.config.ts`、`packages/workbench-service/test/smoke.test.ts`、`.gitignore` 追加
+**Files:** Create: `package.json`（根）、`workbench/workbench-service/package.json`、`workbench/workbench-service/tsconfig.json`、`workbench/workbench-service/vitest.config.ts`、`workbench/workbench-service/test/smoke.test.ts`、`.gitignore` 追加
 
 **Step 1:** 根 `package.json`：
 ```json
-{ "name": "digital-employees", "private": true, "workspaces": ["packages/*"] }
+{ "name": "digital-employees", "private": true, "workspaces": ["workbench/*"] }
 ```
 
-**Step 2:** `packages/workbench-service/package.json`：
+**Step 2:** `workbench/workbench-service/package.json`：
 ```json
 { "name": "@workbench/service", "version": "0.1.0", "private": true, "type": "module",
   "scripts": { "test": "vitest run", "build": "bash scripts/build.sh" },
@@ -67,7 +67,7 @@ pnpm-workspace 无需（用根 package.json workspaces）
 
 **Step 4:** `test/smoke.test.ts`：`import { describe, it, expect } from 'vitest'; describe('workspace', () => { it('vitest 就绪', () => expect(1).toBe(1)) })`
 
-**Step 5:** `cd packages/workbench-service && bun install`（根 workspaces 生效）→ `bun run test` → 预期 1 passed。
+**Step 5:** `cd workbench/workbench-service && bun install`（根 workspaces 生效）→ `bun run test` → 预期 1 passed。
 
 **Step 6:** `.gitignore` 追加 `node_modules/`、`dist/`、`*.exe`、`web-dist/`。Commit: `chore: monorepo 脚手架（bun workspaces + service 包 + vitest）`
 
@@ -203,7 +203,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 
 ### Task 9: 服务冒烟（bun 直跑，未编译）
 
-**Files:** Create: `packages/workbench-service/scripts/smoke.sh`
+**Files:** Create: `workbench/workbench-service/scripts/smoke.sh`
 
 **Step 1** 冒烟脚本（git-bash）顺序断言，任一步失败 set -e 退出：
 1. `WORKBENCH_HOME=$(mktemp -d) bun run src/main.ts start &` → sleep 2 → `curl -s localhost:19980/healthz` 含 `"app":"workbench"` 且含 `"uid"`
@@ -218,7 +218,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 
 ### Task 10: Web 壳（Vue 骨架 + 占位页）
 
-**Files:** Create: `packages/workbench-web/{package.json,vite.config.ts,index.html,src/main.ts,src/App.vue,src/views/Home.vue,src/router/index.ts,src/api/health.ts}`、`packages/workbench-web/test/health.test.ts`
+**Files:** Create: `workbench/workbench-web/{package.json,vite.config.ts,index.html,src/main.ts,src/App.vue,src/views/Home.vue,src/router/index.ts,src/api/health.ts}`、`workbench/workbench-web/test/health.test.ts`
 
 **Step 1** `package.json`：vue@3 / vue-router@4 / pinia@2 / vite@5 / @vitejs/plugin-vue / vite-plugin-singlefile / vitest；scripts：`dev`（代理 127.0.0.1:19980）、`build`（singlefile 输出**单个** `dist/index.html`）、`test`。
 
@@ -230,7 +230,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 
 ### Task 11: 嵌入 + 单体编译 + 全量冒烟
 
-**Files:** Modify: `packages/workbench-service/src/server/endpoints.ts`、Create: `packages/workbench-service/web-dist/`（构建产物，**提交进仓**——S-01 嵌入需要）、`packages/workbench-service/scripts/build.sh`、Modify: `scripts/smoke.sh`
+**Files:** Modify: `workbench/workbench-service/src/server/endpoints.ts`、Create: `workbench/workbench-service/web-dist/`（构建产物，**提交进仓**——S-01 嵌入需要）、`workbench/workbench-service/scripts/build.sh`、Modify: `scripts/smoke.sh`
 
 **Step 1** build.sh：`cd ../workbench-web && bun run build` → 拷 `dist/index.html` 到 service 的 `web-dist/index.html` → `bun build --compile src/main.ts --outfile dist/workbench.exe`。
 **Step 2** endpoints.ts 增 `GET /`：`import indexHtml from "../../web-dist/index.html" with { type: "text" }` 返回 HTML（测试：toHonoApp 后 `app.request('/')` 200 且含「数字员工工作台」）。
@@ -239,7 +239,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 
 ### Task 12: Go module + statemachine（TR-02/05）
 
-**Files:** Create: `packages/workbench-tray/{go.mod,internal/brand/brand.go,internal/statemachine/statemachine.go,internal/statemachine/statemachine_test.go}`
+**Files:** Create: `workbench/workbench-tray/{go.mod,internal/brand/brand.go,internal/statemachine/statemachine.go,internal/statemachine/statemachine_test.go}`
 
 **Step 1 失败测试** `statemachine_test.go` 表驱动断言 `Next(state, event)`：
 - `GREEN + probeFail` → YELLOW；`YELLOW + probeFail`(fails<3 或 elapsed<30s) → YELLOW（**skip 不重启**）
@@ -292,7 +292,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 
 ### Task 16: 托盘组装 + 配真服务冒烟（TR-01/03/04/07/08/09）
 
-**Files:** Create: `packages/workbench-tray/main.go`、`internal/logging/traylog.go`、`packages/workbench-tray/versioninfo/versioninfo.json`、`scripts/tray-smoke.sh`；Modify: 根 `.gitignore`
+**Files:** Create: `workbench/workbench-tray/main.go`、`internal/logging/traylog.go`、`workbench/workbench-tray/versioninfo/versioninfo.json`、`scripts/tray-smoke.sh`；Modify: 根 `.gitignore`
 
 **Step 1** main.go 组装（沿 M0 spike main.go 骨架，换用 internal/* 纯模块）：5s 探活循环 → statemachine → SetIcon 四态 + 菜单联动 + RED 时 `exec workbench start`（ShouldRecover 单次）+ 左键 `__health-wait 15s` 后 `rundll32 url.dll,FileProtocolHandler <url>` 开浏览器 + 退出项仅退壳；traylog 落 `<profile>/logs/tray.log`（JSONL，与 M0 同构）。
 **Step 2** versioninfo.json：四字段非空（CompanyName=Placeholder、ProductName=数字员工工作台、FileVersion=0.1.0）；`go build -ldflags "-H windowsgui -s -w" -o dist/workbench-tray.exe`（CI 校验四字段留 guard 脚本注释）。
@@ -306,7 +306,7 @@ export function createRegistry(): { routes: {method,path,handler}[]; get; post }
 ### Task 17: verification-before-completion 收尾
 
 **REQUIRED SUB-SKILL:** superpowers:verification-before-completion。清单：
-1. `cd packages/workbench-service && bun run test` 全绿；`go test ./...`（tray）全绿
+1. `cd workbench/workbench-service && bun run test` 全绿；`go test ./...`（tray）全绿
 2. 两份冒烟脚本全绿（服务七场景 + 托盘四态/W-2/体量）
 3. 交叉核对设计：healthz 字段=C-4、CLI 面=S-02 表、service.json 字段=设计 §6、状态机=托盘设计 §3（逐项 grep/读码核对，差异记录）
 4. grep 断言架构纪律：`hono` 只在 hono-adapter.ts；`bun:` 只在 runtime/logging 允许目录；品牌值只出现在 brand.ts/brand.go
