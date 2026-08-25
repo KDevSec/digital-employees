@@ -1,0 +1,22 @@
+docs/research/S4-MVP员工落地方案对比与Linux多底座Spike报告-2026-08-25.md
+  s_219083f7ea443f::t_0f6b65294fd5e5 1-111
+  s_219083f7ea443f::t_6263f8b7816a8d 112-179
+docs/research/数字员工MVP设计讨论_from_田-2026-08-25.md
+  s_219083f7ea443f::t_75378bca83e18d 1-280
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "368927b9ac1d3f9af6f6d850b8f24b966e6cc8fb",
+  "prompts": {},
+  "sessions": {
+    "s_219083f7ea443f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c9e66139-7050-49fb-8751-0acd1fea3c59",
+        "model": "claude-fable-5"
+      },
+      "human_author": "will <mj66fs295u@gmail.com>"
+    }
+  }
+}
