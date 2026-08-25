@@ -1,0 +1,40 @@
+docs/plans/2026-08-25-真安装包-design.md
+  s_aad8def6d411b5::t_9ff0e09b5f9aa5 13
+  s_aad8def6d411b5::t_e993eadebb4d1d 116
+  s_aad8def6d411b5::t_3fa060b21fce9b 77,79
+  s_aad8def6d411b5::t_fa47a2d20987e7 124
+  s_aad8def6d411b5::t_ffec774751f3a9 4
+  s_aad8def6d411b5::t_c3caec40b85c8c 102-109
+  s_aad8def6d411b5::t_322e667a131720 28
+  s_aad8def6d411b5::t_4b38230cc21e01 89
+  s_aad8def6d411b5::t_e342cebe9ec042 87
+  s_aad8def6d411b5::t_0fda8514c4d87b 31
+  s_aad8def6d411b5::t_30d3c3e4069921 71-73,75
+  s_aad8def6d411b5::t_a8bf6e07cc188f 97-100
+  s_aad8def6d411b5::t_a85ff031c1a6e8 10
+  s_aad8def6d411b5::t_f1dddef49de65a 42,44-46
+  s_aad8def6d411b5::t_88a6b5fbfff028 61
+  s_aad8def6d411b5::t_a052b902b70594 54-57
+  s_aad8def6d411b5::t_fd04f29a1a793f 15-17
+  s_aad8def6d411b5::t_e9839ccf252d1a 25
+  s_aad8def6d411b5::t_ee3ddb9271f281 29
+  s_aad8def6d411b5::t_2d773170d9dac8 30
+  s_aad8def6d411b5::t_f553d2268ee9d2 76
+  s_aad8def6d411b5::t_b8b2b106fb4c0d 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "de329ab9f97fe07b2a1871cd33bf6809ded0b2b5",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
