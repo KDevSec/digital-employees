@@ -1,0 +1,20 @@
+docs/plans/2026-08-25-真安装包-design.md
+  s_aad8def6d411b5::t_051a923e242d33 110,112-120,126
+  s_aad8def6d411b5::t_2e3f54f48c78d2 1-109,111,121-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "500416718f66b87b1958cb703f07267e5f5b73d4",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
