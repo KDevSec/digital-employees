@@ -45,7 +45,7 @@ const indexHtml = indexHtmlModule as unknown as string
 
 // ---------- profile 目录（模块级仅路径解析：零 IO、零抛错——stop/status 不依赖 config） ----------
 
-/** env 覆盖入口（测试/冒烟关键）：WORKBENCH_HOME > ~/.workbench */
+/** env 覆盖入口（测试/冒烟关键）：WORKBENCH_HOME > ~/.devzero */
 const profileDir = process.env.WORKBENCH_HOME ?? join(homedir(), brand.profileName)
 const runDir = join(profileDir, 'run')
 const logsDir = join(profileDir, 'logs')

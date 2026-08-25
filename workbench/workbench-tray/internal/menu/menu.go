@@ -5,8 +5,8 @@ package menu
 import (
 	"strconv"
 
-	"workbench-tray/internal/brand"
-	"workbench-tray/internal/statemachine"
+	"devzero-tray/internal/brand"
+	"devzero-tray/internal/statemachine"
 )
 
 // ItemID 菜单项标识

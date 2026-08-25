@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"workbench-tray/internal/brand"
+	"devzero-tray/internal/brand"
 )
 
 // TestParseServiceHandleRoundTrip 全字段往返：Go struct → JSON → Parse → 相等（锁 json tag 与 TS 字段名一致）

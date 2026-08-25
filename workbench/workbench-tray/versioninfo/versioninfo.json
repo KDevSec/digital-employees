@@ -21,14 +21,14 @@
   "StringFileInfo": {
     "Comments": "",
     "CompanyName": "Placeholder",
-    "FileDescription": "数字员工工作台 托盘",
+    "FileDescription": "DevZero 托盘",
     "FileVersion": "0.1.0",
-    "InternalName": "workbench-tray",
+    "InternalName": "devzero-tray",
     "LegalCopyright": "Placeholder",
     "LegalTrademarks": "",
-    "OriginalFilename": "workbench-tray.exe",
+    "OriginalFilename": "devzero-tray.exe",
     "PrivateBuild": "",
-    "ProductName": "数字员工工作台",
+    "ProductName": "DevZero",
     "ProductVersion": "0.1.0",
     "SpecialBuild": ""
   },

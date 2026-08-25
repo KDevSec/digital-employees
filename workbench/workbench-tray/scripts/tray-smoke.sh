@@ -27,17 +27,17 @@ exec > >(tee -a "$SMOKE_LOG") 2>&1
 
 BASE="http://127.0.0.1:19980"
 RUN_KEY='HKCU\Software\Microsoft\Windows\CurrentVersion\Run'
-RUN_KEY_NAME="WorkbenchTray" # 镜像 brand.RunKeyName（Go 侧唯一来源，脚本手写同步）
+RUN_KEY_NAME="DevZeroTray" # 镜像 brand.RunKeyName（Go 侧唯一来源，脚本手写同步）
 DIST="../workbench-service/dist"
-SERVICE_EXE="$DIST/workbench.exe"
-TRAY_EXE="$DIST/workbench-tray.exe"
+SERVICE_EXE="$DIST/devzero.exe"
+TRAY_EXE="$DIST/devzero-tray.exe"
 
 export WORKBENCH_HOME="$(mktemp -d)"
 export WORKBENCH_NO_BROWSER=1
 TRAY_LOG="$WORKBENCH_HOME/logs/tray.log"
 
 # 冒烟前已存在的同名进程 = 用户自己的实例，taskkill //IM 会误杀——直接中止让操作者处理
-for proc in workbench.exe workbench-daemon.exe workbench-tray.exe; do
+for proc in devzero.exe devzero-daemon.exe devzero-tray.exe; do
   if tasklist //FI "IMAGENAME eq $proc" 2>/dev/null | grep -i "$proc" >/dev/null; then
     echo "ABORT: 已有 $proc 在跑（taskkill //IM 按进程名全局匹配会误杀），请先关闭再跑冒烟"
     exit 1
@@ -48,9 +48,9 @@ done
 PREV_RUN_VALUE="$(reg query "$RUN_KEY" //v "$RUN_KEY_NAME" 2>/dev/null | sed -n 's/.*REG_SZ[[:space:]]*//p' || true)"
 
 cleanup() {
-  taskkill //F //IM workbench-tray.exe >/dev/null 2>&1 || true
-  taskkill //F //IM workbench.exe >/dev/null 2>&1 || true
-  taskkill //F //IM workbench-daemon.exe >/dev/null 2>&1 || true
+  taskkill //F //IM devzero-tray.exe >/dev/null 2>&1 || true
+  taskkill //F //IM devzero.exe >/dev/null 2>&1 || true
+  taskkill //F //IM devzero-daemon.exe >/dev/null 2>&1 || true
   if [ -n "$PREV_RUN_VALUE" ]; then
     reg add "$RUN_KEY" //v "$RUN_KEY_NAME" //t REG_SZ //d "$PREV_RUN_VALUE" //f >/dev/null 2>&1 || true
   else
@@ -119,7 +119,7 @@ SIZE="$(stat -c%s "$TRAY_EXE")"
 echo "PASS S0a 双制品同目录 + 体量 $SIZE bytes < 8MB（$((SIZE / 1024 / 1024))MB）"
 
 echo "--- S0b: VersionInfo 四字段（TR-08，resource.syso 嵌入） ---"
-TRAY_WIN="$(cygpath -w "$(cd "$DIST" && pwd)/workbench-tray.exe")"
+TRAY_WIN="$(cygpath -w "$(cd "$DIST" && pwd)/devzero-tray.exe")"
 VI_OUT="$(powershell -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; (Get-Item -LiteralPath '$TRAY_WIN').VersionInfo | fl CompanyName,ProductName,FileDescription,LegalCopyright,FileVersion | Out-String")"
 echo "$VI_OUT"
 for f in CompanyName ProductName FileDescription LegalCopyright FileVersion; do
@@ -140,7 +140,7 @@ echo "PASS S1 healthz 就绪（pid=$(healthz_pid)）"
 echo "=== S2: 起托盘 → 30s 内 GREEN 探活（tray.log） ==="
 ( "$TRAY_EXE" >"$WORKBENCH_HOME/tray-stderr.log" 2>&1 & )
 sleep 2
-tasklist //FI "IMAGENAME eq workbench-tray.exe" 2>/dev/null | grep -i "workbench-tray.exe" >/dev/null || {
+tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -i "devzero-tray.exe" >/dev/null || {
   echo "FAIL: 托盘进程未存活（GUI 初始化失败？）"
   cat "$WORKBENCH_HOME/tray-stderr.log" 2>/dev/null || true
   exit 1
@@ -219,7 +219,7 @@ echo "PASS S4b 外部 stop→GRAY / start→GREEN / activity / __health-wait"
 
 echo "=== S5: TR-01/W-2 杀壳 → 服务同 pid 存活 ==="
 PID_BEFORE="$(healthz_pid)"
-taskkill //F //IM workbench-tray.exe >/dev/null
+taskkill //F //IM devzero-tray.exe >/dev/null
 sleep 3
 PID_AFTER="$(healthz_pid)"
 [ -n "$PID_AFTER" ] || { echo "FAIL: 杀壳后 healthz 不可达（W-2 违反：壳死了服务也死）"; exit 1; }
@@ -234,9 +234,9 @@ echo "=== S6: 启动即活——服务已停（哨兵在）时启动托盘，应
 "$SERVICE_EXE" stop >/dev/null 2>&1
 sleep 1
 if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then echo "FAIL: S6 前置——stop 后服务仍在跑"; exit 1; fi
-taskkill //F //IM workbench-tray.exe >/dev/null 2>&1 || true  # S5 已杀壳——不在场是常态（taskkill 未找到返回 128，set -e 会误杀）
+taskkill //F //IM devzero-tray.exe >/dev/null 2>&1 || true  # S5 已杀壳——不在场是常态（taskkill 未找到返回 128，set -e 会误杀）
 sleep 1
-("$DIST/workbench-tray.exe" &)
+("$DIST/devzero-tray.exe" &)
 REVIVED=0
 for i in $(seq 1 20); do
   sleep 1
@@ -245,17 +245,17 @@ done
 [ "$REVIVED" -eq 1 ] || { echo "FAIL: 托盘启动后 20s 内服务未复活（launch_revive）"; tail -5 "$TRAY_LOG"; exit 1; }
 grep -q 'tray.launch_revive' "$TRAY_LOG" || { echo "FAIL: tray.log 无 tray.launch_revive 事件"; exit 1; }
 sleep 6
-grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$HOME/.workbench/logs/tray.log"; exit 1; }
+grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$HOME/.devzero/logs/tray.log"; exit 1; }
 echo "PASS S6 (launch_revive: 托盘独立启动 -> 服务 ${i}s 内复活 -> GREEN)"
 
 # ---------- S7: 单实例 + 唤醒重定向（方案 B，2026-08-25 用户裁决） ----------
 
 echo ""
 echo "=== S7: 单实例——已有壳在跑时再起一个，第二壳秒退并唤醒首壳打开工作台 ==="
-tray_count() { tasklist //FI "IMAGENAME eq workbench-tray.exe" 2>/dev/null | grep -ci "workbench-tray.exe" || true; }
+tray_count() { tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -ci "devzero-tray.exe" || true; }
 [ "$(tray_count)" -eq 1 ] || { echo "FAIL: S7 前置——期望恰 1 个托盘在跑（实际 $(tray_count) 个）"; exit 1; }
 S7_BASE="$(log_line_count)"
-( "$DIST/workbench-tray.exe" >"$WORKBENCH_HOME/tray2-stderr.log" 2>&1 & ) # 模拟用户点开始菜单快捷方式
+( "$DIST/devzero-tray.exe" >"$WORKBENCH_HOME/tray2-stderr.log" 2>&1 & ) # 模拟用户点开始菜单快捷方式
 sleep 3
 [ "$(tray_count)" -eq 1 ] || {
   echo "FAIL: 第二实例 3s 内未退出（进程数 $(tray_count)）——双开防线失效（双图标 bug 复发）"

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"workbench-tray/internal/brand"
+	"devzero-tray/internal/brand"
 )
 
 // TestOpenCreatesDirsAndFile 打开即建目录（mkdir -p 语义）与日志文件本体。

@@ -36,7 +36,7 @@ func TestSentinelPath(t *testing.T) {
 }
 
 func TestRunKeyValue(t *testing.T) {
-	exe := filepath.Join(t.TempDir(), "workbench-tray.exe")
+	exe := filepath.Join(t.TempDir(), "devzero-tray.exe")
 	if got := RunKeyValue(exe); got != exe {
 		t.Fatalf("RunKeyValue(%q) = %q, want 原样（暂无参数拼接）", exe, got)
 	}
