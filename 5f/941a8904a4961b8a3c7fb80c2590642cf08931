@@ -1,0 +1,24 @@
+packages/workbench-service/scripts/flip-subsystem.ts
+  s_cbda167ad90f41::t_ca6988e92fb75b 1-26
+packages/workbench-service/scripts/build.sh
+  s_cbda167ad90f41::t_aa1fd5b8ee2f9a 2,4-9,22,25-26,29-31,33-40,44-45
+  s_cbda167ad90f41::t_b81f3a12fc8cda 41-43
+packages/workbench-service/scripts/install.ps1
+  s_cbda167ad90f41::t_89dfb01194f56a 18,22,32-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "5f941a8904a4961b8a3c7fb80c2590642cf08931",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
