@@ -1,0 +1,19 @@
+docs/design/概要设计/套件工作台V0.1功能点清单-2026-08-23.md
+  s_aad8def6d411b5::t_bee138d77034bc 55,261
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "cff21b49e66e98f384c9a7c5a32fa572d7a5b744",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
