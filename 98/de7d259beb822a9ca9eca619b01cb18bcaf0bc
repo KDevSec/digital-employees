@@ -1,0 +1,29 @@
+workbench/workbench-tray/scripts/tray-smoke.sh
+  s_cbda167ad90f41::t_90d1e5c627ac9a 251
+  s_cbda167ad90f41::t_dae6158e583625 235-236,238,240-244,247,249-250
+  s_cbda167ad90f41::t_f8b15098d5aaf1 245-246,248
+  s_cbda167ad90f41::t_a380faa8c7afbf 237
+  s_cbda167ad90f41::t_ee2b10cf485a56 234,239
+  s_cbda167ad90f41::t_de4c0dff4a2ad7 40,53,174-176
+  s_cbda167ad90f41::t_74ba1adc31542d 233
+workbench/workbench-service/scripts/install.ps1
+  s_cbda167ad90f41::t_e8e0e273b56d2b 59-70,73
+workbench/workbench-tray/main.go
+  s_cbda167ad90f41::t_d47fb9aadcc912 126-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "98de7d259beb822a9ca9eca619b01cb18bcaf0bc",
+  "prompts": {},
+  "sessions": {
+    "s_cbda167ad90f41": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1fe51592-02b5-4b03-bd67-307d6a6cc99b",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
