@@ -1,0 +1,28 @@
+workbench/workbench-installer/assets/ChineseSimplified.isl
+  s_aad8def6d411b5::t_203aece81b278a 1-417
+workbench/workbench-installer/workbench.iss
+  s_aad8def6d411b5::t_5de02ddb327523 1-2,4-22,24-35
+  s_aad8def6d411b5::t_e134dd1dbd9806 3,23,36-38
+workbench/workbench-installer/assets/infobefore.txt
+  s_aad8def6d411b5::t_91bbc263690b4c 1-9
+workbench/workbench-installer/scripts/build-installer.sh
+  s_aad8def6d411b5::t_51dae087cf0bbb 1-3,5-29,31-44
+  s_aad8def6d411b5::t_f90f3cc516b19a 30
+  s_aad8def6d411b5::t_56372a60a773bf 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d1a3a04f89605f885b3bb8e7ed8a2fecf83db5aa",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
