@@ -3,7 +3,7 @@ package menu
 import (
 	"testing"
 
-	"workbench-tray/internal/statemachine"
+	"devzero-tray/internal/statemachine"
 )
 
 // baselineIDs 每态都含的菜单项（任务规格：打开工作台/复制地址/数据目录/日志/检查更新/关于/退出）

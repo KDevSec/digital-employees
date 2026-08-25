@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"workbench-tray/internal/brand"
-	"workbench-tray/internal/contract"
+	"devzero-tray/internal/brand"
+	"devzero-tray/internal/contract"
 )
 
 // ProbeTimeout 探活请求超时（设计 §3：2s）
@@ -97,7 +97,7 @@ func DiscoverPort(profileDir string) int {
 	return brand.DefaultPort
 }
 
-// ProfileDir 壳侧 profile 目录解析：env WORKBENCH_HOME > ~/.workbench。
+// ProfileDir 壳侧 profile 目录解析：env WORKBENCH_HOME > ~/.devzero。
 // 语义差异：Go 侧空串=未设（走默认）；TS 侧 `process.env.WORKBENCH_HOME ?? ...` 的 ?? 只排除
 // null/undefined，空串是有效值——但 Windows 上环境变量设为空串实际不可达，真实环境两侧行为一致。
 func ProfileDir() string {

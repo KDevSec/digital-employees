@@ -1,5 +1,5 @@
 {
-  "name": "@workbench/service",
+  "name": "@devzero/service",
   "version": "0.1.0",
   "private": true,
   "type": "module",

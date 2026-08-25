@@ -223,15 +223,15 @@ if [ -n "$OCCUPIER_PID" ]; then
 fi
 sleep 1
 
-echo "--- 8a: bash scripts/build.sh 产出 dist/workbench.exe ---"
+echo "--- 8a: bash scripts/build.sh 产出 dist/devzero.exe ---"
 bash scripts/build.sh >"$WORKBENCH_HOME/build.log" 2>&1
-[ -f dist/workbench.exe ] || { echo "FAIL: dist/workbench.exe 未产出"; cat "$WORKBENCH_HOME/build.log"; exit 1; }
-EXE_SIZE="$(ls -la dist/workbench.exe | awk '{print $5}')"
-echo "  (workbench.exe ${EXE_SIZE} bytes, 构建日志见 $WORKBENCH_HOME/build.log)"
+[ -f dist/devzero.exe ] || { echo "FAIL: dist/devzero.exe 未产出"; cat "$WORKBENCH_HOME/build.log"; exit 1; }
+EXE_SIZE="$(ls -la dist/devzero.exe | awk '{print $5}')"
+echo "  (devzero.exe ${EXE_SIZE} bytes, 构建日志见 $WORKBENCH_HOME/build.log)"
 echo "PASS 8a (单体编译产出)"
 
 echo "--- 8b: exe 后台 start → healthz 含 app+uid；/ 返回嵌入页；buildCommitId 已注入 ---"
-./dist/workbench.exe start >"$WORKBENCH_HOME/exe-start1.log" 2>&1 &
+./dist/devzero.exe start >"$WORKBENCH_HOME/exe-start1.log" 2>&1 &
 wait_healthz
 BODY="$(curl -sf --max-time 2 "$BASE/healthz")"
 echo "$BODY"
@@ -240,8 +240,8 @@ echo "$BODY" | grep -q '"uid"' || { echo "FAIL: exe healthz 缺 uid"; exit 1; }
 PAGE="$(curl -sf --max-time 2 "$BASE/")"
 # 注意：页面 ~91KB > 64KB 管道缓冲，grep -q 早退会让 echo 收 SIGPIPE(141)，
 # 叠加 set -o pipefail 误判失败——大内容断言用 grep -c（读完全部输入）
-echo "$PAGE" | grep -c '数字员工工作台' >/dev/null || {
-  echo "FAIL: / 返回内容缺「数字员工工作台」（嵌入未生效）"
+echo "$PAGE" | grep -c 'DevZero' >/dev/null || {
+  echo "FAIL: / 返回内容缺「DevZero」（嵌入未生效）"
   echo "  诊断: PAGE 字符数=${#PAGE} 头部=[$(printf '%s' "$PAGE" | head -c 120)]"
   curl -s --max-time 2 -o /dev/null -w '  诊断: http_code=%{http_code} size=%{size_download}
 ' "$BASE/" || true
@@ -258,11 +258,11 @@ echo "PASS 8b (healthz app+uid + / 嵌入页 + buildCommitId=${EXPECTED_COMMIT})
 
 echo "--- 8c: 二次 start 幂等（rc 0）→ stop → healthz 拒连 ---"
 set +e
-./dist/workbench.exe start >"$WORKBENCH_HOME/exe-start2.log" 2>&1
+./dist/devzero.exe start >"$WORKBENCH_HOME/exe-start2.log" 2>&1
 RC=$?
 set -e
 [ "$RC" -eq 0 ] || { echo "FAIL: exe 二次 start 退出码 $RC（期望 0）"; cat "$WORKBENCH_HOME/exe-start2.log"; exit 1; }
-./dist/workbench.exe stop
+./dist/devzero.exe stop
 if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then
   echo "FAIL: exe stop 后 healthz 仍可达"
   exit 1

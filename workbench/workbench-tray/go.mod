@@ -1,4 +1,4 @@
-module workbench-tray
+module devzero-tray
 
 go 1.26
 

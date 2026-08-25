@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"workbench-tray/internal/brand"
+	"devzero-tray/internal/brand"
 )
 
 // Record 单条日志事件

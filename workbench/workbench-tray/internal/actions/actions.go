@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"workbench-tray/internal/brand"
+	"devzero-tray/internal/brand"
 )
 
 // HealthWaitBudgetMs 「等 healthz 就绪」预算（设计 §4.2：15s）——Restart 末段与

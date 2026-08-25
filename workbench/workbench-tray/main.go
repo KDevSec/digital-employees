@@ -1,7 +1,7 @@
-// workbench-tray 托盘壳组装层（Task 16 / Wave 5）：GUI 层 + 执行层，消费 internal/* 纯模块。
+// devzero-tray 托盘壳组装层（Task 16 / Wave 5）：GUI 层 + 执行层，消费 internal/* 纯模块。
 //
 // 红线（托盘壳设计 v0.1 卷首）：壳不承担唯一保活责任（W-2：杀壳服务活）；
-// 壳零业务逻辑——启停/探活数据全走 workbench CLI / /healthz / run/*.json，壳内无服务语义。
+// 壳零业务逻辑——启停/探活数据全走 devzero CLI / /healthz / run/*.json，壳内无服务语义。
 //
 // 平台注记：V0.1 仅面向 Windows（syscall.SysProcAttr.CreationFlags 与 registry 均
 // Windows 专属；darwin 变体归 0.2，状态机/契约/菜单模型全部平台无关已就位）。
@@ -25,16 +25,16 @@ import (
 	"fyne.io/systray"
 	"golang.org/x/sys/windows/registry"
 
-	"workbench-tray/internal/actions"
-	"workbench-tray/internal/autostart"
-	"workbench-tray/internal/brand"
-	"workbench-tray/internal/contract"
-	"workbench-tray/internal/icons"
-	"workbench-tray/internal/menu"
-	"workbench-tray/internal/probe"
-	"workbench-tray/internal/singleton"
-	"workbench-tray/internal/statemachine"
-	"workbench-tray/internal/traylog"
+	"devzero-tray/internal/actions"
+	"devzero-tray/internal/autostart"
+	"devzero-tray/internal/brand"
+	"devzero-tray/internal/contract"
+	"devzero-tray/internal/icons"
+	"devzero-tray/internal/menu"
+	"devzero-tray/internal/probe"
+	"devzero-tray/internal/singleton"
+	"devzero-tray/internal/statemachine"
+	"devzero-tray/internal/traylog"
 )
 
 const (
@@ -47,8 +47,8 @@ const (
 	// cliOutMaxLimit CLI 段输出进 traylog 的截断上限（防巨包刷爆日志）
 	cliOutMaxLimit = 512
 	// singletonName 单实例命名空间基础名（2026-08-25 用户裁决·方案 B）：Local\ 前缀由
-	// singleton 包统一加，互斥体 Local\workbench-tray / 唤醒事件 Local\workbench-tray.wakeup
-	singletonName = "workbench-tray"
+	// singleton 包统一加，互斥体 Local\devzero-tray / 唤醒事件 Local\devzero-tray.wakeup
+	singletonName = "devzero-tray"
 )
 
 // app 托盘壳运行体：全部可变状态由 mu 串行化（探活循环/菜单回调/信号处理并发三源）
@@ -56,7 +56,7 @@ type app struct {
 	mu         sync.Mutex
 	logger     *traylog.Logger
 	profileDir string
-	serviceExe string // 与壳 exe 同目录的 workbench.exe（TR-09 双制品兄弟路径）
+	serviceExe string // 与壳 exe 同目录的 devzero.exe（TR-09 双制品兄弟路径）
 	trayExe    string
 	client     probe.Client
 
@@ -140,7 +140,7 @@ func newApp() *app {
 	if err != nil {
 		trayExe = ""
 	}
-	serviceExe := filepath.Join(filepath.Dir(trayExe), "workbench.exe")
+	serviceExe := filepath.Join(filepath.Dir(trayExe), "devzero.exe")
 
 	logger, err := traylog.Open(profileDir)
 	if err != nil {
@@ -319,13 +319,13 @@ func (a *app) applyStateLocked() {
 			item.SetTitle(mi.Label) // 状态项恒为禁用展示项
 			item.Disable()
 		case menu.ItemAbout:
-			// 关于 = 禁用信息项，双版本线（W-12）：workbench v<service.json version> · 壳 v<trayVersion>。
+			// 关于 = 禁用信息项，双版本线（W-12）：DevZero v<service.json version> · 壳 v<trayVersion>。
 			// 弹窗需要窗口框架（V0.1 无），版本文本入菜单项承载
 			svc := serviceVersion(a.profileDir)
 			if svc == "" {
 				svc = "?"
 			}
-			item.SetTitle("关于 workbench v" + svc + " · 壳 v" + trayVersion)
+			item.SetTitle("关于 DevZero v" + svc + " · 壳 v" + trayVersion)
 			item.Disable()
 		default:
 			// 简化裁决（Task 16）：模型 Visible=false 一律映射为 Disabled——
@@ -343,7 +343,7 @@ func (a *app) applyStateLocked() {
 
 // ---------- 红态恢复（TR-05：恰好一次） ----------
 
-// recoverOnce 红态接管（设计 §3）：壳只做一件事——调 workbench start 一次；
+// recoverOnce 红态接管（设计 §3）：壳只做一件事——调 devzero start 一次；
 // 不做循环自愈（进程级归 OS 守护，壳只补 health 级这一层）。
 // CLI 段形状消费 actions 纯模块（I-2：组装层不手写段），事件名保持冒烟契约稳定
 func (a *app) recoverOnce() {
@@ -448,7 +448,7 @@ func (a *app) onMenu(id menu.ItemID) {
 	case menu.ItemOpenDataDir:
 		a.explorerOpen(actions.DataDirPath(a.profileDir))
 	case menu.ItemCheckUpdate:
-		// U 系列未落地（Wave 5 无 update 通道）：占位记事件，U 系列落地后接 workbench update --check
+		// U 系列未落地（Wave 5 无 update 通道）：占位记事件，U 系列落地后接 devzero update --check
 		a.logger.Event("update_check_pending", nil)
 	case menu.ItemQuit:
 		// 2026-08-25 用户裁决：退出 = 停止服务并退出（不再有「仅退壳」入口）。

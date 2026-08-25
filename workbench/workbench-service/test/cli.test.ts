@@ -56,7 +56,7 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
   it('start → 调 deps.start 并以其返回值为退出码', async () => {
     const { deps, calls, exits } = makeCliDeps()
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'start'])
+    await program.parseAsync(['node', 'devzero', 'start'])
     expect(calls).toContain('start:{}')
     expect(exits).toEqual([0])
   })
@@ -64,15 +64,15 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
   it('start 返回 78（conflict 由 main 捕获转译）→ 退出码 78 透传', async () => {
     const { deps, exits } = makeCliDeps({ start: async () => 78 })
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'start'])
+    await program.parseAsync(['node', 'devzero', 'start'])
     expect(exits).toEqual([78])
   })
 
   it('start --foreground / --no-keepalive 本波同义静默接受（选项透传）', async () => {
     const { deps, calls } = makeCliDeps()
     // commander 程序对象不可复用（选项值残留），每次 parse 建新实例
-    await buildProgram(deps).parseAsync(['node', 'workbench', 'start', '--foreground'])
-    await buildProgram(deps).parseAsync(['node', 'workbench', 'start', '--no-keepalive'])
+    await buildProgram(deps).parseAsync(['node', 'devzero', 'start', '--foreground'])
+    await buildProgram(deps).parseAsync(['node', 'devzero', 'start', '--no-keepalive'])
     const starts = calls.filter((c) => c.startsWith('start:'))
     expect(starts).toContain('start:{"foreground":true}')
     expect(starts).toContain('start:{"keepalive":false}')
@@ -81,7 +81,7 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
   it('stop → 调 deps.stop', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'stop'])
+    await program.parseAsync(['node', 'devzero', 'stop'])
     expect(calls).toContain('stop')
   })
 
@@ -89,7 +89,7 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
     const { deps, calls } = makeCliDeps()
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'status'])
+    await program.parseAsync(['node', 'devzero', 'status'])
 
     expect(calls).toContain('status')
     const printed = log.mock.calls.map((args) => args.join(' ')).join('\n')
@@ -107,7 +107,7 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
   it('portal → 调 deps.portal', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'portal'])
+    await program.parseAsync(['node', 'devzero', 'portal'])
     expect(calls).toContain('portal')
   })
 
@@ -115,7 +115,7 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
     const { deps, calls } = makeCliDeps()
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', 'activity'])
+    await program.parseAsync(['node', 'devzero', 'activity'])
     expect(calls).toContain('activity')
     const printed = log.mock.calls.map((args) => args.join(' ')).join('\n')
     expect(JSON.parse(printed)).toEqual({ conversationTasks: 0, triggerTasks: 0 })
@@ -124,14 +124,14 @@ describe('buildProgram 命令面（S-02，设计 §4）', () => {
   it('__daemon → start 收到 {daemon:true}（调度器拉起路径：守护入口，须尊重 user-stopped 哨兵）', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', '__daemon'])
+    await program.parseAsync(['node', 'devzero', '__daemon'])
     expect(calls).toContain('start:{"daemon":true}')
   })
 
   it('无子命令 → start 不带 daemon（用户显式运行/双击 exe：清哨兵的用户意图路径）', async () => {
     const { deps, calls } = makeCliDeps()
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench'])
+    await program.parseAsync(['node', 'devzero'])
     expect(calls.some((c) => c.startsWith('start:'))).toBe(true)
     expect(calls).toContain('start:{}')
   })
@@ -142,7 +142,7 @@ describe('__health-wait（内部子命令：托盘/安装脚本消费）', () =>
     const { deps, exits } = makeCliDeps()
     const program = buildProgram(deps)
     const t0 = Date.now()
-    await program.parseAsync(['node', 'workbench', '__health-wait', '15000'])
+    await program.parseAsync(['node', 'devzero', '__health-wait', '15000'])
     const elapsed = Date.now() - t0
     expect(exits).toEqual([0])
     expect(elapsed).toBeLessThan(5000)
@@ -151,7 +151,7 @@ describe('__health-wait（内部子命令：托盘/安装脚本消费）', () =>
   it('probeHealthz 永远 fail → 超时后非 0 退出', async () => {
     const { deps, exits } = makeCliDeps({ probeHealthz: async () => false })
     const program = buildProgram(deps)
-    await program.parseAsync(['node', 'workbench', '__health-wait', '150'])
+    await program.parseAsync(['node', 'devzero', '__health-wait', '150'])
     expect(exits).toEqual([1])
   })
 
@@ -159,7 +159,7 @@ describe('__health-wait（内部子命令：托盘/安装脚本消费）', () =>
     const { deps, exits } = makeCliDeps({ probeHealthz: async () => false })
     const program = buildProgram(deps)
     const t0 = Date.now()
-    await program.parseAsync(['node', 'workbench', '__health-wait', 'abc'])
+    await program.parseAsync(['node', 'devzero', '__health-wait', 'abc'])
     expect(exits).toEqual([1])
     expect(Date.now() - t0).toBeLessThan(2000) // 无守卫时 Date.now()>=NaN 恒 false → 死循环
   })

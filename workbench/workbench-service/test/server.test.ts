@@ -14,7 +14,7 @@ function buildApp(overrides: Partial<Parameters<typeof registerEndpoints>[1]> = 
     version: '9.9.9',
     pid: 4321,
     uid: 'uid-abc',
-    dataDir: 'D:/data/.workbench',
+    dataDir: 'D:/data/.devzero',
     uptime: () => 12_345,
     indexHtml: readEmbeddedIndexHtml(),
     ...overrides,
@@ -40,7 +40,7 @@ describe('route-registry + hono-adapter（框架无关路由表，hono 单点适
       pid: 4321,
       uid: 'uid-abc',
       uptime: 12_345,
-      dataDir: 'D:/data/.workbench',
+      dataDir: 'D:/data/.devzero',
     })
   })
 
@@ -64,12 +64,12 @@ describe('route-registry + hono-adapter（框架无关路由表，hono 单点适
     expect(await res.json()).toEqual({ conversationTasks: 0, triggerTasks: 0 })
   })
 
-  it('GET / → 200 text/html 且 body 含「数字员工工作台」（S-01 嵌入 Web 壳）', async () => {
+  it('GET / → 200 text/html 且 body 含「DevZero」（S-01 嵌入 Web 壳）', async () => {
     const app = buildApp()
     const res = await app.request('/')
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toContain('text/html')
-    expect(await res.text()).toContain('数字员工工作台')
+    expect(await res.text()).toContain('DevZero')
   })
 
   it('GET / 的 Host 白名单守卫同样生效（evil.com → 403）', async () => {
@@ -169,9 +169,9 @@ describe('数据目录与日志目录布局（healthz.dataDir 报 profile 真实
 })
 
 describe('嵌入源 web-dist/index.html（提交进仓的编译期资产，S-01）', () => {
-  it('为单文件形态：含「数字员工工作台」、无外链 script、无外链 stylesheet', () => {
+  it('为单文件形态：含「DevZero」、无外链 script、无外链 stylesheet', () => {
     const html = readEmbeddedIndexHtml()
-    expect(html).toContain('数字员工工作台')
+    expect(html).toContain('DevZero')
     expect(html).not.toMatch(/<script\s+src=/)
     expect(html).not.toMatch(/<link\s+rel="stylesheet"\s+href=/)
   })

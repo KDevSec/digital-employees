@@ -31,7 +31,7 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="home">
-    <h1 class="title">数字员工工作台</h1>
+    <h1 class="title">DevZero</h1>
     <p class="badge" :class="badge.badgeClass">{{ badge.badge }}</p>
     <p class="version">{{ version }}</p>
     <p class="note">V0.1 框架增量 · 业务填充中</p>

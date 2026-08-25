@@ -30,9 +30,9 @@ export interface CliDeps {
 const HEALTH_WAIT_POLL_MS = 200
 
 export function buildProgram(deps: CliDeps): Command {
-  const program = new Command('workbench')
+  const program = new Command('devzero')
   program
-    .description('数字员工工作台服务（V0.1 框架增量）')
+    .description('DevZero 服务（V0.1 框架增量）')
     // 无子命令（用户双击 exe / 终端裸跑）→ 用户显式启动：不带 daemon 旗标（main 据此清 user-stopped 哨兵）
     .action(async () => {
       const code = await deps.start({})

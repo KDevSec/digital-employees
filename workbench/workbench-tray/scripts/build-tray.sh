@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # 托盘构建（Task 16 / TR-09 双制品同目录）：
-#   1. 确保 service 的 dist/workbench.exe 存在（缺失则先触发 service 构建）——托盘 exe 与
-#      service exe 同目录兄弟落位（main.go 的 serviceExe = dirname(os.Executable())/workbench.exe）
+#   1. 确保 service 的 dist/devzero.exe 存在（缺失则先触发 service 构建）——托盘 exe 与
+#      service exe 同目录兄弟落位（main.go 的 serviceExe = dirname(os.Executable())/devzero.exe）
 #   2. TR-08 版本资源：versioninfo/versioninfo.json → resource.syso（go build 自动嵌入）；
 #      工具不可用（离线等）时沿用仓内已提交的 resource.syso——版本资源缺失不影响功能
-#   3. go build -ldflags "-H windowsgui -s -w" -o ../workbench-service/dist/workbench-tray.exe
+#   3. go build -ldflags "-H windowsgui -s -w" -o ../workbench-service/dist/devzero-tray.exe
 set -euo pipefail
 
 cd "$(dirname "$0")/.." # workbench/workbench-tray
 
-SERVICE_DIST="../workbench-service/dist/workbench.exe"
-TRAY_OUT="../workbench-service/dist/workbench-tray.exe"
+SERVICE_DIST="../workbench-service/dist/devzero.exe"
+TRAY_OUT="../workbench-service/dist/devzero-tray.exe"
 
 if [ ! -f "$SERVICE_DIST" ]; then
   echo "[build-tray] service 制品缺失，先构建 service（$SERVICE_DIST）"

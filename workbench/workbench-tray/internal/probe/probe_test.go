@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"workbench-tray/internal/brand"
+	"devzero-tray/internal/brand"
 )
 
 func serverPort(t *testing.T, srv *httptest.Server) int {
@@ -169,7 +169,7 @@ func TestDiscoverPort(t *testing.T) {
 	})
 }
 
-// TestProfileDir profile 目录解析：env WORKBENCH_HOME 覆盖默认 ~/.workbench（对齐 TS 侧 main.ts）
+// TestProfileDir profile 目录解析：env WORKBENCH_HOME 覆盖默认 ~/.devzero（对齐 TS 侧 main.ts）
 func TestProfileDir(t *testing.T) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -177,7 +177,7 @@ func TestProfileDir(t *testing.T) {
 	}
 	t.Run("默认_用户目录下profile", func(t *testing.T) {
 		t.Setenv("WORKBENCH_HOME", "")
-		want := filepath.Join(home, ".workbench")
+		want := filepath.Join(home, ".devzero")
 		if got := ProfileDir(); got != want {
 			t.Fatalf("ProfileDir = %q, want %q", got, want)
 		}

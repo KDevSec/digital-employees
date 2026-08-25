@@ -37,7 +37,7 @@ export function loadConfig(profileDir: string): WorkbenchConfig {
 export function writeSample(profileDir: string): string {
   mkdirSync(profileDir, { recursive: true })
   const sample: Record<string, unknown> = {
-    _comment: '数字员工工作台配置示例：复制为 config.json 后按需修改，未写出的项走内置默认值。',
+    _comment: 'DevZero 配置示例：复制为 config.json 后按需修改，未写出的项走内置默认值。',
     ...defaultConfig,
   }
   const samplePath = join(profileDir, SAMPLE_FILE)
