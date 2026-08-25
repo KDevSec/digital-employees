@@ -22,7 +22,7 @@ fi
 # 2. 编译单体（注入构建 commit + 版本信息）
 mkdir -p dist
 COMMIT_ID="$(git rev-parse --short HEAD 2>/dev/null || echo 'dev')"
-WB_VERSION="$(node -e "console.log(require('./package.json').version)" 2>/dev/null || echo 0.1.0)"
+WB_VERSION="$(node -e "console.log(require('./package.json').version)" 2>/dev/null || echo 0.0.1)"
 
 bun build --compile \
   --define "process.env.WORKBENCH_BUILD_COMMIT_ID=\"${COMMIT_ID}\"" \

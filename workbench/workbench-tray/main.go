@@ -39,7 +39,7 @@ import (
 
 const (
 	// trayVersion 壳版本线（与服务版本分离，W-12 双版本线；versioninfo.json 的 FileVersion 与此同步）
-	trayVersion = "0.1.0"
+	trayVersion = "0.0.1"
 	// probeInterval 探活间隔（设计 §3 默认 5s；黄态加密 2s 是 T-Q1 开放问题，M3 实测冷启动分布后定）
 	probeInterval = 5 * time.Second
 	// createNoWindow CREATE_NO_WINDOW：GUI 壳（-H windowsgui）拉起控制台子进程不闪黑窗
