@@ -2,11 +2,11 @@
 import { RouterView } from 'vue-router'
 
 import SideNav from './SideNav.vue'
+import TopBar from './TopBar.vue'
 
 /**
- * 登录态业务页统一布局（I0-5 T3，设计 D-5）：侧栏 SideNav + 内容区 router-view。
- * 顶栏为 F-04（I0-5 T4）TopBar 全局态预留槽位——当前以注释占位，T4 挂载后承接
- * 用户区/平台状态徽章/版本行/检查更新占位按钮。
+ * 登录态业务页统一布局（I0-5 T3，设计 D-5）：侧栏 SideNav + 顶栏 TopBar + 内容区 router-view。
+ * 顶栏为 F-04（I0-5 T4）全局态：用户区/平台状态徽章与告警条/版本行/检查更新占位按钮。
  * 接入页（access 域 '/'）不走本布局：顶层独立全屏（D-5 未登录不露导航）。
  */
 </script>
@@ -15,7 +15,7 @@ import SideNav from './SideNav.vue'
   <div class="layout">
     <SideNav />
     <div class="main">
-      <!-- 顶栏槽位：I0-5 T4（F-04）在此挂 TopBar -->
+      <TopBar />
       <main class="content">
         <RouterView />
       </main>

@@ -12,20 +12,17 @@ import {
   resetAction,
 } from '../api/access'
 import type { AccessState, ActionResult } from '../api/access'
-import { fetchHealthz, interpretHealth, versionLineGated } from '../api/health'
-import type { HealthBadge, HealthzJson } from '../api/health'
+import { useHealthPolling } from '../composables/useHealthPolling'
 
 /**
  * 登录与接入页（I0-5 T2，设计 §3：workbench-demo/src/ui.ts 的 Vue 化归宿）。
  * - 状态卡/动作区数据源 GET /api/state；审批中（authenticated 且 PENDING_REVIEW/APPROVED）
  *   每 5s POST /api/progress + 刷新（demo L31 节奏语义，onUnmounted/条件退出 clearInterval）；
- * - 服务健康徽章区承接 Home.vue 退役（fetchHealthz/interpretHealth/versionLineGated，2s 轮询；
- *   T4 顶栏落地后迁入顶栏）；
+ * - 服务健康徽章区承接 Home.vue 退役（I0-5 T4 起 fetchHealthz/interpretHealth/versionLineGated
+ *   与顶栏共用 useHealthPolling composable——接入页全屏无顶栏，健康徽章仍保留在此）；
  * - 「返回管理平台」链接不渲染（设计 G-5：Vue 侧无 platformPublicUrl 来源，A 系列定稿后补）。
  */
 
-/** 服务健康徽章轮询间隔（Home.vue 同款 2s） */
-const HEALTH_POLL_MS = 2000
 /** 审批进度轮询间隔（demo ui.ts L31 的 5s） */
 const PROGRESS_POLL_MS = 5000
 
@@ -34,10 +31,8 @@ const state = ref<AccessState | null>(null)
 const loadFailed = ref(false)
 /** 动作文案区（demo messageNode：处理中… / 操作成功 / 服务端错误消息） */
 const message = ref('')
-const badge = ref<HealthBadge>(interpretHealth(null))
-const version = ref<string>(versionLineGated(null))
+const { badge, version } = useHealthPolling()
 
-let healthTimer: ReturnType<typeof setInterval> | undefined
 let progressTimer: ReturnType<typeof setInterval> | undefined
 
 async function refresh(): Promise<void> {
@@ -49,14 +44,6 @@ async function refresh(): Promise<void> {
     loadFailed.value = true
   }
   syncProgressPolling()
-}
-
-async function refreshHealth(): Promise<void> {
-  const json: HealthzJson | null = await fetchHealthz()
-  badge.value = interpretHealth(json)
-  // 端口从页面自身地址推导（页面即由服务伺服）；版本行经健康门控防外国占用者 version 误显示
-  const port = Number(window.location.port) || undefined
-  version.value = versionLineGated(json, port)
 }
 
 /** demo L31 语义：authenticated 且 PENDING_REVIEW/APPROVED 才轮询；条件退出即 clearInterval */
@@ -108,12 +95,10 @@ function onLogout(): void {
 
 onMounted(() => {
   void refresh()
-  void refreshHealth()
-  healthTimer = setInterval(() => void refreshHealth(), HEALTH_POLL_MS)
+  // 健康徽章轮询（挂载即拉 + 2s 周期 + 卸载清理）在 useHealthPolling 内接管
 })
 
 onBeforeUnmount(() => {
-  if (healthTimer !== undefined) clearInterval(healthTimer)
   if (progressTimer !== undefined) clearInterval(progressTimer)
 })
 </script>

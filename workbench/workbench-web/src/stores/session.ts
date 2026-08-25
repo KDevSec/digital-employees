@@ -5,7 +5,11 @@ import { fetchAccessState, type AccessState } from '../api/access'
 /**
  * 会话 store 骨架（I0-5 T2，设计 D-7）：T3 登录态路由守卫的消费方——
  * 守卫启动拉一次 /api/state，未认证访问非 '/' 重定向 '/'（fetch 失败按未认证处理）。
- * 本任务只立骨架：AccessView 自管页面级状态，守卫接线是 T3 的事。
+ * I0-5 T4 起顶栏 TopBar 也消费本 store：每 30s 周期调 fetchState 刷新 accessState
+ * （A-05 服务端心跳 60s 未落地前的前端观察节奏）。两个消费方共用同一动作无语义纠缠——
+ * loaded 门闩只拦守卫「首次导航拉一次」，轮询更新 accessState 不重置门闩也不影响
+ * 守卫判定路径（守卫只在 !loaded 时 await fetchState；轮询失败归一 null 后用户再导航，
+ * 按 D-7「失败按未认证」重定向 '/'，与不可达语义自洽）。
  */
 export const useSessionStore = defineStore('session', {
   state: () => ({
