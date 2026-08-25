@@ -25,7 +25,7 @@ const (
 	ItemPendingUpdate               // 有更新已就绪（禁用展示项，C-8 壳侧落点）
 	ItemApplyUpdate                 // 立即重启以应用
 	ItemAbout                       // 关于
-	ItemQuit                        // 退出（仅退壳，不停服务——服务归 OS 守护）
+	ItemQuit                        // 停止服务并退出（2026-08-25 用户裁决：退出=产品整体退出；服务经 CLI stop 优雅停止并落哨兵，壳零业务不变）
 )
 
 // MenuItem 单个菜单项的展示语义
@@ -115,7 +115,7 @@ func MenuModelFor(state statemachine.State, port int, hasPendingUpdate bool) Men
 		{ID: ItemOpenDataDir, Label: "打开数据目录", Visible: true, Enabled: true},
 		{ID: ItemCheckUpdate, Label: "检查更新…", Visible: true, Enabled: true},
 		{ID: ItemAbout, Label: "关于", Visible: true, Enabled: true},
-		{ID: ItemQuit, Label: "退出", Visible: true, Enabled: true},
+		{ID: ItemQuit, Label: "停止服务并退出", Visible: true, Enabled: true},
 	}}
 	return m
 }

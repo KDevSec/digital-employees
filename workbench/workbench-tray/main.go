@@ -346,7 +346,7 @@ func (a *app) buildMenu() {
 	a.items[menu.ItemCheckUpdate] = systray.AddMenuItem("检查更新…", "检查更新")
 	a.items[menu.ItemAbout] = systray.AddMenuItem("关于", "版本信息")
 	systray.AddSeparator()
-	a.items[menu.ItemQuit] = systray.AddMenuItem("退出", "退出壳（不停服务）")
+	a.items[menu.ItemQuit] = systray.AddMenuItem("停止服务并退出", "优雅停止服务（守护不再自动拉起）并退出托盘")
 
 	// 菜单构建日志（冒烟断言消费；也即 TR-03「点击链路留人眼验收」外的可脚本化证据）
 	names := make([]string, 0, len(menuOrder))
@@ -392,8 +392,14 @@ func (a *app) onMenu(id menu.ItemID) {
 		// U 系列未落地（Wave 5 无 update 通道）：占位记事件，U 系列落地后接 workbench update --check
 		a.logger.Event("update_check_pending", nil)
 	case menu.ItemQuit:
-		a.logger.Event("tray.quit", map[string]any{"via": "menu"})
-		systray.Quit()
+		// 2026-08-25 用户裁决：退出 = 停止服务并退出（不再有「仅退壳」入口）。
+		// 停止走既有 CLI 链路（stop 落 user-stopped 哨兵 -> 守护不复活），壳仍零业务；
+		// 意外死亡路径（taskkill/崩溃）不受影响——那是 W-2 红线的领域（服务独立生存）。
+		a.logger.Event("tray.quit", map[string]any{"via": "menu", "stops_service": true})
+		go func() {
+			a.runAction("quit", actions.Stop())
+			systray.Quit()
+		}()
 	}
 }
 
