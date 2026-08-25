@@ -125,3 +125,98 @@ begin
   // 立即恢复（裁决 3：与用户解耦；托盘启动即活拉服务——服务幂等单实例判定）
   Exec(ExpandConstant('{app}\devzero-tray.exe'), '', ExpandConstant('{app}'), SW_HIDE, ewNoWait, ResultCode);
 end;
+
+// ---------- 卸载语义（设计 §2 裁决 2：数据默认保留 + /DELETEDATA=1 显式清除通道） ----------
+
+// 数据目录解析：与服务 profile 解析同语义（probe.go ProfileDir：WORKBENCH_HOME > ~/.devzero）。
+// S4 的 /DELETEDATA=1 删的是 WORKBENCH_HOME 隔离目录——此一致性是 S4 安全性的根，动这里前
+// 必先对照 probe.go。回退分支 {%USERPROFILE|{sd}\Users\Public}：USERPROFILE 缺失（Windows
+// 实际不可达）时给确定路径而非空串拼接（Inno 文档：DefaultValue 可含嵌套常量）。
+// WORKBENCH_HOME 经 MSYS 导出为 Windows 形态（可含正斜杠），DelTree 走 Win32 API 兼容之
+// （同 UserStoppedSentinelPath 的 DeleteFile 选型理由，勿换 cmd rd /s——rd 把 / 当开关符）
+function DataDir(): String;
+var
+  Home: String;
+begin
+  Home := GetEnv('WORKBENCH_HOME');
+  if Home <> '' then
+    Result := Home
+  else
+    Result := ExpandConstant('{%USERPROFILE|{sd}\Users\Public}') + '\.devzero';
+end;
+
+var
+  // /DELETEDATA=1 显式清除通道（裁决 2）；False = 默认保留（含交互模式用户选「否」）
+  DeleteData: Boolean;
+
+// Inno 文档（isxfunc_paramstr）：ParamStr(0) 是 exe 全路径、参数在 1..ParamCount——计划稿的
+// 0..ParamCount-1 循环漏扫最后一个参数（/DELETEDATA=1 恰在末位时静默失效），此处修正。
+// 事件签名是 function 返回 Boolean（Inno 文档：Return False to abort Uninstall）
+function InitializeUninstall(): Boolean;
+var
+  i: Integer;
+begin
+  DeleteData := False;
+  for i := 1 to ParamCount() do
+    if CompareText(ParamStr(i), '/DELETEDATA=1') = 0 then
+      DeleteData := True;
+  Result := True;
+end;
+
+// 前置清理单步：Exec 失败（进程没起来——exe 缺失/CreateProcess 拒绝）必须 Log 留痕——
+// Exec 不写 Inno 日志，装机现场只能靠 /LOG 定位（沿 CurStepChanged 的 Log 模式）。
+// 退出码不记：taskkill 128（进程不在）/reg delete 1（值本就不存在）是幂等清理的正常态，
+// 记了全是噪音；真失败的定位靠冒烟断言消息 + 本函数的启动失败留痕
+procedure UninstallCleanupExec(const What, Filename, Params: String);
+var
+  ResultCode: Integer;
+begin
+  if not Exec(Filename, Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    Log('卸载前置清理「' + What + '」未执行：' + Filename + ' 启动失败');
+end;
+
+// usUninstall 在删文件前触发（{app} 下 exe 尚在，可跑 stop）；usPostUninstall 在删完文件
+// 后触发（DelTree 数据目录不与安装文件删除竞争，也避开「stop 落哨兵写回刚删的目录」）
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
+begin
+  if CurUninstallStep = usUninstall then begin
+    // 优雅停服单独走（不走 UninstallCleanupExec）：退出码非 0 =「文件删除受阻」的第一嫌疑，
+    // 值得留痕。stop 落 user-stopped 哨兵（守护不复活）并轮询确认进程死（释放 exe 文件锁）
+    if not Exec(ExpandConstant('{app}\devzero.exe'), 'stop', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      Log('卸载前置清理「优雅停服」未执行：devzero.exe 启动失败（首装即卸/文件缺失？）')
+    else if ResultCode <> 0 then
+      Log('卸载前置清理「优雅停服」退出码 ' + IntToStr(ResultCode) + '（服务可能仍在运行，文件删除将受阻）');
+    // 三进程硬杀兜底（PrepareToInstall 同款）：stop 失败/僵尸进程的文件锁保险
+    UninstallCleanupExec('杀托盘壳', 'taskkill', '/F /IM devzero-tray.exe');
+    UninstallCleanupExec('杀服务', 'taskkill', '/F /IM devzero.exe');
+    UninstallCleanupExec('杀守护', 'taskkill', '/F /IM devzero-daemon.exe');
+    // 计划任务：先禁用（掐掉每分钟触发器的在途窗口）再删
+    UninstallCleanupExec('禁用任务', 'schtasks', '/Change /TN DevZeroDaemon /DISABLE');
+    UninstallCleanupExec('删任务', 'schtasks', '/Delete /TN DevZeroDaemon /F');
+    // Run 键注销（W-16 双侧对齐：托盘侧 applyAutostart 幂等注册，卸载侧必须幂等注销；
+    // 值本就不存在（用户关过自启）时退出码 1 属正常态，不视为失败）
+    UninstallCleanupExec('删 Run 键', 'reg', 'delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v DevZeroTray /f');
+    // 数据询问（裁决 2）：交互模式询问且默认否（MB_DEFBUTTON2——选否可在重装后恢复全部
+    // 状态）；静默 UninstallSilent() 零弹窗走默认保留。/DELETEDATA=1 已在
+    // InitializeUninstall 置位，此询问只可能把它从 False 变 True
+    if not UninstallSilent() then
+      if MsgBox('是否同时删除用户数据（登录态 / 密钥 / 工程记忆）？' + #13#10 +
+        '选择「否」可在重装后恢复全部状态（默认保留）。',
+        mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+        DeleteData := True;
+  end;
+  if CurUninstallStep = usPostUninstall then begin
+    // 留痕两分支都记：S3 日志见「数据保留」、S4 日志见「已删除」——DELETEDATA 链路断了
+    // 靠这两行定位断点（参数未达 vs DelTree 失败）
+    if DeleteData then begin
+      if DelTree(DataDir(), True, True, True) then
+        Log('数据目录已删除（/DELETEDATA=1 或用户确认）：' + DataDir())
+      else
+        Log('数据目录删除未成功（目录不存在或文件被占用）：' + DataDir());
+    end
+    else
+      Log('数据保留（默认，裁决 2）：' + DataDir());
+  end;
+end;

@@ -44,6 +44,10 @@ START_MENU_LNK="$(cygpath -u "$APPDATA")/Microsoft/Windows/Start Menu/Programs/D
 
 export WORKBENCH_HOME="$(mktemp -d)"
 export WORKBENCH_NO_BROWSER=1
+# S4 的 Inno 日志隔离目录（不能放 $WORKBENCH_HOME）：/DELETEDATA=1 会删数据目录——日志放
+# 里面会随数据一起消失（失败无诊断）；卸载日志更糟：unins000 的日志句柄开着，DelTree 删
+# 到该文件时被句柄挡住 → 数据目录删不净 → S4 假红
+S4_LOG_DIR="$(mktemp -d)"
 
 # ---- 前置防护 ----
 [ -f "$SETUP_EXE" ] || { echo "ABORT: $SETUP_EXE 不存在——先跑 build-installer.sh"; exit 1; }
@@ -95,6 +99,7 @@ cleanup() {
     reg delete "$RUN_KEY" //v "$RUN_KEY_NAME" //f >/dev/null 2>&1 || true
   fi
   rm -rf "$WORKBENCH_HOME"
+  rm -rf "$S4_LOG_DIR"
 }
 trap cleanup EXIT INT TERM # INT/TERM 加固：HKCU/计划任务真实副作用下 Ctrl+C 也走清场；
                           # cleanup 全程幂等（|| true），与 EXIT 重复触发无害
@@ -202,6 +207,93 @@ S2_WINDOW_TXT=""
 [ -n "$S2_DOWN_AT" ] && S2_WINDOW_TXT="实测 $((S2_UP_AT - S2_DOWN_AT))s / "
 echo "PASS S2 覆盖升级（中断窗口 ${S2_WINDOW_TXT}≤20s + 文件已更新 + 服务托盘已恢复）"
 
-# S3/S4 由后续任务补充
+# ---- S3: 卸载·保留数据（默认，裁决 2） ----
 echo ""
-echo "=== （S3/S4 由后续任务补充） ==="
+echo "=== S3: 静默卸载——数据默认保留 ==="
+printf 'keep-marker\n' > "$WORKBENCH_HOME/keep-marker" # 标记文件（计划稿 mkdir 建目录却用 -f 断言——永假，改为建文件）
+S3_LOG="$WORKBENCH_HOME/innosetup-s3.log"
+S3_LOG_WIN="$(cygpath -w "$S3_LOG")" # /LOG= 须 Windows 路径（坑②，同 S1/S2）
+s34_fail() { # S3/S4 专用 FAIL：Inno 日志先全文摘录（沿 s2_fail 设计——cleanup 会删 $WORKBENCH_HOME
+  # 与 $S4_LOG_DIR，FAIL 后现场即失）；日志路径可选，由调用方给最相关那份
+  echo "FAIL: $1"
+  if [ -n "${2:-}" ] && [ -f "$2" ]; then
+    echo "---- Inno 日志全文摘录（$2，原文件即将随 cleanup 删除）----"
+    cat "$2"
+  fi
+  exit 1
+}
+# 坑①：unins000 的 /VERYSILENT /LOG= 与 setup 同坑——EXCL 全参数原样直达
+if ! MSYS2_ARG_CONV_EXCL="*" "$UNINSTALLER" /VERYSILENT "/LOG=$S3_LOG_WIN"; then
+  s34_fail "S3 unins000 退出码非 0" "$S3_LOG"
+fi
+# 杀壳竞态兜底（预警 4）：iss usUninstall 前置清理自己会杀壳，此处立即补刀——赶在 unins000
+# 文件删除阶段前释放 devzero-tray.exe 锁；服务（devzero.exe）故意不杀：S3 的语义就是
+# 「服务在跑时卸载」，优雅停服必须由卸载器前置清理完成
+taskkill //F //IM devzero-tray.exe >/dev/null 2>&1 || true
+# 坑③：unins000 自复制到临时目录异步执行——返回 ≠ 完成。「任务/Run 键/安装目录/快捷方式」
+# 四断言物全部消失才算卸载完成，轮询 30s（计划稿 sleep 2 慢机必假红）
+s3_done=0
+s3_deadline=$((SECONDS + 30))
+while [ "$SECONDS" -lt "$s3_deadline" ]; do
+  if ! schtasks //Query //TN "$TASK_NAME" >/dev/null 2>&1 \
+     && ! reg query "$RUN_KEY" //v "$RUN_KEY_NAME" >/dev/null 2>&1 \
+     && [ ! -d "$INSTALL_DIR" ] \
+     && [ ! -f "$START_MENU_LNK" ]; then
+    s3_done=1
+    break
+  fi
+  sleep 1
+done
+# 超时归因链（顺序即报错优先级）：系统侧先行（任务/Run 键——[Code] 卸载语义的直接证据），
+# 文件侧殿后
+if [ "$s3_done" -ne 1 ]; then
+  schtasks //Query //TN "$TASK_NAME" >/dev/null 2>&1 && s34_fail "S3 计划任务 $TASK_NAME 未删（卸载语义缺失/前置清理未跑）" "$S3_LOG"
+  reg query "$RUN_KEY" //v "$RUN_KEY_NAME" >/dev/null 2>&1 && s34_fail "S3 Run 键 $RUN_KEY_NAME 未删" "$S3_LOG"
+  [ -d "$INSTALL_DIR" ] && s34_fail "S3 安装目录 30s 内未删（unins000 异步未完成或文件锁未释放）" "$S3_LOG"
+  [ -f "$START_MENU_LNK" ] && s34_fail "S3 快捷方式 DevZero.lnk 未删" "$S3_LOG"
+fi
+[ -d "$WORKBENCH_HOME" ] || s34_fail "S3 数据目录被误删（应默认保留）" "$S3_LOG"
+[ -f "$WORKBENCH_HOME/keep-marker" ] || s34_fail "S3 数据目录内容被误删（keep-marker 丢失）" "$S3_LOG"
+echo "PASS S3 静默卸载默认保留数据（安装目录/计划任务/Run 键/快捷方式已清，数据完整）"
+
+# ---- S4: 卸载·清除数据（/DELETEDATA=1 显式通道，裁决 2） ----
+echo ""
+echo "=== S4: /DELETEDATA=1 卸载清除数据 ==="
+S4_INSTALL_LOG="$S4_LOG_DIR/innosetup-s4-install.log"
+S4_INSTALL_LOG_WIN="$(cygpath -w "$S4_INSTALL_LOG")" # 坑②：/LOG= 须 Windows 路径
+# 重装走完整安装语义（ssPostInstall 重建任务+起托盘）；坑①：EXCL 沿 S1/S2 模式
+if ! MSYS2_ARG_CONV_EXCL="*" "$SETUP_EXE" /VERYSILENT /SUPPRESSMSGBOXES "/LOG=$S4_INSTALL_LOG_WIN"; then
+  s34_fail "S4 重装 setup 退出码非 0（文件锁？）" "$S4_INSTALL_LOG"
+fi
+# 任务重建后立即禁用（预警 5）：先于 wait_healthz——首触发 +30s，若等 healthz 再禁，起服
+# 慢时可能已被无环境继承的 daemon 抢 19980 端口（沿 S1/S2 尾禁用模式，时机更早一档）
+schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null 2>&1 || true
+# 预警 3：服务恢复链可晚于 setup 退出 ~2s（头部环境事实）——wait_healthz 30 覆盖；
+# || true：S4 测的是 DELETEDATA 语义，安装健康度 S1/S2 已验，不为它红
+wait_healthz 30 || true
+# 三进程全停（计划语义）：DelTree 前不能有进程往 $WORKBENCH_HOME 写文件（服务日志/句柄
+# 会让「目录已删」断言假红）——S3 已验卸载器自停能力，此处直接杀干净
+taskkill //F //IM devzero-tray.exe >/dev/null 2>&1 || true
+taskkill //F //IM devzero.exe >/dev/null 2>&1 || true
+taskkill //F //IM devzero-daemon.exe >/dev/null 2>&1 || true
+sleep 1 # taskkill //F 后句柄释放有瞬时窗口（沿 cleanup 模式）
+S4_UNINST_LOG="$S4_LOG_DIR/innosetup-s4-uninst.log"
+S4_UNINST_LOG_WIN="$(cygpath -w "$S4_UNINST_LOG")" # 坑②
+# 坑①：/DELETEDATA=1 与 /VERYSILENT 同样被 MSYS 当 POSIX 路径转换——EXCL 全参数原样直达
+if ! MSYS2_ARG_CONV_EXCL="*" "$UNINSTALLER" /VERYSILENT /DELETEDATA=1 "/LOG=$S4_UNINST_LOG_WIN"; then
+  s34_fail "S4 unins000 退出码非 0" "$S4_UNINST_LOG"
+fi
+# 坑③：unins000 异步——轮询「安装目录+数据目录」都消失（30s 预算）；断言分开报，失败模式
+# 可区分（卸载没完成 vs /DELETEDATA=1 没生效）
+s4_done=0
+s4_deadline=$((SECONDS + 30))
+while [ "$SECONDS" -lt "$s4_deadline" ]; do
+  if [ ! -d "$INSTALL_DIR" ] && [ ! -d "$WORKBENCH_HOME" ]; then
+    s4_done=1
+    break
+  fi
+  sleep 1
+done
+[ ! -d "$INSTALL_DIR" ] || s34_fail "S4 安装目录 30s 内未删（unins000 异步未完成）" "$S4_UNINST_LOG"
+[ ! -d "$WORKBENCH_HOME" ] || s34_fail "S4 数据目录未删（/DELETEDATA=1 未生效？）" "$S4_UNINST_LOG"
+echo "PASS S4 /DELETEDATA=1 卸载清除数据（安装目录+数据目录均删）"
