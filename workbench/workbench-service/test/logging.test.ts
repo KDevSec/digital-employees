@@ -24,13 +24,13 @@ function readLines(file: string): Line[] {
 }
 
 describe('双轨日志（S-08，设计 §11）', () => {
-  it('log() 写 workbench.log、lifecycle() 写 lifecycle.log——两文件分流互不掺', () => {
+  it('log() 写 devzero.log、lifecycle() 写 lifecycle.log——两文件分流互不掺', () => {
     const logger = createLogger(logsDir)
     logger.log('request', { path: '/healthz' })
     logger.lifecycle('started', { port: 19980 })
     logger.close()
 
-    const run = readLines('workbench.log')
+    const run = readLines('devzero.log')
     const life = readLines('lifecycle.log')
     expect(run).toHaveLength(1)
     expect(run[0]).toMatchObject({ event: 'request', payload: { path: '/healthz' } })
@@ -46,7 +46,7 @@ describe('双轨日志（S-08，设计 §11）', () => {
     logger.close()
     const after = Date.now()
 
-    const [line] = readLines('workbench.log')
+    const [line] = readLines('devzero.log')
     const ts = Date.parse(line.ts)
     expect(Number.isNaN(ts)).toBe(false)
     expect(ts).toBeGreaterThanOrEqual(before - 5)
@@ -60,7 +60,7 @@ describe('双轨日志（S-08，设计 §11）', () => {
     logger.log('e1')
     logger.log('e2')
     logger.close()
-    expect(readLines('workbench.log').map((l) => l.event)).toEqual(['e1', 'e2'])
+    expect(readLines('devzero.log').map((l) => l.event)).toEqual(['e1', 'e2'])
   })
 
   it('文件 UTF-8 无 BOM', () => {
@@ -69,13 +69,13 @@ describe('双轨日志（S-08，设计 §11）', () => {
     logger.lifecycle('stopped', { reason: '信号' })
     logger.close()
 
-    for (const f of ['workbench.log', 'lifecycle.log']) {
+    for (const f of ['devzero.log', 'lifecycle.log']) {
       const buf = readFileSync(join(logsDir, f))
       expect(buf[0]).not.toBe(0xef) // BOM 前 3 字节 ef bb bf
       const text = buf.toString('utf8')
-      expect(text).toContain(f === 'workbench.log' ? '中文事件' : 'stopped')
+      expect(text).toContain(f === 'devzero.log' ? '中文事件' : 'stopped')
     }
-    const runText = readFileSync(join(logsDir, 'workbench.log'), 'utf8')
+    const runText = readFileSync(join(logsDir, 'devzero.log'), 'utf8')
     expect(runText).toContain('横幅·测试')
   })
 
@@ -83,19 +83,19 @@ describe('双轨日志（S-08，设计 §11）', () => {
     const first = createLogger(logsDir)
     first.log('before-close')
     first.close()
-    expect(() => readLines('workbench.log')).not.toThrow()
+    expect(() => readLines('devzero.log')).not.toThrow()
 
     const second = createLogger(logsDir)
     second.log('after-reopen')
     second.close()
-    expect(readLines('workbench.log').map((l) => l.event)).toEqual(['before-close', 'after-reopen'])
+    expect(readLines('devzero.log').map((l) => l.event)).toEqual(['before-close', 'after-reopen'])
   })
 
   it('无 payload 时行为一致（省略 payload 或空对象均可）', () => {
     const logger = createLogger(logsDir)
     logger.log('bare')
     logger.close()
-    const [line] = readLines('workbench.log')
+    const [line] = readLines('devzero.log')
     expect(line.event).toBe('bare')
     expect(line.payload === undefined || line.payload === null).toBe(true)
   })
@@ -131,11 +131,11 @@ describe('启动横幅（设计 §11：started 事件含全部横幅字段）', 
     expect(line.ts).toBeDefined()
   })
 
-  it('banner 事件不落 workbench.log', () => {
+  it('banner 事件不落 devzero.log', () => {
     const logger = createLogger(logsDir)
     logger.banner({ version: '0.1.0', buildCommitId: 'd', runtime: 'Bun 1.3.9', os: 'win32', arch: 'x64', port: 1, instanceId: 'i' })
     logger.close()
-    expect(existsSync(join(logsDir, 'workbench.log'))).toBe(false)
+    expect(existsSync(join(logsDir, 'devzero.log'))).toBe(false)
   })
 })
 
@@ -146,8 +146,8 @@ describe('大小轮转（maxBytes 注入，简版保留 1 份 .1）', () => {
     logger.log('third-event') // 追加后超 200 → 轮转
     logger.close()
 
-    const rotated = readFileSync(join(logsDir, 'workbench.log.1'), 'utf8')
-    const current = readFileSync(join(logsDir, 'workbench.log'), 'utf8')
+    const rotated = readFileSync(join(logsDir, 'devzero.log.1'), 'utf8')
+    const current = readFileSync(join(logsDir, 'devzero.log'), 'utf8')
     expect(rotated).toContain('first-big-event')
     expect(current).not.toContain('first-big-event')
     expect(current).toContain('third-event')
@@ -159,8 +159,8 @@ describe('大小轮转（maxBytes 注入，简版保留 1 份 .1）', () => {
     logger.log('e2', { pad: 'y'.repeat(80) }) // 第 1 次轮转：.1=[e1]，current=[e2]
     logger.log('e3', { pad: 'z'.repeat(80) }) // 第 2 次轮转：.1=[e2]（覆盖），current=[e3]
     logger.close()
-    expect(readFileSync(join(logsDir, 'workbench.log.1'), 'utf8')).toContain('e2')
-    const current = readFileSync(join(logsDir, 'workbench.log'), 'utf8')
+    expect(readFileSync(join(logsDir, 'devzero.log.1'), 'utf8')).toContain('e2')
+    const current = readFileSync(join(logsDir, 'devzero.log'), 'utf8')
     expect(current).toContain('e3')
     expect(current).not.toContain('e1')
   })
@@ -170,8 +170,8 @@ describe('大小轮转（maxBytes 注入，简版保留 1 份 .1）', () => {
     for (let i = 0; i < 12; i++) logger.log(`event-${i}`, { pad: 'z'.repeat(40) })
     logger.close()
 
-    const files = readdirSync(logsDir).filter((f) => f.startsWith('workbench.log')).sort()
-    expect(files).toEqual(['workbench.log', 'workbench.log.1'])
+    const files = readdirSync(logsDir).filter((f) => f.startsWith('devzero.log')).sort()
+    expect(files).toEqual(['devzero.log', 'devzero.log.1'])
   })
 
   it('lifecycle 轨独立轮转（与 workbench 轨互不影响）', () => {
@@ -182,8 +182,8 @@ describe('大小轮转（maxBytes 注入，简版保留 1 份 .1）', () => {
     logger.lifecycle('life-b', { pad: 'd'.repeat(60) })
     logger.close()
 
-    const currentRun = readFileSync(join(logsDir, 'workbench.log'), 'utf8')
-    const rotatedRun = readFileSync(join(logsDir, 'workbench.log.1'), 'utf8')
+    const currentRun = readFileSync(join(logsDir, 'devzero.log'), 'utf8')
+    const rotatedRun = readFileSync(join(logsDir, 'devzero.log.1'), 'utf8')
     expect(currentRun).toContain('run-b')
     expect(rotatedRun).toContain('run-a')
 
@@ -200,7 +200,7 @@ describe('边界', () => {
     const logger = createLogger(dir)
     logger.log('auto-mkdir')
     logger.close()
-    expect(existsSync(join(dir, 'workbench.log'))).toBe(true)
+    expect(existsSync(join(dir, 'devzero.log'))).toBe(true)
   })
 
   it('close() 幂等（重复 close 不抛）', () => {

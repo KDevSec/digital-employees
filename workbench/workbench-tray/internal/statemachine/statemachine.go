@@ -62,7 +62,7 @@ func (UserStart) isEvent() {}
 // Transition 单次状态迁移结果
 type Transition struct {
 	State State
-	// ShouldRecover 进入 RED 时恰好为 true 一次：壳应执行一次 workbench start（不循环自愈）
+	// ShouldRecover 进入 RED 时恰好为 true 一次：壳应执行一次 devzero start（不循环自愈）
 	ShouldRecover bool
 }
 

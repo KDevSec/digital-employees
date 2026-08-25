@@ -54,7 +54,7 @@ func ParseConfigPort(data []byte) (int, error) {
 	return c.Network.Port, nil
 }
 
-// ActivityInfo 活动任务契约（TR-07 优雅停服判据）：workbench activity 子命令的 stdout，
+// ActivityInfo 活动任务契约（TR-07 优雅停服判据）：devzero activity 子命令的 stdout，
 // 与 TS 侧 /api/activity handler（activityCommand 转发其响应）字段名严格对齐。
 type ActivityInfo struct {
 	ConversationTasks int `json:"conversationTasks"`

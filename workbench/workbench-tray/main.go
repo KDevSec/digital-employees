@@ -319,13 +319,14 @@ func (a *app) applyStateLocked() {
 			item.SetTitle(mi.Label) // 状态项恒为禁用展示项
 			item.Disable()
 		case menu.ItemAbout:
-			// 关于 = 禁用信息项，双版本线（W-12）：DevZero v<service.json version> · 壳 v<trayVersion>。
-			// 弹窗需要窗口框架（V0.1 无），版本文本入菜单项承载
+			// 关于 = 禁用信息项，双版本线（W-12）：<DisplayName> v<service.json version> · 壳 v<trayVersion>。
+			// 弹窗需要窗口框架（V0.1 无），版本文本入菜单项承载；品牌名走 brand.DisplayName 单源
+			// （与上方 Tooltip 同款用法，组装层不得硬编码品牌字符串）
 			svc := serviceVersion(a.profileDir)
 			if svc == "" {
 				svc = "?"
 			}
-			item.SetTitle("关于 DevZero v" + svc + " · 壳 v" + trayVersion)
+			item.SetTitle("关于 " + brand.DisplayName + " v" + svc + " · 壳 v" + trayVersion)
 			item.Disable()
 		default:
 			// 简化裁决（Task 16）：模型 Visible=false 一律映射为 Disabled——
