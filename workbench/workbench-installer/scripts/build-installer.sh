@@ -14,7 +14,7 @@ for f in devzero.exe devzero-daemon.exe devzero-tray.exe; do
   [ -f "$DIST/$f" ] || { echo "[build-installer] $DIST/$f 缺失--先跑 service/build.sh 与 tray/build-tray.sh"; exit 1; }
 done
 
-# iscc 探测：PATH > 默认安装路径（winget 装机不自动进 PATH）
+# iscc 探测：ISCC_PATH 显式覆盖 > PATH > 默认安装路径（winget 装机不自动进 PATH）——同设计文档 §4 实然（final review Minor 2）
 ISCC="${ISCC_PATH:-}"
 if [ -z "$ISCC" ]; then
   for c in iscc "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" "/c/Program Files/Inno Setup 6/ISCC.exe"; do

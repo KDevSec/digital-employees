@@ -39,7 +39,8 @@ RUN_KEY_NAME="DevZeroTray" # 镜像 brand.RunKeyName（Go 侧唯一来源，脚�
 TASK_NAME="DevZeroDaemon"  # 计划任务名（brand 重命名 Task R 定稿）
 INSTALL_DIR="$(cygpath -u "$LOCALAPPDATA")/Programs/devzero"
 UNINSTALLER="$INSTALL_DIR/unins000.exe"
-SETUP_EXE="$PWD/dist/devzero-setup-$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' package.json | head -1)-x64.exe"
+SETUP_VERSION="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' package.json | head -1)"
+SETUP_EXE="$PWD/dist/devzero-setup-$SETUP_VERSION-x64.exe"
 START_MENU_LNK="$(cygpath -u "$APPDATA")/Microsoft/Windows/Start Menu/Programs/DevZero.lnk"
 
 export WORKBENCH_HOME="$(mktemp -d)"
@@ -128,6 +129,13 @@ schtasks //Query //TN "$TASK_NAME" >/dev/null 2>&1 || {
 }
 [ -f "$START_MENU_LNK" ] || { echo "FAIL: S1 开始菜单快捷方式缺失（$START_MENU_LNK）"; exit 1; }
 wait_healthz || { echo "FAIL: S1 服务 30s 内未就绪（ssPostInstall 未恢复？）"; exit 1; }
+# 版本护栏（final review Major 2）：healthz 上报版本必须 == setup 文件名版本——版本线半改
+# 事故在本分支已翻车两次（数值块漏改/syso 未入库），五处源头手工同改是发布常态，此断言闭环
+S1_VER="$(curl -sf --max-time 2 "$BASE/healthz" | grep -o '"version":"[^"]*"' | head -1 | sed 's/"version":"\([^"]*\)"/\1/')" || true
+[ "$S1_VER" = "$SETUP_VERSION" ] || {
+  echo "FAIL: S1 版本护栏——healthz 上报 $S1_VER != setup 版本 $SETUP_VERSION（版本线半改？查六源头：service/web package.json、brand.ts version、trayVersion、versioninfo.json 双维度、build.sh 兜底、resource.syso 是否随附提交）"
+  exit 1
+}
 tasklist //FI "IMAGENAME eq devzero-tray.exe" 2>/dev/null | grep -i devzero-tray >/dev/null \
   || { echo "FAIL: S1 托盘进程未起"; exit 1; }
 [ -f "$S1_LOG" ] || { echo "FAIL: S1 Inno 日志未生成（/LOG 参数未生效？）"; exit 1; }
