@@ -75,6 +75,9 @@ cleanup() {
     done
   fi
   if [ -d "$INSTALL_DIR" ]; then
+    # 不 rm -rf 兜底：目录残留但卸载注册表条目（Uninstall 键/计划任务）仍在的话，
+    # rm -rf 会造出「目录没了、系统仍认为已装」的更糟状态；WARN + 下轮前置 ABORT
+    # 是干净的失败模式——fail-safe，勿「顺手」加 rm -rf（Task 2 review Minor 1）
     echo "WARN: cleanup 静默卸载 60s 未清掉 $INSTALL_DIR——下轮冒烟前置检查会 ABORT，需人工排查"
   else
     echo "(cleanup: 安装已清场——机器无 devzero 安装残留)"
