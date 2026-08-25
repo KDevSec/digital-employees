@@ -128,7 +128,10 @@ if grep -i "error\|exception" "$S1_LOG" >/dev/null; then
   exit 1
 fi
 # 任务存在即禁用：daemon 经任务计划触发无环境继承，会用真实 ~/.devzero 抢 19980 端口，干扰后续场景
-schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null
+if ! schtasks //Change //TN "$TASK_NAME" //DISABLE >/dev/null; then
+  echo "FAIL: S1 计划任务 $TASK_NAME 禁用失败（后续场景会被无环境继承的 daemon 抢 19980 端口）"
+  exit 1
+fi
 echo "PASS S1 静默首装（三制品 + 任务 + 快捷方式 + healthz + 托盘 + 日志无 error）"
 
 # S2/S3/S4 由后续任务补充
