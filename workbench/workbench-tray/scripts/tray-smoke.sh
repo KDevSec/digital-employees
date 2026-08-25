@@ -37,7 +37,7 @@ export WORKBENCH_NO_BROWSER=1
 TRAY_LOG="$WORKBENCH_HOME/logs/tray.log"
 
 # 冒烟前已存在的同名进程 = 用户自己的实例，taskkill //IM 会误杀——直接中止让操作者处理
-for proc in workbench.exe workbench-tray.exe; do
+for proc in workbench.exe workbench-daemon.exe workbench-tray.exe; do
   if tasklist //FI "IMAGENAME eq $proc" 2>/dev/null | grep -i "$proc" >/dev/null; then
     echo "ABORT: 已有 $proc 在跑（taskkill //IM 按进程名全局匹配会误杀），请先关闭再跑冒烟"
     exit 1
@@ -50,6 +50,7 @@ PREV_RUN_VALUE="$(reg query "$RUN_KEY" //v "$RUN_KEY_NAME" 2>/dev/null | sed -n 
 cleanup() {
   taskkill //F //IM workbench-tray.exe >/dev/null 2>&1 || true
   taskkill //F //IM workbench.exe >/dev/null 2>&1 || true
+  taskkill //F //IM workbench-daemon.exe >/dev/null 2>&1 || true
   if [ -n "$PREV_RUN_VALUE" ]; then
     reg add "$RUN_KEY" //v "$RUN_KEY_NAME" //t REG_SZ //d "$PREV_RUN_VALUE" //f >/dev/null 2>&1 || true
   else
@@ -170,7 +171,9 @@ echo "PASS S3 Run 键已注册（值 = $RUN_VAL）+ 哨兵已写"
 
 echo "=== S4: TR-02/TR-05 四态流转（杀服务 → YELLOW → RED → recover 恰一次 → GREEN 回归） ==="
 S4_T0=$SECONDS
-taskkill //F //IM workbench.exe >/dev/null
+SVC_PID="$(curl -sf --max-time 2 "$BASE/healthz" | grep -o '"pid":[0-9]*' | head -1 | cut -d: -f2)"
+[ -n "$SVC_PID" ] || { echo "FAIL: S4 拿不到服务 pid"; exit 1; }
+taskkill //F //PID "$SVC_PID" >/dev/null
 BASE_LINE="$(log_line_count)"
 wait_log '"to":"Yellow"' 15 "YELLOW 出现" "$BASE_LINE"
 wait_log '"to":"Red"' 50 "RED 出现（双条件：连续 3 失败 + 30s 冷启动预算）" "$BASE_LINE"
@@ -227,4 +230,22 @@ PID_AFTER="$(healthz_pid)"
 echo "PASS S5 W-2：杀壳后服务同 pid 存活（pid=$PID_AFTER，healthz 200）"
 
 echo ""
-echo "TRAY_SMOKE_EXIT=0"
+echo "=== S6: 启动即活——服务已停（哨兵在）时启动托盘，应立即拉起服务（launch_revive） ==="
+"$SERVICE_EXE" stop >/dev/null 2>&1
+sleep 1
+if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then echo "FAIL: S6 前置——stop 后服务仍在跑"; exit 1; fi
+taskkill //F //IM workbench-tray.exe >/dev/null 2>&1 || true  # S5 已杀壳——不在场是常态（taskkill 未找到返回 128，set -e 会误杀）
+sleep 1
+("$DIST/workbench-tray.exe" &)
+REVIVED=0
+for i in $(seq 1 20); do
+  sleep 1
+  if curl -sf --max-time 2 "$BASE/healthz" >/dev/null 2>&1; then REVIVED=1; break; fi
+done
+[ "$REVIVED" -eq 1 ] || { echo "FAIL: 托盘启动后 20s 内服务未复活（launch_revive）"; tail -5 "$TRAY_LOG"; exit 1; }
+grep -q 'tray.launch_revive' "$TRAY_LOG" || { echo "FAIL: tray.log 无 tray.launch_revive 事件"; exit 1; }
+sleep 6
+grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$HOME/.workbench/logs/tray.log"; exit 1; }
+echo "PASS S6 (launch_revive: 托盘独立启动 -> 服务 ${i}s 内复活 -> GREEN)"
+
+TRAY_SMOKE_EXIT=0

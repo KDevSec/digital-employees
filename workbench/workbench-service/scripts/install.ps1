@@ -56,10 +56,21 @@ foreach ($i in 1..20) {
 if (-not $ready) { throw "服务经计划任务拉起后 10s 内 healthz 未就绪" }
 Write-Host "[3/4] 服务已由计划任务拉起（pid=$($r.pid) port=$($r.port) uid=$($r.uid)）"
 
-# 4. 起托盘 + 开浏览器
+# 4. 开始菜单快捷方式（托盘退出后的重开入口——指向托盘 exe：启动即活，托盘起来服务跟着起）
+$startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+$lnk = Join-Path $startMenu '数字员工工作台.lnk'
+$ws = New-Object -ComObject WScript.Shell
+$sc = $ws.CreateShortcut($lnk)
+$sc.TargetPath = Join-Path $InstallDir 'workbench-tray.exe'
+$sc.WorkingDirectory = $InstallDir
+$sc.Description = '数字员工工作台（托盘 + 本地服务）'
+$sc.Save() | Out-Null
+Write-Host "[4/5] 开始菜单快捷方式已创建（开始菜单 -> 数字员工工作台）"
+
+# 5. 起托盘 + 开浏览器
 Start-Process (Join-Path $InstallDir 'workbench-tray.exe')
 Start-Process $healthz
-Write-Host "[4/4] 托盘已启动 + 浏览器已打开"
+Write-Host "[5/5] 托盘已启动 + 浏览器已打开"
 Write-Host ""
 Write-Host "== 安装完成 =="
 Write-Host "  访问:     $healthz"

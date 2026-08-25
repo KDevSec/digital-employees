@@ -123,6 +123,17 @@ func (a *app) onReady() {
 	a.mu.Lock()
 	a.applyIfNeededLocked() // 初始 Starting 态联动（图标/状态项「探测中…」）
 	a.mu.Unlock()
+	// 启动即活（2026-08-25 用户裁决补 UX 缺口：托盘退出后重开，服务应立即可用而非等 30s 红态自愈）：
+	// 托盘被用户显式启动（双击/快捷方式/登录自启）= 用户要产品在跑——立即探测一次，
+	// 不健康就 spawn start（用户路径清 user-stopped 哨兵，与后台 __daemon 尊重哨兵的语义正交：
+	// 后台不对抗用户停止，前台启动代表新的用户意图）。start 幂等（D-020 五分支），与探活循环/红态恢复并发安全。
+	go func() {
+		port := probe.DiscoverPort(a.profileDir)
+		if r := probe.Probe(a.client, port); !r.Ok {
+			a.logger.Event("tray.launch_revive", map[string]any{"port": port, "own": r.Own})
+			a.runAction("launch_revive", actions.Start())
+		}
+	}()
 	// 左键单击直达（TR-04）：v1.12.2 即有 SetOnTapped（Windows WM_LBUTTONUP），
 	// 设置后左键不再弹菜单（菜单归右键）——设计 §4.2 的左键语义。
 	// I-1（Wave 5 审查修复）：回调在 wndProc 线程同步执行，probe(≤2s) + health-wait(≤15s)
