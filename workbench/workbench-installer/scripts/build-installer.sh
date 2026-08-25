@@ -20,7 +20,7 @@ if [ -z "$ISCC" ]; then
     if command -v "$c" >/dev/null 2>&1; then ISCC="$c"; break; fi
   done
 fi
-[ -n "$ISCC" ] || { echo "[build-installer] iscc.exe 未找到--先装 Inno Setup 6 或设 ISCC_PATH"; exit 1; }
+[ -n "$ISCC" ] || { echo "[build-installer] iscc.exe 未找到--先装 Inno Setup 6（winget install JRSoftware.InnoSetup）或设 ISCC_PATH"; exit 1; }
 
 # 版本注入（设计 §4：安装包版本 = 服务主版本线；壳版本独立线 W-12 不进）
 VERSION="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' ../workbench-service/package.json | head -1)"
@@ -35,9 +35,10 @@ echo "[build-installer] built: $OUT ($SIZE bytes)"
 sha256sum "$OUT" | awk '{print $1}' > "$OUT.sha256"
 echo "[build-installer] sha256: $(cat "$OUT.sha256")"
 
-# signtool 挂点（裁决 4：无证书零开销跳过）
+# signtool 挂点（裁决 4：无证书零开销跳过）。参数用 - 前缀：git-bash MSYS 会把
+# /fd /f /p 当 POSIX 路径改写（与 iscc -D 同源，signtool 双前缀等价）
 if [ -n "${WORKBENCH_SIGN_CERT:-}" ]; then
-  signtool sign /fd SHA256 /f "$WORKBENCH_SIGN_CERT" ${WORKBENCH_SIGN_P:+/p "$WORKBENCH_SIGN_P"} "$OUT" \
+  signtool sign -fd SHA256 -f "$WORKBENCH_SIGN_CERT" ${WORKBENCH_SIGN_P:+-p "$WORKBENCH_SIGN_P"} "$OUT" \
     && echo "[build-installer] 已签名" || echo "[build-installer] 签名失败（继续，signature_status 报 UNVERIFIED）"
 else
   echo "[build-installer] 未设 WORKBENCH_SIGN_CERT--跳过签名（signature_status=UNVERIFIED）"
