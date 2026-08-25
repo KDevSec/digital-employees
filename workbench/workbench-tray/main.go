@@ -32,6 +32,7 @@ import (
 	"workbench-tray/internal/icons"
 	"workbench-tray/internal/menu"
 	"workbench-tray/internal/probe"
+	"workbench-tray/internal/singleton"
 	"workbench-tray/internal/statemachine"
 	"workbench-tray/internal/traylog"
 )
@@ -45,6 +46,9 @@ const (
 	createNoWindow = 0x08000000
 	// cliOutMaxLimit CLI 段输出进 traylog 的截断上限（防巨包刷爆日志）
 	cliOutMaxLimit = 512
+	// singletonName 单实例命名空间基础名（2026-08-25 用户裁决·方案 B）：Local\ 前缀由
+	// singleton 包统一加，互斥体 Local\workbench-tray / 唤醒事件 Local\workbench-tray.wakeup
+	singletonName = "workbench-tray"
 )
 
 // app 托盘壳运行体：全部可变状态由 mu 串行化（探活循环/菜单回调/信号处理并发三源）
@@ -75,11 +79,61 @@ type app struct {
 
 func main() {
 	a := newApp()
+
+	// 单实例 + 唤醒重定向（2026-08-25 用户裁决·方案 B，修复双图标 bug）。调用序不可倒：
+	// NewWatcher 必须先于 TryLock——第二实例 Notify 时事件对象必然有人常驻持句柄，
+	// 信号零丢失窗口（见 singleton 包注）。两步任一系统调用失败均降级不杀壳
+	// （对齐 TR-06「注册失败不挡托盘出现」的裁决风格）：Watcher 失败 → 防双开仍由
+	// mutex 侧独立生效、仅唤醒重定向失效；TryLock 失败 → 起壳（可能双开，比起不来轻）
+	w, werr := singleton.NewWatcher(singletonName)
+	if werr != nil {
+		a.logger.Event("tray.singleton_watcher_failed", map[string]any{"error": werr.Error()})
+	}
+	lock, lerr := singleton.TryLock(singletonName)
+	if lerr != nil {
+		a.logger.Event("tray.singleton_probe_failed", map[string]any{"error": lerr.Error()})
+	} else if !lock.Owned {
+		// 已有实例在跑：唤醒它打开工作台（= 用户点快捷方式/双击 exe 的意图），自己退出——不再叠图标
+		rec := map[string]any{"pid": os.Getpid()}
+		if nerr := singleton.NotifyExisting(singletonName); nerr != nil {
+			rec["notify_error"] = nerr.Error()
+		}
+		a.logger.Event("tray.duplicate_exit", rec)
+		_ = lock.Close()
+		_ = w.Close()
+		_ = a.logger.Close()
+		return
+	}
+
+	// tray.start 移到单实例判定后（原在 newApp）：第二实例不再冒充 tray.start，
+	// 其唯一痕迹是上面的 tray.duplicate_exit——日志读者可无歧义区分首实例与重开尝试
+	a.logger.Event("tray.start", map[string]any{
+		"trayVersion": trayVersion,
+		"profileDir":  a.profileDir,
+		"serviceExe":  a.serviceExe,
+		"pid":         os.Getpid(),
+	})
+	go a.watchWakeups(w)
 	a.applyAutostart() // TR-06：注册失败不挡托盘出现（错误只落 traylog/stderr）
 	systray.Run(a.onReady, a.onExit)
 }
 
-// newApp 解析路径与日志（tray.start 事件含 serviceExe 解析结果——Task 16：启动时解析一次记 traylog）
+// watchWakeups 单实例唤醒重定向消费端（方案 B）：第二实例 NotifyExisting 置位事件 →
+// 此处 Wait 命中 → openWorkbench（= 左键单击行为，「我要用工作台」的意图闭环）。
+// INFINITE 常驻等，进程退出时 OS 回收；Wait 返回 false（句柄失效/WAIT_FAILED）即退循环。
+// w 为 nil（NewWatcher 降级）时静默不监听——防双开不受影响，仅唤醒重定向失效。
+func (a *app) watchWakeups(w *singleton.Watcher) {
+	if w == nil {
+		return
+	}
+	for w.Wait(-1) {
+		a.logger.Event("tray.wakeup", nil)
+		a.openWorkbench()
+	}
+}
+
+// newApp 解析路径与日志（tray.start 事件由 main 在单实例判定通过后记——第二实例
+// 不冒充 tray.start，其痕迹是 tray.duplicate_exit；Task 16：serviceExe 解析结果随 tray.start 落 traylog）
 func newApp() *app {
 	profileDir := probe.ProfileDir()
 	trayExe, err := os.Executable()
@@ -106,12 +160,6 @@ func newApp() *app {
 		items:       make(map[menu.ItemID]*systray.MenuItem),
 	}
 	a.handleWasThere = fileExists(filepath.Join(profileDir, "run", "service.json"))
-	a.logger.Event("tray.start", map[string]any{
-		"trayVersion": trayVersion,
-		"profileDir":  profileDir,
-		"serviceExe":  serviceExe,
-		"pid":         os.Getpid(),
-	})
 	return a
 }
 
