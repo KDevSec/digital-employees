@@ -248,4 +248,26 @@ sleep 6
 grep -q '"state":"Green"' <(tail -3 "$TRAY_LOG") || { echo "FAIL: 复活后未回 GREEN"; tail -3 "$HOME/.workbench/logs/tray.log"; exit 1; }
 echo "PASS S6 (launch_revive: 托盘独立启动 -> 服务 ${i}s 内复活 -> GREEN)"
 
+# ---------- S7: 单实例 + 唤醒重定向（方案 B，2026-08-25 用户裁决） ----------
+
+echo ""
+echo "=== S7: 单实例——已有壳在跑时再起一个，第二壳秒退并唤醒首壳打开工作台 ==="
+tray_count() { tasklist //FI "IMAGENAME eq workbench-tray.exe" 2>/dev/null | grep -ci "workbench-tray.exe" || true; }
+[ "$(tray_count)" -eq 1 ] || { echo "FAIL: S7 前置——期望恰 1 个托盘在跑（实际 $(tray_count) 个）"; exit 1; }
+S7_BASE="$(log_line_count)"
+( "$DIST/workbench-tray.exe" >"$WORKBENCH_HOME/tray2-stderr.log" 2>&1 & ) # 模拟用户点开始菜单快捷方式
+sleep 3
+[ "$(tray_count)" -eq 1 ] || {
+  echo "FAIL: 第二实例 3s 内未退出（进程数 $(tray_count)）——双开防线失效（双图标 bug 复发）"
+  cat "$WORKBENCH_HOME/tray2-stderr.log" 2>/dev/null || true
+  exit 1
+}
+wait_log '"event":"tray.duplicate_exit"' 10 "第二实例留痕 tray.duplicate_exit" "$S7_BASE"
+if tail -n +"$((S7_BASE + 1))" "$TRAY_LOG" 2>/dev/null | grep '"notify_error"' >/dev/null; then
+  echo "FAIL: 第二实例唤醒通知失败（payload 含 notify_error）"; exit 1
+fi
+wait_log '"event":"tray.wakeup"' 10 "首实例收到唤醒" "$S7_BASE"
+wait_log '"event":"open.browser_suppressed"' 10 "唤醒重定向走通 openWorkbench（NO_BROWSER=1 抑制位生效）" "$S7_BASE"
+echo "PASS S7 双开秒退（进程恒为 1）+ duplicate_exit 留痕 + 唤醒重定向（tray.wakeup → openWorkbench）"
+
 TRAY_SMOKE_EXIT=0
