@@ -1,0 +1,21 @@
+workbench/workbench-installer/scripts/installer-smoke.sh
+  s_aad8def6d411b5::t_510e797bd3a01b 155,157,189,191-192
+  s_aad8def6d411b5::t_73c6f51505a4d9 22-25,141,143-154,156,158-184,186-188,190,193-205
+  s_aad8def6d411b5::t_51eecb190449b6 185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "9a1298bcf8a7e8bd96051841d0e5b722ea07480f",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
