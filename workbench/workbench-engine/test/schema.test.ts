@@ -70,6 +70,12 @@ describe('parseNodeTable 非法表用例集', () => {
     reject(t, "node 'g1'", "'g-other'", 'gate_specs')
   })
 
+  it("gate 字段命中 Object.prototype 属性名 'toString'（原型链偏差回归锚——in 命中原型不得放行）", () => {
+    const t = baseTable()
+    t.nodes[1].gate = 'toString'
+    reject(t, "node 'g1'", "'toString'", 'gate_specs')
+  })
+
   it('review spec 缺 on_pass', () => {
     const t = baseTable()
     delete t.gate_specs.g1.on_pass

@@ -123,7 +123,7 @@ export function getNextActions(state: TaskState, table: LoadedTable): NextAction
   if (node.kind === 'terminal') return result
   if (isBlocked) return result
 
-  if (node.kind === 'gate' && node.gate && node.gate in table.gate_specs) {
+  if (node.kind === 'gate' && node.gate && Object.hasOwn(table.gate_specs, node.gate)) {
     const spec = table.gate_specs[node.gate]
     result.gate_spec = {
       ...spec,

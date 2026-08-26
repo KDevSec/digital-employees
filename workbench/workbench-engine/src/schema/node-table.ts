@@ -145,7 +145,7 @@ export function parseNodeTable(raw: unknown): NodeTable {
     }
     if (n.kind === 'gate') {
       if (!n.gate) throw new EngineSchemaError(`[node-table] node '${n.id}': gate 节点缺少 gate 字段`)
-      if (!(n.gate in parsed.gate_specs)) {
+      if (!Object.hasOwn(parsed.gate_specs, n.gate)) {
         throw new EngineSchemaError(`[node-table] node '${n.id}': gate '${n.gate}' 不在 gate_specs`)
       }
     }

@@ -210,6 +210,24 @@ describe('R2 getNextActions', () => {
     expect(r.next_actions).toEqual([])
   })
 
+  it("gate 节点 gate_specs 成员判定不踩原型链（gate id='toString' 回归锚）", () => {
+    // 手搓表绕过 parseNodeTable（schema 层对该形态报错；此处锁定 getNextActions 自身
+    // 的成员判定：不在 specs 的 gate 按 else 分支走 adjacency，不产 gate_spec）
+    const t = loadNodeTable({
+      flow: 'proto-t',
+      max_retries: 3,
+      terminal_fail: null,
+      nodes: [
+        { id: 'g', kind: 'gate' as const, gate: 'toString', next: ['b'] },
+        { id: 'b', kind: 'terminal' as const, next: [] },
+      ],
+      gate_specs: {},
+    })
+    const r = getNextActions(initState('g'), t)
+    expect(r.gate_spec).toBeUndefined()
+    expect(r.next_actions).toEqual([{ to_node: 'b', label: 'b' }])
+  })
+
   it('blocked state：next_actions 空 + is_blocked/blocked_reason 透出', () => {
     const r = getNextActions(
       { ...initState('n-adm'), status: 'blocked', blocked_reason: 'mock spawn failed' },
