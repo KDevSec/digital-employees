@@ -1,0 +1,36 @@
+workbench/workbench-web/src/components/access/AccessModal.vue
+  s_2c1150e19dee71::t_58ebe2501905ec 1-257
+workbench/workbench-web/test/access-modal.test.ts
+  s_2c1150e19dee71::t_e0a14e2c54d541 1-311
+workbench/workbench-web/src/components/nav/Layout.vue
+  s_2c1150e19dee71::t_4df150744018fd 5,12,21-26,34-36,40-45,51-55
+workbench/workbench-web/test/settings-panel.test.ts
+  s_2c1150e19dee71::t_face119a1bf70c 396-404,410-411,413-416,418,422
+  s_2c1150e19dee71::t_998766f45e7be8 23-26
+  s_2c1150e19dee71::t_0354b5b83b674d 448-486,488
+  s_2c1150e19dee71::t_0f2641a697fa4c 246,255-260,262,264
+workbench/workbench-web/src/components/nav/SettingsPanel.vue
+  s_2c1150e19dee71::t_816a562ae06196 3
+  s_2c1150e19dee71::t_6f8f58fea2ebc1 23-27
+  s_2c1150e19dee71::t_8d0aa448492131 43
+  s_2c1150e19dee71::t_8434b95d55f39d 166,169
+  s_2c1150e19dee71::t_cebbc6a6303a15 111-120
+workbench/workbench-web/src/router/guard.ts
+  s_2c1150e19dee71::t_7fbe46b3133600 11-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "32eab30c360bb0a642836bf502a99f61de25e4b9",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
