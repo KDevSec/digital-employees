@@ -1,0 +1,59 @@
+docs/plans/2026-08-26-员工模板-design.md
+  s_0cf83e7997645f::t_b5236de2c5fd3d 187-188
+  s_0cf83e7997645f::t_1939747cb974d7 61,76,118-122,159
+workbench/templates/dev-engineer/skills/tdd-methodology/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_cd55f0a52a51fb 1-202
+workbench/templates/sec-code/manifest.yml
+  s_0cf83e7997645f::t_e3f422638d9e06 29
+workbench/templates/sec-compliance/AGENTS.md
+  s_0cf83e7997645f::t_9e679c6ebd789a 43
+  s_0cf83e7997645f::t_599aa689fc341f 21
+docs/design/详细设计/shared-protocol详细设计-v0.2.md
+  s_0cf83e7997645f::t_7159545faa6829 150-151
+  s_0cf83e7997645f::t_56590b206235a0 163
+  s_0cf83e7997645f::t_e5a89138c55013 237
+workbench/templates/dev-engineer/skills/writing-plans/SKILL.md
+  s_0cf83e7997645f::t_9e679c6ebd789a 64
+  s_0cf83e7997645f::t_0837679cfee400 21,163,165,167
+workbench/templates/dev-engineer/orchestration/dev-engineer.node-table.yml
+  s_0cf83e7997645f::t_9e679c6ebd789a 4-5
+  s_0cf83e7997645f::t_7119d5e244a143 1
+workbench/templates/sys-engineer/skills/kdev-gen-proto/SKILL.md
+  s_0cf83e7997645f::t_cddc5efacec258 10-14
+workbench/templates/dev-engineer/skills/writing-plans/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_cd55f0a52a51fb 1-202
+workbench/templates/dev-engineer/skills/verification-before-completion/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_cd55f0a52a51fb 1-202
+workbench/templates/sec-design/manifest.yml
+  s_0cf83e7997645f::t_e3f422638d9e06 29
+docs/design/fable评审记录-员工模板-2026-08-27.md
+  s_0cf83e7997645f::t_cd9feee4abfb4c 1,3-11,13,15,17,19,21,23,25-28,30-33,35,37-46,48,50-54,56,58-92
+workbench/templates/req-clarifier/skills/brainstorming/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_cd55f0a52a51fb 1-202
+workbench/templates/sec-compliance/manifest.yml
+  s_0cf83e7997645f::t_e3f422638d9e06 29
+workbench/templates/req-clarifier/skills/brainstorming/SKILL.md
+  s_0cf83e7997645f::t_cf2a0271792390 34
+workbench/templates/sec-code/AGENTS.md
+  s_0cf83e7997645f::t_da582559ca1b88 22
+workbench/templates/sec-design/AGENTS.md
+  s_0cf83e7997645f::t_6f497b65d652e7 21
+workbench/templates/skills-remaining.md
+  s_0cf83e7997645f::t_3c5e91a5efd1ad 8-14,31-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "76875dc1890aebdc749fd27afaab8612466f9712",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
