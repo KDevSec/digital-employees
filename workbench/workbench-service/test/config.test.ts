@@ -1,11 +1,11 @@
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ZodError } from 'zod'
 import { brand } from '../src/brand'
 import { defaultConfig } from '../src/config/schema'
-import { loadConfig, writeSample } from '../src/config/load'
+import { loadConfig, writeConfigOverride, writeSample } from '../src/config/load'
 
 let dir: string
 
@@ -24,14 +24,20 @@ describe('brand（品牌唯一来源）', () => {
 
 describe('loadConfig', () => {
   it('无文件 → 全默认', () => {
-    expect(loadConfig(dir)).toEqual({ network: { port: 19980 } })
+    expect(loadConfig(dir)).toEqual({
+      network: { port: 19980 },
+      platform: { baseUrl: 'http://127.0.0.1:18000' }, // I0-5 T8（D-13）：platform 键入默认形状
+    })
   })
 
   it('只写 network.port 覆盖项 → 生效且其余默认', () => {
     writeFileSync(join(dir, 'config.json'), JSON.stringify({ network: { port: 1234 } }), 'utf8')
     const cfg = loadConfig(dir)
     expect(cfg.network.port).toBe(1234)
-    expect(cfg).toEqual({ network: { port: 1234 } })
+    expect(cfg).toEqual({
+      network: { port: 1234 },
+      platform: { baseUrl: 'http://127.0.0.1:18000' }, // 未写的键走默认（只写覆盖项语义不变）
+    })
   })
 
   it('network 为空对象 → port 走默认（只写覆盖项语义，设计 §5）', () => {
@@ -69,6 +75,24 @@ describe('loadConfig', () => {
   })
 })
 
+describe('platform.baseUrl（I0-5 T8，设计 D-13：平台地址存 config.json 覆盖键）', () => {
+  it('无文件 → 默认 http://127.0.0.1:18000（与 demo 平台一致）', () => {
+    expect(loadConfig(dir).platform.baseUrl).toBe('http://127.0.0.1:18000')
+  })
+
+  it('只写 platform.baseUrl 覆盖项 → 生效且其余默认（只写覆盖项语义不变）', () => {
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }), 'utf8')
+    const cfg = loadConfig(dir)
+    expect(cfg.platform.baseUrl).toBe('http://192.168.1.5:18000')
+    expect(cfg.network.port).toBe(19980)
+  })
+
+  it('非 http(s) scheme（ftp://）→ 抛 ZodError（z.string().url() 收任意 scheme，限 http(s) 由 refine 收口；PUT 与加载同一判据，schema 单源）', () => {
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ platform: { baseUrl: 'ftp://example.com' } }), 'utf8')
+    expect(() => loadConfig(dir)).toThrow(ZodError)
+  })
+})
+
 describe('writeSample', () => {
   it('生成含 _comment 的 config.sample.json，且 sample 本身能通过 loadConfig 校验', () => {
     writeSample(dir)
@@ -82,5 +106,36 @@ describe('writeSample', () => {
     // 把 sample 复制为用户文件 → loadConfig 校验通过
     copyFileSync(samplePath, join(dir, 'config.json'))
     expect(loadConfig(dir)).toEqual(defaultConfig)
+  })
+})
+
+describe('writeConfigOverride（I0-5 T8：只写覆盖键，深合并保留既有键，D-13）', () => {
+  it('无既有文件 → 写出仅含覆盖键的 config.json，且可被 loadConfig 读回', () => {
+    writeConfigOverride(dir, { platform: { baseUrl: 'http://10.0.0.8:18000' } })
+    const onDisk = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8'))
+    expect(onDisk).toEqual({ platform: { baseUrl: 'http://10.0.0.8:18000' } })
+    expect(loadConfig(dir).platform.baseUrl).toBe('http://10.0.0.8:18000')
+  })
+
+  it('既有 network.port 与 _comment → 合并保留不被覆盖', () => {
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ _comment: '手工注释', network: { port: 1234 } }), 'utf8')
+    writeConfigOverride(dir, { platform: { baseUrl: 'http://10.0.0.8:18000' } })
+    const onDisk = JSON.parse(readFileSync(join(dir, 'config.json'), 'utf8'))
+    expect(onDisk).toEqual({
+      _comment: '手工注释',
+      network: { port: 1234 },
+      platform: { baseUrl: 'http://10.0.0.8:18000' },
+    })
+  })
+
+  it('二次覆盖同键 → 后值胜，幂等编辑路径', () => {
+    writeConfigOverride(dir, { platform: { baseUrl: 'http://a.example:18000' } })
+    writeConfigOverride(dir, { platform: { baseUrl: 'http://b.example:18000' } })
+    expect(loadConfig(dir).platform.baseUrl).toBe('http://b.example:18000')
+  })
+
+  it('原子写不留 .tmp 残留（tmp+rename，沿 runtime/contracts atomicWrite 手法）', () => {
+    writeConfigOverride(dir, { platform: { baseUrl: 'http://a.example:18000' } })
+    expect(readdirSync(dir).filter((f) => f.endsWith('.tmp'))).toEqual([])
   })
 })

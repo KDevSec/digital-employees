@@ -13,7 +13,7 @@ import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { brand } from './brand'
-import { loadConfig, writeSample } from './config/load'
+import { loadConfig, writeConfigOverride, writeSample } from './config/load'
 import type { WorkbenchConfig } from './config/schema'
 import { buildProgram } from './cli'
 import type { CliDeps, StartOptions } from './cli'
@@ -33,11 +33,11 @@ import type { ShutdownDeps, StartupDeps } from './runtime/lifecycle'
 import { TAKEOVER_MIN_CONSECUTIVE_FAILS } from './runtime/instance'
 import type { HealthSnapshot } from './runtime/instance'
 import { createRegistry } from './server/registry'
-import { registerEndpoints } from './server/endpoints'
+import { registerAllRoutes } from './server/routes'
 import { toHonoApp } from './server/hono-adapter'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
-// vitest 不支持该导入属性——endpoints 侧经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
+// vitest 不支持该导入属性——路由域（routes/）经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
 // 类型注意：bun-types 自带 declare module "*.html"（HTMLBundle 类型），
 // 与运行时实际返回 string 不符——显式 cast 收窄（tsc --noEmit 消 TS2322）。
 import indexHtmlModule from '../web-dist/index.html' with { type: 'text' }
@@ -179,13 +179,17 @@ function sleep(ms: number): Promise<void> {
 
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
-  registerEndpoints(registry, {
+  registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
     uid: rt.uid,
     dataDir: profileDir,
     uptime: () => Date.now() - startedAtMs,
     indexHtml,
+    // I0-5 T8 config 域（设计 D-14）：平台地址读写落在真实 profile 的 config.json（D-13）
+    profileDir,
+    loadConfig,
+    writeConfigOverride,
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

@@ -1,22 +1,27 @@
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { toHonoApp } from '../src/server/hono-adapter'
 import { isLocalHost } from '../src/server/guard'
 import { createRegistry } from '../src/server/registry'
-import { registerEndpoints } from '../src/server/endpoints'
+import { registerAllRoutes } from '../src/server/routes'
+import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
 
-function buildApp(overrides: Partial<Parameters<typeof registerEndpoints>[1]> = {}) {
+function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
   const registry = createRegistry()
-  registerEndpoints(registry, {
+  registerAllRoutes(registry, {
     version: '9.9.9',
     pid: 4321,
     uid: 'uid-abc',
     dataDir: 'D:/data/.devzero',
     uptime: () => 12_345,
     indexHtml: readEmbeddedIndexHtml(),
+    // I0-5 T8 config 域：真实读写函数 + 占位 profile（本文件不触达该域端点，行为断言在 routes-config.test.ts）
+    profileDir: 'D:/data/.devzero',
+    loadConfig,
+    writeConfigOverride,
     ...overrides,
   })
   return toHonoApp(registry)
@@ -133,8 +138,13 @@ describe('Host 白名单（DNS rebinding 防护，设计 §10.1）', () => {
 })
 
 describe('架构纪律：hono 只出现在 hono-adapter.ts', () => {
-  it('registry/endpoints/guard 三文件均无 hono import（grep -L 语义，fs 实现以跨平台）', async () => {
-    const files = ['src/server/registry.ts', 'src/server/endpoints.ts', 'src/server/guard.ts']
+  it('registry/routes 各域文件/guard 均无 hono import（grep -L 语义，fs 实现以跨平台）', async () => {
+    // routes/ 目录整目录扫描——I1 各线新增域文件自动纳入纪律覆盖，不依赖清单手工维护
+    const files = [
+      'src/server/registry.ts',
+      ...readdirSync('src/server/routes').filter((f) => f.endsWith('.ts')).map((f) => `src/server/routes/${f}`),
+      'src/server/guard.ts',
+    ]
     const honoImport = /from\s+['"]hono|require\(['"]hono|import\s+['"]hono/
     for (const f of files) {
       const src = readFileSync(f, 'utf8')
