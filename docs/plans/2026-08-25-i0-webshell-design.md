@@ -119,6 +119,12 @@
 |---|------|------|
 | D-26 | 接入与平台设置 = 弹窗（modal），非路由跳转 | SettingsPanel 第三项改 button（emit open-access）→ Layout 开 `AccessModal`（居中 mask+白卡）：内嵌 AccessStatusCard + PlatformConfigCard + AccessActions（登录态动作完整迁移）；Esc/外点/X 关闭，关闭即回原业务页（上下文不丢）。'/' 路由语义收窄为「未登录登录卡 + 审批中盯进度全屏页」，ACTIVE 用户不再被引去 |
 
+## 11 T12 增量设计：品牌文案统一（2026-08-26 用户指令）
+
+| # | 决策 | 说明 |
+|---|------|------|
+| D-27 | 品牌主副互换 + 全局「工作台」→「终端」 | 登录卡主标「研发零处数字员工终端」（大字）+ 副标 DevZero（小字）；全部 **UI 可见文案**「工作台」→「终端」（按钮/行标签/提示/logo title）；「数字员工工作台」→「研发零处数字员工终端」；登录按钮「企业账号登录」→「登录」。代码注释中的架构术语（workbench/工作台实体）保留不动（与详设文档一致）；service brand.ts 契约字段与 index.html title（纯 DevZero）不动 |
+
 ## 变更记录
 
 | 日期 | 变更 |
