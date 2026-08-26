@@ -1,0 +1,19 @@
+docs/design/1.0demo员工创建对照与对齐建议-2026-08-26.md
+  s_0cf83e7997645f::t_4759e1e5610159 1-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0e9251aa523504d45a82f6ed06c582d9884c48c0",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
