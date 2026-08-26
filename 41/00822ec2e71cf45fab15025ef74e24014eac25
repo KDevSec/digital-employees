@@ -1,0 +1,40 @@
+workbench/workbench-web/test/access-status-card.test.ts
+  s_2c1150e19dee71::t_906ae3bd124c94 39,55,70
+  s_2c1150e19dee71::t_dcd667d077f27c 97
+workbench/workbench-web/src/components/access/AccessActions.vue
+  s_2c1150e19dee71::t_198503e4f2d7ec 23,33
+workbench/workbench-web/test/settings-panel.test.ts
+  s_2c1150e19dee71::t_906ae3bd124c94 475
+workbench/workbench-web/src/views/AccessView.vue
+  s_2c1150e19dee71::t_198503e4f2d7ec 140,151-152,181-182,185
+  s_2c1150e19dee71::t_5f50637fc7707e 22
+workbench/workbench-web/src/components/access/AccessStatusCard.vue
+  s_2c1150e19dee71::t_198503e4f2d7ec 36,47,50
+workbench/workbench-web/test/access-view.test.ts
+  s_2c1150e19dee71::t_906ae3bd124c94 87,89,95,115,136,142,196
+  s_2c1150e19dee71::t_d954741a495063 9
+workbench/workbench-web/src/api/access.ts
+  s_2c1150e19dee71::t_198503e4f2d7ec 168
+workbench/workbench-web/test/access-actions.test.ts
+  s_2c1150e19dee71::t_906ae3bd124c94 45,51,90
+workbench/workbench-web/test/access-modal.test.ts
+  s_2c1150e19dee71::t_906ae3bd124c94 149,151,234,254,301,307-308
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_2c1150e19dee71::t_198503e4f2d7ec 8,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4100822ec2e71cf45fab15025ef74e24014eac25",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
