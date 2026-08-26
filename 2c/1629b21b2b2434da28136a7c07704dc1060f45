@@ -1,0 +1,46 @@
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_2c1150e19dee71::t_d7bc6019aac068 59-70
+  s_2c1150e19dee71::t_0cc2f379f8a064 134-135
+  s_2c1150e19dee71::t_29e9d89eec6e5b 173-179
+  s_2c1150e19dee71::t_5fe9d4b487516f 5-6,14-20,22-23
+workbench/workbench-web/test/settings-panel.test.ts
+  s_2c1150e19dee71::t_ad2b8e975866bc 9,14-29,31,45,52,59,62,68,87-88,103-105,107,109-110,116-121,123-129,141-143,149-152,156,165,173-175,183-197,205-228,232-233,240-241,244-258,261,263-271,273-279,281-286,290-291,300,303-310,312-313,317,319-321,324-325,329-330,332-333,336-338,341,343-345,347,349,351,355-371,381,388-402,404-405,409-413,415-435,437-440
+  s_2c1150e19dee71::t_d5cbd3a3ea2a94 350,372-379,384
+  s_2c1150e19dee71::t_9cc73ddbd69026 436
+  s_2c1150e19dee71::t_533c6ebce14460 382-383,385-386
+workbench/workbench-web/src/components/nav/Layout.vue
+  s_2c1150e19dee71::t_c8386bf357de85 2,5-6,10-11,14-20,23-29,34-36,38-39
+workbench/workbench-web/src/components/nav/SettingsPanel.vue
+  s_2c1150e19dee71::t_69108e19f9bea5 2,11-28,33-34,40-42,65,72,75-76,78-80,83,85-87,91,93-94,99,103,111-117,134-158,162,166-171,175-176,179-181,184-189,238,243-244,246-248,251,283,312-317,320-328,330-333,336-337,341-343,346,351,353-354,357-358
+  s_2c1150e19dee71::t_fb18de9830505a 29-32
+  s_2c1150e19dee71::t_2f5d1dbcfc71d0 7
+  s_2c1150e19dee71::t_d6193d85da09fb 121-123,129
+  s_2c1150e19dee71::t_e3375d1b4c3b31 37
+workbench/workbench-web/src/composables/useHealthPolling.ts
+  s_2c1150e19dee71::t_256c20c94b951a 7-9,11-12
+workbench/workbench-web/src/components/nav/AlertBar.vue
+  s_2c1150e19dee71::t_33d6cda94a7679 1-34
+workbench/workbench-web/test/alert-bar.test.ts
+  s_2c1150e19dee71::t_2fbe57b751e559 1-63,67-68,70-73,75-82,84-85
+  s_2c1150e19dee71::t_d3320d03e0c609 64-66,69,74,83
+workbench/workbench-web/test/side-nav.test.ts
+  s_2c1150e19dee71::t_c2f3839c64fcb5 80-100
+workbench/workbench-web/src/stores/session.ts
+  s_2c1150e19dee71::t_58fef0586c775b 8-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2c1629b21b2b2434da28136a7c07704dc1060f45",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
