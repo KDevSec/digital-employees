@@ -1,0 +1,35 @@
+workbench/workbench-engine/test/table-demo.test.ts
+  s_ae9313906bcd90::t_3cf41a58cc8f5f 1-113
+workbench/workbench-engine/src/schema/node-table.ts
+  s_ae9313906bcd90::t_7e4938fc47ba8f 155
+  s_ae9313906bcd90::t_d4ef3025ccc364 1-153,156,159-178
+  s_ae9313906bcd90::t_3dd9d0382bf03f 154,157-158
+workbench/workbench-engine/src/schema/index.ts
+  s_ae9313906bcd90::t_fe8cfaaecd4af2 1-6
+workbench/workbench-engine/assets/flows/demo-flow.node-table.yml
+  s_ae9313906bcd90::t_d519f1c27dab1d 1-28
+workbench/workbench-engine/test/schema.test.ts
+  s_ae9313906bcd90::t_d86e85e21cdd66 1-120
+workbench/workbench-engine/src/schema/events.ts
+  s_ae9313906bcd90::t_f9706cd9fe95bf 1-65
+bun.lock
+  s_ae9313906bcd90::t_738bdf778bf02b 11-13,16-17,200-201,248-249,334-335
+workbench/workbench-engine/package.json
+  s_ae9313906bcd90::t_7ff5c5a6a3fcc3 11-13,15-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "bfb796d37cf06396823415d47e2ff5d4a1065de1",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": null
+    }
+  }
+}
