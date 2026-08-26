@@ -83,7 +83,7 @@ describe('AccessView 挂载与渲染', () => {
     const text = wrapper.text()
     expect(stub.calls('/api/state', 'GET')).toBe(1)
     // 登录卡品牌区（D-19：登录卡自带品牌——头部条在该形态下移除，页面更纯粹）
-    expect(text).toContain('DevZero')
+    expect(text).toContain('研发零处数字员工终端')
     expect(text).toContain('研发零处数字员工终端')
     expect(text).toContain('使用企业账号登录以继续')
     expect(text).toContain('登录')
@@ -111,7 +111,7 @@ describe('AccessView 挂载与渲染', () => {
     expect(text).toContain('服务不可达')
     expect(text).toContain('无法获取接入状态')
     // state null 归未登录形态：登录卡骨架仍在
-    expect(text).toContain('DevZero')
+    expect(text).toContain('研发零处数字员工终端')
     expect(text).toContain('登录')
     expect(text).not.toContain('inst-001')
     // 卡底服务状态行同步显示服务不可用（红点态）

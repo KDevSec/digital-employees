@@ -69,12 +69,12 @@ describe('route-registry + hono-adapter（框架无关路由表，hono 单点适
     expect(await res.json()).toEqual({ conversationTasks: 0, triggerTasks: 0 })
   })
 
-  it('GET / → 200 text/html 且 body 含「DevZero」（S-01 嵌入 Web 壳）', async () => {
+  it('GET / → 200 text/html 且 body 含「研发零处数字员工终端」（S-01 嵌入 Web 壳，CLAUDE.md §4 命名）', async () => {
     const app = buildApp()
     const res = await app.request('/')
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toContain('text/html')
-    expect(await res.text()).toContain('DevZero')
+    expect(await res.text()).toContain('研发零处数字员工终端')
   })
 
   it('GET / 的 Host 白名单守卫同样生效（evil.com → 403）', async () => {
@@ -179,9 +179,9 @@ describe('数据目录与日志目录布局（healthz.dataDir 报 profile 真实
 })
 
 describe('嵌入源 web-dist/index.html（提交进仓的编译期资产，S-01）', () => {
-  it('为单文件形态：含「DevZero」、无外链 script、无外链 stylesheet', () => {
+  it('为单文件形态：含中文正式名、无外链 script、无外链 stylesheet', () => {
     const html = readEmbeddedIndexHtml()
-    expect(html).toContain('DevZero')
+    expect(html).toContain('研发零处数字员工终端')
     expect(html).not.toMatch(/<script\s+src=/)
     expect(html).not.toMatch(/<link\s+rel="stylesheet"\s+href=/)
   })
@@ -190,7 +190,7 @@ describe('嵌入源 web-dist/index.html（提交进仓的编译期资产，S-01�
     const html = readEmbeddedIndexHtml()
     // web 包 src/api/health.ts 的 APP_ID 镜像（interpretHealth 判自家 app 的字面量）
     expect(html).toContain(brand.app)
-    // web 包 Home.vue 的标题镜像（文案写死，见计划 Task 10）
-    expect(html).toContain(brand.displayName)
+    // web 包品牌正式名镜像（CLAUDE.md §4——中文正式名，DevZero 不作正式名称出现）
+    expect(html).toContain(brand.displayNameZh)
   })
 })

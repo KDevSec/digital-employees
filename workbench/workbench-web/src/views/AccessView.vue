@@ -18,8 +18,8 @@ import { useHealthPolling } from '../composables/useHealthPolling'
 /**
  * 登录与接入页（I0-5 T2 立项：demo ui.ts 的 Vue 化归宿；T7 视觉蓝系化；T9 双形态重构 D-19/D-20）。
  * - 双形态分支（T9，state 驱动 template v-if）：
- *   · 未登录 = 居中单卡登录页（D-19）：logo 方块（同 SideNav 款蓝渐变+人形 SVG）+ DevZero
- *     主标「研发零处数字员工终端」（T12/D-27）+ 副标 DevZero + 引导语 + 整宽放大「登录」唯一主按钮 +
+ *   · 未登录 = 居中单卡登录页（D-19）：logo 方块（同 SideNav 款蓝渐变+人形 SVG）+
+ *     主标「研发零处数字员工终端」（T12/D-27；T13 起 DevZero 不作正式名称出现——CLAUDE.md §4）+ 引导语 + 整宽放大「登录」唯一主按钮 +
  *     卡底一行（左「平台设置 ▾」展开收纳 T8 配置卡 + 右服务状态·版本小字）。头部条在该
  *     形态下移除（页面更纯粹——登录卡自带品牌）；健康轮询逻辑保留，数据进卡底状态行；
  *   · 已登录 = 简化状态页（D-20）：安全边界卡删除（demo 时代开发者展示物）；头部条
@@ -179,7 +179,6 @@ onBeforeUnmount(() => {
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
         <h1 class="brand-name">研发零处数字员工终端</h1>
-        <p class="brand-sub">DevZero</p>
         <p class="lead">使用企业账号登录以继续</p>
         <!-- 整宽放大主按钮（btn-primary：padding 12px / 字号 15px / 整宽） -->
         <button type="button" class="btn btn-primary btn-login" @click="login">登录</button>
