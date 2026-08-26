@@ -22,6 +22,8 @@ export interface TaskMeta {
   title: string
   workspace: string
   display_name?: string
+  /** 发起需求文本（节点 prompt 渲染 {{input}} 的数据源——T5 nextStep 消费） */
+  input?: string
   created_at: string
   updated_at: string
 }

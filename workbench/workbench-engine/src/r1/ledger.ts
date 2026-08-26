@@ -234,6 +234,7 @@ export function createLedger(dirs: EngineDirs, hooks: LedgerHooks = {}): Ledger 
         title: input.title,
         workspace: input.workspace,
         ...(table.display_name !== undefined ? { display_name: table.display_name } : {}),
+        ...(input.input !== undefined ? { input: input.input } : {}),
         created_at: now,
         updated_at: now,
       }
