@@ -1,0 +1,62 @@
+workbench/workbench-web/src/api/platform-config.ts
+  s_2c1150e19dee71::t_a9a95cdb937b93 1-59
+workbench/workbench-web/test/platform-config.test.ts
+  s_2c1150e19dee71::t_72edcbb41c2ca6 1-113
+workbench/workbench-service/test/routes-config.test.ts
+  s_2c1150e19dee71::t_75b76badaf2879 1-32,35-149
+  s_2c1150e19dee71::t_55c626c4e71457 33-34
+workbench/workbench-service/test/server.test.ts
+  s_2c1150e19dee71::t_888a8780b09008 9,21-24
+workbench/workbench-web/test/platform-config-card.test.ts
+  s_2c1150e19dee71::t_6dc4dfdd200c80 1-153
+workbench/workbench-service/src/server/registry.ts
+  s_2c1150e19dee71::t_beaf71ce286d63 8,25,33-34,37,48-50
+workbench/workbench-service/src/server/routes/config.ts
+  s_2c1150e19dee71::t_92253fb81bdc42 1-71
+workbench/workbench-service/test/config.test.ts
+  s_2c1150e19dee71::t_e731b3a07198e8 111-141
+  s_2c1150e19dee71::t_ea2ca211a9414f 78-95
+  s_2c1150e19dee71::t_d3e54b611a36b1 1,8
+  s_2c1150e19dee71::t_da0ff4f676ca68 27-30,37-40
+workbench/workbench-service/src/config/schema.ts
+  s_2c1150e19dee71::t_e0719bd645104d 4-17,30-36
+workbench/workbench-service/src/server/routes/index.ts
+  s_2c1150e19dee71::t_07e76d45635907 16-17,20,26
+workbench/workbench-service/src/main.ts
+  s_2c1150e19dee71::t_1e8f547a970e9e 189-192
+  s_2c1150e19dee71::t_1bae8be5f4bcc9 16
+workbench/workbench-service/test/routes-registry.test.ts
+  s_2c1150e19dee71::t_28983eaf02f6d3 37,43,46
+  s_2c1150e19dee71::t_5e1f18ed6869c5 7-8,16,24-26
+  s_2c1150e19dee71::t_f95f8910406987 80-88
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_2c1150e19dee71::t_113d90af299c2b 21-24,31-33
+workbench/workbench-service/test/lifecycle.test.ts
+  s_2c1150e19dee71::t_51ddc4c8f5db69 9-10
+workbench/workbench-service/src/config/load.ts
+  s_2c1150e19dee71::t_9abfbe82bdb49c 1-2
+  s_2c1150e19dee71::t_5027c75c888cc4 51,53
+  s_2c1150e19dee71::t_8a332e6c9ed8c8 49-50,52,54-94
+workbench/workbench-web/src/views/AccessView.vue
+  s_2c1150e19dee71::t_4b5279b0ed9e63 28-29
+  s_2c1150e19dee71::t_e4203a048fbb79 6
+  s_2c1150e19dee71::t_117d8a499c12a9 135-136
+workbench/workbench-web/src/components/access/PlatformConfigCard.vue
+  s_2c1150e19dee71::t_1f13cee23b03c1 1-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "5e2584ffac3bb4169c1e49363ea029b929149d0f",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
