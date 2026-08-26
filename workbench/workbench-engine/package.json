@@ -8,8 +8,13 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^5.4.0",
     "typescript": "^5",
-    "vitest": "^2",
-    "@types/bun": "latest"
+    "vitest": "^2"
+  },
+  "dependencies": {
+    "zod": "^3"
   }
 }
