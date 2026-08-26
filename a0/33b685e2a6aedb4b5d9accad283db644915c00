@@ -1,0 +1,26 @@
+docs/design/设计决策记录-2026-08-13.md
+  s_3164dc039eb46c::t_2dff08ca98b11c 333-334
+  s_3164dc039eb46c::t_d83fcc599b9033 374-386
+  s_3164dc039eb46c::t_3b66b32d96ab81 103-104
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_89a9d972025ce7 353
+  s_3164dc039eb46c::t_bb189c454dc77a 1-23,25-83,85-205,207-352,354-384,386-425,427-437
+  s_3164dc039eb46c::t_850dac2d9262a7 24,84,385,426
+  s_3164dc039eb46c::t_d678be41f754a9 206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a033b685e2a6aedb4b5d9accad283db644915c00",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
