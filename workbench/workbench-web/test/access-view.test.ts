@@ -6,7 +6,7 @@ import AccessView from '../src/views/AccessView.vue'
 
 /**
  * AccessView（I0-5 T2 立项：demo ui.ts 页面骨架的 Vue 化组装；T9 增 D-19/D-20 双形态）：
- * - 未登录 = 居中单卡登录页（D-19）：logo/品牌/引导语/整宽「企业账号登录」主按钮 +
+ * - 未登录 = 居中单卡登录页（D-19）：logo/品牌/引导语/整宽「登录」主按钮 +
  *   卡底一行（「平台设置 ▾」展开 T8 配置卡 + 服务状态·版本小字）；头部条在该形态下移除；
  * - 已登录 = 简化状态页（D-20）：头部条保留（品牌+健康徽章）+ 一行 hero，删安全边界卡，
  *   状态卡主位 + 平台配置卡次位；
@@ -84,15 +84,15 @@ describe('AccessView 挂载与渲染', () => {
     expect(stub.calls('/api/state', 'GET')).toBe(1)
     // 登录卡品牌区（D-19：登录卡自带品牌——头部条在该形态下移除，页面更纯粹）
     expect(text).toContain('DevZero')
-    expect(text).toContain('数字员工工作台')
+    expect(text).toContain('研发零处数字员工终端')
     expect(text).toContain('使用企业账号登录以继续')
-    expect(text).toContain('企业账号登录')
+    expect(text).toContain('登录')
     // 卡底服务状态行：健康轮询数据（badge 摘要 + 版本行）进卡底小字
     expect(text).toContain('运行中')
     expect(text).toContain('v0.1.0')
     // 登录卡形态不渲染头部条/状态卡（未登录不露接入状态明细）
     expect(wrapper.find('.head').exists()).toBe(false)
-    expect(text).not.toContain('工作台接入状态')
+    expect(text).not.toContain('终端接入状态')
     expect(text).not.toContain('inst-001')
     expect(text).not.toContain('请先登录')
     // 「返回管理平台」链接不渲染（设计 G-5：Vue 侧无 platformPublicUrl 来源）
@@ -112,7 +112,7 @@ describe('AccessView 挂载与渲染', () => {
     expect(text).toContain('无法获取接入状态')
     // state null 归未登录形态：登录卡骨架仍在
     expect(text).toContain('DevZero')
-    expect(text).toContain('企业账号登录')
+    expect(text).toContain('登录')
     expect(text).not.toContain('inst-001')
     // 卡底服务状态行同步显示服务不可用（红点态）
     expect(text).toContain('服务不可用')
@@ -133,13 +133,13 @@ describe('AccessView 挂载与渲染', () => {
     expect(text).toContain('运行中')
     expect(text).toContain('v0.1.0')
     // hero 一行：h1 + sub 一句（eyebrow 已删）
-    expect(text).toContain('工作台接入状态')
+    expect(text).toContain('终端接入状态')
     expect(text).not.toContain('Local execution plane')
     // 状态卡主位（AccessStatusCard 状态行 + AccessActions 按钮）
     expect(text).toContain('inst-001')
     expect(text).toContain('wb-7')
     expect(text).toContain('已激活')
-    expect(text).toContain('发送工作台心跳')
+    expect(text).toContain('发送终端心跳')
     expect(text).toContain('退出登录')
     // 平台配置卡次位（T8 卡从 hero 侧挂迁入 grid 次位）
     expect(text).toContain('平台连接')
@@ -193,7 +193,7 @@ describe('AccessView 登录卡（D-19）：平台设置折叠区与整页登录�
       })
       const wrapper = mount(AccessView)
       await flushPromises()
-      const button = wrapper.findAll('button').find((candidate) => candidate.text() === '企业账号登录')
+      const button = wrapper.findAll('button').find((candidate) => candidate.text() === '登录')
       expect(button, '登录卡主按钮应存在').toBeTruthy()
       await button!.trigger('click')
       expect(window.location.href).toBe('/auth/login')

@@ -146,9 +146,9 @@ describe('AccessModal 挂载与渲染（D-26：三件套零改动复用，store 
     expect(wrapper.text()).toContain('http://192.168.1.5:18000')
     // AccessActions：ACTIVE fixture → 心跳 + 登出在场；登录/重提/重置不显示（demo 显隐布尔式）
     const buttonTexts = wrapper.findAll('.access-modal button').map((button) => button.text())
-    expect(buttonTexts).toContain('发送工作台心跳')
+    expect(buttonTexts).toContain('发送终端心跳')
     expect(buttonTexts).toContain('退出登录')
-    expect(buttonTexts).not.toContain('企业账号登录')
+    expect(buttonTexts).not.toContain('登录')
     expect(buttonTexts).not.toContain('重新提交接入申请')
     expect(buttonTexts).not.toContain('重置申请状态')
   })
@@ -231,7 +231,7 @@ describe('AccessModal 动作处理（AccessActions emit → api 动作 → store
     )
     expect(router.currentRoute.value.path).toBe('/employees')
     expect(wrapper.text()).not.toContain('操作成功')
-    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送工作台心跳')
+    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送终端心跳')
     expect(heartbeat, '心跳按钮应存在').toBeTruthy()
     await heartbeat!.trigger('click')
     await flushPromises()
@@ -251,7 +251,7 @@ describe('AccessModal 动作处理（AccessActions emit → api 动作 → store
         jsonResponse({ error: { code: 'PLATFORM_DOWN', message: '平台连接失败' } }, { ok: false, status: 502, statusText: 'Bad Gateway' }),
       '/api/config/platform': () => jsonResponse(PLATFORM_CONFIG),
     })
-    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送工作台心跳')
+    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送终端心跳')
     expect(heartbeat, '心跳按钮应存在').toBeTruthy()
     await heartbeat!.trigger('click')
     await flushPromises()
@@ -298,14 +298,14 @@ describe('AccessModal store 数据流（AccessView 登录态一致：accessState
     expect(wrapper.text()).not.toContain('已激活')
   })
 
-  it('未登录态 fixture → AccessActions 显示「企业账号登录」（弹窗不自拉，store 有啥显啥）', async () => {
+  it('未登录态 fixture → AccessActions 显示「登录」（弹窗不自拉，store 有啥显啥）', async () => {
     const { wrapper } = await mountModal({
       '/api/state': () => jsonResponse(inactiveState),
       '/api/config/platform': () => jsonResponse(PLATFORM_CONFIG),
     })
     const buttonTexts = wrapper.findAll('.access-modal button').map((button) => button.text())
-    expect(buttonTexts).toContain('企业账号登录')
-    expect(buttonTexts).not.toContain('发送工作台心跳')
+    expect(buttonTexts).toContain('登录')
+    expect(buttonTexts).not.toContain('发送终端心跳')
     expect(wrapper.text()).toContain('请先登录') // AccessStatusCard 未登录提示块
   })
 })

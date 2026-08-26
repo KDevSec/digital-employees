@@ -165,7 +165,7 @@ export function enrollAction(): Promise<ActionResult> {
   return postAction('/api/enroll')
 }
 
-/** 发送工作台心跳（demo：POST /api/heartbeat） */
+/** 发送终端心跳（demo：POST /api/heartbeat） */
 export function heartbeatAction(): Promise<ActionResult> {
   return postAction('/api/heartbeat')
 }

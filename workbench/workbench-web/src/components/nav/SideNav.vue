@@ -5,7 +5,7 @@ import { RouterLink } from 'vue-router'
  * 侧栏导航（I0-5 T3 骨架，T7 视觉对齐原型 workbench.html `<aside class="sidebar">` 段；
  * T10 增 D-23 sidebar-foot 设置齿轮）：
  * - 形态：78px 窄图标栏 + 纵向蓝渐变（blue-950→blue-800）+ sticky 100vh；
- *   logo 44px 蓝渐变方块 + 原型人形 SVG，title「数字员工工作台」；
+ *   logo 44px 蓝渐变方块 + 原型人形 SVG，title「研发零处数字员工终端」；
  * - 可点项三枚：我的员工（默认选中）/ 底座与环境 / 任务看板——RouterLink 样式化为原型
  *   nav-item（竖排 SVG 图标 21px + 10.5px 微字），选中态走 router-link active
  *   （vue-router 内建，无自定义选中逻辑；原型 nav-item.active 的底色/内描边语言）；
@@ -25,7 +25,7 @@ const emit = defineEmits<{ openSettings: [] }>()
 
 <template>
   <aside class="sidebar">
-    <div class="logo" title="数字员工工作台">
+    <div class="logo" title="研发零处数字员工终端">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
     </div>
     <nav class="nav" aria-label="主导航">

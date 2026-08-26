@@ -36,7 +36,7 @@ describe('AccessStatusCard（demo L28 全部行渲染）', () => {
     expect(text).toContain('inst-001')
     expect(text).toContain('申请 ID')
     expect(text).toContain('enr-9')
-    expect(text).toContain('工作台 ID')
+    expect(text).toContain('终端 ID')
     expect(text).toContain('wb-7')
     expect(text).toContain('状态')
     expect(text).toContain('已激活')
@@ -52,7 +52,7 @@ describe('AccessStatusCard（demo L28 全部行渲染）', () => {
     })
     const dashes = wrapper.findAll('.row').map((row) => row.text())
     expect(dashes.some((row) => row.includes('申请 ID') && row.includes('-'))).toBe(true)
-    expect(dashes.some((row) => row.includes('工作台 ID') && row.includes('-'))).toBe(true)
+    expect(dashes.some((row) => row.includes('终端 ID') && row.includes('-'))).toBe(true)
     expect(dashes.some((row) => row.includes('最后心跳') && row.includes('-'))).toBe(true)
   })
 
@@ -67,7 +67,7 @@ describe('AccessStatusCard（demo L28 全部行渲染）', () => {
     })
     expect(wrapper.text()).toContain('未登录')
     expect(wrapper.text()).toContain('请先登录')
-    expect(wrapper.text()).toContain('工作台需要通过企业账号完成 Keycloak 认证。')
+    expect(wrapper.text()).toContain('终端需要通过企业账号完成 Keycloak 认证。')
     expect(wrapper.text()).not.toContain('能力已锁定')
   })
 })
@@ -94,7 +94,7 @@ describe('AccessStatusCard 能力已锁定（demo locked 数组原样：NEW/PEND
   it.each(LOCKED_STATUSES)('登录且 %s → 显示「能力已锁定」', (status) => {
     const wrapper = mount(AccessStatusCard, { props: { state: fixture({ status }) } })
     expect(wrapper.text()).toContain('能力已锁定')
-    expect(wrapper.text()).toContain('接入申请审批通过并完成本机激活后，才可发送心跳和使用其他工作台能力。')
+    expect(wrapper.text()).toContain('接入申请审批通过并完成本机激活后，才可发送心跳和使用其他终端能力。')
   })
 
   it.each([['ACTIVE'], ['REVOKED']] as [AccessStatus][])('登录且 %s → 不显示锁定提示（demo 数组不含）', (status) => {

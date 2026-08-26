@@ -19,7 +19,7 @@ import { useHealthPolling } from '../composables/useHealthPolling'
  * 登录与接入页（I0-5 T2 立项：demo ui.ts 的 Vue 化归宿；T7 视觉蓝系化；T9 双形态重构 D-19/D-20）。
  * - 双形态分支（T9，state 驱动 template v-if）：
  *   · 未登录 = 居中单卡登录页（D-19）：logo 方块（同 SideNav 款蓝渐变+人形 SVG）+ DevZero
- *     品牌名 +「数字员工工作台」副标 + 引导语 + 整宽放大「企业账号登录」唯一主按钮 +
+ *     主标「研发零处数字员工终端」（T12/D-27）+ 副标 DevZero + 引导语 + 整宽放大「登录」唯一主按钮 +
  *     卡底一行（左「平台设置 ▾」展开收纳 T8 配置卡 + 右服务状态·版本小字）。头部条在该
  *     形态下移除（页面更纯粹——登录卡自带品牌）；健康轮询逻辑保留，数据进卡底状态行；
  *   · 已登录 = 简化状态页（D-20）：安全边界卡删除（demo 时代开发者展示物）；头部条
@@ -137,7 +137,7 @@ onBeforeUnmount(() => {
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
         <div class="brand">
-          <strong>数字员工工作台</strong>
+          <strong>研发零处数字员工终端</strong>
           <small>企业登录与可信接入</small>
         </div>
         <div class="health">
@@ -148,8 +148,8 @@ onBeforeUnmount(() => {
       <main class="page">
         <!-- hero 简化为一行（D-20）：h1 + sub 一句，eyebrow/侧挂配置卡移除 -->
         <section class="hero">
-          <h1>工作台接入状态</h1>
-          <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用工作台能力。</p>
+          <h1>终端接入状态</h1>
+          <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用终端能力。</p>
         </section>
         <!-- 「返回管理平台」链接不渲染（设计 G-5：platformPublicUrl 无前端来源） -->
         <div class="grid">
@@ -178,11 +178,11 @@ onBeforeUnmount(() => {
         <div class="logo" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
-        <h1 class="brand-name">DevZero</h1>
-        <p class="brand-sub">数字员工工作台</p>
+        <h1 class="brand-name">研发零处数字员工终端</h1>
+        <p class="brand-sub">DevZero</p>
         <p class="lead">使用企业账号登录以继续</p>
         <!-- 整宽放大主按钮（btn-primary：padding 12px / 字号 15px / 整宽） -->
-        <button type="button" class="btn btn-primary btn-login" @click="login">企业账号登录</button>
+        <button type="button" class="btn btn-primary btn-login" @click="login">登录</button>
         <!-- 首次拉取失败 → 卡内不可达提示（登录卡骨架仍在，不白屏） -->
         <p v-if="loadFailed" class="error">服务不可达，无法获取接入状态</p>
         <!-- 「平台设置 ▾」折叠区（D-19：T8 配置卡收纳进登录卡） -->

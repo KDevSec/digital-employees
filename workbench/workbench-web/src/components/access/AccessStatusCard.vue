@@ -33,7 +33,7 @@ const badgeClass = computed(() => statusBadgeClass(props.state.status))
     <div class="row"><span>企业用户</span><strong>{{ props.state.authenticated ? userName : '未登录' }}</strong></div>
     <div class="row"><span>Installation ID</span><strong>{{ props.state.installationId ?? '-' }}</strong></div>
     <div class="row"><span>申请 ID</span><strong>{{ props.state.enrollmentId ?? '-' }}</strong></div>
-    <div class="row"><span>工作台 ID</span><strong>{{ props.state.workbenchId ?? '-' }}</strong></div>
+    <div class="row"><span>终端 ID</span><strong>{{ props.state.workbenchId ?? '-' }}</strong></div>
     <div class="row"><span>状态</span><strong><span class="badge" :class="[TAG_BY_BADGE_CLASS[badgeClass], badgeClass]">{{ statusLabel(props.state.status) }}</span></strong></div>
     <div class="row"><span>最后心跳</span><strong>{{ props.state.lastHeartbeatAt ?? '-' }}</strong></div>
 
@@ -44,10 +44,10 @@ const badgeClass = computed(() => statusBadgeClass(props.state.status))
       <strong>申请异常</strong>{{ props.state.error }}
     </div>
     <div v-if="!props.state.authenticated" class="notice">
-      <strong>请先登录</strong>工作台需要通过企业账号完成 Keycloak 认证。
+      <strong>请先登录</strong>终端需要通过企业账号完成 Keycloak 认证。
     </div>
     <div v-else-if="locked" class="notice">
-      <strong>能力已锁定</strong>接入申请审批通过并完成本机激活后，才可发送心跳和使用其他工作台能力。
+      <strong>能力已锁定</strong>接入申请审批通过并完成本机激活后，才可发送心跳和使用其他终端能力。
     </div>
   </div>
 </template>
