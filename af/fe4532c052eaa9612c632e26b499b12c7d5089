@@ -1,0 +1,19 @@
+docs/design/E-11七员工模板素材缺口盘点-2026-08-26.md
+  s_0cf83e7997645f::t_e67e903a6071c2 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "affe4532c052eaa9612c632e26b499b12c7d5089",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
