@@ -1,0 +1,19 @@
+docs/plans/2026-08-25-真安装包.md
+  s_aad8def6d411b5::t_55ba452bb09626 693
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "98fb249619a44f4fba91b0a95dfa6662c9802af1",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
