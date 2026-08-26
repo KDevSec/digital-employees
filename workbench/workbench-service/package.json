@@ -1,0 +1,21 @@
+{
+  "name": "@devzero/service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "bash scripts/build.sh"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "zod": "^3",
+    "commander": "^12"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^2",
+    "@types/bun": "latest"
+  }
+}

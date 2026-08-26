@@ -1,0 +1,26 @@
+{
+  "name": "@devzero/web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "^3",
+    "vue-router": "^4",
+    "pinia": "^2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5",
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^30.0.1",
+    "typescript": "^5",
+    "vite": "^5",
+    "vite-plugin-singlefile": "^2",
+    "vitest": "^2"
+  }
+}
