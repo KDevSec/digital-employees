@@ -1,0 +1,25 @@
+workbench/workbench-service/test/driver.test.ts
+  s_ae9313906bcd90::t_fedb9cd39345b6 1-244
+workbench/workbench-service/src/engine/launcher.ts
+  s_ae9313906bcd90::t_3754ee9f51f088 1-99
+workbench/workbench-service/src/engine/driver.ts
+  s_ae9313906bcd90::t_d15e351f40feb2 1-129
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_ae9313906bcd90::t_585c95044bddd8 1-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "edb265423eaaa5aa5863adb7cdbaf91ab9029168",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
