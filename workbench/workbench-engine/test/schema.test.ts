@@ -118,3 +118,19 @@ describe('parseNodeTable 非法表用例集', () => {
     reject(t, 'max_retries')
   })
 })
+
+describe('parseNodeTable 缺省值归一（正向断言——与非法用例集对偶）', () => {
+  it('最小合法表（1 action + 1 terminal，无 max_retries/terminal_fail/gate_specs/human_gate）', () => {
+    const t = parseNodeTable({
+      flow: 't-min',
+      nodes: [
+        { id: 'a', kind: 'action', next: ['b'] },
+        { id: 'b', kind: 'terminal', next: [] },
+      ],
+    })
+    expect(t.max_retries).toBe(3) // 缺省 3（1.0 DEFAULT_MAX_RETRIES）
+    expect(t.terminal_fail).toBeNull() // 缺省 null
+    expect(t.gate_specs).toEqual({}) // 缺省空对象
+    expect(t.nodes[0].human_gate).toBe(false) // 缺省归一 false
+  })
+})
