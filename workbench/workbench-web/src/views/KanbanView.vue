@@ -54,6 +54,23 @@ function onCreated(taskId: string): void {
   store.seedTask(taskId)
 }
 
+/** 人工闸辅按钮（对话式为主通道）：confirmGate → 引擎放行（fixture 演出即恢复推流） */
+async function onGateConfirm(taskId: string, node: string | null): Promise<void> {
+  try {
+    await runtime.value?.api.confirmGate(taskId, node ?? '', 'approve')
+  } catch {
+    /* 放行失败静默（停靠条仍在场重试——错误不吞语义由停靠态本身承担） */
+  }
+}
+
+async function onGateReject(taskId: string, node: string | null): Promise<void> {
+  try {
+    await runtime.value?.api.confirmGate(taskId, node ?? '', 'reject')
+  } catch {
+    /* 同上 */
+  }
+}
+
 // 任务卡缺表 → getTask 拉表快照 + 员工映射（getTask 下发口径）
 watch(
   () => tasks.value.map((t) => t.taskId),
@@ -110,6 +127,8 @@ watch(
       :table="store.tables[task.taskId] ?? null"
       :employees="store.employeesMap"
       :feed="store.feed.filter((e) => e.task_id === task.taskId)"
+      @confirm="(t) => onGateConfirm(t.taskId, t.currentNode)"
+      @reject="(t) => onGateReject(t.taskId, t.currentNode)"
     />
   </section>
 </template>

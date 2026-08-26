@@ -60,7 +60,9 @@ export function createEngineStream(
   const source = factory(url)
 
   let closed = false
-  let maxSeq = 0
+  /** seq 去重游标按 task_id 分域——seq 是 per-task 事件文件行号（§7.3 events.jsonl），
+   * 跨任务 seq 重号是常态（各自从 1 起），全局累计会把新任务的帧误判为重放吞掉。 */
+  const maxSeqByTask = new Map<string, number>()
   let eventCb: ((ev: EngineEvent) => void) | null = null
   let connCb: ((c: Connection) => void) | null = null
   let conn: Connection = 'connecting'
@@ -87,8 +89,11 @@ export function createEngineStream(
       const res = parseSseFrame({ event: type, data: frame.data, id: frame.lastEventId })
       if (!res.ok) return // 非法帧静默丢弃（守卫层已记录错误语义）
       const ev = res.event
-      if (ev.seq > 0 && ev.seq <= maxSeq) return // 重放去重
-      if (ev.seq > 0) maxSeq = ev.seq
+      if (ev.seq > 0) {
+        const seen = maxSeqByTask.get(ev.task_id) ?? 0
+        if (ev.seq <= seen) return // 同任务重放去重（Last-Event-ID 回放窗口重叠幂等）
+        maxSeqByTask.set(ev.task_id, ev.seq)
+      }
       eventCb?.(ev)
     })
   }

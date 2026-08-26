@@ -259,16 +259,18 @@ KanbanView（/kanban）
 
 ## 11. 验收清单
 
-| # | 断言 |
-|---|---|
-| K1 | 全量测试绿（基线 224 + 新增全绿）+ typecheck 绿 |
-| K2 | fixture 演出：happy-path 剧本播放，五阶段卡推进动画、员工卡 dispatch 出现/消散、流水滚动，与 §3.3 剧本时序一致 |
-| K3 | gate-pause 剧本：停靠 amber 高亮 + 人工 confirm 进流水 + 续跑；reflow 剧本：节点重置与 iter 可见；abort 剧本：终态 + 错误常驻 |
-| K4 | 断线重连：mock simulateError → reconnecting 态 → 重连续播 + 回放去重（不重复出卡/流水） |
-| K5 | 发起表单：全字段提交载荷逐字段对齐 §9.1 createTask；出卡链路（提交→202→占位卡→run.created 补全） |
-| K6 | 换表跟随：gate-pause 变体表（不同节点集）渲染自动跟随，零前端改动 |
-| K7 | 零硬编码抽查：表快照 stage/name 改名后 UI 文案跟随（deriveBoard 无字面量） |
-| K8 | 品牌：页面无「工作台」文案（用户可见面）、无 DevZero 字样；按钮文案精简 |
+| # | 断言 | 结果（2026-08-27 走查） |
+|---|---|---|
+| K1 | 全量测试绿（基线 224 + 新增全绿）+ typecheck 绿 | ✅ 354/354（基线 224 + 新增 130）+ tsc 干净 |
+| K2 | fixture 演出：happy-path 五阶段推进、员工卡 dispatch、流水滚动 | ✅ 浏览器实操（截图 screenshots/2026-08-27-l5-kanban-*.png，主仓工作区） |
+| K3 | gate-pause 停靠高亮 + 人工 confirm 进流水 + 续跑；reflow 节点重置与 iter；abort 终态常驻 | ✅ 四剧本全闭环（停靠→辅按钮放行→已完成；FAIL:1→PASS:2；已终止+常驻红条） |
+| K4 | 断线重连：reconnecting 态 + 回放去重 | ✅ 测试级（engine-stream 12 测含 per-task 分域去重回归锚）；浏览器级真实断线路径待引擎线联调（mock 无真断线源） |
+| K5 | 表单载荷逐字段对齐 §9.1；出卡链路 | ✅ 测试逐字段 + 浏览器实操（占位卡→run.created 补全→表快照渲染） |
+| K6 | 换表跟随（变体表） | ✅ gate-pause 变体表渲染自动跟随 |
+| K7 | 零硬编码抽查 | ✅ deriveBoard 表驱动（改名跟随测试锚） |
+| K8 | 品牌：无「工作台」文案、无 DevZero；按钮精简 | ✅ grep 干净 + 页面标题/文案走查（「跟随终端默认」等「终端」用词） |
+
+走查实捕修复三件（均含回归锚）：① seq 去重按 task_id 分域（原全局累计把新任务同号帧误吞——seq 是 per-task 事件文件行号，§7.3）② fixture 流 emitOpen 顺序（先建流再 open，否则连接条滞留「连接中」）③ 人工闸辅按钮 → confirmGate 接线遗漏。
 
 ## 12. 决策记录（占位号，合流时编真号）
 
@@ -285,3 +287,4 @@ KanbanView（/kanban）
 | 日期 | 变更 |
 |------|------|
 | 2026-08-27 | v0.1 初版：四层架构（消费/归并/派生/UI）+ fixture 四剧本 + 表单字段面 + 契约歧义六条 + 验收 K1-K8 |
+| 2026-08-27 | 验收回写：T1~T11 全绿（354 测试），K1~K8 逐条勾；走查实捕修复三件（seq 分域去重/emitOpen 顺序/辅按钮接线） |

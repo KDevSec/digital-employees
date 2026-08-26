@@ -145,6 +145,35 @@ describe('createEngineStream（消费层）', () => {
     expect(streamUrl('R-5')).toBe('/api/engine/stream?task_id=R-5')
   })
 
+  it('seq 去重按 task_id 分域：新任务 seq 从 1 重号不被旧任务游标误吞（走查实捕 bug 的回归锚）', () => {
+    const src = new MockEventSource(streamUrl())
+    const stream = createEngineStream(streamUrl(), { factory: () => src })
+    const got: Array<[string, number]> = []
+    stream.onEvent((e) => got.push([e.task_id, e.seq]))
+    src.emitOpen()
+    const a = buildScenario('happy-path', { taskId: 'R-a', title: 't', workspace: 'w' }) // seq 1..37
+    const b = buildScenario('abort', { taskId: 'R-b', title: 't', workspace: 'w' }) // seq 1..7 重号
+    src.enqueueFrames([...a, ...b].map(frameOf))
+    src.flushAll()
+    expect(got).toHaveLength(a.length + b.length)
+    stream.close()
+  })
+
+  it('同任务重放仍被去重（分域不放松原语义）', () => {
+    const src = new MockEventSource(streamUrl())
+    const stream = createEngineStream(streamUrl(), { factory: () => src })
+    const seqs: number[] = []
+    stream.onEvent((e) => seqs.push(e.seq))
+    src.emitOpen()
+    const a = buildScenario('happy-path', { taskId: 'R-a', title: 't', workspace: 'w' })
+    src.enqueueFrames(a.map(frameOf))
+    src.flushAll()
+    src.enqueueFrames(a.slice(3).map(frameOf)) // 同任务重放 seq 4 起
+    src.flushAll()
+    expect(seqs).toEqual(a.map((_, i) => i + 1))
+    stream.close()
+  })
+
   it('默认工厂用全局 EventSource（live 模式接线的前提）', async () => {
     const calls: string[] = []
     const FakeES = class implements EventSourceLike {

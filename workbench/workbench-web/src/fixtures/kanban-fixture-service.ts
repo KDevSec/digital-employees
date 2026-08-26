@@ -123,8 +123,15 @@ export function createFixtureRuntime(opts: { intervalMs?: number } = {}): Fixtur
 
   return {
     api,
-    // fixture 的 stream = 消费层包同一个 mock source（去重/状态机逻辑与 live 完全同路）
-    openStream: () => createEngineStream(streamUrl(), { factory: () => source as unknown as EventSourceLike }),
+    // fixture 的 stream = 消费层包同一个 mock source（去重/状态机逻辑与 live 完全同路）；
+    // 先建流（消费层挂上 onopen）再 emitOpen——顺序反了的话 open 通知落在 null 回调上
+    openStream: () => {
+      const stream = createEngineStream(streamUrl(), {
+        factory: () => source as unknown as EventSourceLike,
+      })
+      source.emitOpen()
+      return stream
+    },
     openMockSource: () => source,
     controls,
     employees,
