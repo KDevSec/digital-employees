@@ -4,11 +4,12 @@ import { fetchHealthz, interpretHealth, versionLineGated } from '../api/health'
 import type { HealthBadge, HealthzJson } from '../api/health'
 
 /**
- * 服务健康轮询 composable（I0-5 T4，D-11：healthz 消费逻辑统一供接入页与顶栏复用——
- * AccessView 顶部健康徽章与 TopBar 版本行本是同一段 fetchHealthz/interpret/versionLine 逻辑）。
+ * 服务健康轮询 composable（I0-5 T4，D-11：healthz 消费逻辑统一供接入页与设置浮层复用——
+ * AccessView 顶部健康徽章与设置浮层版本行本是同一段 fetchHealthz/interpret/versionLine
+ * 逻辑；T10（D-24）起顶栏 TopBar 退役，其版本行消费迁入设置浮层 SettingsPanel）。
  * 挂载即拉一次 + 每 2s 轮询（Home.vue 退役前的同款节奏，先例语义不动），卸载清理定时器。
- * 调用方在 setup 中取 { badge, version }：接入页消费徽章 + 版本行，顶栏只消费版本行
- * （平台连接状态另有 platform-status 徽章，与本地服务健康是两层判定）。
+ * 调用方在 setup 中取 { badge, version }：接入页消费徽章 + 版本行，设置浮层只消费版本行
+ * （平台连接状态另有 platform-status tag，与本地服务健康是两层判定）。
  */
 
 /** 服务健康轮询间隔（Home.vue/AccessView 先例 2s，I0-5 T4 起顶栏同款） */
