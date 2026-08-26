@@ -1,45 +1,13 @@
 /**
  * demo-flow 表快照 fixture（L5 看板线 T2，设计 §6.1）：
- * 协同编排设计 §6.1 demo-flow 十二节点表的 TS 对象形态（= table.snapshot.yml 解析后 JSON），
+ * 协同编排设计 §6.1 demo-flow 十二节点表的数据形态——类型契约（TableSnapshot）在
+ * src/api/engine-table.ts（getTask 响应契约的一部分），本文件只持数据。
  * 看板「零硬编码」纪律的数据源——阶段/节点全部按表渲染，换表自动跟随。
  * 真源 = 引擎线快照文件（联调后由 getTask 下发真表，本文件为 fixture 先行口径）。
  */
+import type { TableSnapshot } from '../api/engine-table'
 
-export interface TableSnapshotNode {
-  id: string
-  name: string
-  kind: 'action' | 'gate' | 'terminal'
-  /** 叙事分组（看板按阶段聚合渲染，可选） */
-  stage?: string
-  /** action 节点主责员工 id */
-  emp?: string
-  /** gate 节点引用的 gate_specs 键（1.0 原生「节点引用 gate_specs」分离式） */
-  gate?: string
-  /** 人工闸（进入即停靠 gate_paused） */
-  human_gate?: boolean
-  /** 阶段内置模型档位（发起页勾选「使用流程阶段内置档位」时生效） */
-  model_tier?: string
-  next: string[]
-}
-
-export interface GateSpec {
-  kind: string
-  reviewer: string
-  on_pass: string
-  on_reflow: string
-  covers: string[]
-}
-
-export interface TableSnapshot {
-  flow: string
-  display_name: string
-  version: number
-  max_retries: number
-  terminal_fail: string
-  delivery_node: string
-  nodes: TableSnapshotNode[]
-  gate_specs: Record<string, GateSpec>
-}
+export type { TableSnapshot, TableSnapshotNode, GateSpec } from '../api/engine-table'
 
 /** demo-flow（§6.1 原样：五阶段 12 节点，demo 表默认全关人工闸） */
 export const demoFlowTable: TableSnapshot = {
