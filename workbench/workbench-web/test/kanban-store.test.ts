@@ -157,10 +157,11 @@ describe('pinia store 壳（SSE 消费层接线）', () => {
     const store = useKanbanStore()
     const a = buildScenario('happy-path', { ...OPTS, taskId: 'R-a' })
     const b = buildScenario('abort', { taskId: 'R-b', title: 't', workspace: 'w' })
-    const mixed = a.slice(0, 6).map((e) => ['a', e] as const)
-      .concat(b.map((e) => ['b', e] as const))
-      .concat(a.slice(6).map((e) => ['a', e] as const))
-      .map(([, e]) => e)
+    const mixed = [
+      ...a.slice(0, 6),
+      ...b,
+      ...a.slice(6),
+    ]
     for (const ev of mixed) store.applyIncoming(ev)
     expect(store.tasks['R-a'].status).toBe('completed')
     expect(store.tasks['R-b'].status).toBe('aborted')

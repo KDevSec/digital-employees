@@ -1,17 +1,22 @@
 // @vitest-environment jsdom
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { demoFlowTable } from '../src/fixtures/demo-flow.table'
 import { buildScenario } from '../src/fixtures/scenarios'
 import KanbanView from '../src/views/KanbanView.vue'
 import { useKanbanStore } from '../src/stores/kanban'
 
 /**
- * 看板页壳（L5 看板线 T8）：page-head + ConnectionBar + 空态/任务卡列表 + 发起入口。
- * 运行时接线（SSE 连接生命周期）在 T9 use-kanban-runtime；此处测「store 态 → 页面渲染」
- * 与空态语义。路由替换断言见 test/router.test.ts（结构性）+ placeholder.test.ts 摘除。
+ * 看板页壳（L5 看板线 T8/T9）：page-head + ConnectionBar + 空态/任务卡列表 + 发起入口；
+ * onMounted 经 use-kanban-runtime 接线 SSE（dev 默认 fixture 演出）。渲染用例 mock 掉
+ * runtime 接线（纯 store 态断言）；末尾集成用例走真 fixture 链路（createTask → 事件进 store）。
  */
+
+vi.mock('../src/composables/use-kanban-runtime', () => ({
+  createKanbanRuntime: vi.fn(async () => null),
+  resolveRuntimeMode: vi.fn(() => 'fixture'),
+}))
 
 const OPTS = { taskId: 'R-100', title: '支付网关对接联调', workspace: 'D:/demo/r-x' }
 

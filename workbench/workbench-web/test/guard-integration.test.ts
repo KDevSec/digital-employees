@@ -103,6 +103,8 @@ afterEach(() => {
 
 describe('守卫集成：未登录可达面收敛到接入页（D-7）', () => {
   it('未认证：三业务域路径全部重定向落 /，且页面不露侧栏导航（D-5 接入页全屏 / D-031 不给死入口）', async () => {
+    // timeout 放宽：本用例三域 push + flushPromises 在并行 worker 高负载下偶发超 5s 默认阈值
+    // （L5 看板线 2026-08-27 复现两次，非断言回退）；断言与逻辑不变
     stubFetch({ '/api/state': () => jsonResponse(unauthenticatedState) })
     const { router, text } = await mountApp()
     expect(router.currentRoute.value.path).toBe('/') // 初始导航（目标 /）放行
@@ -113,7 +115,7 @@ describe('守卫集成：未登录可达面收敛到接入页（D-7）', () => {
     }
     expect(text()).toContain('access-stub') // 落地接入页
     expect(text()).not.toContain('我的群组与对话') // 侧栏未挂（未登录不露导航）
-  })
+  }, 15000)
 
   it('fetch 失败（reject）→ 按未认证处理：/employees 重定向 /（fetchAccessState 归一 null → authenticated false）', async () => {
     stubFetch({ '/api/state': () => new Error('network down') })

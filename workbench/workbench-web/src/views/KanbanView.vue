@@ -1,17 +1,76 @@
 <script setup lang="ts">
 /**
- * 任务看板页壳（L5 看板线 T8，KB-01）：page-head + SSE 连接态 + 空态/任务卡列表 +
- * 发起任务入口（KB-02 弹窗 T10 接入）。数据全部来自 kanban store（事件归并产物），
- * 运行时接线（SSE 连接生命周期/fixture 演出）在 T9 use-kanban-runtime 挂载。
+ * 任务看板页壳（L5 看板线 T8/T9，KB-01）：page-head + SSE 连接态 + 空态/任务卡列表 +
+ * 发起任务入口（KB-02 弹窗 T10 接入）。数据全部来自 kanban store（事件归并产物）；
+ * 运行时经 use-kanban-runtime 挂载（dev 默认 fixture 演出 / ?live=1 真实引擎）——
+ * onMounted 建 runtime + connect 流；任务卡缺表时经 getTask 拉表快照（契约歧义 A 口径）。
  */
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { FlowSummary } from '../api/engine-api'
 import ConnectionBar from '../components/kanban/ConnectionBar.vue'
+import CreateTaskModal from '../components/kanban/CreateTaskModal.vue'
+import FixtureControls from '../components/kanban/FixtureControls.vue'
 import TaskBoardCard from '../components/kanban/TaskBoardCard.vue'
+import { createKanbanRuntime, type KanbanRuntime } from '../composables/use-kanban-runtime'
 import { useKanbanStore } from '../stores/kanban'
 
 const store = useKanbanStore()
 
 const tasks = computed(() => store.taskList)
+const runtime = ref<KanbanRuntime | null>(null)
+/** fixture 控制面（仅 fixture runtime 有；live 模式为 null → 控件不渲染） */
+const fixtureControls = ref<import('../fixtures/kanban-fixture-service').FixtureControls | null>(null)
+
+/** 发起任务弹窗（KB-02）：flows 经 getFlows 拉取；员工选择器映射（fixture 内置/L4 待接口） */
+const modalOpen = ref(false)
+const flows = ref<FlowSummary[]>([])
+const pickerEmployees = ref<Record<string, string>>({})
+
+onMounted(async () => {
+  const rt = await createKanbanRuntime()
+  runtime.value = rt
+  if (rt && 'controls' in rt) fixtureControls.value = rt.controls
+  if (rt && 'employees' in rt) pickerEmployees.value = (rt as { employees: Record<string, string> }).employees
+  store.connect(rt?.openStream() ?? dummyStream())
+  try {
+    flows.value = await rt.api.getFlows()
+  } catch {
+    /* 表清单拉取失败：表单流程下拉空（提交时校验兜底） */
+  }
+})
+
+onUnmounted(() => {
+  store.disconnect()
+  runtime.value?.cleanup()
+})
+
+/** runtime 为 null（测试/异常）时的空流占位——connect 拿到 close 能力即可 */
+function dummyStream() {
+  return { onEvent: () => {}, onConnectionChange: () => {}, close: () => {} }
+}
+
+/** 发起成功：占位卡先出（run.created 到达补全）；fixture 模式剧本已自动起播 */
+function onCreated(taskId: string): void {
+  store.seedTask(taskId)
+}
+
+// 任务卡缺表 → getTask 拉表快照 + 员工映射（getTask 下发口径）
+watch(
+  () => tasks.value.map((t) => t.taskId),
+  async (ids) => {
+    const api = runtime.value?.api
+    if (!api) return
+    for (const id of ids) {
+      if (store.tables[id]) continue
+      try {
+        const detail = await api.getTask(id)
+        store.setTable(id, detail.table, detail.employees)
+      } catch {
+        /* 表拉取失败保持骨架态——事件流仍在推进，下次任务列表变动重试 */
+      }
+    }
+  },
+)
 </script>
 
 <template>
@@ -23,9 +82,19 @@ const tasks = computed(() => store.taskList)
       </div>
       <div class="head-actions">
         <ConnectionBar :connection="store.connection" />
-        <button class="btn primary">发起任务</button>
+        <button class="btn primary" @click="modalOpen = true">发起任务</button>
       </div>
     </header>
+
+    <FixtureControls v-if="fixtureControls" :controls="fixtureControls" />
+
+    <CreateTaskModal
+      v-model:open="modalOpen"
+      :flows="flows"
+      :employees="Object.keys(store.employeesMap).length > 0 ? store.employeesMap : pickerEmployees"
+      :api="runtime?.api ?? null"
+      @created="onCreated"
+    />
 
     <div v-if="tasks.length === 0" class="empty card">
       <div class="empty-inner">

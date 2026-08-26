@@ -44,7 +44,7 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
     type: EngineEvent['type'],
     actor: string,
     payload: Record<string, unknown>,
-    parent?: number,
+    parent?: number | null,
   ): number {
     seq += 1
     events.push({

@@ -212,12 +212,23 @@ export const useKanbanStore = defineStore('kanban', {
   actions: {
     /** SSE 事件入口（stream.onEvent 接线目标） */
     applyIncoming(ev: EngineEvent): void {
-      this.$patch(applyEvent(this.$state, ev))
+      const next = applyEvent(this.$state, ev)
+      this.tasks = next.tasks
+      this.feed = next.feed
     },
     /** 表快照/员工映射写入（getTask 响应落地；契约歧义 A/B 先行口径） */
     setTable(taskId: string, table: TableSnapshot, employees?: Record<string, string>): void {
       this.tables = { ...this.tables, [taskId]: table }
       if (employees) this.employeesMap = { ...this.employeesMap, ...employees }
+    },
+    /** 发起成功即建占位卡（createTask 202 与 SSE run.created 之间的窗口；归并幂等覆盖） */
+    seedTask(taskId: string, partial?: { title?: string }): void {
+      if (this.tasks[taskId]) return
+      this.tasks = {
+        ...this.tasks,
+        [taskId]: placeholderTask(taskId, 0, new Date().toISOString()),
+      }
+      if (partial?.title) this.tasks[taskId].title = partial.title
     },
     /** 接线消费层：事件归并 + 连接状态跟随；返回 stream 供调用方持有（卸载时 disconnect） */
     connect(stream: EngineStream): EngineStream {

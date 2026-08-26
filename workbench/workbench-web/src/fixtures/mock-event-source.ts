@@ -23,10 +23,13 @@ export class MockEventSource {
   private readonly listeners = new Map<string, Set<Listener>>()
   private queue: MockFrame[] = []
   private timer: ReturnType<typeof setInterval> | null = null
+  private pausedFlag = false
+  /** 已派发帧（fixture 服务停靠检测/测试取证） */
+  readonly emitted: MockFrame[] = []
 
   constructor(
     url: string,
-    private readonly opts: { intervalMs?: number } = {},
+    private readonly opts: { intervalMs?: number; onFrame?: (frame: MockFrame) => void } = {},
   ) {
     this.url = url
   }
@@ -62,14 +65,21 @@ export class MockEventSource {
     this.timer = setInterval(() => this.pump(1), interval)
   }
 
-  /** 暂停（演出停靠感——gate-pause 剧本的「无事件若干秒」） */
+  /** 暂停（演出停靠感——gate-pause 剧本的「无事件若干秒」）；队列保留可恢复 */
   pause(): void {
+    this.pausedFlag = true
     this.stopTimer()
   }
 
   /** 恢复播放 */
   resume(): void {
+    this.pausedFlag = false
     this.start()
+  }
+
+  /** 演出暂停态（pump 循环也尊重此标志——drain 不越过停靠帧） */
+  isPaused(): boolean {
+    return this.pausedFlag
   }
 
   /** 同步排干队列（测试用；等价 flushAll） */
@@ -106,12 +116,15 @@ export class MockEventSource {
 
   private pump(count: number): void {
     for (let i = 0; i < count && this.queue.length > 0; i++) {
+      if (this.pausedFlag) return
       const frame = this.queue.shift()!
       this.dispatch(frame)
     }
   }
 
   private dispatch(frame: MockFrame): void {
+    this.emitted.push(frame)
+    this.opts.onFrame?.(frame)
     const set = this.listeners.get(frame.event)
     if (!set) return
     for (const listener of set) {
