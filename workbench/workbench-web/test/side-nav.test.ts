@@ -77,3 +77,24 @@ describe('SideNav 置灰项与隐藏项', () => {
     expect(wrapper.text()).not.toContain('workflow')
   })
 })
+
+describe('SideNav sidebar-foot 设置齿轮（D-23：设置按钮落位侧栏底部）', () => {
+  it('底部存在「设置」按钮：nav-item 形态、aria-label 设置、齿轮 SVG；不占路由链接位', () => {
+    const wrapper = mountNav()
+    const foot = wrapper.find('.sidebar-foot')
+    expect(foot.exists(), '原型 .sidebar-foot 结构应在场（nav 之后、flex 尾部对齐）').toBe(true)
+    const gear = foot.find('button.nav-item')
+    expect(gear.exists()).toBe(true)
+    expect(gear.attributes('aria-label')).toBe('设置')
+    expect(gear.text()).toBe('设置')
+    expect(gear.find('svg').exists(), '齿轮 SVG（stroke 风格沿侧栏图标）').toBe(true)
+    // 设置按钮不是路由链接：RouterLink 仍恰三枚（D-23：开设置浮层而非导航）
+    expect(wrapper.findAllComponents(RouterLink)).toHaveLength(3)
+  })
+
+  it('点击「设置」按钮 → emit openSettings（Layout 接线开设置浮层）', async () => {
+    const wrapper = mountNav()
+    await wrapper.find('.sidebar-foot button').trigger('click')
+    expect(wrapper.emitted('openSettings')).toHaveLength(1)
+  })
+})

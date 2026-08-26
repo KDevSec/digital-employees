@@ -42,13 +42,13 @@ const ALL_STATUSES: AccessStatus[] = [
 const EXPECTED: Record<string, string[]> = {
   // 未登录：只有登录按钮（任意状态）
   ...Object.fromEntries(
-    ALL_STATUSES.map((status) => [`false:${status}`, ['企业账号登录']]),
+    ALL_STATUSES.map((status) => [`false:${status}`, ['登录']]),
   ),
   'true:NEW': ['重新提交接入申请', '退出登录'],
   'true:PENDING_REVIEW': ['退出登录'],
   'true:APPROVED': ['退出登录'],
   'true:COMPLETED': ['退出登录'],
-  'true:ACTIVE': ['发送工作台心跳', '退出登录'],
+  'true:ACTIVE': ['发送终端心跳', '退出登录'],
   'true:REJECTED': ['重新提交接入申请', '重置申请状态', '退出登录'],
   'true:REVOKED': ['退出登录'],
   'true:ERROR': ['重新提交接入申请', '重置申请状态', '退出登录'],
@@ -87,7 +87,7 @@ describe('AccessActions emit（动作事件交父组件处理）', () => {
 
   it('ACTIVE 登录态：心跳按钮 emit heartbeat', async () => {
     const wrapper = mount(AccessActions, { props: { state: fixture({ status: 'ACTIVE' }) } })
-    await clickLabel(wrapper, '发送工作台心跳')
+    await clickLabel(wrapper, '发送终端心跳')
     expect(wrapper.emitted('heartbeat')).toHaveLength(1)
   })
 

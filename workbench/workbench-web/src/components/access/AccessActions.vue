@@ -20,7 +20,7 @@ function login(): void {
 
 <template>
   <div class="actions">
-    <button v-if="!props.state.authenticated" class="btn btn-primary" @click="login">企业账号登录</button>
+    <button v-if="!props.state.authenticated" class="btn btn-primary" @click="login">登录</button>
     <button
       v-if="props.state.authenticated && ['NEW', 'REJECTED', 'ERROR'].includes(props.state.status)"
       class="btn btn-ghost"
@@ -30,7 +30,7 @@ function login(): void {
       v-if="props.state.authenticated && props.state.status === 'ACTIVE'"
       class="btn btn-ghost"
       @click="emit('heartbeat')"
-    >发送工作台心跳</button>
+    >发送终端心跳</button>
     <button
       v-if="props.state.authenticated && ['REJECTED', 'ERROR'].includes(props.state.status)"
       class="btn btn-ghost btn-danger"

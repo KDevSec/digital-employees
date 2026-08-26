@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AccessActions from '../components/access/AccessActions.vue'
 import AccessStatusCard from '../components/access/AccessStatusCard.vue'
@@ -16,17 +16,22 @@ import type { AccessState, ActionResult } from '../api/access'
 import { useHealthPolling } from '../composables/useHealthPolling'
 
 /**
- * 登录与接入页（I0-5 T2，设计 §3：workbench-demo/src/ui.ts 的 Vue 化归宿；T7 视觉蓝系化）。
+ * 登录与接入页（I0-5 T2 立项：demo ui.ts 的 Vue 化归宿；T7 视觉蓝系化；T9 双形态重构 D-19/D-20）。
+ * - 双形态分支（T9，state 驱动 template v-if）：
+ *   · 未登录 = 居中单卡登录页（D-19）：logo 方块（同 SideNav 款蓝渐变+人形 SVG）+
+ *     主标「研发零处数字员工终端」（T12/D-27；T13 起 DevZero 不作正式名称出现——CLAUDE.md §4）+ 引导语 + 整宽放大「登录」唯一主按钮 +
+ *     卡底一行（左「平台设置 ▾」展开收纳 T8 配置卡 + 右服务状态·版本小字）。头部条在该
+ *     形态下移除（页面更纯粹——登录卡自带品牌）；健康轮询逻辑保留，数据进卡底状态行；
+ *   · 已登录 = 简化状态页（D-20）：安全边界卡删除（demo 时代开发者展示物）；头部条
+ *     （品牌+健康徽章）保留；hero 简化为一行（h1 + sub 一句）；状态卡主位 + 平台配置卡
+ *     次位（grid 单列，简洁优先）。
+ * - 背景装饰（D-19）：--bg 底 + 左上/右下两团蓝渐变 radial 光斑（纯 CSS 无资源依赖），
+ *   两形态共用（.access-page 一处声明）。
  * - 状态卡/动作区数据源 GET /api/state；审批中（authenticated 且 PENDING_REVIEW/APPROVED）
  *   每 5s POST /api/progress + 刷新（demo L31 节奏语义，onUnmounted/条件退出 clearInterval）；
- * - 服务健康徽章区承接 Home.vue 退役（I0-5 T4 起 fetchHealthz/interpretHealth/versionLineGated
- *   与顶栏共用 useHealthPolling composable——接入页全屏无顶栏，健康徽章仍保留在此）；
+ * - 服务健康徽章：useHealthPolling composable（2s 轮询）——已登录形态进头部条，
+ *   未登录形态进卡底服务状态行；
  * - 「返回管理平台」链接不渲染（设计 G-5：Vue 侧无 platformPublicUrl 来源，A 系列定稿后补）。
- * T7 视觉（脚本零改动，只换皮）：头部品牌条沿侧栏蓝渐变语言 + 蓝渐变 logo 方块（原型人形 SVG）；
- * 健康徽章走原型 tag 体系（ok→tag-green/down→tag-red，模板层映射）+ 版本行白字 70% 透明度；
- * hero 区原型 page-head 规格（h1 24px/700 + eyebrow + sub g500 13px）；卡片原型 .card 语言。
- * I0-5 T8（设计 D-16）：hero 区右侧挂 PlatformConfigCard 平台连接配置卡——未登录即可配；
- * 其 GET /api/config/platform 挂载自拉（失败静默降级为卡内提示，不影响本页既有状态卡渲染）。
  */
 
 /** 审批进度轮询间隔（demo ui.ts L31 的 5s） */
@@ -37,7 +42,12 @@ const state = ref<AccessState | null>(null)
 const loadFailed = ref(false)
 /** 动作文案区（demo messageNode：处理中… / 操作成功 / 服务端错误消息） */
 const message = ref('')
+/** 登录卡「平台设置 ▾」折叠区开合（D-19：T8 配置卡收纳进登录卡） */
+const configOpen = ref(false)
 const { badge, version } = useHealthPolling()
+
+/** 双形态分流（D-19/D-20）：authenticated 才进状态页；未登录/不可达（state null）一律登录卡 */
+const isLoggedIn = computed(() => state.value?.authenticated === true)
 
 let progressTimer: ReturnType<typeof setInterval> | undefined
 
@@ -99,6 +109,15 @@ function onLogout(): void {
   void run(logoutAction)
 }
 
+/**
+ * 登录卡主按钮：OIDC 出站 302 必须整页跳转（与 AccessActions 登录按钮同语义——
+ * 那边是组件契约保留，本页未登录形态的入口已移到登录卡，AccessActions 的登录按钮
+ * 不再经本页渲染）。
+ */
+function login(): void {
+  window.location.href = '/auth/login'
+}
+
 onMounted(() => {
   void refresh()
   // 健康徽章轮询（挂载即拉 + 2s 周期 + 卸载清理）在 useHealthPolling 内接管
@@ -110,37 +129,33 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="access-page">
-    <header class="head">
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
-      </div>
-      <div class="brand">
-        <strong>数字员工工作台</strong>
-        <small>企业登录与可信接入</small>
-      </div>
-      <div class="health">
-        <span class="tag" :class="badge.badgeClass === 'ok' ? 'tag-green' : 'tag-red'">{{ badge.badge }}</span>
-        <span class="version">{{ version }}</span>
-      </div>
-    </header>
-    <main class="page">
-      <section class="hero">
-        <div>
-          <div class="eyebrow">Local execution plane</div>
-          <h1>工作台接入状态</h1>
-          <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用工作台能力。</p>
+  <div class="access-page" :class="{ 'login-mode': !isLoggedIn }">
+    <!-- 已登录形态：简化状态页（D-20）——头部条 + 一行 hero + 状态卡主位 + 配置卡次位 -->
+    <template v-if="isLoggedIn">
+      <header class="head">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
+        <div class="brand">
+          <strong>研发零处数字员工终端</strong>
+          <small>企业登录与可信接入</small>
+        </div>
+        <div class="health">
+          <span class="tag" :class="badge.badgeClass === 'ok' ? 'tag-green' : 'tag-red'">{{ badge.badge }}</span>
+          <span class="version">{{ version }}</span>
+        </div>
+      </header>
+      <main class="page">
+        <!-- hero 简化为一行（D-20）：h1 + sub 一句，eyebrow/侧挂配置卡移除 -->
+        <section class="hero">
+          <h1>终端接入状态</h1>
+          <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用终端能力。</p>
+        </section>
         <!-- 「返回管理平台」链接不渲染（设计 G-5：platformPublicUrl 无前端来源） -->
-        <!-- I0-5 T8 平台连接配置卡（设计 D-16）：hero 区右侧，未登录即可配（登录前就要知道平台在哪） -->
-        <PlatformConfigCard />
-      </section>
-      <div class="grid">
-        <section class="card">
-          <h2>接入状态</h2>
-          <p v-if="loadFailed && !state" class="error">服务不可达，无法获取接入状态</p>
-          <p v-else-if="!state" class="muted">加载中…</p>
-          <template v-else>
+        <div class="grid">
+          <!-- 状态卡主位（D-20） -->
+          <section class="card">
+            <h2>接入状态</h2>
             <AccessStatusCard :state="state" />
             <AccessActions
               :state="state"
@@ -149,26 +164,63 @@ onBeforeUnmount(() => {
               @reset="onReset"
               @logout="onLogout"
             />
-          </template>
-          <p class="muted">{{ message }}</p>
-        </section>
-        <section class="card">
-          <h2>安全边界</h2>
-          <div class="row"><span>人员认证</span><strong>Keycloak OIDC + PKCE</strong></div>
-          <div class="row"><span>审批控制</span><strong>按组织路径授权管理员</strong></div>
-          <div class="row"><span>本机密钥</span><strong>ES256 · AES-GCM 加密落盘</strong></div>
-          <div class="row"><span>机器认证</span><strong>private_key_jwt + Bearer Token</strong></div>
-        </section>
-      </div>
+            <p class="muted">{{ message }}</p>
+          </section>
+          <!-- 平台配置卡次位（D-20：T8 卡从 hero 侧挂迁入） -->
+          <PlatformConfigCard />
+        </div>
+      </main>
+    </template>
+
+    <!-- 未登录形态：居中单卡登录页（D-19）——登录卡自带品牌，头部条移除 -->
+    <main v-else class="login-wrap">
+      <section class="card login-card">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
+        </div>
+        <h1 class="brand-name">研发零处数字员工终端</h1>
+        <p class="lead">使用企业账号登录以继续</p>
+        <!-- 整宽放大主按钮（btn-primary：padding 12px / 字号 15px / 整宽） -->
+        <button type="button" class="btn btn-primary btn-login" @click="login">登录</button>
+        <!-- 首次拉取失败 → 卡内不可达提示（登录卡骨架仍在，不白屏） -->
+        <p v-if="loadFailed" class="error">服务不可达，无法获取接入状态</p>
+        <!-- 「平台设置 ▾」折叠区（D-19：T8 配置卡收纳进登录卡） -->
+        <div v-if="configOpen" class="config-drawer">
+          <PlatformConfigCard />
+        </div>
+        <!-- 卡底一行：左「平台设置 ▾」入口 + 右服务状态·版本小字（健康轮询数据进卡底） -->
+        <div class="card-foot">
+          <button type="button" class="config-toggle" @click="configOpen = !configOpen">平台设置 ▾</button>
+          <span class="service-status">
+            <span class="dot" :class="badge.badgeClass === 'ok' ? 'dot-green' : 'dot-red'" aria-hidden="true"></span>
+            {{ badge.badge }} · {{ version }}
+          </span>
+        </div>
+      </section>
     </main>
   </div>
 </template>
 
 <style scoped>
-/* T7 蓝系：body 基调（--bg/--ink/字体栈）由全局 tokens.css 提供 */
+/* T7 蓝系：body 基调（--bg/--ink/字体栈）由全局 tokens.css 提供。
+   T9（D-19）背景装饰：--bg 底 + 左上/右下两团蓝渐变 radial 光斑（纯 CSS 无资源），
+   登录卡形态与状态页形态共用；login-mode 附加垂直水平居中（登录卡）。 */
 .access-page {
   min-height: 100vh;
+  background:
+    radial-gradient(600px 400px at 15% 10%, rgba(59, 130, 246, 0.12), transparent),
+    radial-gradient(600px 400px at 85% 90%, rgba(96, 165, 250, 0.1), transparent),
+    var(--bg);
 }
+
+.access-page.login-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ---- 已登录形态（D-20 简化状态页，骨架沿用 T7） ---- */
 
 /* 头部品牌条：沿侧栏渐变语言（横向 blue-950→blue-800）+ logo 方块（同 SideNav logo） */
 .head {
@@ -254,39 +306,32 @@ onBeforeUnmount(() => {
   padding: 26px 34px 60px;
 }
 
-/* hero 区：原型 page-head 规格（h1 24px/700 + sub g500 13px）+ eyebrow 蓝系小字距 */
+/* hero 简化为一行（D-20）：h1 与 sub 同行 baseline 对齐（eyebrow 已删） */
 .hero {
   display: flex;
-  justify-content: space-between;
-  gap: 30px;
-  align-items: flex-start;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
   margin-bottom: 18px;
-}
-
-.eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--blue-500);
-  font-weight: 600;
 }
 
 h1 {
   font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  margin: 5px 0 0;
+  margin: 0;
 }
 
 .sub {
   color: var(--g500);
-  margin-top: 5px;
+  margin: 0;
   font-size: 13px;
 }
 
+/* D-20：状态卡主位 + 配置卡次位——grid 单列（简洁优先，配置卡随行在下方） */
 .grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1fr;
   gap: 20px;
 }
 
@@ -316,24 +361,6 @@ h1 {
   background: var(--blue-500);
 }
 
-/* 行 .row 沿用（token 化：span g500、行分隔 g100） */
-.row {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--g100);
-  align-items: center;
-}
-
-.row:last-of-type {
-  border-bottom: none;
-}
-
-.row span {
-  color: var(--g500);
-}
-
 .muted {
   color: var(--g500);
   font-size: 13px;
@@ -344,10 +371,141 @@ h1 {
   color: var(--red);
 }
 
+/* ---- 未登录形态：登录卡（D-19） ---- */
+
+.login-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  width: 400px;
+  max-width: 100%;
+  padding: 32px 30px 20px;
+  text-align: center;
+}
+
+/* 登录卡 logo：同 SideNav 款 44px 蓝渐变方块 + 人形 SVG（居中放大留白） */
+.login-card .logo {
+  margin: 0 auto 18px;
+}
+
+.brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+
+.brand-sub {
+  margin-top: 5px;
+  font-size: 13px;
+  color: var(--g500);
+}
+
+.lead {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--g500);
+}
+
+/* 原型 .btn/.btn-primary 语言（同 AccessActions 子集） */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 9px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: 0.15s;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: var(--blue-600);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--blue-700);
+}
+
+/* 整宽放大主按钮（D-19：padding 12px / 字号 15px / 整宽） */
+.btn-login {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.login-card .error {
+  margin-top: 12px;
+  font-size: 12.5px;
+}
+
+/* 配置折叠区：展开时插在主按钮与卡底行之间（卡内文字回左对齐） */
+.config-drawer {
+  margin-top: 18px;
+  text-align: left;
+}
+
+/* 卡底一行：左「平台设置 ▾」入口 + 右服务状态小字（12px g500） */
+.card-foot {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--g100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-toggle {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--g600);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.config-toggle:hover {
+  color: var(--blue-700);
+}
+
+.service-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--g500);
+  white-space: nowrap;
+}
+
+/* 健康点（沿 TopBar dot 语言：7px 圆点绿/红） */
+.service-status .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-green {
+  background: var(--green);
+}
+
+.dot-red {
+  background: var(--red);
+}
+
 @media (max-width: 760px) {
-  .hero,
-  .grid {
-    display: block;
+  .page {
+    padding: 20px 18px 40px;
   }
 
   .hero {
@@ -355,7 +513,7 @@ h1 {
   }
 
   .card {
-    margin-bottom: 12px;
+    margin-bottom: 0;
   }
 }
 </style>
