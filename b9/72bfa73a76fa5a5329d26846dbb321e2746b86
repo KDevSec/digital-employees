@@ -1,0 +1,20 @@
+docs/design/预审与demo对照-编排设计合并后状态刷新-2026-08-26.md
+  s_0cf83e7997645f::t_2b165d9a5cc8f9 116-155
+  s_0cf83e7997645f::t_78c3470daa8521 159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "b972bfa73a76fa5a5329d26846dbb321e2746b86",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
