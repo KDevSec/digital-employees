@@ -1,23 +1,23 @@
 /**
- * R1 账本（T4）——单级 task 模型 + 事件流 + 热冷归档。
- * 落盘形态真源：设计文档 2026-08-26-协同编排-design.md §7（§7.1 布局分层 / §7.2 flow-state 字段 / §7.3 事件壳）。
+ * R1 账本（T4 修复版）——单级 task 模型 + 事件流 + 热冷归档。
+ * 落盘形态真源：设计文档 2026-08-26-协同编排-design.md §7（§7.1 布局 / §7.2 flow-state / §7.3 事件壳）。
  *
- * 布局分层：账本主存储在 dataDir 侧（<dataDir>/tasks/<id>/）；工作区侧（<workspace>/.devzero/）
- * init 时同步落 TASK.md、AGENTS.md 引用行、.mcp.json 三样，不落账本副本。
+ * 布局（D-045）：活动账本在 <workspace>/.devzero/tasks/<id>/；完成归档搬 <dataDir>/archive/tasks/<id>；
+ * dataDir 侧 tasks-index.json 轻量索引（定位/列表之源——活动目录分散各 workspace 需反查）。
  *
  * write 顺序红线（设计 §7.4 ⑥）：先 append events.jsonl（注入 seq/ts）再原子写 flow-state.json
  * （tmp+rename，1.0 flow_state._write_doc 对应）——「事件丢一行可容忍、状态文件是真相源」。
  */
 import { randomUUID } from 'node:crypto'
 import {
-  appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync,
+  appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { dump as yamlDump } from 'js-yaml'
 import { engineEventSchema, type EngineEvent } from '../schema/events'
 import type { NodeTable } from '../schema/node-table'
 import type { TaskState } from '../r2/state'
-import { archiveDir, taskDir, type EngineDirs, type TaskMeta } from './paths'
+import { archiveDir, indexPath, taskDir, type EngineDirs, type IndexEntry, type TaskMeta } from './paths'
 
 /** 发起任务入参（T5 门面同形契约——T5 engine.ts re-export 本定义） */
 export interface CreateTaskInput {
@@ -32,28 +32,37 @@ export interface CreateTaskInput {
   effort?: string
 }
 
-/** 账本错误——message 含定位路径（坏盘不静默） */
+/** 账本错误——message 含定位路径（坏盘不静默）；cause 链保留原始错误（init 回滚等） */
 export class LedgerError extends Error {
-  constructor(message: string) {
-    super(message)
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options)
     this.name = 'LedgerError'
   }
 }
 
+/** @internal 测试注入钩子：rename/rm 失败场景模拟（归档占用兜底分支覆盖） */
+export interface LedgerHooks {
+  rename?: (src: string, dest: string) => void
+  rm?: (target: string) => void
+}
+
 export interface Ledger {
-  /** 建任务目录+表快照+flow-state 初值+工作区三样（TASK.md/AGENTS.md 行/.mcp.json）。不做 run.created 事件 */
+  /** 建 <ws>/.devzero/tasks/<id>/ 账本 + 工作区三样（TASK.md/AGENTS.md 行/.mcp.json）+ 索引行。
+   *  失败全量回滚（账本目录/索引行/本次新建的 .devzero 骨架）。不做 run.created 事件 */
   init(input: CreateTaskInput, table: NodeTable): { task_id: string }
-  /** 读 flow-state.json，返回 state/meta 合并视图（缺文件/坏 JSON 抛 LedgerError 含路径；归档侧兜底） */
+  /** 经索引定位读 flow-state（归档任务可读历史）；缺行/目录缺失/坏 JSON 抛 LedgerError 含定位 */
   read(taskId: string): { state: TaskState; meta: TaskMeta }
-  /** 先 append events.jsonl（注入 seq/ts + schema 校验）再原子写 flow-state（updated_at 刷新）。终态不自动归档 */
+  /** 仅活动任务：先 append events.jsonl（注入 seq/ts + schema 校验 + 尾行换行防御）再原子写
+   *  flow-state（updated_at 刷新）+ 同步索引行 status；已归档任务拒绝写。终态不自动归档 */
   write(taskId: string, next: TaskState, newEvents: EngineEvent[]): void
-  /** 逐行读事件（坏行跳过——1.0 容错语义），afterSeq 之后（seq > afterSeq）；活动目录优先、归档兜底 */
+  /** 逐行读事件（坏行跳过——1.0 容错语义），afterSeq 之后（seq > afterSeq）；归档任务可读 */
   readEvents(taskId: string, afterSeq?: number): EngineEvent[]
-  /** 整目录移到 <dataDir>/archive/tasks/<id>；目标占用换 .r2/.r3 代际名 */
+  /** 幂等（已归档 no-op）；工作区账本目录 → <dataDir>/archive/tasks/<id>（占用换 .r2/.r3）；
+   *  Windows 占用对策：rename 重试 1 次 → copy+rm 兜底（rm 失败则索引已切归档侧、抛错留人工清理） */
   archive(taskId: string): void
-  /** 活动目录扫描（坏目录跳过；空/缺目录返回 []） */
+  /** 活动任务（索引 archived:false 行） */
   list(): { task_id: string; status: string; title: string }[]
-  /** 归档目录扫描（看板历史，语义同 list） */
+  /** 归档任务（索引 archived:true 行，看板历史） */
   listArchive(): { task_id: string; status: string; title: string }[]
 }
 
@@ -73,6 +82,8 @@ const newTaskId = (): string => `t-${randomUUID().replace(/-/g, '').slice(0, 12)
 
 /** flow-state.json 落盘形态：meta + state 扁平合并（设计 §7.2 样例同形） */
 type FlowStateDoc = TaskMeta & TaskState
+
+type TaskIndexDoc = { tasks: Record<string, IndexEntry> }
 
 function renderTaskMd(meta: TaskMeta, state: TaskState): string {
   const flowLabel = meta.display_name ? `${meta.flow}（${meta.display_name}）` : meta.flow
@@ -145,15 +156,6 @@ function readFlowState(dir: string): FlowStateDoc {
   }
 }
 
-/** 活动目录优先、归档兜底（归档后 read/readEvents 仍可读历史）；两侧都无 → LedgerError 含路径 */
-function resolveTaskDir(dirs: EngineDirs, taskId: string): string {
-  const active = taskDir(dirs, taskId)
-  if (existsSync(active)) return active
-  const archived = archiveDir(dirs, taskId)
-  if (existsSync(archived)) return archived
-  throw new LedgerError(`[ledger] 任务不存在: ${active}（亦未见于归档 ${archived}）`)
-}
-
 function readEventsFile(dir: string): EngineEvent[] {
   const target = join(dir, EVENTS)
   if (!existsSync(target)) return []
@@ -169,31 +171,62 @@ function readEventsFile(dir: string): EngineEvent[] {
   return events
 }
 
-/** 扫任务根目录（活动或归档）出三字段行；坏目录跳过 */
-function scanTasks(rootDir: string): { task_id: string; status: string; title: string }[] {
-  if (!existsSync(rootDir)) return []
-  const rows: { task_id: string; status: string; title: string }[] = []
-  for (const ent of readdirSync(rootDir, { withFileTypes: true })) {
-    if (!ent.isDirectory()) continue
-    try {
-      const doc = readFlowState(join(rootDir, ent.name))
-      rows.push({ task_id: doc.task_id, status: String(doc.status), title: String(doc.title) })
-    } catch {
-      // 坏目录跳过（无 flow-state/坏 JSON）——列表不被单任务拖垮
-    }
+/** 读任务索引：不存在 → 空索引；坏 JSON → LedgerError 含路径（不静默清空） */
+function readIndex(dirs: EngineDirs): TaskIndexDoc {
+  const p = indexPath(dirs)
+  if (!existsSync(p)) return { tasks: {} }
+  try {
+    return JSON.parse(readFileSync(p, 'utf8')) as TaskIndexDoc
+  } catch (err) {
+    throw new LedgerError(`[ledger] tasks-index.json 损坏（坏 JSON）: ${p}: ${(err as Error).message}`)
   }
-  rows.sort((a, b) => a.task_id.localeCompare(b.task_id))
-  return rows
 }
 
-export function createLedger(dirs: EngineDirs): Ledger {
+/** 原子写索引（dataDir + tmp + rename） */
+function writeIndexAtomic(dirs: EngineDirs, doc: TaskIndexDoc): void {
+  mkdirSync(dirs.dataDir, { recursive: true })
+  const target = indexPath(dirs)
+  const tmp = join(dirs.dataDir, `.tasks-index-${randomUUID()}.tmp`)
+  try {
+    writeFileSync(tmp, `${JSON.stringify(doc, null, 2)}\n`)
+    renameSync(tmp, target)
+  } catch (err) {
+    rmSync(tmp, { force: true })
+    throw err
+  }
+}
+
+/** 经索引定位任务目录（归档任务走 archive_path；活动走工作区） */
+function resolveTask(dirs: EngineDirs, taskId: string): { dir: string; entry: IndexEntry } {
+  const entry = readIndex(dirs).tasks[taskId]
+  if (!entry) {
+    throw new LedgerError(`[ledger] 任务不存在于索引: ${taskId}（index: ${indexPath(dirs)}）`)
+  }
+  const dir = entry.archived && entry.archive_path ? entry.archive_path : taskDir(entry.workspace, taskId)
+  if (!existsSync(dir)) {
+    throw new LedgerError(`[ledger] 任务目录缺失: ${dir}（task ${taskId}${entry.archived ? ' archived' : ''}）`)
+  }
+  return { dir, entry }
+}
+
+/** 索引行 → 列表行（按 archived 分区，task_id 排序） */
+function indexRows(dirs: EngineDirs, archived: boolean): { task_id: string; status: string; title: string }[] {
+  return Object.entries(readIndex(dirs).tasks)
+    .filter(([, e]) => e.archived === archived)
+    .map(([task_id, e]) => ({ task_id, status: e.status, title: e.title }))
+    .sort((a, b) => a.task_id.localeCompare(b.task_id))
+}
+
+export function createLedger(dirs: EngineDirs, hooks: LedgerHooks = {}): Ledger {
+  const doRename = hooks.rename ?? ((src: string, dest: string) => renameSync(src, dest))
+  const doRm = hooks.rm ?? ((target: string) => rmSync(target, { recursive: true, force: true }))
+
   return {
     init(input, table) {
       const taskId = newTaskId()
-      const dir = taskDir(dirs, taskId)
-      mkdirSync(join(dir, HANDOFFS), { recursive: true })
-      writeFileSync(join(dir, EVENTS), '') // 空文件占位——init 不发事件（run.created 由 T5 门面发）
-
+      const wsDz = join(input.workspace, '.devzero')
+      const dzExisted = existsSync(wsDz)
+      const dir = taskDir(input.workspace, taskId)
       const now = nowIso()
       const meta: TaskMeta = {
         task_id: taskId,
@@ -212,16 +245,36 @@ export function createLedger(dirs: EngineDirs): Ledger {
         retries: {},
         blocked_reason: null,
       }
-      // 表快照：入参已解析 NodeTable 原样 dump（solo 动态表同经此路径）
-      writeFileSync(join(dir, SNAPSHOT), yamlDump(table))
-      writeFlowStateAtomic(dir, { ...meta, ...state })
+      try {
+        mkdirSync(join(dir, HANDOFFS), { recursive: true })
+        writeFileSync(join(dir, EVENTS), '') // 空文件占位——init 不发事件（run.created 由 T5 门面发）
+        // 表快照：入参已解析 NodeTable 原样 dump（solo 动态表同经此路径）
+        writeFileSync(join(dir, SNAPSHOT), yamlDump(table))
+        writeFlowStateAtomic(dir, { ...meta, ...state })
+        writeWorkspaceArtifacts(input, meta, state) // 工作区三样（失败 → 回滚重抛）
 
-      writeWorkspaceArtifacts(input, meta, state)
+        const idx = readIndex(dirs) // 索引最后写——工作区全部成功才入索引
+        idx.tasks[taskId] = {
+          workspace: input.workspace, flow: table.flow, title: input.title,
+          status: state.status, archived: false, archive_path: null, created_at: now, updated_at: now,
+        }
+        writeIndexAtomic(dirs, idx)
+      } catch (err) {
+        // 全量回滚：账本目录 + 本次新建的 .devzero 骨架（已存在则只清本次 TASK.md；.mcp.json 多任务共享不清；
+        // AGENTS.md 引用行幂等无害保留）。索引未写（最后一步）——无需回滚，但防御性删行。
+        rmSync(dir, { recursive: true, force: true })
+        if (!dzExisted) {
+          try { rmSync(wsDz, { recursive: true, force: true }) } catch { /* 回滚尽力而为 */ }
+        } else {
+          try { rmSync(join(wsDz, 'TASK.md'), { force: true }) } catch { /* 回滚尽力而为 */ }
+        }
+        throw new LedgerError(`[ledger] init 失败已回滚（task ${taskId}）: ${(err as Error).message}`, { cause: err })
+      }
       return { task_id: taskId }
     },
 
     read(taskId) {
-      const doc = readFlowState(resolveTaskDir(dirs, taskId))
+      const doc = readFlowState(resolveTask(dirs, taskId).dir)
       const {
         status, current_node, gate_iters, gate_calls, retries, blocked_reason,
         ...meta
@@ -233,15 +286,17 @@ export function createLedger(dirs: EngineDirs): Ledger {
     },
 
     write(taskId, next, newEvents) {
-      const dir = resolveTaskDir(dirs, taskId)
+      const { dir, entry } = resolveTask(dirs, taskId)
+      if (entry.archived) {
+        throw new LedgerError(`[ledger] task '${taskId}' archived; write rejected`)
+      }
       const meta = readFlowState(dir)
 
       // ① 先校验整批（注入 seq/ts）后落盘——一条非法则一行不写
       // seq=已有行数+自增（原始行计——坏行也占号，永不回拨/复用）
       const eventsPath = join(dir, EVENTS)
-      const existing = existsSync(eventsPath)
-        ? readFileSync(eventsPath, 'utf8').split('\n').filter((l) => l.trim() !== '').length
-        : 0
+      const raw = existsSync(eventsPath) ? readFileSync(eventsPath, 'utf8') : ''
+      const existing = raw.split('\n').filter((l) => l.trim() !== '').length
       const completed: EngineEvent[] = newEvents.map((e, i) => {
         const candidate = { ...e, seq: existing + i + 1, ts: e.ts && e.ts.length > 0 ? e.ts : nowIso() }
         const parsed = engineEventSchema.safeParse(candidate)
@@ -254,21 +309,39 @@ export function createLedger(dirs: EngineDirs): Ledger {
         return parsed.data
       })
       if (completed.length > 0) {
-        appendFileSync(join(dir, EVENTS), completed.map((e) => JSON.stringify(e)).join('\n') + '\n')
+        // 尾行换行防御：crash-mid-append 残行（非空且不以 \n 结尾）→ 先补换行，新事件独立成行
+        const prefix = raw.length > 0 && !raw.endsWith('\n') ? '\n' : ''
+        appendFileSync(eventsPath, `${prefix}${completed.map((e) => JSON.stringify(e)).join('\n')}\n`)
       }
 
       // ② 再原子写 flow-state（meta+next 合并，updated_at 刷新；终态不自动归档——调用方显式 archive）
       writeFlowStateAtomic(dir, { ...meta, ...next, updated_at: nowIso() })
+
+      // ③ 同步索引行（status/updated_at）
+      const idx = readIndex(dirs)
+      const row = idx.tasks[taskId]
+      if (row) {
+        row.status = next.status
+        row.updated_at = nowIso()
+        writeIndexAtomic(dirs, idx)
+      }
     },
 
     readEvents(taskId, afterSeq = 0) {
-      return readEventsFile(resolveTaskDir(dirs, taskId)).filter((e) => e.seq > afterSeq)
+      return readEventsFile(resolveTask(dirs, taskId).dir).filter((e) => e.seq > afterSeq)
     },
 
     archive(taskId) {
-      const src = taskDir(dirs, taskId)
+      const idx = readIndex(dirs)
+      const entry = idx.tasks[taskId]
+      if (!entry) {
+        throw new LedgerError(`[ledger] archive 失败——任务不存在于索引: ${taskId}（index: ${indexPath(dirs)}）`)
+      }
+      if (entry.archived) return // 幂等：已归档 no-op
+
+      const src = taskDir(entry.workspace, taskId)
       if (!existsSync(src)) {
-        throw new LedgerError(`[ledger] archive 失败——活动任务不存在: ${src}`)
+        throw new LedgerError(`[ledger] archive 失败——活动目录缺失: ${src}`)
       }
       // 目标占用 → .r2/.r3 代际名（首个可用）
       let dest = archiveDir(dirs, taskId)
@@ -276,15 +349,43 @@ export function createLedger(dirs: EngineDirs): Ledger {
         dest = `${archiveDir(dirs, taskId)}.r${gen}`
       }
       mkdirSync(dirname(dest), { recursive: true })
-      renameSync(src, dest)
+
+      // Windows 占用对策（1.0 坑②路径版）：rename 重试 1 次 → copy+rm 兜底；
+      // rm 失败（源被观战流/编辑器持句柄）→ 索引已切归档侧（读走 archive_path），抛错留人工清理
+      try {
+        doRename(src, dest)
+      } catch {
+        try {
+          doRename(src, dest)
+        } catch {
+          cpSync(src, dest, { recursive: true })
+          try {
+            doRm(src)
+          } catch (rmErr) {
+            entry.archived = true
+            entry.archive_path = dest
+            entry.updated_at = nowIso()
+            writeIndexAtomic(dirs, idx)
+            throw new LedgerError(
+              `[ledger] archive copy 兜底完成但源删除失败（双存在，读已切归档侧，请人工清理）: ${src}: ${(rmErr as Error).message}`,
+              { cause: rmErr },
+            )
+          }
+        }
+      }
+      // 成功路径统一更新索引（rm 失败分支已 throw 并自行更新，不会到达此处）
+      entry.archived = true
+      entry.archive_path = dest
+      entry.updated_at = nowIso()
+      writeIndexAtomic(dirs, idx)
     },
 
     list() {
-      return scanTasks(join(dirs.dataDir, 'tasks'))
+      return indexRows(dirs, false)
     },
 
     listArchive() {
-      return scanTasks(join(dirs.dataDir, 'archive', 'tasks'))
+      return indexRows(dirs, true)
     },
   }
 }
