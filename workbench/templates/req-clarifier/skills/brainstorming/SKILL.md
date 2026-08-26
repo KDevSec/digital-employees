@@ -31,7 +31,7 @@ You MUST create a task for each of these items and complete them in order:
 5. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
 6. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 7. **User reviews written spec** — ask user to review the spec file before proceeding
-8. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+8. **Transition to implementation** — 若实现方持有计划编写技能（如 dev-engineer 的 writing-plans）则移交；本包内不自带该技能时，产出设计要点清单供实现方起草计划
 
 ## Process Flow
 

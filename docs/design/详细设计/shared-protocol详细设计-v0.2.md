@@ -147,6 +147,8 @@ export const manifestSchema = z.object({
 export const skillFrontmatterSchema = z.object({
   name: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),   // = 目录名 = slug（安装约定）
   description: z.string().min(10),                   // 触发召回依据；双引号包裹（CB 严格 YAML 教训）
+  vendored_from: z.string().optional(),              // vendoring 溯源（MIT 合规要求；如 superpowers/@6.1.1）
+  license: z.string().optional(),                    // 许可标识（随行 licenses/ 或 LICENSE 文件）
 }).strict()
 ```
 
@@ -158,7 +160,7 @@ export const skillEntrySchema = z.discriminatedUnion('source_type', [
     name: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
     version: z.string().regex(semver),                 // 锁定版本（包自包含）
     source_type: z.literal('template'),
-    template_id: z.string(),                           // 来源模板（重建/漂移检测用）
+    template_id: z.string().optional(),                // 来源模板 id（重建/漂移检测用；模板自证场景可省——E-12 重建包时注入）
   }),
   z.object({                                            // 本地上传（D-047 V0.1 主路径：zip 解包 → 校验 → 复制进包）
     name: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
@@ -232,3 +234,4 @@ CI: pnpm gen && git diff --exit-code samples/
 | 日期 | 变更 |
 |------|------|
 | 2026-08-27 | v0.2：八类顶层重组（T6）+ 六重复项清理（T7）+ id 治理（T8）+ tools.deny（T9）+ skill 来源 D-047 收敛；模板物料 7 份作活样例纳入 CI；取代 v0.1 |
+| 2026-08-27 | fable 评审修复：template_id 改 optional（模板自证场景自指无意义，E-12 重建时注入）、skillFrontmatter 增 vendored_from/license（MIT 溯源合规）；注：governance.audit 枚举较 v0.1 由 metadata\|full 改为 full\|exceptions-only（对齐 demo v2「仅异常」语义，语义修订非笔误） |

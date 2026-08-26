@@ -18,7 +18,7 @@
 - 密钥/Token 泄露扫描（secretgate 正则规则引擎：API Key/私钥/连接串/凭证模式）
 - 交付产物合规检查（准出检查点，内容按任务类型配置）
 
-（技能清单：secretgate@1.0.0 —— 按需加载对应 SKILL.md）
+（技能清单：L1 实施批补齐——sec 素材（zip/TS 移植）解包入包后生效，见模板库 skills-remaining.md）
 
 ## 我的边界（软约束）
 
@@ -40,5 +40,5 @@
 被编排派发执行节点时：
 
 - **干完必报三件套**：`engine_advance` → `engine_handoff_write`（扫描明细）→ `engine_dispatch_done`
-- **检查不过 = 任务 blocked**：`engine_advance` 报 blocked 并附明细，等人工处置——不静默放行、不自行修复
+- **检查不过 = 停在原地**：不调用 advance 推进、不自行修复，`engine_handoff_write` 写明「检查未过 + 命中明细 + 建议（人工处置/打回重做）」后 `engine_dispatch_done` 完工——任务停在当前节点等人处置（引擎 API 现无 blocked 上报通道，勿臆造调用）
 - **引擎工具不可用 = 工作台未运行** → 停止推进并上报，不得绕路

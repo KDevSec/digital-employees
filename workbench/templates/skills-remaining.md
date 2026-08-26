@@ -5,6 +5,13 @@
 > 每份头部留来源注记，副文件 references/LICENSE 随行）+ review-verdict 新写 1 份。
 > 分配：dev-engineer×5 / req-clarifier×5 / sys-engineer×5 / reviewer-expert×1（新写）。
 
+## L1 打磨批（语义级改写，fable 评审 #6/#7/#8 遗留）
+
+| # | 项 | 说明 |
+|---|----|------|
+| 5 | kdev-gen 七件套 V4x.1 流程词汇降级 | 体内 nodes-data/准入 prompt-check.sh/veto 编号/迭代档案坐标（`迭代N/vX-<版本>/03-design/`）等 1.0 V4x.1 SOP 词汇未做语义级清理（本批仅机械替换：前缀/.ieidev→.devzero）——L1 打磨为通用方法论措辞或补齐规范副文件随行 |
+| 6 | writing-plans 残留复查 | 已改两处主从指令（评审 #6）；其余 superpowers 语境词汇（spec/reviewer-prompt 引用文件随行情况）L1 复核 |
+
 ## 剩余（留 L1 线实施批）
 
 | # | 项 | 来源 | 动作 | 备注 |
@@ -21,3 +28,8 @@
 - dev 个人表：YAML 合法、节点 id 唯一、next/gate 引用完整、terminal_fail/delivery_node 在表内 ✅
 - skills ×16：frontmatter name=目录名、description ≥10 字（sr/ar 为多行折叠块，单行校验脚本误报、内容合格）✅
 - **未做**（待 I0-4 zod 真源落仓后接 CI）：manifest 全量 schema 校验、SKILL.md 双引号规范复核
+
+
+## fable 评审修复批记录（2026-08-27，随本分支提交）
+
+已修：🔴#1 schema template_id 改 optional / 🔴#2 frontmatter 增 vendored_from+license / 🟡#3 个人表 self 契约补注（Q-selfgate 登记）/ 🟡#4 sec-compliance blocked 表述改停跑+handoff / 🟡#5 设计 §4 评审位三件套变体 / 🟡#6 writing-plans 主从两处 / 🟡#7 brainstorming 条件式+proto 依赖声明降级 / 🟡#9 LICENSE×4 补齐 / 🟡#10 sec 三员 skills 摘除对账 / 🟡#11 占位邮箱 / 🟡#12 kind 判据 / ⚪#13 节点计数 / ⚪#15 变更记录补 audit / ⚪#16 evals+tests 删除。未动：#14（合并自愈）/ #17（Q-verify 与 I3 收口）。

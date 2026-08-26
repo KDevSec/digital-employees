@@ -7,6 +7,11 @@ description: 高保真原型节点的产物生成 SKILL（V4x.1·从原型生成
 
 # kdev-gen-proto · 高保真原型生成（delegate:frontend-design·从原型生成提示词模板转化）
 
+> **跨技能依赖声明（V0.1）**：本 skill 的方法论 = 委托 `frontend-design` 技能创作原型（该技能默认配置在
+> dev-engineer 员工包）。若当前员工包未包含 frontend-design（D-006 包自包含原则下的显式可选依赖），
+> **降级语义**：由承接者自含产出基础结构原型（布局/信息层级/交互清单，不含高保真视觉），
+> 并在产物头部注明「基础档（无 frontend-design 技能）」；不得假装已完成高保真创作。
+
 **开场播报**："我在用 kdev-gen-proto 承接 <版本> 高保真原型生成（delegate:frontend-design 模式）。"
 
 > **V4x.1 形态**：本 SKILL 把"承接动作 + 委托纪律 + 交付硬标准"封装成可调承接器。`0b-生成提示词模板-原型` 因此变薄——只喂坐标+AR+设计系统硬约束并**调本 SKILL**，不再贴整段委托指令。

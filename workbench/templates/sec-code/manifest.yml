@@ -26,8 +26,7 @@ agent:
       - 明细落档（漏洞位置/类型/修法可追溯）
     usage_modes: [裸用, +方法论]
 
-skills:
-  - {name: sec-scan-code, version: 1.0.0, source_type: template} # zip 素材：Python 扫描引擎 + OWASP Top 10:2025（.venv 装员工 home 不进包）
+skills: []  # L1 实施批补齐（sec 素材为 zip/TS 移植，见 skills-remaining.md #1~#3；避免声明-实物不符）
 
 hooks: # 候选值（Q-T4）
   redlines:

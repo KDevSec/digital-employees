@@ -18,7 +18,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** 如需与主工作区隔离，在执行期用宿主的 worktree 机制（如 Claude Code 的 EnterWorktree）创建隔离工作区。
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
 
 ## Scope Check
@@ -61,7 +61,7 @@ independently testable deliverable.
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** 按 agents-team 编排执行本计划——主控逐 task 派 fresh subagent 实现并在 task 间审查（推荐），或在当前会话内联逐 task 执行。Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** 由当前会话逐 task 顺序实现并在 task 间自检（2.0 单 Agent 语境；或经引擎节点派发执行，见任务工作区 .devzero/TASK.md）
 
 **Goal:** [One sentence describing what this builds]
 
@@ -160,10 +160,10 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
 
-**1. Subagent-Driven (recommended)** - 主控逐 task 派 fresh subagent 实现，task 间审查，快速迭代
+**1. Inline Execution (recommended)** - 当前会话内联逐 task 实现，task 间自检，按 checkpoint 停下来与用户对齐
 
-**2. Inline Execution** - 当前会话内联批执行，按 checkpoint 停下来审查
+**2. Orchestration Execution** - 任务工作区有引擎任务（.devzero/TASK.md）时，按节点指令被编排派发执行，干完必报三件套
 
 **Which approach?"**

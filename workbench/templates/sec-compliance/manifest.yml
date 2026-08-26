@@ -26,8 +26,7 @@ agent:
       - 准入准出对称（两端同一标准）
     usage_modes: [裸用, +方法论]
 
-skills:
-  - {name: secretgate, version: 1.0.0, source_type: template}
+skills: []  # L1 实施批补齐（sec 素材为 zip/TS 移植，见 skills-remaining.md #1~#3；避免声明-实物不符）
 
 hooks: # 候选值（Q-T4）：本地扫描，禁外网
   redlines:
