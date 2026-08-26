@@ -191,7 +191,6 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     writeFileSync(join(flowsDir, 'demo-flow.node-table.yml'), demoFlowYaml as unknown as string)
   }
   const engine = new Engine({ dataDir: profileDir, templatesDir: flowsDir })
-  const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -205,6 +204,8 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     writeConfigOverride,
     engine,
   })
+  // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）
+  const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })
   startedAtMs = Date.now()
   try {
     return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
