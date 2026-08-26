@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import type { Router } from 'vue-router'
 
 import Layout from '../src/components/nav/Layout.vue'
 import TopBar from '../src/components/nav/TopBar.vue'
@@ -10,13 +11,17 @@ import type { AccessState } from '../src/api/access'
 import { useSessionStore } from '../src/stores/session'
 
 /**
- * TopBar（I0-5 T4，F-04 顶栏全局态，设计 §3 尾段）：
+ * TopBar（I0-5 T4，F-04 顶栏全局态，设计 §3 尾段；T9 增 D-22 设置下拉）：
  * - 用户区：首字母圆徽 + name/email 两行；无用户「未登录」灰态（数据来自 session store）；
  * - 平台状态徽章 + 告警条：interpretPlatformStatus 消费 store.accessState（详见 platform-status.test）；
  * - 版本行：useHealthPolling（fetchHealthz + versionLineGated，2s 轮询——接入页同款逻辑的 composable 化）；
  * - 检查更新占位按钮（U 系列未落地）：点击 → 提示条「检查更新功能即将上线」；
  * - /api/state 轮询：30s 周期经 store.fetchState 刷新，挂载不立即拉取（守卫首次导航已拉过，
  *   不与 guard-integration「只拉一次」语义打架），unmount 清理定时器。
+ * - 设置下拉（T9，D-22）：用户区齿轮按钮（aria-label 设置）→ 菜单两项——「接入与平台设置」
+ *   （RouterLink 跳 '/'）+「退出登录」（logoutAction → store.fetchState → 编程导航回 '/'，
+ *   守卫与登录页自然衔接）；菜单外点击/Esc 关闭（手写 document 监听，onBeforeUnmount 清理）。
+ *   完整设置中心留 S-07 落地时升级。
  * fetch 以 stubGlobal 顶替（沿 access-view.test.ts 手法）；假定时下用 advanceTimersByTimeAsync
  * 刷微任务（flushPromises 依赖 setTimeout 会被假定时冻结）。
  */
@@ -74,6 +79,22 @@ function stubFetch(handlers: Record<string, () => unknown>): { calls: (url: stri
 }
 
 /**
+ * 最小 memory router（T9 起 TopBar 含 RouterLink/useRouter，挂载需真 router 注入；
+ * 四路径齐全避免 RouterLink 无匹配告警——沿 side-nav.test.ts 手法）。
+ */
+function createMinimalRouter(): Router {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { name: 'EmptyRoot', render: () => null } },
+      { path: '/employees', component: { name: 'EmptyE', render: () => null } },
+      { path: '/bases', component: { name: 'EmptyB', render: () => null } },
+      { path: '/kanban', component: { name: 'EmptyK', render: () => null } },
+    ],
+  })
+}
+
+/**
  * 挂 TopBar 前先经真 store.fetchState 预载（守卫首次导航语义）——
  * 桩 fetch 已装好，走真实 fetchAccessState 解析路径（不做 store 层 mock）。
  */
@@ -85,7 +106,7 @@ async function mountTopBar(
   setActivePinia(pinia)
   const store = useSessionStore()
   await store.fetchState()
-  const wrapper = mount(TopBar, { global: { plugins: [pinia] } })
+  const wrapper = mount(TopBar, { global: { plugins: [pinia, createMinimalRouter()] } })
   await flushPromises()
   return { wrapper, stub }
 }
@@ -247,7 +268,7 @@ describe('TopBar /api/state 轮询（30s 周期）与生命周期清理', () => 
     setActivePinia(pinia)
     const store = useSessionStore()
     await store.fetchState() // 守卫首次拉取语义：1 次
-    const wrapper = mount(TopBar, { global: { plugins: [pinia] } })
+    const wrapper = mount(TopBar, { global: { plugins: [pinia, createMinimalRouter()] } })
     await vi.advanceTimersByTimeAsync(0)
     expect(stub.calls('/api/state', 'GET')).toBe(1) // 挂载零拉取（不与守卫重复）
     expect(stub.calls('/healthz', 'GET')).toBe(1) // 健康轮询挂载即拉（接入页同款）
@@ -278,7 +299,7 @@ describe('TopBar /api/state 轮询（30s 周期）与生命周期清理', () => 
     setActivePinia(pinia)
     const store = useSessionStore()
     await store.fetchState()
-    const wrapper = mount(TopBar, { global: { plugins: [pinia] } })
+    const wrapper = mount(TopBar, { global: { plugins: [pinia, createMinimalRouter()] } })
     await vi.advanceTimersByTimeAsync(0)
     expect(wrapper.find('.platform-badge').text()).toBe('平台已连接')
     expect(wrapper.find('.alert').exists()).toBe(false)
@@ -319,5 +340,114 @@ describe('Layout 集成：顶栏槽位挂 TopBar（I0-5 T4 组装）', () => {
     expect(wrapper.text()).toContain('平台已连接')
     expect(wrapper.text()).toContain('检查更新')
     expect(wrapper.text()).toContain('张三') // 用户区经 store 渲染
+  })
+})
+
+describe('TopBar 设置下拉（D-22：齿轮按钮 → 接入与平台设置 / 退出登录）', () => {
+  /**
+   * D-22 专用挂载：比 mountTopBar 多两件事——
+   * - 真 router 且挂载后显式 push '/employees' 作起点（memory history 初始恒为 '/'——
+   *   vue-router 4.6.4 的 createMemoryHistory 参数只是 base 非初始 location；
+   *   从业务页跳 '/' 才可观测）；
+   * - attachTo: document.body（外点关闭的 document click 监听需要真实冒泡路径——
+   *   VTU 默认游离树不挂文档，trigger 的事件到不了 document）。
+   */
+  async function mountTopBarAttached(
+    handlers: Record<string, () => unknown>,
+  ): Promise<{ wrapper: VueWrapper; stub: { calls: (url: string, method: string) => number }; router: Router }> {
+    const stub = stubFetch(handlers)
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const store = useSessionStore()
+    await store.fetchState()
+    const router = createMinimalRouter()
+    const wrapper = mount(TopBar, { global: { plugins: [pinia, router] }, attachTo: document.body })
+    await flushPromises()
+    await router.push('/employees')
+    await flushPromises()
+    active = wrapper
+    return { wrapper, stub, router }
+  }
+
+  it('齿轮按钮在场（aria-label 设置，默认收起）；点击展开菜单两项：接入与平台设置 / 退出登录', async () => {
+    const { wrapper } = await mountTopBarAttached({
+      '/api/state': () => jsonResponse(activeFresh),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    const gear = wrapper.find('button[aria-label="设置"]')
+    expect(gear.exists(), '齿轮按钮应存在（aria-label 设置）').toBe(true)
+    expect(wrapper.find('.settings-menu').exists()).toBe(false) // 默认收起
+
+    await gear.trigger('click')
+    expect(wrapper.find('.settings-menu').exists()).toBe(true)
+    const items = wrapper.findAll('.settings-menu .menu-item')
+    expect(items.map((item) => item.text())).toEqual(['接入与平台设置', '退出登录'])
+  })
+
+  it('点「接入与平台设置」→ 路由跳 / 且菜单收起（RouterLink 导航）', async () => {
+    const { wrapper, router } = await mountTopBarAttached({
+      '/api/state': () => jsonResponse(activeFresh),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    expect(router.currentRoute.value.path).toBe('/employees')
+    await wrapper.find('button[aria-label="设置"]').trigger('click')
+    const link = wrapper.findAll('.settings-menu a').find((item) => item.text() === '接入与平台设置')
+    expect(link, '菜单内应为 RouterLink 锚点').toBeTruthy()
+    await link!.trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/')
+    expect(wrapper.find('.settings-menu').exists()).toBe(false)
+  })
+
+  it('点「退出登录」→ POST /api/logout → GET /api/state 刷新未登录态 → 编程导航回 /', async () => {
+    let stateCalls = 0
+    const { wrapper, stub, router } = await mountTopBarAttached({
+      // 预载 1 次 ACTIVE（守卫首次拉取语义）；退出动作后再拉 → 未登录态
+      '/api/state': () => {
+        stateCalls += 1
+        return jsonResponse(stateCalls === 1 ? activeFresh : unauthenticatedState)
+      },
+      '/api/logout': () => jsonResponse({ status: 'ok' }),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    expect(router.currentRoute.value.path).toBe('/employees')
+    await wrapper.find('button[aria-label="设置"]').trigger('click')
+    const logout = wrapper.findAll('.settings-menu button').find((item) => item.text() === '退出登录')
+    expect(logout, '退出登录应为菜单内按钮').toBeTruthy()
+    await logout!.trigger('click')
+    await flushPromises()
+
+    expect(stub.calls('/api/logout', 'POST')).toBe(1)
+    expect(stub.calls('/api/state', 'GET')).toBe(2) // 预载 1 + 退出后 fetchState 1
+    expect(router.currentRoute.value.path).toBe('/')
+    // store 已翻未登录态（退出后 fetchState 拿到未登录态，用户区自然回灰态）
+    expect(wrapper.text()).toContain('未登录')
+    expect(wrapper.find('.settings-menu').exists()).toBe(false) // 菜单已收起
+  })
+
+  it('菜单外点击（document 冒泡）→ 关闭菜单', async () => {
+    const { wrapper } = await mountTopBarAttached({
+      '/api/state': () => jsonResponse(activeFresh),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    await wrapper.find('button[aria-label="设置"]').trigger('click')
+    expect(wrapper.find('.settings-menu').exists()).toBe(true)
+
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+    expect(wrapper.find('.settings-menu').exists()).toBe(false)
+  })
+
+  it('Esc 键 → 关闭菜单', async () => {
+    const { wrapper } = await mountTopBarAttached({
+      '/api/state': () => jsonResponse(activeFresh),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    await wrapper.find('button[aria-label="设置"]').trigger('click')
+    expect(wrapper.find('.settings-menu').exists()).toBe(true)
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(wrapper.find('.settings-menu').exists()).toBe(false)
   })
 })

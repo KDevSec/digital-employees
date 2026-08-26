@@ -5,8 +5,8 @@ import { h } from 'vue'
 import type { Router } from 'vue-router'
 
 /**
- * 路由守卫集成（I0-5 T3，设计 D-7）：真 router（src/router 全量装配：Layout 嵌套路由 + beforeEach 守卫）
- * + setActivePinia + stubGlobal fetch，走真实导航管线。
+ * 路由守卫集成（I0-5 T3 立项 D-7；T9 增 D-21 登录动线）：真 router（src/router 全量装配：
+ * Layout 嵌套路由 + beforeEach 守卫）+ setActivePinia + stubGlobal fetch，走真实导航管线。
  *
  * 环境与隔离手法：
  * - createWebHistory 顶替为 createMemoryHistory（沿 test/router.test.ts 手法）：router 是模块级单例，
@@ -46,6 +46,15 @@ const authenticatedState = {
   installationId: 'inst-001',
   workbenchId: 'wb-7',
   status: 'ACTIVE',
+  authenticated: true,
+  user: { name: '张三' },
+}
+
+/** D-21 用例 fixture：已登录但审批未过（停接入页盯审批的状态） */
+const pendingReviewState = {
+  installationId: 'inst-001',
+  enrollmentId: 'enr-9',
+  status: 'PENDING_REVIEW',
   authenticated: true,
   user: { name: '张三' },
 }
@@ -117,9 +126,10 @@ describe('守卫集成：未登录可达面收敛到接入页（D-7）', () => {
 })
 
 describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
-  it('认证后：三域逐页放行且渲染对应占位说明文案；侧栏在场；已登录访问 / 不跳转', async () => {
+  it('认证后：三域逐页放行且渲染对应占位说明文案；侧栏在场', async () => {
     stubFetch({ '/api/state': () => jsonResponse(authenticatedState) })
     const { router, text } = await mountApp()
+    // ACTIVE fixture 下首导航（初始 '/'）已被 D-21 自动跳到 /employees（详见下方 D-21 组用例）
     await router.push('/employees')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/employees')
@@ -137,10 +147,45 @@ describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
     expect(router.currentRoute.value.path).toBe('/kanban')
     expect(text()).toContain('任务看板即将上线')
 
-    // 已登录访问 / 不跳转（demo 语义，D-7 注）：接入页常驻可达（登录后即状态卡）
+    // 已登录 ACTIVE × SPA 内导航回 / → 放行停驻（T9 审查修复：自动分流只在初始导航/登录落地，
+    // 手动回接入页意图优先——D-22 顶栏「接入与平台设置」入口对 ACTIVE 用户有效）
     await router.push('/')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/')
+    expect(text()).toContain('access-stub')
+  })
+})
+
+describe('守卫集成：登录动线自动跳转（D-21：已登录 ACTIVE × / → /employees）', () => {
+  it('ACTIVE：首导航落 /（OIDC 回调场景，初始导航）即分流 /employees；SPA 内导航回 / 放行停驻（T9 审查修复）', async () => {
+    stubFetch({ '/api/state': () => jsonResponse(authenticatedState) })
+    const { router, text } = await mountApp()
+    // 回调落 '/' 的时序（D-21 注）：守卫首次导航已拉 state，直接按状态分流——初始 '/' 不停留
+    expect(router.currentRoute.value.path).toBe('/employees')
+    expect(text()).toContain('员工列表即将上线')
+
+    await router.push('/bases') // 先去别的业务页
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/bases')
+
+    // 再回 /：SPA 内导航放行停驻接入页（D-22「接入与平台设置」入口可达；自动跳转只属登录落地）
+    await router.push('/')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/')
+    expect(text()).toContain('access-stub')
+  })
+
+  it('PENDING_REVIEW：push(\'/\') 停 /（接入页盯审批，不自动跳）', async () => {
+    stubFetch({ '/api/state': () => jsonResponse(pendingReviewState) })
+    const { router, text } = await mountApp()
+    expect(router.currentRoute.value.path).toBe('/') // 非 ACTIVE 首导航停接入页
+    await router.push('/employees')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/employees')
+
+    await router.push('/')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/') // 审批未过：回 / 停留盯审批
     expect(text()).toContain('access-stub')
   })
 })

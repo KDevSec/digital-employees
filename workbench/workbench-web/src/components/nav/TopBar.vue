@@ -1,18 +1,26 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 
+import { logoutAction } from '../../api/access'
 import { useHealthPolling } from '../../composables/useHealthPolling'
 import { alertBanner, interpretPlatformStatus, statusBadge } from '../../api/platform-status'
 import { useSessionStore } from '../../stores/session'
 
 /**
- * 顶栏全局态（I0-5 T4，F-04 顶栏数据源，设计 §3 尾段；T7 视觉对齐原型）：
+ * 顶栏全局态（I0-5 T4，F-04 顶栏数据源，设计 §3 尾段；T7 视觉对齐原型；T9 增 D-22 设置下拉）：
  * - 形态：main 顶部一条白卡片（原型 .card 语言），内部 flex 两端布局——左侧用户区
  *   （原型 .avatar .av-blue 40px 蓝渐变圆徽 + name/email 两行），右侧平台状态徽章
  *   （原型 tag 体系：ok→tag-green/stale→tag-amber/revoked·unreachable→tag-red/
  *   inactive→tag-gray，附 dot 小圆点）+ 版本行 + 检查更新按钮（.btn .btn-ghost .btn-sm）；
  * - 用户区：首字母圆徽（name ?? preferred_username 首字符）+ name/email 两行文本；
  *   无用户或展示性 claim 全缺 → 「未登录」灰态（数据来自 session store 的 accessState.user）；
+ * - 设置下拉（T9，D-22）：用户区尾加齿轮按钮（aria-label 设置，stroke 风格沿 SideNav 图标）
+ *   → 下拉白卡两项——「接入与平台设置」（RouterLink 跳 '/'，接入页承载状态与平台配置）
+ *   +「退出登录」（红字变体沿 btn-danger 语言；logoutAction → store.fetchState → 编程
+ *   导航回 '/'，退出后 fetchState 拿到未登录态，守卫与登录页自然衔接）。菜单外点击/Esc
+ *   关闭（VueUse 不可用，手写 document 监听 + onBeforeUnmount 清理）。完整设置中心留
+ *   S-07（settings.json 用户偏好）落地时升级——用户确认 2026-08-26。
  * - 平台状态徽章 + 告警条：interpretPlatformStatus 消费 store.accessState——ok 绿 /
  *   stale 黄不出告警 / inactive 灰中性 / revoked·unreachable 红且告警条常驻卡片下方
  *   （D-032 提示而非降级：只提示，不锁任何功能）；
@@ -29,6 +37,7 @@ import { useSessionStore } from '../../stores/session'
 const ACCESS_STATE_POLL_MS = 30_000
 
 const store = useSessionStore()
+const router = useRouter()
 const { version } = useHealthPolling()
 
 const user = computed(() => store.accessState?.user)
@@ -60,15 +69,58 @@ const badgeDotClass = computed(() => DOT_BY_BADGE_CLASS[badge.value.badgeClass])
 /** 检查更新占位提示条（U 系列未落地，占位语义——见组件头注释） */
 const updateNotice = ref(false)
 
+/** 设置下拉开合（D-22）：齿轮按钮切换；菜单项点击/外点/Esc 收起 */
+const settingsOpen = ref(false)
+/** 设置区容器（齿轮 + 菜单）：外点判定基准（contains 判 target 是否在区内） */
+const settingsRef = ref<HTMLElement | null>(null)
+
+function toggleSettings(): void {
+  settingsOpen.value = !settingsOpen.value
+}
+
+function closeSettings(): void {
+  settingsOpen.value = false
+}
+
+/** 菜单外点击关闭：target 不在设置区容器内 → 收起（手写 document 监听，onBeforeUnmount 清理） */
+function onDocClick(event: MouseEvent): void {
+  if (!settingsOpen.value) return
+  if (settingsRef.value && !settingsRef.value.contains(event.target as Node)) {
+    settingsOpen.value = false
+  }
+}
+
+/** Esc 关闭菜单 */
+function onDocKeydown(event: KeyboardEvent): void {
+  if (settingsOpen.value && event.key === 'Escape') {
+    settingsOpen.value = false
+  }
+}
+
+/**
+ * 退出登录（D-22）：logoutAction → 刷新 store（拿到未登录态）→ 编程导航回 '/'。
+ * 退出后守卫按未登录分流（无 ACTIVE 自动跳），登录卡/接入页自然衔接。
+ */
+async function onLogout(): Promise<void> {
+  settingsOpen.value = false
+  await logoutAction()
+  await store.fetchState()
+  await router.push('/')
+}
+
 let stateTimer: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
   // 不立即 fetchState（守卫首次拉取的错开约定见组件头注释），只起周期刷新
   stateTimer = setInterval(() => void store.fetchState(), ACCESS_STATE_POLL_MS)
+  document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', onDocKeydown)
 })
 
 onBeforeUnmount(() => {
   if (stateTimer !== undefined) clearInterval(stateTimer)
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onDocKeydown)
 })
 </script>
 
@@ -85,6 +137,23 @@ onBeforeUnmount(() => {
             </span>
           </template>
           <span v-else class="guest-label">未登录</span>
+          <!-- D-22 设置下拉：齿轮按钮 + 两项菜单（接入与平台设置 / 退出登录）；完整设置中心留 S-07 -->
+          <div ref="settingsRef" class="settings">
+            <button
+              type="button"
+              class="settings-btn"
+              aria-label="设置"
+              aria-haspopup="menu"
+              :aria-expanded="settingsOpen"
+              @click="toggleSettings"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+            </button>
+            <div v-if="settingsOpen" class="settings-menu" role="menu">
+              <RouterLink to="/" class="menu-item" role="menuitem" @click="closeSettings">接入与平台设置</RouterLink>
+              <button type="button" class="menu-item menu-item-danger" role="menuitem" @click="onLogout">退出登录</button>
+            </div>
+          </div>
         </div>
         <div class="meta">
           <span class="platform-badge" :class="[badgeTagClass, badge.badgeClass]">
@@ -179,6 +248,80 @@ onBeforeUnmount(() => {
 /* 未登录灰态（无用户/无展示性 claim） */
 .user.guest .guest-label {
   color: var(--g500);
+}
+
+/* D-22 设置下拉：齿轮按钮（ghost 图标钮）+ 绝对定位菜单（白卡 .card 语言） */
+.settings {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.settings-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid var(--g300);
+  background: #fff;
+  color: var(--g500);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.settings-btn:hover {
+  border-color: var(--blue-400);
+  color: var(--blue-700);
+}
+
+.settings-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 176px;
+  background: #fff;
+  border: 1px solid var(--g200);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.12);
+  padding: 6px;
+  z-index: 30;
+}
+
+/* 菜单项：整块可点 + hover blue-50（RouterLink 补锚点形态重置） */
+.menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--g700);
+  cursor: pointer;
+  text-decoration: none;
+  transition: 0.15s;
+}
+
+.menu-item:hover {
+  background: var(--blue-50);
+  color: var(--blue-700);
+}
+
+/* 退出登录：红字变体（沿 AccessActions btn-danger 语言：ghost 形态 + red 文字，hover 红 200 底） */
+.menu-item-danger {
+  color: var(--red);
+}
+
+.menu-item-danger:hover {
+  background: var(--red-bg);
+  color: var(--red);
 }
 
 .meta {
