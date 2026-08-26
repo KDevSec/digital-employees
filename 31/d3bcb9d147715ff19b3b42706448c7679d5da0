@@ -1,0 +1,25 @@
+workbench/workbench-engine/test/schema.test.ts
+  s_ae9313906bcd90::t_55a4e2f6f59209 73-78
+workbench/workbench-engine/test/r2.test.ts
+  s_ae9313906bcd90::t_9342241c072af3 213-230
+workbench/workbench-engine/src/r2/node-machine.ts
+  s_ae9313906bcd90::t_0c1b9243a66305 126
+workbench/workbench-engine/src/schema/node-table.ts
+  s_ae9313906bcd90::t_7bf8ac192a7c0e 148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "31d3bcb9d147715ff19b3b42706448c7679d5da0",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
