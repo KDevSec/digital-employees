@@ -1,0 +1,25 @@
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_1440485a6cf42a 7
+  s_ae9313906bcd90::t_48865df79b6b82 448
+  s_ae9313906bcd90::t_dbe136586f5f1e 41
+  s_ae9313906bcd90::t_9f00ca7f968723 481
+docs/design/设计决策记录-2026-08-13.md
+  s_ae9313906bcd90::t_ff6f39ae1e5bfa 273-274
+  s_ae9313906bcd90::t_39eb3a52faf5ae 308-369
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "58a88a142c171e499eb0a40b9c32b687412c5199",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
