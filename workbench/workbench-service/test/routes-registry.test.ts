@@ -6,6 +6,10 @@ import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
 import { registerConfigRoutes } from '../src/server/routes/config'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
+import { Engine } from '@devzero/engine'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 /**
  * 路由分域注册约定（I0-5 T1，设计 D-1/D-2/D-3）：
@@ -13,7 +17,12 @@ import { loadConfig, writeConfigOverride } from '../src/config/load'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
-/** 域注册依赖：infra 五项 + shell 一项 + config 三项（I0-5 T8，与 main 装配同形状，值非契约） */
+/** 编排域引擎夹具：临时 dataDir/templatesDir（本文件只验路由表结构，不触达 engine 行为——行为断言在 routes-engine.test.ts） */
+const engineRoot = mkdtempSync(join(tmpdir(), 'registry-engine-'))
+const engine = new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') })
+process.on('exit', () => rmSync(engineRoot, { recursive: true, force: true }))
+
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + engine 一项（L3 T6，与 main 装配同形状，值非契约） */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -24,6 +33,7 @@ const deps = {
   profileDir: 'D:/data/.devzero',
   loadConfig,
   writeConfigOverride,
+  engine,
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -41,8 +51,21 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/'],
       ['GET', '/api/activity'],
       ['GET', '/api/config/platform'],
+      ['GET', '/api/engine/flows'],
+      ['GET', '/api/engine/tasks'],
+      ['GET', '/api/engine/tasks/:id'],
+      ['GET', '/api/engine/tasks/:id/events'],
       ['GET', '/api/events'],
       ['GET', '/healthz'],
+      ['POST', '/api/engine/tasks'],
+      ['POST', '/api/engine/tasks/:id/abort'],
+      ['POST', '/api/engine/tasks/:id/advance'],
+      ['POST', '/api/engine/tasks/:id/complete'],
+      ['POST', '/api/engine/tasks/:id/confirm-gate'],
+      ['POST', '/api/engine/tasks/:id/dispatch-done'],
+      ['POST', '/api/engine/tasks/:id/dispatch-start'],
+      ['POST', '/api/engine/tasks/:id/handoff-write'],
+      ['POST', '/api/engine/tasks/:id/record-gate'],
       ['PUT', '/api/config/platform'],
     ])
   })

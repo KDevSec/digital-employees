@@ -9,6 +9,8 @@ export interface Ctx {
   path: string
   host: string
   body?: unknown
+  /** 查询串解析（T6 起 engine 域 events?after_seq= 消费；缺省空——既有域不受影响） */
+  query?: URLSearchParams
 }
 
 export interface Res {

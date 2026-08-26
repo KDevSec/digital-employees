@@ -18,8 +18,13 @@ export function toHonoApp(
   return app
 }
 
+function parseQuery(url: string): URLSearchParams {
+  const qIndex = url.indexOf('?')
+  return new URLSearchParams(qIndex >= 0 ? url.slice(qIndex + 1) : '')
+}
+
 async function dispatch(
-  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
+  c: { req: { path: string; url: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
   route: Route,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
@@ -31,6 +36,8 @@ async function dispatch(
     // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
     // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
     body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
+    // 查询串仅 GET 消费（T6 engine 域 after_seq 过滤）；从完整 url 解析，失败归一空集
+    query: route.method === 'GET' ? parseQuery(c.req.url) : undefined,
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)

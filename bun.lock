@@ -22,6 +22,7 @@
       "name": "@devzero/service",
       "version": "0.0.1",
       "dependencies": {
+        "@devzero/engine": "workspace:*",
         "commander": "^12",
         "hono": "^4",
         "zod": "^3",

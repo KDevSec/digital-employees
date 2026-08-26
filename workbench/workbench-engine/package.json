@@ -15,5 +15,11 @@
   "dependencies": {
     "js-yaml": "^5.4.0",
     "zod": "^3"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/engine.ts",
+      "import": "./src/engine.ts"
+    }
   }
 }

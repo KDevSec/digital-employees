@@ -6,7 +6,7 @@
  * 串行前提：本类不做并发控制——单 service 进程内调用方（HTTP/MCP/驱动器）保证串行
  * （D-041 确定性驱动器单循环；账本 write 为 read-modify-write）。
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml'
 import { parseNodeTable, type FlowNode, type GateSpec, type NodeKind, type NodeTable } from './schema/node-table'
@@ -300,6 +300,25 @@ export class Engine {
   /** 事件拉取（SSE 重放/HTTP 分页共用；归档任务可读历史） */
   readEvents(taskId: string, afterSeq = 0): EngineEvent[] {
     return this.ledger.readEvents(taskId, afterSeq)
+  }
+
+  /** 活动任务列表（看板 GET /api/engine/tasks；T6 补——12 操作之外的列表读） */
+  listTasks(): { task_id: string; status: string; title: string }[] {
+    return this.ledger.list()
+  }
+
+  /** 归档任务列表（看板历史） */
+  listArchivedTasks(): { task_id: string; status: string; title: string }[] {
+    return this.ledger.listArchive()
+  }
+
+  /** 可用 flow 模板清单（GET /api/engine/flows——扫描 templatesDir 的 *.node-table.yml） */
+  flowsList(): { flow: string; file: string }[] {
+    if (!existsSync(this.deps.templatesDir)) return []
+    return readdirSync(this.deps.templatesDir)
+      .filter((f) => f.endsWith('.node-table.yml'))
+      .map((f) => ({ flow: f.replace(/\.node-table\.yml$/, ''), file: f }))
+      .sort((a, b) => a.flow.localeCompare(b.flow))
   }
 
   // ---------- 内部 ----------
