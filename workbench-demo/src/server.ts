@@ -32,7 +32,15 @@ async function submitEnrollmentIfNeeded(
   if (state.enrollmentId && !['REJECTED', 'ERROR'].includes(state.status)) {
     try {
       const existing = await platform.enrollment(state.enrollmentId, person.accessToken)
-      state.status = existing.status as WorkbenchState['status']
+      // 修复（验收阻塞，2026-08-26）：申请表终态 COMPLETED ≠ 实例未激活——已换得 workbenchId
+      // 的实例应保持 ACTIVE（心跳态）；原样覆盖会把已激活实例在每次拉状态时压回「已完成注册」，
+      // 前端守卫据此判非 ACTIVE 不自动跳转、状态卡恒示「能力已锁定」（demo 单 status 字段
+      // 混用申请/实例两张表状态的 bug，正式 A 系列迁移时两态分离）。
+      if (existing.status === 'COMPLETED' && state.workbenchId) {
+        state.status = 'ACTIVE'
+      } else {
+        state.status = existing.status as WorkbenchState['status']
+      }
       await store.save(state)
       return undefined
     } catch (error) {
