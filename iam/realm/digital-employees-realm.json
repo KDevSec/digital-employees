@@ -1,4 +1,5 @@
 {
+  "passwordPolicy": "hashAlgorithm(bcrypt) and hashIterations(12)",
   "realm": "digital-employees",
   "enabled": true,
   "displayName": "数字员工",

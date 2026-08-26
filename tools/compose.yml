@@ -15,7 +15,7 @@ services:
       retries: 30
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.7.0
+    image: quay.io/keycloak/keycloak:26.7.2
     command: ["start-dev", "--import-realm"]
     environment:
       KC_DB: postgres
@@ -35,6 +35,7 @@ services:
       IAM_SYNC_CLIENT_SECRET: ${IAM_SYNC_CLIENT_SECRET}
     volumes:
       - ../iam/realm:/opt/keycloak/data/import:ro
+      - ../iam/providers:/opt/keycloak/providers
     ports:
       - "18080:8080"
     depends_on:
