@@ -111,6 +111,14 @@
 | D-24 | TopBar 退役，内容全迁设置浮层 | 浮层分组：①用户组（avatar+name+email/未登录灰态）②状态组（平台状态 tag + 服务版本行——useHealthPolling 数据源迁此）③动作组（检查更新占位/接入与平台设置→'/'/退出登录红字）。外点/Esc 关闭 |
 | D-25 | 告警条独立为 AlertBar（D-032 语义不变） | 平台 unreachable/revoked 常驻告警从 TopBar 抽出为独立组件，Layout main 顶部条件渲染（正常态零占位）——常驻可见性不藏进浮层 |
 
+## 10 T11 增量设计：接入与平台设置弹窗（2026-08-26 用户验收反馈）
+
+> 反馈原文：「接入与平台设置页面应该是弹窗，或带侧边栏的页面，而不是单独页面无法返回」——原 RouterLink 跳 '/' 全屏路由（登录卡布局），ACTIVE 用户进入后无侧栏无返回动线断层。
+
+| # | 决策 | 说明 |
+|---|------|------|
+| D-26 | 接入与平台设置 = 弹窗（modal），非路由跳转 | SettingsPanel 第三项改 button（emit open-access）→ Layout 开 `AccessModal`（居中 mask+白卡）：内嵌 AccessStatusCard + PlatformConfigCard + AccessActions（登录态动作完整迁移）；Esc/外点/X 关闭，关闭即回原业务页（上下文不丢）。'/' 路由语义收窄为「未登录登录卡 + 审批中盯进度全屏页」，ACTIVE 用户不再被引去 |
+
 ## 变更记录
 
 | 日期 | 变更 |
