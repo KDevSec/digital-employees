@@ -52,6 +52,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/activity'],
       ['GET', '/api/config/platform'],
       ['GET', '/api/engine/flows'],
+      ['GET', '/api/engine/stream'],
       ['GET', '/api/engine/tasks'],
       ['GET', '/api/engine/tasks/:id'],
       ['GET', '/api/engine/tasks/:id/events'],

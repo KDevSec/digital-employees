@@ -24,7 +24,7 @@ function parseQuery(url: string): URLSearchParams {
 }
 
 async function dispatch(
-  c: { req: { path: string; url: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
+  c: { req: { path: string; url: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; raw: { headers: Headers } } },
   route: Route,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
@@ -38,6 +38,8 @@ async function dispatch(
     body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
     // 查询串仅 GET 消费（T6 engine 域 after_seq 过滤）；从完整 url 解析，失败归一空集
     query: route.method === 'GET' ? parseQuery(c.req.url) : undefined,
+    // 请求头小写键快照（T7 SSE last-event-id）；adapter 单点提取，域文件不碰框架类型
+    headers: Object.fromEntries(c.req.raw.headers),
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)
@@ -46,6 +48,12 @@ async function dispatch(
   const res = await route.handler(ctx)
   if (res.json !== undefined) {
     return Response.json(res.json, { status: res.status })
+  }
+  if (res.stream !== undefined) {
+    return new Response(res.stream, {
+      status: res.status,
+      headers: { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store' },
+    })
   }
   if (res.html !== undefined) {
     return new Response(res.html, {

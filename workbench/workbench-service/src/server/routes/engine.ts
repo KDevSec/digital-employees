@@ -6,6 +6,7 @@
  */
 import { z } from 'zod'
 import type { Ctx, Res, RouteRegistry } from '../registry'
+import { createEngineStream } from '../../engine/stream'
 
 /** engine 域依赖：引擎实例（main 装配：dataDir=profileDir / templatesDir=profileDir/templates/flows） */
 export interface EngineRouteDeps {
@@ -25,6 +26,8 @@ export interface EngineRouteDeps {
     listTasks(): { task_id: string; status: string; title: string }[]
     listArchivedTasks(): { task_id: string; status: string; title: string }[]
     flowsList(): { flow: string; file: string }[]
+    /** T7 SSE 消费（真 Engine 实例；测试注入用结构兼容对象即可） */
+    onEvent(listener: (e: { trace_id: string; type: string; seq: number }) => void): () => void
   }
 }
 
@@ -118,6 +121,15 @@ export function registerEngineRoutes(reg: RouteRegistry, deps: EngineRouteDeps):
       return { status: 200, json: { ok: true, tasks: engine.listTasks(), archived: engine.listArchivedTasks() } }
     } catch (err) { return engineErrorRes(err) }
   })
+
+  /** SSE 通道（设计 §8）：?task_id= 过滤 / Last-Event-ID=<task>:<seq> 重放 / 15s 心跳 */
+  reg.get('/api/engine/stream', (ctx) => ({
+    status: 200,
+    stream: createEngineStream(engine as never, {
+      taskId: ctx.query?.get('task_id') ?? undefined,
+      lastEventId: ctx.headers?.['last-event-id'],
+    }),
+  }))
 
   reg.get('/api/engine/flows', () => {
     try {
