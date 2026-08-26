@@ -1,0 +1,46 @@
+workbench/workbench-web/src/router/index.ts
+  s_2c1150e19dee71::t_873cdb86566b3c 2,4-7,10-12
+workbench/workbench-service/src/main.ts
+  s_2c1150e19dee71::t_a7e7f1a24b6054 182
+  s_2c1150e19dee71::t_30281b6e847fc1 36
+  s_2c1150e19dee71::t_e086c06914c910 40
+workbench/workbench-service/src/server/routes/index.ts
+  s_2c1150e19dee71::t_37b683088a0df2 1-37
+workbench/workbench-tray/internal/contract/contract_test.go
+  s_2c1150e19dee71::t_1c7adc336dd392 213-214,216,218-219
+workbench/workbench-service/test/routes-registry.test.ts
+  s_2c1150e19dee71::t_c09a35e2c8a51e 1-73
+workbench/workbench-service/src/server/routes/shell.ts
+  s_2c1150e19dee71::t_1ae65fd77bbaa3 1-23
+workbench/workbench-service/src/server/routes/infra.ts
+  s_2c1150e19dee71::t_831b7b324b306d 1-52
+workbench/workbench-web/src/router/routes/access.ts
+  s_2c1150e19dee71::t_0009ec11fb78a0 1-13
+workbench/workbench-service/src/server/registry.ts
+  s_2c1150e19dee71::t_382ed43d225b5e 4
+workbench/workbench-service/test/server.test.ts
+  s_2c1150e19dee71::t_6d2c732325bfe9 1
+  s_2c1150e19dee71::t_223960f70f58a8 8
+  s_2c1150e19dee71::t_5a374136546be2 137-142
+  s_2c1150e19dee71::t_5e81ee999aedf3 11,13
+  s_2c1150e19dee71::t_403ff62b3e82e3 136
+workbench/workbench-web/test/router.test.ts
+  s_2c1150e19dee71::t_2f412e27fb7fe9 1-34,39-40
+  s_2c1150e19dee71::t_06eb0b22015625 35-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "fcf6c6f488a8aa15639a2fca2ebb53edb271f6bb",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

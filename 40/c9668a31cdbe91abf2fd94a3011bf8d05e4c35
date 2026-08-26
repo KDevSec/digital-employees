@@ -1,0 +1,44 @@
+workbench/workbench-web/src/router/routes/bases.ts
+  s_2c1150e19dee71::t_8271f136eee1ac 1-16
+workbench/workbench-web/test/router.test.ts
+  s_2c1150e19dee71::t_31ff6c5d7900ee 2,5,8,11-18,20,28,31-38,40-41,45-63,67,71-85
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_2c1150e19dee71::t_564456b4123495 1-80
+workbench/workbench-web/test/guard-integration.test.ts
+  s_2c1150e19dee71::t_646e78f2da9881 1-163
+workbench/workbench-web/src/router/guard.ts
+  s_2c1150e19dee71::t_38ddce33fcd508 1-36
+workbench/workbench-web/src/components/nav/Layout.vue
+  s_2c1150e19dee71::t_f184fc35c681d8 1-46
+workbench/workbench-web/src/router/index.ts
+  s_2c1150e19dee71::t_10c0f66b85043f 2-4,6-8,10-20,25-33,36-38
+workbench/workbench-web/src/router/routes/employees.ts
+  s_2c1150e19dee71::t_d04a8dedebaa83 1-16
+workbench/workbench-web/test/side-nav.test.ts
+  s_2c1150e19dee71::t_bf008efdab85cd 1-17,20-22,24-79
+  s_2c1150e19dee71::t_e452b1812b2b7e 18-19,23
+workbench/workbench-web/src/views/Placeholder.vue
+  s_2c1150e19dee71::t_c1b8b8212b849e 1-56
+workbench/workbench-web/test/placeholder.test.ts
+  s_2c1150e19dee71::t_8eacb70a1b2247 1-59
+workbench/workbench-web/test/guard.test.ts
+  s_2c1150e19dee71::t_54abab173232f8 1-36
+workbench/workbench-web/src/router/routes/kanban.ts
+  s_2c1150e19dee71::t_08cd5dcfc6cfd5 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "40c9668a31cdbe91abf2fd94a3011bf8d05e4c35",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

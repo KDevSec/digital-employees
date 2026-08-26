@@ -1,0 +1,36 @@
+workbench/workbench-web/test/platform-status.test.ts
+  s_2c1150e19dee71::t_9b73e2164a6a0b 1-96
+workbench/workbench-web/src/api/platform-status.ts
+  s_2c1150e19dee71::t_b653381abdc794 1-70
+workbench/workbench-web/src/composables/useHealthPolling.ts
+  s_2c1150e19dee71::t_ad0e81985a7d00 1-41
+workbench/workbench-web/src/components/nav/TopBar.vue
+  s_2c1150e19dee71::t_1ba6417930fe46 1-220
+workbench/workbench-web/src/stores/session.ts
+  s_2c1150e19dee71::t_0dcd5dfabc7ba5 8-12
+workbench/workbench-web/src/views/AccessView.vue
+  s_2c1150e19dee71::t_ff20c1bbd46f1c 15,21-22,34
+  s_2c1150e19dee71::t_30560df24a7184 98
+workbench/workbench-web/test/top-bar.test.ts
+  s_2c1150e19dee71::t_124cad787b062b 1-304,306-310,313-323
+  s_2c1150e19dee71::t_cecfea7987cb78 305,311-312
+workbench/workbench-web/src/components/nav/Layout.vue
+  s_2c1150e19dee71::t_63dd56bdde6dbd 18
+  s_2c1150e19dee71::t_7cd97ef0c41470 5,8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d52ae9a50df3144b3a049ee4906a96fc72562c3f",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
