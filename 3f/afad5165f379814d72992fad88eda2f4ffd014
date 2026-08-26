@@ -1,0 +1,46 @@
+workbench/workbench-web/test/alert-bar.test.ts
+  s_2c1150e19dee71::t_2fbe57b751e559 1-63,67-68,70-73,75-82,84-85
+  s_2c1150e19dee71::t_d3320d03e0c609 64-66,69,74,83
+workbench/workbench-web/src/components/nav/SettingsPanel.vue
+  s_2c1150e19dee71::t_d6193d85da09fb 121-123,129
+  s_2c1150e19dee71::t_e3375d1b4c3b31 37-39,108-109
+  s_2c1150e19dee71::t_fb18de9830505a 29-32
+  s_2c1150e19dee71::t_2f5d1dbcfc71d0 7
+  s_2c1150e19dee71::t_69108e19f9bea5 1-6,8-28,33-36,40-107,110-120,124-128,130-360
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_2c1150e19dee71::t_0cc2f379f8a064 134-135
+  s_2c1150e19dee71::t_29e9d89eec6e5b 173-179
+  s_2c1150e19dee71::t_d7bc6019aac068 59-70
+  s_2c1150e19dee71::t_5fe9d4b487516f 5-6,14-20,22-23
+workbench/workbench-web/test/side-nav.test.ts
+  s_2c1150e19dee71::t_c2f3839c64fcb5 80-100
+workbench/workbench-web/src/composables/useHealthPolling.ts
+  s_2c1150e19dee71::t_256c20c94b951a 7-9,11-12
+workbench/workbench-web/src/components/nav/AlertBar.vue
+  s_2c1150e19dee71::t_33d6cda94a7679 1-34
+workbench/workbench-web/src/stores/session.ts
+  s_2c1150e19dee71::t_58fef0586c775b 8-13
+workbench/workbench-web/test/settings-panel.test.ts
+  s_2c1150e19dee71::t_d5cbd3a3ea2a94 350,372-380,384
+  s_2c1150e19dee71::t_ad2b8e975866bc 1-349,351-371,381,387-435,437-442
+  s_2c1150e19dee71::t_9cc73ddbd69026 436
+  s_2c1150e19dee71::t_533c6ebce14460 382-383,385-386
+workbench/workbench-web/src/components/nav/Layout.vue
+  s_2c1150e19dee71::t_c8386bf357de85 2,5-6,10-11,14-20,23-29,34-36,38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "3fafad5165f379814d72992fad88eda2f4ffd014",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
