@@ -5,7 +5,7 @@
  */
 
 export interface Ctx {
-  method: 'GET' | 'POST'
+  method: 'GET' | 'POST' | 'PUT'
   path: string
   host: string
   body?: unknown
@@ -22,7 +22,7 @@ export interface Res {
 export type Handler = (ctx: Ctx) => Res | Promise<Res>
 
 export interface Route {
-  method: 'GET' | 'POST'
+  method: 'GET' | 'POST' | 'PUT'
   path: string
   handler: Handler
 }
@@ -30,9 +30,11 @@ export interface Route {
 export interface RouteRegistry {
   get(path: string, handler: Handler): void
   post(path: string, handler: Handler): void
+  /** I0-5 T8 增：PUT（config 域 /api/config/platform——设计 D-14） */
+  put(path: string, handler: Handler): void
 }
 
-/** 路由只经 get/post 声明（未声明方法在类型层即不可注册）。 */
+/** 路由只经 get/post/put 声明（未声明方法在类型层即不可注册）。 */
 export function createRegistry(): RouteRegistry & { routes: Route[] } {
   const routes: Route[] = []
   return {
@@ -42,6 +44,9 @@ export function createRegistry(): RouteRegistry & { routes: Route[] } {
     },
     post(path, handler) {
       routes.push({ method: 'POST', path, handler })
+    },
+    put(path, handler) {
+      routes.push({ method: 'PUT', path, handler })
     },
   }
 }

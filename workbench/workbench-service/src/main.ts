@@ -13,7 +13,7 @@ import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { brand } from './brand'
-import { loadConfig, writeSample } from './config/load'
+import { loadConfig, writeConfigOverride, writeSample } from './config/load'
 import type { WorkbenchConfig } from './config/schema'
 import { buildProgram } from './cli'
 import type { CliDeps, StartOptions } from './cli'
@@ -186,6 +186,10 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     dataDir: profileDir,
     uptime: () => Date.now() - startedAtMs,
     indexHtml,
+    // I0-5 T8 config 域（设计 D-14）：平台地址读写落在真实 profile 的 config.json（D-13）
+    profileDir,
+    loadConfig,
+    writeConfigOverride,
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

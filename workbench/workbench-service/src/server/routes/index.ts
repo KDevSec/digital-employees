@@ -13,14 +13,17 @@ import { registerInfraRoutes } from './infra'
 import type { InfraRouteDeps } from './infra'
 import { registerShellRoutes } from './shell'
 import type { ShellRouteDeps } from './shell'
+import { registerConfigRoutes } from './config'
+import type { ConfigRouteDeps } from './config'
 
 /** 全量路由依赖 = 各域依赖之和（main 装配一次给全；域文件各取所需字段） */
-export type RouteDeps = InfraRouteDeps & ShellRouteDeps
+export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps
 
 /** 汇总注册（静态表：一行一域；新增域在此追加一行） */
 export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps: RouteDeps): void {
   registerInfraRoutes(reg, deps)
   registerShellRoutes(reg, deps)
+  registerConfigRoutes(reg, deps) // I0-5 T8 config 域（设计 D-14：GET/PUT /api/config/platform）
   assertNoDuplicateRoutes(reg.routes)
 }
 

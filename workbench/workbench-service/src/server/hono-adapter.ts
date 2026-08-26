@@ -18,14 +18,19 @@ export function toHonoApp(
   return app
 }
 
-async function dispatch(c: { req: { path: string; header: (name: string) => string | undefined } }, route: Route): Promise<Response> {
+async function dispatch(
+  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
+  route: Route,
+): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
   // DNS rebinding 攻击必然携带恶意 Host，白名单判据仍是「带 Host 则必须白名单内」。
   const ctx: Ctx = {
     method: route.method,
     path: c.req.path,
     host: c.req.header('Host') ?? '127.0.0.1',
-    body: undefined,
+    // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
+    // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
+    body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)

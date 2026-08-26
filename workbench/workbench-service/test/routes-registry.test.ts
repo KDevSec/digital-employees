@@ -4,6 +4,8 @@ import type { Route } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
+import { registerConfigRoutes } from '../src/server/routes/config'
+import { loadConfig, writeConfigOverride } from '../src/config/load'
 
 /**
  * 路由分域注册约定（I0-5 T1，设计 D-1/D-2/D-3）：
@@ -11,7 +13,7 @@ import { registerShellRoutes } from '../src/server/routes/shell'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
-/** 域注册依赖：infra 五项 + shell 一项（与 main 装配同形状，值非契约） */
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项（I0-5 T8，与 main 装配同形状，值非契约） */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -19,6 +21,9 @@ const deps = {
   dataDir: 'D:/data/.devzero',
   uptime: () => 12_345,
   indexHtml: '<html>DevZero</html>',
+  profileDir: 'D:/data/.devzero',
+  loadConfig,
+  writeConfigOverride,
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -29,14 +34,16 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity）', () => {
+  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
       ['GET', '/'],
       ['GET', '/api/activity'],
+      ['GET', '/api/config/platform'],
       ['GET', '/api/events'],
       ['GET', '/healthz'],
+      ['PUT', '/api/config/platform'],
     ])
   })
 
@@ -69,5 +76,14 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     const reg = createRegistry()
     registerShellRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([['GET', '/']])
+  })
+
+  it('config 域：GET+PUT /api/config/platform（I0-5 T8，不含其他域端点）', () => {
+    const reg = createRegistry()
+    registerConfigRoutes(reg, deps)
+    expect(table(reg.routes)).toEqual([
+      ['GET', '/api/config/platform'],
+      ['PUT', '/api/config/platform'],
+    ])
   })
 })

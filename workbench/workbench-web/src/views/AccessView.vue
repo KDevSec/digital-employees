@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import AccessActions from '../components/access/AccessActions.vue'
 import AccessStatusCard from '../components/access/AccessStatusCard.vue'
+import PlatformConfigCard from '../components/access/PlatformConfigCard.vue'
 import {
   enrollAction,
   fetchAccessState,
@@ -24,6 +25,8 @@ import { useHealthPolling } from '../composables/useHealthPolling'
  * T7 视觉（脚本零改动，只换皮）：头部品牌条沿侧栏蓝渐变语言 + 蓝渐变 logo 方块（原型人形 SVG）；
  * 健康徽章走原型 tag 体系（ok→tag-green/down→tag-red，模板层映射）+ 版本行白字 70% 透明度；
  * hero 区原型 page-head 规格（h1 24px/700 + eyebrow + sub g500 13px）；卡片原型 .card 语言。
+ * I0-5 T8（设计 D-16）：hero 区右侧挂 PlatformConfigCard 平台连接配置卡——未登录即可配；
+ * 其 GET /api/config/platform 挂载自拉（失败静默降级为卡内提示，不影响本页既有状态卡渲染）。
  */
 
 /** 审批进度轮询间隔（demo ui.ts L31 的 5s） */
@@ -129,6 +132,8 @@ onBeforeUnmount(() => {
           <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用工作台能力。</p>
         </div>
         <!-- 「返回管理平台」链接不渲染（设计 G-5：platformPublicUrl 无前端来源） -->
+        <!-- I0-5 T8 平台连接配置卡（设计 D-16）：hero 区右侧，未登录即可配（登录前就要知道平台在哪） -->
+        <PlatformConfigCard />
       </section>
       <div class="grid">
         <section class="card">

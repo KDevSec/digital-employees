@@ -6,6 +6,7 @@ import { toHonoApp } from '../src/server/hono-adapter'
 import { isLocalHost } from '../src/server/guard'
 import { createRegistry } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
+import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
 
 function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
@@ -17,6 +18,10 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     dataDir: 'D:/data/.devzero',
     uptime: () => 12_345,
     indexHtml: readEmbeddedIndexHtml(),
+    // I0-5 T8 config 域：真实读写函数 + 占位 profile（本文件不触达该域端点，行为断言在 routes-config.test.ts）
+    profileDir: 'D:/data/.devzero',
+    loadConfig,
+    writeConfigOverride,
     ...overrides,
   })
   return toHonoApp(registry)
