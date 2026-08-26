@@ -20,8 +20,10 @@ import { useSessionStore } from '../src/stores/session'
  *      tag 体系映射 ok→tag-green/warn→tag-amber/error→tag-red/neutral→tag-gray）
  *      + 版本行（useHealthPolling 数据源迁此——healthz fetch mock 驱动）；
  *   ③ 动作组：「检查更新」占位（点击提示「检查更新功能即将上线」）+「接入与平台设置」
- *      （RouterLink 跳 '/'）+「退出登录」红字（logoutAction → store.fetchState →
- *      编程导航回 '/'——D-22 语义沿 top-bar.test 迁移）；
+ *      （D-26：RouterLink 跳 '/' 退役——ACTIVE 用户全屏路由无侧栏无返回动线断层；改
+ *      button emit openAccess 交 Layout 开 AccessModal，关闭即回原业务页）+「退出登录」
+ *      红字（logoutAction → store.fetchState → 编程导航回 '/'——D-22 语义沿 top-bar.test
+ *      迁移）；
  * - 开关：外点/Esc 关闭（沿 T9 TopBar 下拉手法：document 监听 + onBeforeUnmount 清理 +
  *   contains 判定「点浮层内部不关」）；
  * - useHealthPolling 迁入：浮层组件挂载起轮询（打开时数据新鲜），卸载清理；
@@ -241,7 +243,7 @@ describe('SettingsPanel 动作组（D-24 ③：D-22 两项 + 检查更新占位�
     expect(stub.calls('/api/state', 'GET')).toBe(stateCalls)
   })
 
-  it('「接入与平台设置」RouterLink to / → 点击导航 / 且浮层收起（emit update:open false）', async () => {
+  it('「接入与平台设置」button（D-26：RouterLink 退役）→ emit openAccess + 浮层收起，不发生路由跳转', async () => {
     const { wrapper, router } = await mountPanel(
       {
         '/api/state': () => jsonResponse(activeFresh),
@@ -250,12 +252,16 @@ describe('SettingsPanel 动作组（D-24 ③：D-22 两项 + 检查更新占位�
       { push: '/employees' },
     )
     expect(router.currentRoute.value.path).toBe('/employees')
-    const link = wrapper.findAll('.settings-panel a').find((item) => item.text() === '接入与平台设置')
-    expect(link, '动作组内应为 RouterLink 锚点').toBeTruthy()
-    await link!.trigger('click')
+    // D-26：第三项改 button（原 RouterLink 跳 '/' 全屏路由——ACTIVE 用户进入后无侧栏
+    // 无返回，动线断层；浮层动作组内不再有锚点）
+    expect(wrapper.findAll('.settings-panel a').length).toBe(0)
+    const button = wrapper.findAll('.settings-panel button').find((item) => item.text() === '接入与平台设置')
+    expect(button, '动作组第三项应为 button').toBeTruthy()
+    await button!.trigger('click')
     await flushPromises()
-    expect(router.currentRoute.value.path).toBe('/')
+    expect(wrapper.emitted('openAccess')).toContainEqual([]) // 请求 Layout 开 AccessModal
     expect(wrapper.emitted('update:open')).toContainEqual([false]) // 浮层收起
+    expect(router.currentRoute.value.path).toBe('/employees') // 停当前页（弹窗承载，不整页跳转）
   })
 
   it('「退出登录」红字按钮 → POST /api/logout → GET /api/state 刷新未登录态 → 编程导航回 /', async () => {
@@ -387,22 +393,33 @@ describe('SettingsPanel useHealthPolling 迁入（挂载即拉 + 2s 轮询 + 卸
   })
 })
 
-describe('Layout 组装（D-24/D-25：TopBar 退役 + AlertBar 常驻告警）', () => {
-  /** Layout 挂载前经真 store.fetchState 预载（守卫首次导航语义），随后挂最小 memory router */
-  async function mountLayout(handlers: Record<string, () => unknown>): Promise<VueWrapper> {
+describe('Layout 组装（D-24/D-25：TopBar 退役 + AlertBar 常驻告警；D-26：AccessModal 接线）', () => {
+  /**
+   * Layout 挂载前经真 store.fetchState 预载（守卫首次导航语义），随后挂最小 memory router。
+   * push 选项：从业务页起测（memory history 初始恒 '/'，「URL 不变」断言需先离港）。
+   */
+  async function mountLayout(
+    handlers: Record<string, () => unknown>,
+    options: { push?: string } = {},
+  ): Promise<{ wrapper: VueWrapper; router: Router }> {
     stubFetch(handlers)
     const pinia = createPinia()
     setActivePinia(pinia)
     const store = useSessionStore()
     await store.fetchState()
-    const wrapper = mount(Layout, { global: { plugins: [pinia, createMinimalRouter()] } })
+    const router = createMinimalRouter()
+    const wrapper = mount(Layout, { global: { plugins: [pinia, router] } })
     await flushPromises()
+    if (options.push) {
+      await router.push(options.push)
+      await flushPromises()
+    }
     active = wrapper
-    return wrapper
+    return { wrapper, router }
   }
 
   it('正常态：顶部无 TopBar（.topbar 不在场）、无告警条；侧栏底齿轮点击 → 设置浮层三组在场；再点收起', async () => {
-    const wrapper = await mountLayout({
+    const { wrapper } = await mountLayout({
       '/api/state': () => jsonResponse(activeFresh),
       '/healthz': () => jsonResponse(HEALTHY),
     })
@@ -428,8 +445,47 @@ describe('Layout 组装（D-24/D-25：TopBar 退役 + AlertBar 常驻告警）',
     expect(wrapper.find('.settings-panel').exists()).toBe(false)
   })
 
+  it('D-26 接入与平台设置弹窗接线：浮层第三项点击 → 浮层收起 + AccessModal 开（三件套在场，两浮层互斥）；Esc 关弹窗回业务页（URL 不变）', async () => {
+    const { wrapper, router } = await mountLayout(
+      {
+        '/api/state': () => jsonResponse(activeFresh),
+        '/healthz': () => jsonResponse(HEALTHY),
+        '/api/config/platform': () => jsonResponse({ baseUrl: 'http://192.168.1.5:18000' }),
+      },
+      { push: '/employees' },
+    )
+    expect(router.currentRoute.value.path).toBe('/employees')
+    // 开设置浮层（业务页 → 设置）
+    await wrapper.find('.sidebar-foot button[aria-label="设置"]').trigger('click')
+    expect(wrapper.find('.settings-panel').exists()).toBe(true)
+
+    // 浮层第三项（D-26：button emit，无锚点）
+    expect(wrapper.findAll('.settings-panel a').length).toBe(0)
+    const accessItem = wrapper.findAll('.settings-panel button').find((item) => item.text() === '接入与平台设置')
+    expect(accessItem, '动作组第三项应为 button').toBeTruthy()
+    await accessItem!.trigger('click')
+    await flushPromises()
+
+    // 互斥：浮层收起 + 弹窗在场（三件套内容锚点）
+    expect(wrapper.find('.settings-panel').exists()).toBe(false)
+    expect(wrapper.find('.access-modal-mask').exists()).toBe(true)
+    expect(wrapper.find('.modal-title').text()).toBe('接入与平台设置')
+    expect(wrapper.text()).toContain('已激活') // AccessStatusCard
+    expect(wrapper.text()).toContain('平台连接') // PlatformConfigCard
+    expect(wrapper.text()).toContain('发送工作台心跳') // AccessActions
+    // URL 不变（弹窗承载，不整页跳转——D-26 动线修复核心：业务页上下文不丢）
+    expect(router.currentRoute.value.path).toBe('/employees')
+
+    // Esc 关闭弹窗回业务页（浮层不复活，单向互斥）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(wrapper.find('.access-modal-mask').exists()).toBe(false)
+    expect(wrapper.find('.settings-panel').exists()).toBe(false)
+    expect(router.currentRoute.value.path).toBe('/employees')
+  })
+
   it('告警态（REVOKED）→ AlertBar 在 main 顶部常驻（红条文案在场，不藏进浮层）', async () => {
-    const wrapper = await mountLayout({
+    const { wrapper } = await mountLayout({
       '/api/state': () => jsonResponse(revokedState),
       '/healthz': () => jsonResponse(HEALTHY),
     })

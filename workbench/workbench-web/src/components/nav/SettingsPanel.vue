@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 import { logoutAction } from '../../api/access'
 import { useHealthPolling } from '../../composables/useHealthPolling'
@@ -20,9 +20,11 @@ import { useSessionStore } from '../../stores/session'
  *      → 原型 tag 体系映射 ok→tag-green/stale→tag-amber/revoked·unreachable→tag-red/
  *      inactive→tag-gray，附 dot 小圆点）+ 版本行（useHealthPolling 数据源迁此）；
  *   ③ 动作组：「检查更新」占位（U 系列未落地，点击只弹提示「检查更新功能即将上线」，
- *      不发起任何网络请求）+「接入与平台设置」（RouterLink 跳 '/'，接入页承载状态与
- *      平台配置）+「退出登录」红字（logoutAction → store.fetchState → 编程导航回 '/'，
- *      退出后 fetchState 拿到未登录态，守卫与登录卡自然衔接——D-22 语义迁移）；
+ *      不发起任何网络请求）+「接入与平台设置」（D-26：RouterLink 跳 '/' 退役——ACTIVE
+ *      用户进入全屏路由后无侧栏无返回，动线断层；改 button emit openAccess 交 Layout
+ *      开 AccessModal，关闭即回原业务页）+「退出登录」红字（logoutAction →
+ *      store.fetchState → 编程导航回 '/'，退出后 fetchState 拿到未登录态，守卫与
+ *      登录卡自然衔接——D-22 语义迁移）；
  * - 开关（沿 T9 TopBar 下拉手法）：外点（document 冒泡 + contains 判定「点浮层内部不关」）
  *   / Esc 关闭（emit update:open false），document 监听 onBeforeUnmount 清理。SideNav
  *   齿轮的点击经 .stop 阻断冒泡（开浮层的这一次点击不会被外点判定误关）；
@@ -38,7 +40,7 @@ import { useSessionStore } from '../../stores/session'
 const ACCESS_STATE_POLL_MS = 30_000
 
 const props = defineProps<{ open: boolean }>()
-const emit = defineEmits<{ 'update:open': [value: boolean] }>()
+const emit = defineEmits<{ 'update:open': [value: boolean]; openAccess: [] }>()
 
 const store = useSessionStore()
 const router = useRouter()
@@ -106,6 +108,16 @@ async function onLogout(): Promise<void> {
   await router.push('/')
 }
 
+/**
+ * 开接入与平台设置弹窗（D-26）：emit openAccess 交 Layout 开 AccessModal（收浮层 + 开
+ * 弹窗的互斥接线在 Layout 侧）；本地同步收起浮层。原 RouterLink 跳 '/' 退役——ACTIVE
+ * 用户进入全屏路由后无侧栏无返回，动线断层。
+ */
+function onOpenAccess(): void {
+  emit('openAccess')
+  close()
+}
+
 let stateTimer: ReturnType<typeof setInterval> | undefined
 
 watch(
@@ -151,10 +163,10 @@ onBeforeUnmount(() => {
       </span>
       <span class="version">{{ version }}</span>
     </div>
-    <!-- ③ 动作组（检查更新占位 / 接入与平台设置 / 退出登录——D-22 语义迁移） -->
+    <!-- ③ 动作组（检查更新占位 / 接入与平台设置→emit 开弹窗 D-26 / 退出登录——D-22 语义迁移） -->
     <div class="panel-group action-group">
       <button type="button" class="action-item" @click="updateNotice = true">检查更新</button>
-      <RouterLink to="/" class="action-item" @click="close">接入与平台设置</RouterLink>
+      <button type="button" class="action-item" @click="onOpenAccess">接入与平台设置</button>
       <button type="button" class="action-item action-danger" @click="onLogout">退出登录</button>
     </div>
     <!-- 检查更新占位提示条（U 系列未落地） -->
