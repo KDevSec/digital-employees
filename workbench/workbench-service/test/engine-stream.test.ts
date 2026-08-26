@@ -39,7 +39,7 @@ async function drain(stream: ReadableStream<Uint8Array>, maxChunks = 50, idleMs 
   for (let i = 0; i < maxChunks; i++) {
     const next = await Promise.race([
       reader.read(),
-      new Promise<symbol>((r) => setTimeout(() => r(IDLE), idleMs)),
+      new Promise<'idle'>((r) => setTimeout(() => r(IDLE), idleMs)),
     ])
     if (next === IDLE) break
     const { done, value } = next
@@ -49,7 +49,7 @@ async function drain(stream: ReadableStream<Uint8Array>, maxChunks = 50, idleMs 
   await reader.cancel()
   return out
 }
-const IDLE = Symbol('idle')
+const IDLE = 'idle' as const
 
 const createDemo = (title: string) =>
   engine.createTask({ mode: 'team', flow: 'demo-flow', workspace, title, input: 'x' })
