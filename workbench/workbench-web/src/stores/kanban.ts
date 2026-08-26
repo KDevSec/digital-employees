@@ -13,6 +13,7 @@ import { defineStore } from 'pinia'
 
 import type { Connection, EngineStream } from '../api/engine-stream'
 import type { EngineEvent } from '../api/engine-events'
+import type { TableSnapshot } from '../api/engine-table'
 
 export type TaskStatus = 'in_progress' | 'gate_paused' | 'blocked' | 'completed' | 'aborted'
 
@@ -62,13 +63,17 @@ export interface KanbanState {
   tasks: Record<string, TaskState>
   /** 全局事件流水（滚动窗口，最新在后） */
   feed: EngineEvent[]
+  /** 表快照（task_id 键；经 getTask 下发，契约歧义 A 的先行口径） */
+  tables: Record<string, TableSnapshot>
+  /** 员工 display 映射（经 getTask 下发，契约歧义 B 的先行口径） */
+  employeesMap: Record<string, string>
 }
 
 /** 全局流水滚动窗口上限 */
 export const FEED_CAP = 200
 
 export function emptyKanbanState(): KanbanState {
-  return { connection: 'connecting', tasks: {}, feed: [] }
+  return { connection: 'connecting', tasks: {}, feed: [], tables: {}, employeesMap: {} }
 }
 
 /** 未知任务的占位卡（混流兜底：run.created 未到先来了后续事件） */
@@ -208,6 +213,11 @@ export const useKanbanStore = defineStore('kanban', {
     /** SSE 事件入口（stream.onEvent 接线目标） */
     applyIncoming(ev: EngineEvent): void {
       this.$patch(applyEvent(this.$state, ev))
+    },
+    /** 表快照/员工映射写入（getTask 响应落地；契约歧义 A/B 先行口径） */
+    setTable(taskId: string, table: TableSnapshot, employees?: Record<string, string>): void {
+      this.tables = { ...this.tables, [taskId]: table }
+      if (employees) this.employeesMap = { ...this.employeesMap, ...employees }
     },
     /** 接线消费层：事件归并 + 连接状态跟随；返回 stream 供调用方持有（卸载时 disconnect） */
     connect(stream: EngineStream): EngineStream {
