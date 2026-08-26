@@ -1,0 +1,21 @@
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_6df5fdc4948b81 190
+workbench/workbench-engine/test/schema.test.ts
+  s_ae9313906bcd90::t_dea9a7b8f2e193 121-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "eaa8bb23a18ca5d6776f7d7a53e5a0aa4c16b830",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
