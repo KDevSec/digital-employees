@@ -1,0 +1,133 @@
+workbench/templates/dev-engineer/skills/frontend-design/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-55
+workbench/templates/dev-engineer/skills/writing-plans/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-169
+workbench/templates/sys-engineer/skills/kdev-gen-design/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-53
+workbench/templates/req-clarifier/skills/ar-authoring/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-57
+workbench/templates/reviewer-expert/skills/review-verdict/SKILL.md
+  s_0cf83e7997645f::t_c86be27c060568 1-60
+workbench/templates/req-clarifier/skills/sr-authoring/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-55
+workbench/templates/sys-engineer/skills/kdev-gen-overview/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-52
+workbench/templates/sys-engineer/skills/kdev-gen-toplevel/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-54
+workbench/templates/skills-remaining.md
+  s_0cf83e7997645f::t_b72bb56e328884 1-23
+workbench/templates/req-clarifier/skills/brainstorming/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-142
+workbench/templates/req-clarifier/skills/kdev-gen-storymap/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-44
+workbench/templates/sys-engineer/skills/kdev-gen-plan/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-51
+workbench/templates/dev-engineer/skills/tdd-methodology/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-374
+workbench/templates/req-clarifier/skills/kdev-gen-split/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-52
+workbench/templates/sys-engineer/skills/kdev-gen-proto/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-44
+workbench/templates/dev-engineer/skills/secure-coding/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-95
+workbench/templates/dev-engineer/skills/verification-before-completion/SKILL.md
+  s_0cf83e7997645f::t_0a04070929e95b 1-142
+workbench/templates/dev-engineer/skills/frontend-design/LICENSE
+  s_0cf83e7997645f::t_1b8ed5d5dbcc03 1-202
+workbench/templates/dev-engineer/skills/frontend-design/NOTICE
+  s_0cf83e7997645f::t_599f8c47fe3dd7 1-40
+workbench/templates/dev-engineer/skills/secure-coding/evals/README.md
+  s_0cf83e7997645f::t_ee40fe9e331a06 1-85
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/A-trigger/a01-vulnerable.py
+  s_0cf83e7997645f::t_7e3c724f3d0ed1 1-55
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/A-trigger/a02-clean.py
+  s_0cf83e7997645f::t_f01b54bb7d6a68 1-73
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/A-trigger/a03-borderline.py
+  s_0cf83e7997645f::t_28a68ba7365ca1 1-69
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b01-input.expected.txt
+  s_0cf83e7997645f::t_200d47f1da787b 1-4
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b01-input.py
+  s_0cf83e7997645f::t_2758b3aebdb0ef 1-54
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b02-security.expected.txt
+  s_0cf83e7997645f::t_4433c7ec18558b 1-7
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b02-security.py
+  s_0cf83e7997645f::t_540ba293e8ee28 1-53
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b03-encapsulation.expected.txt
+  s_0cf83e7997645f::t_44a8b77208f3b3 1-6
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b03-encapsulation.py
+  s_0cf83e7997645f::t_2ed3395479fd1c 1-46
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b04-api-misuse.expected.txt
+  s_0cf83e7997645f::t_3461622e2f3ab5 1-5
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b04-api-misuse.py
+  s_0cf83e7997645f::t_19813c583271ea 1-44
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b05-time-state.expected.txt
+  s_0cf83e7997645f::t_2ce6724be5d491 1-5
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b05-time-state.py
+  s_0cf83e7997645f::t_34b985d335966b 1-53
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b06-error.expected.txt
+  s_0cf83e7997645f::t_f276e26cb0b55e 1-6
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b06-error.py
+  s_0cf83e7997645f::t_0daeb69fa43580 1-61
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b07-quality.expected.txt
+  s_0cf83e7997645f::t_8ed27bed72ac7c 1-6
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b07-quality.py
+  s_0cf83e7997645f::t_e3ac4976445e98 1-55
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b08-environment.expected.txt
+  s_0cf83e7997645f::t_88cf82891847b7 1-9
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b08-environment.py
+  s_0cf83e7997645f::t_51750d288df7e1 1-41
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/B-recall/b08-environment.requirements.txt
+  s_0cf83e7997645f::t_5f3fbe3db72c07 1-5
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/D-adversarial/d01-subprocess-safe.py
+  s_0cf83e7997645f::t_686d218d767192 1-44
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/D-adversarial/d02-yaml-safe-load.py
+  s_0cf83e7997645f::t_49e22b3a4899e7 1-34
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/D-adversarial/d03-random-non-crypto.py
+  s_0cf83e7997645f::t_219c375d1aaeac 1-33
+workbench/templates/dev-engineer/skills/secure-coding/evals/fixtures/D-adversarial/d04-md5-checksum.py
+  s_0cf83e7997645f::t_73cf1db3b30211 1-36
+workbench/templates/dev-engineer/skills/secure-coding/references/01-input-validation.md
+  s_0cf83e7997645f::t_25c920ceb6ce48 1-268
+workbench/templates/dev-engineer/skills/secure-coding/references/02-security-features.md
+  s_0cf83e7997645f::t_b1e18a5ceb8c4a 1-365
+workbench/templates/dev-engineer/skills/secure-coding/references/03-encapsulation.md
+  s_0cf83e7997645f::t_43e197fa2e2aa2 1-125
+workbench/templates/dev-engineer/skills/secure-coding/references/04-api-misuse.md
+  s_0cf83e7997645f::t_421de513574aa7 1-76
+workbench/templates/dev-engineer/skills/secure-coding/references/05-time-and-state.md
+  s_0cf83e7997645f::t_59abe8214eaa85 1-32
+workbench/templates/dev-engineer/skills/secure-coding/references/06-error-handling.md
+  s_0cf83e7997645f::t_cef5bf1c387268 1-38
+workbench/templates/dev-engineer/skills/secure-coding/references/07-code-quality.md
+  s_0cf83e7997645f::t_894c05cf6add61 1-28
+workbench/templates/dev-engineer/skills/secure-coding/references/08-environment.md
+  s_0cf83e7997645f::t_08dd1fcebb11a7 1-91
+workbench/templates/dev-engineer/skills/secure-coding/tests/verify-skill.py
+  s_0cf83e7997645f::t_fd0248736f7c78 1-117
+workbench/templates/dev-engineer/skills/tdd-methodology/testing-anti-patterns.md
+  s_0cf83e7997645f::t_99b2ac276d655c 1-299
+workbench/templates/dev-engineer/skills/writing-plans/plan-document-reviewer-prompt.md
+  s_0cf83e7997645f::t_0de213c61159d9 1-49
+workbench/templates/req-clarifier/skills/ar-authoring/references/AR需求撰写规范模板-v4.md
+  s_0cf83e7997645f::t_7071e8501845ec 1-372
+workbench/templates/req-clarifier/skills/brainstorming/spec-document-reviewer-prompt.md
+  s_0cf83e7997645f::t_e0779e37bfc7ef 1-49
+workbench/templates/req-clarifier/skills/sr-authoring/references/SR-Create-SPEC.md
+  s_0cf83e7997645f::t_794335626b624f 1-712
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "aaff503ff008679d8a73eb78b9e1d6b3a86425d9",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
