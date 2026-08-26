@@ -1,0 +1,26 @@
+workbench/workbench-engine/src/r1/ledger.ts
+  s_ae9313906bcd90::t_ad430cea7bdf29 2-3,5-6,13,20,35,37-38,43-48,50-51,53,55-56,58,60-61,63,65,86-87,174-195,199-223,227-229,248-254,256-272,277,289-292,298-299,312-314,319-327,331,335-342,344,352-375,384,388
+  s_ae9313906bcd90::t_857074541d8ad8 376-380
+docs/plans/2026-08-26-l3-engine.md
+  s_ae9313906bcd90::t_b50782a3919475 152-153
+workbench/workbench-engine/test/r1.test.ts
+  s_ae9313906bcd90::t_f0ccbeada9df44 2-4,19,64-67,80-81,85-86,107-116,119,146-159,163,169,190-192,201-202,220,227-229,231,241-250,256,260,262,266-317,321,323,340-354,356,361,375,391,395,397,400-417
+workbench/workbench-engine/src/r1/paths.ts
+  s_ae9313906bcd90::t_e7ffb130df2d14 2-6,12,29-39,41-45,48-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c6c4d62e67e4c3e3c6c4e215222273e3036f388e",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
