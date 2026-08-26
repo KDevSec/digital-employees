@@ -12,7 +12,9 @@
     "hono": "^4",
     "zod": "^3",
     "commander": "^12",
-    "@devzero/engine": "workspace:*"
+    "@devzero/engine": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@hono/mcp": "^0.3.2"
   },
   "devDependencies": {
     "typescript": "^5",

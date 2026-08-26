@@ -5,13 +5,30 @@
  * 响应用原生 Response 构造（Hono handler 兼容），绕开 ContentfulStatusCode 字面量约束。
  */
 import { Hono } from 'hono'
+import { StreamableHTTPTransport } from '@hono/mcp'
 import { forbiddenHostResponse, isLocalHost } from './guard'
 import type { Ctx, Route, RouteRegistry } from './registry'
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+
+/** MCP 例外口（L3 T8，受控）：/mcp 需要 Web 标准 Request/Response 流，经 @hono/mcp
+ *  StreamableHTTPTransport.handleRequest(c) 直挂——唯一越过 registry「业务路由框架无关」纪律的位置，
+ *  例外收敛在本文件单点（routes/ 各域纪律不变；MCP server 构建在 server/mcp/engine-mcp.ts）。 */
+export interface McpMountOptions {
+  mcpServer: McpServer
+}
 
 export function toHonoApp(
   registry: RouteRegistry & { routes: Route[] },
+  mcp?: McpMountOptions,
 ): Hono {
   const app = new Hono()
+  if (mcp) {
+    const transport = new StreamableHTTPTransport()
+    app.all('/mcp', async (c) => {
+      if (!mcp.mcpServer.isConnected()) await mcp.mcpServer.connect(transport)
+      return transport.handleRequest(c)
+    })
+  }
   for (const route of registry.routes) {
     app.on(route.method, route.path, (c) => dispatch(c, route))
   }

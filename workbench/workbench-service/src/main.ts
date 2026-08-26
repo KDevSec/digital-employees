@@ -36,6 +36,7 @@ import { createRegistry } from './server/registry'
 import { registerAllRoutes } from './server/routes'
 // L3 T6 编排域装配：引擎实例 + 模板目录 ensure（demo 表首启落位）
 import { Engine } from '@devzero/engine'
+import { buildEngineMcpServer } from './server/mcp/engine-mcp'
 import demoFlowYaml from '../../workbench-engine/assets/flows/demo-flow.node-table.yml' with { type: 'text' }
 import { toHonoApp } from './server/hono-adapter'
 
@@ -190,6 +191,7 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     writeFileSync(join(flowsDir, 'demo-flow.node-table.yml'), demoFlowYaml as unknown as string)
   }
   const engine = new Engine({ dataDir: profileDir, templatesDir: flowsDir })
+  const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -203,7 +205,6 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     writeConfigOverride,
     engine,
   })
-  const app = toHonoApp(registry)
   startedAtMs = Date.now()
   try {
     return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
