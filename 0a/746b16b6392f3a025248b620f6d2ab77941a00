@@ -1,0 +1,31 @@
+workbench/workbench-web/src/views/AccessView.vue
+  s_2c1150e19dee71::t_3ee3ca59f47875 21-22
+workbench/workbench-service/test/server.test.ts
+  s_2c1150e19dee71::t_4286c89d92a227 72,77,182,184,193-194
+workbench/workbench-service/web-dist/index.html
+  s_2c1150e19dee71::t_4286c89d92a227 1-6,11,15,19,23-24,28,32,36-42
+CLAUDE.md
+  s_2c1150e19dee71::t_3ee3ca59f47875 32-39
+workbench/workbench-web/test/access-view.test.ts
+  s_2c1150e19dee71::t_3ee3ca59f47875 86,114
+workbench/workbench-web/index.html
+  s_2c1150e19dee71::t_3ee3ca59f47875 6
+workbench/workbench-service/src/brand.ts
+  s_2c1150e19dee71::t_4286c89d92a227 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0a746b16b6392f3a025248b620f6d2ab77941a00",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
