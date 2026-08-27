@@ -1,4 +1,4 @@
-import { profile } from './profile'
+import { profile } from '../../../src/adapters/claude-code/profile'
 import { describe, expect, it } from 'vitest'
 
 describe('claude-code profile', () => {
