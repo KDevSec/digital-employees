@@ -1,0 +1,44 @@
+platform/frontend/src/locales/en.ts
+  s_fc8aeed9d46b96::t_cf43b51f9cffb0 239-240
+platform/backend/app/api/core.py
+  s_fc8aeed9d46b96::t_feb15f88364626 514,521-523,535-538,541
+  s_fc8aeed9d46b96::t_663034bcad83f6 4
+platform/frontend/src/features/users/UsersPage.vue
+  s_fc8aeed9d46b96::t_64b345255aae8c 371-383
+platform/frontend/src/locales/zh-CN.ts
+  s_fc8aeed9d46b96::t_ec1f6bc9ff7c3c 246-247
+platform/backend/app/auth/oidc.py
+  s_fc8aeed9d46b96::t_c194befcb1c37b 211-214,217-218,221-223,225-226,235-236
+  s_fc8aeed9d46b96::t_f442c983af342c 303,307-308
+  s_fc8aeed9d46b96::t_85ae7ed5d74290 351-370,372-376
+  s_fc8aeed9d46b96::t_c8a0acfc8c9c9b 85
+  s_fc8aeed9d46b96::t_9bb816e602f3a1 247,250,252,277-296
+platform/backend/app/iam/sync.py
+  s_fc8aeed9d46b96::t_4c277f7c8c0ecf 73-85
+  s_fc8aeed9d46b96::t_2425210ba4baa5 9-13,16,19,29-31
+platform/backend/tests/api/test_user_management_refactor.py
+  s_fc8aeed9d46b96::t_8d43e5ee26322b 161,163-168
+  s_fc8aeed9d46b96::t_160648549ab189 65,67
+  s_fc8aeed9d46b96::t_632ef952de2161 4-5
+platform/backend/tests/api/test_iam_sync.py
+  s_fc8aeed9d46b96::t_79c4f3c46b16f0 89-119,124-202
+  s_fc8aeed9d46b96::t_51a9cbe0c426bf 120-123
+  s_fc8aeed9d46b96::t_580d1ed68e3283 5,10,20-21
+  s_fc8aeed9d46b96::t_eb66da0f703ccb 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a19089c17303af176902c67306cf0b0ffa6b61cf",
+  "prompts": {},
+  "sessions": {
+    "s_fc8aeed9d46b96": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a60579a1-e96a-4eaf-b5e1-4a59eb219f65",
+        "model": "auto"
+      },
+      "human_author": "ljccc-rbs <631114161@qq.com>"
+    }
+  }
+}

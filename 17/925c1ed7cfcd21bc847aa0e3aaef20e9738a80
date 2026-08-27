@@ -1,0 +1,24 @@
+tools/user-keycloak-migration/import-to-keycloak.py
+  s_fc8aeed9d46b96::t_45e1a6d5029cd3 799-808
+  s_fc8aeed9d46b96::t_9f06673fe7b6d3 484-509
+  s_fc8aeed9d46b96::t_09eff9450bdbcc 510-592
+  s_fc8aeed9d46b96::t_4a3c4d6f5b10e8 952-954,966-967
+iam/realm/digital-employees-realm.json
+  s_fc8aeed9d46b96::t_98969b08f4b19f 41-56,87-102,113-129,257-892,896-904,922-928,930
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "17925c1ed7cfcd21bc847aa0e3aaef20e9738a80",
+  "prompts": {},
+  "sessions": {
+    "s_fc8aeed9d46b96": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a60579a1-e96a-4eaf-b5e1-4a59eb219f65",
+        "model": "auto"
+      },
+      "human_author": "ljccc-rbs <631114161@qq.com>"
+    }
+  }
+}
