@@ -1,0 +1,24 @@
+workbench/workbench-service/test/engine/real-launcher.test.ts
+  s_3d694229081e72::t_e3a9ceffdba2ed 1-30,32-153
+  s_3d694229081e72::t_8570f95c36ba05 31
+workbench/workbench-service/src/engine/real-launcher.ts
+  s_3d694229081e72::t_7752f807ddeddd 18
+  s_3d694229081e72::t_70e463913a00b4 36
+  s_3d694229081e72::t_993730f7399643 1-17,19-35,37-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "376a3ffda0a521d7120aa35d6981f24d5dc15ce1",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
