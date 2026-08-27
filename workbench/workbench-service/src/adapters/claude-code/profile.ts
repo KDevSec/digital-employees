@@ -6,7 +6,7 @@ export const profile: BaseProfile = {
   identity_anchor: 'config-domain',
   identity_file: 'CLAUDE.md',
   skills_dir: 'skills',
-  version_min: '2.1.245', version_tested: '2.1.245',
+  version_min: '2.1.226', version_tested: '2.1.226',
   provides: ['agent-def', 'fs-access', 'skill-def', 'bash-exec', 'slash-command', 'subagent-dispatch'],
   auth: { kind: 'symlink', files: ['.credentials.json'] },
   launch: { configEnv: 'CLAUDE_CONFIG_DIR' },
