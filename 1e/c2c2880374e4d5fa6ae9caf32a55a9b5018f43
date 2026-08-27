@@ -1,0 +1,19 @@
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_43abe8ab21de8c::t_cdc80db9f563ba 50-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1ec2c2880374e4d5fa6ae9caf32a55a9b5018f43",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
