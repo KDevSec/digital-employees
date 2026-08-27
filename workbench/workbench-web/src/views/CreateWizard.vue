@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import StepBar from '../components/wizard/StepBar.vue'
+import PreviewPanel from '../components/wizard/PreviewPanel.vue'
 import TplGrid from '../components/wizard/TplGrid.vue'
 import StepAgent from '../components/wizard/steps/StepAgent.vue'
 import StepCommandsFlow from '../components/wizard/steps/StepCommandsFlow.vue'
@@ -15,11 +16,11 @@ import type { TemplateMeta } from '../api/templates'
 import { useWizardStore } from '../stores/wizard'
 
 /**
- * 员工创建向导页（L1 员工新建线 Task 13 骨架 + Task 14 七步表单接入 + 草稿恢复）：
+ * 员工创建向导页（L1 员工新建线 Task 13 骨架 + Task 14 七步表单接入 + 草稿恢复 + Task 15 预览面板）：
  * - page-head：← 返回按钮（→ /employees）+ h1「员工创建」+ 副标；
  * - layout-2col：左栏「1 · 选择角色模板」+ TplGrid + 「2 · 配置向导」card
  *   （StepBar + 当前步骤组件区 + 底部 上一步/下一步 按钮）；
- * - 右栏 sticky 预览面板占位（「产出物预览」——Task 15 实做）。
+ * - 右栏 sticky PreviewPanel（校验徽章 + manifest YAML + 目录树——Task 15 实做）。
  *
  * 七步组件区（Task 14）：按 store.currentStep 切换 Step 组件——
  *   1 模板（左栏 TplGrid 已选）/ 2 Agent / 3 Skills / 4 HooksTools /
@@ -27,6 +28,8 @@ import { useWizardStore } from '../stores/wizard'
  *
  * 草稿（Task 14）：watch draft deep → 防抖 1s 落 localStorage；onMounted 检测草稿 → 「检测到未完成草稿，恢复？」
  * 确认条（恢复/丢弃两按钮）；恢复时 local skill 项标 needsReupload:true。
+ *
+ * 预览面板跳转（Task 15）：PreviewPanel emit `jump-to-field {step, field}` → store.gotoStep(step)。
  *
  * 禁词红线（Global Constraint）：UI 文案全程不得出现「底座」「安装」「AgentHub」。
  */
@@ -87,6 +90,11 @@ function onNext(): void {
 
 function onPrev(): void {
   store.prev()
+}
+
+/** PreviewPanel issue 点击 → 跳到对应 step */
+function onJumpToField(payload: { step: number; field: string }): void {
+  store.gotoStep(payload.step)
 }
 
 /** 恢复草稿 */
@@ -177,12 +185,9 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 右栏：sticky 预览面板占位（Task 15 实做） -->
+      <!-- 右栏：sticky 预览面板（Task 15 实做） -->
       <div class="preview-col">
-        <div class="panel">
-          <h3>产出物预览</h3>
-          <div class="muted">向导产出与手写完全同构，符合 manifest schema（Task 15 实做）</div>
-        </div>
+        <PreviewPanel @jump-to-field="onJumpToField" />
       </div>
     </div>
   </section>

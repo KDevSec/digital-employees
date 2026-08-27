@@ -51,11 +51,13 @@
       "version": "0.0.1",
       "dependencies": {
         "@devzero/shared-protocol": "workspace:*",
+        "js-yaml": "^4",
         "pinia": "^2",
         "vue": "^3",
         "vue-router": "^4",
       },
       "devDependencies": {
+        "@types/js-yaml": "^4",
         "@vitejs/plugin-vue": "^5",
         "@vue/test-utils": "^2.4.11",
         "jsdom": "^30.0.1",
