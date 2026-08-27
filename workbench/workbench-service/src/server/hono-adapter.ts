@@ -6,7 +6,7 @@
  */
 import { Hono } from 'hono'
 import { forbiddenHostResponse, isLocalHost } from './guard'
-import type { Ctx, Route, RouteRegistry } from './registry'
+import type { Ctx, Res, ResCookie, Route, RouteRegistry } from './registry'
 
 export function toHonoApp(
   registry: RouteRegistry & { routes: Route[] },
@@ -18,8 +18,46 @@ export function toHonoApp(
   return app
 }
 
+/** demo cookies() 迁移：Cookie 头 → 键值对（decodeURIComponent + 双段过滤） */
+function parseCookies(header: string | undefined): Record<string, string> {
+  return Object.fromEntries(
+    (header ?? '')
+      .split(';')
+      .map((value) => value.trim().split('=').map(decodeURIComponent))
+      .filter((pair) => pair.length === 2),
+  )
+}
+
+function serializeCookie(cookie: ResCookie): string {
+  const parts = [`${cookie.name}=${encodeURIComponent(cookie.value)}`]
+  if (cookie.maxAgeSeconds !== undefined) parts.push(`Max-Age=${cookie.maxAgeSeconds}`)
+  if (cookie.httpOnly) parts.push('HttpOnly')
+  if (cookie.sameSite) parts.push(`SameSite=${cookie.sameSite}`)
+  parts.push(`Path=${cookie.path ?? '/'}`)
+  return parts.join('; ')
+}
+
+/** Res → Response（redirect/cookies/json/html/text 单点映射；guard 短路复用同一路径） */
+export function resToResponse(res: Res): Response {
+  const headers = new Headers()
+  if (res.redirect !== undefined) headers.set('Location', res.redirect)
+  for (const cookie of res.cookies ?? []) headers.append('Set-Cookie', serializeCookie(cookie))
+  if (res.redirect !== undefined) {
+    return new Response(null, { status: res.status, headers })
+  }
+  if (res.json !== undefined) {
+    return Response.json(res.json, { status: res.status, headers })
+  }
+  if (res.html !== undefined) {
+    headers.set('content-type', 'text/html; charset=utf-8')
+    return new Response(res.html, { status: res.status, headers })
+  }
+  // 204/205/304 不得携带 body（Fetch 规范），无 text 时传 null 才能构造合法 Response
+  return new Response(res.text ?? null, { status: res.status, headers })
+}
+
 async function dispatch(
-  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
+  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; query: () => Record<string, string> } },
   route: Route,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
@@ -31,21 +69,13 @@ async function dispatch(
     // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
     // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
     body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
+    cookies: parseCookies(c.req.header('Cookie')),
+    query: c.req.query(),
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)
     return new Response(denied.text, { status: denied.status })
   }
   const res = await route.handler(ctx)
-  if (res.json !== undefined) {
-    return Response.json(res.json, { status: res.status })
-  }
-  if (res.html !== undefined) {
-    return new Response(res.html, {
-      status: res.status,
-      headers: { 'content-type': 'text/html; charset=utf-8' },
-    })
-  }
-  // 204/205/304 不得携带 body（Fetch 规范），无 text 时传 null 才能构造合法 Response
-  return new Response(res.text ?? null, { status: res.status })
+  return resToResponse(res)
 }

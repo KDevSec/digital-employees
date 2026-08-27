@@ -9,6 +9,20 @@ export interface Ctx {
   path: string
   host: string
   body?: unknown
+  /** Cookie 头解析产物（demo cookies() 语义迁移，adapter 单点映射，设计 §4.1） */
+  cookies?: Record<string, string>
+  /** 查询串解析产物（/auth/callback 消费 code/state，adapter 单点映射，设计 §4.1） */
+  query?: Record<string, string>
+}
+
+/** Set-Cookie 指令（A-02 登录链专用语义，adapter 单点映射，设计 §4.1） */
+export interface ResCookie {
+  name: string
+  value: string
+  maxAgeSeconds?: number
+  httpOnly?: boolean
+  sameSite?: 'Strict' | 'Lax'
+  path?: string
 }
 
 export interface Res {
@@ -17,6 +31,10 @@ export interface Res {
   text?: string
   /** HTML body（S-01 嵌入页）：adapter 以 text/html; charset=utf-8 透传 */
   html?: string
+  /** 3xx Location（A-02 登录链专用语义，adapter 单点映射，设计 §4.1）；与 json/html/text 互斥，redirect 胜出 */
+  redirect?: string
+  /** Set-Cookie 批量下发（A-02 登录链专用语义，adapter 单点映射，设计 §4.1） */
+  cookies?: ResCookie[]
 }
 
 export type Handler = (ctx: Ctx) => Res | Promise<Res>

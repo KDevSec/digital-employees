@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRegistry } from '../src/server/registry'
-import type { Route } from '../src/server/registry'
+import type { Res, Route } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
@@ -93,5 +93,12 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
       ['GET', '/api/config/platform'],
       ['PUT', '/api/config/platform'],
     ])
+  })
+})
+
+describe('Res/Ctx 契约类型扩展（认证迁移设计 §4.1）', () => {
+  it('Res 新字段由类型承载（registry 类型同步，编译期契约）', () => {
+    const res: Res = { status: 302, redirect: '/x', cookies: [{ name: 'a', value: 'b' }] }
+    expect(res.redirect).toBe('/x')
   })
 })

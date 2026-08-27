@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { toHonoApp } from '../src/server/hono-adapter'
 import { isLocalHost } from '../src/server/guard'
 import { createRegistry } from '../src/server/registry'
+import type { Ctx, Res } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
@@ -192,5 +193,64 @@ describe('嵌入源 web-dist/index.html（提交进仓的编译期资产，S-01�
     expect(html).toContain(brand.app)
     // web 包品牌正式名镜像（CLAUDE.md §4——中文正式名，DevZero 不作正式名称出现）
     expect(html).toContain(brand.displayNameZh)
+  })
+})
+
+describe('Res/Ctx 契约扩展（认证迁移设计 §4.1）', () => {
+  function buildAppWith(handler: (ctx: Ctx) => Res | Promise<Res>): ReturnType<typeof toHonoApp> {
+    const registry = createRegistry()
+    registry.get('/probe', handler)
+    return toHonoApp(registry)
+  }
+
+  it('redirect：302 + Location 头 + 空 body', async () => {
+    const app = buildAppWith(() => ({ status: 302, redirect: 'https://idp.example/auth?x=1' }))
+    const res = await app.request('/probe')
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://idp.example/auth?x=1')
+    expect(await res.text()).toBe('')
+  })
+
+  it('cookies：逐条 append Set-Cookie（HttpOnly/SameSite/Max-Age/Path 序列化）', async () => {
+    const app = buildAppWith(() => ({
+      status: 200,
+      json: { ok: true },
+      cookies: [
+        { name: 'workbench_session', value: 'sid-123', maxAgeSeconds: 300, httpOnly: true, sameSite: 'Strict' },
+        { name: 'cleared', value: '', maxAgeSeconds: 0 },
+      ],
+    }))
+    const res = await app.request('/probe')
+    const cookies = res.headers.getSetCookie()
+    expect(cookies).toContain('workbench_session=sid-123; Max-Age=300; HttpOnly; SameSite=Strict; Path=/')
+    expect(cookies).toContain('cleared=; Max-Age=0; Path=/')
+  })
+
+  it('Ctx.cookies：Cookie 头解析（demo cookies() 语义迁移）', async () => {
+    let seen: Record<string, string> | undefined
+    const app = buildAppWith((ctx) => {
+      seen = ctx.cookies
+      return { status: 204 }
+    })
+    await app.request('/probe', { headers: { Cookie: 'workbench_session=sid-123; other=value%20x' } })
+    expect(seen).toEqual({ workbench_session: 'sid-123', other: 'value x' })
+  })
+
+  it('Ctx.query：查询串解析（/auth/callback 消费 code/state）', async () => {
+    let seen: Record<string, string> | undefined
+    const app = buildAppWith((ctx) => {
+      seen = ctx.query
+      return { status: 204 }
+    })
+    await app.request('/probe?code=abc&state=xyz')
+    expect(seen).toEqual({ code: 'abc', state: 'xyz' })
+  })
+
+  it('redirect 与 json 并存时 redirect 胜出（互斥约定：登录链 handler 只给 redirect）', async () => {
+    const app = buildAppWith(() => ({ status: 302, redirect: '/', json: { stale: true } }))
+    const res = await app.request('/probe')
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('/')
+    expect(res.headers.get('content-type')).toBeNull()
   })
 })
