@@ -52,6 +52,9 @@ export interface Ledger {
   init(input: CreateTaskInput, table: NodeTable): { task_id: string }
   /** 经索引定位读 flow-state（归档任务可读历史）；缺行/目录缺失/坏 JSON 抛 LedgerError 含定位 */
   read(taskId: string): { state: TaskState; meta: TaskMeta }
+  /** 经索引解析任务目录（活动走工作区、归档走 archive_path + 代际探测兜底）——
+   *  表快照读取用（getTable 兼归档任务，L5×L3 联调） */
+  taskDirOf(taskId: string): string
   /** 仅活动任务：先 append events.jsonl（注入 seq/ts + schema 校验 + 尾行换行防御）再原子写
    *  flow-state（updated_at 刷新）+ 同步索引行 status；已归档任务拒绝写。终态不自动归档 */
   write(taskId: string, next: TaskState, newEvents: EngineEvent[]): void
@@ -337,6 +340,10 @@ export function createLedger(dirs: EngineDirs, hooks: LedgerHooks = {}): Ledger 
         state: { status, current_node, gate_iters, gate_calls, retries, blocked_reason },
         meta,
       }
+    },
+
+    taskDirOf(taskId) {
+      return resolveTask(dirs, taskId).dir
     },
 
     write(taskId, next, newEvents) {

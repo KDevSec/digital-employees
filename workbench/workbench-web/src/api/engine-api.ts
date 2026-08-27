@@ -4,6 +4,7 @@
  * 同源相对路径（health.ts 同款——页面由 service 伺服，dev 由 Vite 代理）；失败 reject 带
  * Error 不吞错。fixture 运行时实现同一 EngineApi 接口（kanban-fixture-service.ts）。
  */
+import { parseEngineEvent, type EngineEvent } from './engine-events'
 import type { TableSnapshot } from './engine-table'
 
 /** 发起任务载荷（§9.1 createTask 参数 1:1；表单逐字段映射见 CreateTaskModal） */
@@ -32,16 +33,36 @@ export function createTaskPayload(p: CreateTaskPayload): CreateTaskPayload {
   return out
 }
 
-/** 任务详情（getTask 响应形状——契约歧义 A/B 的先行口径：表快照与员工映射随任务下发） */
+/** 任务详情（getTask 装配产物——歧义 A 引擎口径：task 经 GET :id、table 经 GET :id/table） */
 export interface TaskDetail {
   task: { task_id: string; title?: string; flow?: string; workspace?: string }
-  table: TableSnapshot
+  /** 表端点失败/未就绪 → undefined（看板骨架态，事件流照常推进） */
+  table?: TableSnapshot
   employees: Record<string, string>
+}
+
+/** 静态七员工映射（内置 team 花名册——设计 §4.1；引擎无员工清单面，契约歧义 B/C 先行口径，
+ *  L4 registry 查询面就位后替换为真实源） */
+export const STATIC_EMPLOYEES: Record<string, string> = {
+  'req-clarifier': '需求澄清师',
+  'sys-engineer': '系统工程师',
+  'dev-engineer': '开发工程师',
+  'reviewer-expert': '评审专家',
+  'sec-compliance': '安全合规审核员',
+  'sec-design': '安全设计审核员',
+  'sec-code': '代码安全审核员',
 }
 
 export interface FlowSummary {
   flow: string
-  display_name: string
+  /** 引擎清单面现仅返回 file（文件名）；display_name 表内字段未透出——缺省时 UI 以 flow id 兜底显示 */
+  display_name?: string
+}
+
+export interface TaskListItem {
+  task_id: string
+  status: string
+  title: string
 }
 
 export interface EngineApi {
@@ -49,6 +70,10 @@ export interface EngineApi {
   getTask(taskId: string): Promise<TaskDetail>
   getFlows(): Promise<FlowSummary[]>
   confirmGate(taskId: string, node: string, verdict: 'approve' | 'reject', note?: string): Promise<{ ok: boolean }>
+  /** 任务清单（活动 + 归档——看板初值拉取，重载不丢板） */
+  listTasks(): Promise<{ tasks: TaskListItem[]; archived: TaskListItem[] }>
+  /** 事件拉取（初值重放/断线补拉共用；载荷经 parseEngineEvent 同一守卫归一） */
+  getEvents(taskId: string, afterSeq?: number): Promise<EngineEvent[]>
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -75,12 +100,41 @@ function post<T>(url: string, body: unknown): Promise<T> {
 
 export const httpEngineApi: EngineApi = {
   createTask: (payload) => post<{ task_id: string }>('/api/engine/tasks', payload),
-  getTask: (taskId) => request<TaskDetail>(`/api/engine/tasks/${encodeURIComponent(taskId)}`),
-  getFlows: () => request<FlowSummary[]>('/api/engine/flows'),
+  // 任务详情双调用装配（歧义 A 引擎口径）：task 与 table 分立端点，表失败容错为 undefined（骨架态）
+  getTask: async (taskId) => {
+    const id = encodeURIComponent(taskId)
+    const detail = await request<{ ok: boolean; task: TaskDetail['task'] }>(`/api/engine/tasks/${id}`)
+    const table = await request<{ ok: boolean; table: TableSnapshot }>(`/api/engine/tasks/${id}/table`)
+      .then((r) => r.table)
+      .catch(() => undefined)
+    return { task: detail.task, table, employees: STATIC_EMPLOYEES }
+  },
+  // 引擎真实响应 = {ok:true, flows:[{flow,file}]}（routes/engine.ts flowsList）——拆信封取数组
+  getFlows: async () => {
+    const res = await request<{ ok: boolean; flows: FlowSummary[] }>('/api/engine/flows')
+    return Array.isArray(res?.flows) ? res.flows : []
+  },
   confirmGate: (taskId, node, verdict, note) =>
     post<{ ok: boolean }>(`/api/engine/tasks/${encodeURIComponent(taskId)}/confirm-gate`, {
       node,
       verdict,
       ...(note ? { note } : {}),
     }),
+  // 任务清单：{ok, tasks, archived} 拆信封（看板初值拉取）
+  listTasks: async () => {
+    const res = await request<{ ok: boolean; tasks: TaskListItem[]; archived: TaskListItem[] }>('/api/engine/tasks')
+    return { tasks: res?.tasks ?? [], archived: res?.archived ?? [] }
+  },
+  // 事件拉取：坏行（守卫不过）静默跳过——与 SSE 帧消费同一纪律
+  getEvents: async (taskId, afterSeq = 0) => {
+    const res = await request<{ ok: boolean; events: unknown[] }>(
+      `/api/engine/tasks/${encodeURIComponent(taskId)}/events?after_seq=${afterSeq}`,
+    )
+    const out: EngineEvent[] = []
+    for (const raw of res?.events ?? []) {
+      const parsed = parseEngineEvent(raw)
+      if (parsed.ok) out.push(parsed.event)
+    }
+    return out
+  },
 }

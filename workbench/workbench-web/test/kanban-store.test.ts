@@ -46,6 +46,19 @@ describe('applyEvent 单事件矩阵（设计 §5.1 七行语义）', () => {
     expect(end.tasks['R-100'].blockedReason).toContain('spawn 失败')
   })
 
+  it('dispatch done status 取值集 = 引擎真源 done|blocked（歧义 F 落定）：blocked → 常驻错误', () => {
+    // 引擎 HTTP 面 zod enum ['done','blocked']（routes/engine.ts dispatchDoneSchema）；
+    // 原 fixture 口径 'ok'|'error' 以引擎真源为准修订
+    const base = { seq: 2, ts: '2026-08-27T00:00:00.000Z', type: 'dispatch', trace_id: 'R-1', parent_seq: null, actor: 'req-clarifier', task_id: 'R-1', emp: 'req-clarifier', dispatch_id: 'd-1', node: 'n0-req' } as const
+    let s = applyEvent(emptyKanbanState(), {
+      ...base, seq: 1, type: 'run.created', flow: 'demo-flow', title: 'T', workspace: 'D:/w',
+    } as never)
+    s = applyEvent(s, { ...base, phase: 'start' } as never)
+    s = applyEvent(s, { ...base, phase: 'done', status: 'blocked' } as never)
+    expect(s.tasks['R-1'].activeDispatches).toHaveLength(0)
+    expect(s.tasks['R-1'].blockedReason).toContain('req-clarifier')
+  })
+
   it('transition：currentNode 推进 + from 入 doneNodes + status 快照覆盖', () => {
     const events = buildScenario('happy-path', OPTS)
     // seq4 = transition n-adm→n0-req
@@ -109,6 +122,23 @@ describe('四剧本全量重放（KB-01 行为规格）', () => {
     expect(t.doneNodes).toContain('n2-impl')
     const codeGates = t.gateRecords.filter((g) => g.gate === 'g-code-review')
     expect(codeGates.map((g) => `${g.verdict}:${g.iter}`)).toEqual(['FAIL:1', 'PASS:2'])
+  })
+
+  it('重访重置（引擎 R3 gate 回流 reflow=false）：transition 落点已在 done 集 → 该节点回到活跃（看板返工视图）', () => {
+    // 引擎语义（L3 实测）：gate FAIL 的 on_reflow 推进 transition.reflow=false（reflow 标志只属
+    // R2 机械回流）。看板按「重访即返工」渲染：落点若已完成则重置为活跃，否则返工期间阶段
+    // 进度虚高 100%、节点 chip 卡 done。
+    const base = { seq: 2, ts: '2026-08-27T00:00:00.000Z', type: 'transition', trace_id: 'R-1', parent_seq: null, actor: 'engine', task_id: 'R-1' } as const
+    let s = applyEvent(emptyKanbanState(), {
+      ...base, seq: 1, type: 'run.created', flow: 'demo-flow', title: 'T', workspace: 'D:/w',
+    } as never)
+    // n2-impl → g-sec-code（n2-impl 入 done）
+    s = applyEvent(s, { ...base, from: 'n2-impl', to: 'g-sec-code', reflow: false, forced_fail: false, status: 'in_progress' } as never)
+    expect(s.tasks['R-1'].doneNodes).toContain('n2-impl')
+    // gate FAIL 回流 g-sec-code → n2-impl（reflow=false，落点已 done）
+    s = applyEvent(s, { ...base, from: 'g-sec-code', to: 'n2-impl', reflow: false, forced_fail: false, reason: 'g-sec-code FAIL', status: 'in_progress' } as never)
+    expect(s.tasks['R-1'].doneNodes).not.toContain('n2-impl')
+    expect(s.tasks['R-1'].currentNode).toBe('n2-impl')
   })
 
   it('abort：aborted 终态 + 原因常驻', () => {

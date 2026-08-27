@@ -129,7 +129,7 @@ function close(): void {
           <div v-if="form.mode === 'team'" class="field">
             <label>流程</label>
             <select v-model="form.flow" data-field="flow">
-              <option v-for="f in flows" :key="f.flow" :value="f.flow">{{ f.display_name }}</option>
+              <option v-for="f in flows" :key="f.flow" :value="f.flow">{{ f.display_name ?? f.flow }}</option>
             </select>
             <p v-if="errors.flow" class="field-error">{{ errors.flow }}</p>
           </div>

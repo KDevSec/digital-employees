@@ -16,7 +16,9 @@ export type EngineEventType =
   | 'gate'
   | 'dispatch'
 
-/** 事件通用壳（§7.3：seq=行号 1-based SSE 重放锚；trace_id=task_id；parent_seq=因果链） */
+/** 事件通用壳（§7.3：seq=行号 1-based SSE 重放锚；trace_id=task_id；parent_seq=因果链）。
+ *  task_id 为派生字段：引擎真实事件载荷只带 trace_id（L5×L3 联调实锤——设计 §7.3 trace_id=task_id），
+ *  消费层以 trace_id 兜底注入；L5 fixture 冗余自带 task_id，两者兼容（见 parseEngineEvent 归一）。 */
 interface EngineEventBase {
   seq: number
   ts: string
@@ -32,18 +34,19 @@ export interface RunCreatedEvent extends EngineEventBase {
   flow: string
   title: string
   workspace: string
-  display_name: string
+  /** 引擎条件展开（表无 display_name 则省略——solo 动态表即无） */
+  display_name?: string
 }
 
 export interface RunCompletedEvent extends EngineEventBase {
   type: 'run.completed'
-  final_node: string
+  final_node?: string
   duration_s: number
 }
 
 export interface RunAbortedEvent extends EngineEventBase {
   type: 'run.aborted'
-  final_node: string
+  final_node?: string
   reason: string
 }
 
@@ -58,7 +61,9 @@ export interface TransitionEvent extends EngineEventBase {
   status: string
 }
 
-/** gate：node = 闸所评节点（covers 目标，非闸自身 id）；verdict = PASS/FAIL（人工闸 approve/reject） */
+/** gate：node = 闸位节点 id（歧义 D 裁决·引擎为准——recordGate 记 state.current_node，
+ *  评审时任务已 advance 进闸节点；covers 目标节点不进事件，demo-run-events.jsonl 实证）；
+ *  verdict = PASS/FAIL（人工闸 approve/reject） */
 export interface GateEvent extends EngineEventBase {
   type: 'gate'
   gate: string
@@ -71,7 +76,8 @@ export interface GateEvent extends EngineEventBase {
   request_id?: string
 }
 
-/** dispatch：phase 区分 start/done（§7.3 原生）；done 带 status（ok|error，契约歧义 F 的 fixture 口径） */
+/** dispatch：phase 区分 start/done（§7.3 原生）；done 带 status（引擎取值集 'done'|'blocked'，
+ *  歧义 F 落定——HTTP 面 zod enum 同源，routes/engine.ts dispatchDoneSchema） */
 export interface DispatchEvent extends EngineEventBase {
   type: 'dispatch'
   phase: 'start' | 'done'
@@ -99,9 +105,8 @@ const isNum = (v: unknown): v is number => typeof v === 'number'
 const isStrArray = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === 'string')
 
-/** 通用壳校验：六字段齐备且类型正确 */
+/** 通用壳校验：身份锚 trace_id 等字段齐备且类型正确（task_id 不校验——派生字段见 parseEngineEvent） */
 function checkBase(raw: Record<string, unknown>): string | null {
-  if (!isStr(raw.task_id)) return 'task_id'
   if (!isStr(raw.trace_id)) return 'trace_id'
   if (!isStr(raw.ts)) return 'ts'
   if (!isStr(raw.actor)) return 'actor'
@@ -117,14 +122,14 @@ function payloadError(raw: Record<string, unknown>): string | null {
       if (!isStr(raw.flow)) return 'flow'
       if (!isStr(raw.title)) return 'title'
       if (!isStr(raw.workspace)) return 'workspace'
-      if (!isStr(raw.display_name)) return 'display_name'
+      if (raw.display_name !== undefined && !isStr(raw.display_name)) return 'display_name'
       return null
     case 'run.completed':
-      if (!isStr(raw.final_node)) return 'final_node'
+      if (raw.final_node !== undefined && !isStr(raw.final_node)) return 'final_node'
       if (!isNum(raw.duration_s)) return 'duration_s'
       return null
     case 'run.aborted':
-      if (!isStr(raw.final_node)) return 'final_node'
+      if (raw.final_node !== undefined && !isStr(raw.final_node)) return 'final_node'
       if (!isStr(raw.reason)) return 'reason'
       return null
     case 'transition':
@@ -161,6 +166,8 @@ function payloadError(raw: Record<string, unknown>): string | null {
 /**
  * 已解析对象 → EngineEvent 判别联合（守卫矩阵见 test/engine-events.test.ts）。
  * 非对象/壳字段缺失/载荷字段不符 → { ok:false, error: '<字段名> …' }，绝不抛异常。
+ * 通过校验后归一 task_id：引擎载荷不带该字段（设计 §7.3 trace_id=task_id，L5×L3 联调
+ * 实锤），以 trace_id 兜底注入；fixture 冗余自带 task_id 时保留原值（两者兼容）。
  */
 export function parseEngineEvent(raw: unknown): ParseResult {
   if (typeof raw !== 'object' || raw === null) return { ok: false, error: '事件不是对象' }
@@ -169,7 +176,8 @@ export function parseEngineEvent(raw: unknown): ParseResult {
   if (baseErr) return { ok: false, error: `字段 ${baseErr} 缺失或类型不符` }
   const payloadErr = payloadError(obj)
   if (payloadErr) return { ok: false, error: `字段 ${payloadErr} 缺失或类型不符` }
-  return { ok: true, event: obj as unknown as EngineEvent }
+  const event = obj as unknown as EngineEvent
+  return { ok: true, event: isStr(obj.task_id) ? event : { ...event, task_id: event.trace_id } }
 }
 
 /** SSE 帧（§8 契约：event + data + id）；data 为事件 JSON 行，id=seq */

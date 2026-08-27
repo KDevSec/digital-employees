@@ -266,6 +266,18 @@ describe('Engine · emitter 与 solo 模式', () => {
     expect(v.position).toEqual({ cleared: 1, total: 1, pct: 100 }) // 0 gate+终点：终点位 cleared=total
   })
 
+  it('getTable 兼归档任务（L5×L3 联调实锚）：completeTask 归档后仍可读表快照——看板重载初值拉取需要', () => {
+    const { task_id } = engine.createTask({
+      mode: 'solo', employee: 'dev-engineer', workspace, title: '归档表', input: 'x',
+    })
+    engine.advance(task_id, 'n-done')
+    engine.completeTask(task_id)
+    // 归档后 getTable 走 archive_path 解析（原实现仅活动目录 → 抛「表快照缺失」）
+    const table = engine.getTable(task_id)
+    expect(table.flow).toBe('solo:dev-engineer')
+    expect(table.nodes).toHaveLength(3)
+  })
+
   it('错误契约：未知 flow 模板 → EngineError 含路径；solo 缺 employee → EngineError', () => {
     expect(() => engine.createTask({ mode: 'team', flow: 'nope', workspace, title: 't', input: 'x' }))
       .toThrow(/flow 模板不存在/)

@@ -108,9 +108,9 @@ describe('剧本差异语义', () => {
     const gates = events.filter((e) => e.type === 'gate')
     expect(gates).toHaveLength(5)
     expect(gates.every((g) => (g as { verdict: string }).verdict === 'PASS')).toBe(true)
-    // dispatch done 全 ok
+    // dispatch done 全 done（引擎取值集 done|blocked——歧义 F 落定，routes/engine.ts zod enum 同源）
     const dones = events.filter((e) => e.type === 'dispatch' && (e as { phase: string }).phase === 'done')
-    expect(dones.every((d) => (d as { status?: string }).status === 'ok')).toBe(true)
+    expect(dones.every((d) => (d as { status?: string }).status === 'done')).toBe(true)
     // transition 链首尾相接：前一个 to = 后一个 from
     const transitions = events.filter((e) => e.type === 'transition') as Array<{
       from: string | null
@@ -168,10 +168,10 @@ describe('剧本差异语义', () => {
     expect(implStarts).toHaveLength(2)
   })
 
-  it('abort：dispatch done status=error → run.aborted 带原因', () => {
+  it('abort：dispatch done status=blocked（引擎取值集，歧义 F）→ run.aborted 带原因', () => {
     const events = buildScenario('abort', OPTS)
     const errDone = events.find(
-      (e) => e.type === 'dispatch' && (e as { status?: string }).status === 'error',
+      (e) => e.type === 'dispatch' && (e as { status?: string }).status === 'blocked',
     )
     expect(errDone).toBeDefined()
     const last = events[events.length - 1] as Extract<EngineEvent, { type: 'run.aborted' }>

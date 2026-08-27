@@ -258,7 +258,15 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
   })
   startedAtMs = Date.now()
   try {
-    const server = Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    const server = Bun.serve({
+      port: cfg.network.port,
+      hostname: '127.0.0.1',
+      fetch: app.fetch,
+      // SSE 长连接（/api/engine/stream）空闲保活上限：Bun 默认 10s 会在首个 15s 心跳前掐死
+      // 空闲流（L5×L3 联调实锤：EventSource 经代理收 500 → 连接态「已断开」）；255 为 Bun 上限，
+      // 心跳 15s 每次写入重置计时，长连接不受影响（mock 侧同款修法，见 scripts/mock-engine-server.ts）
+      idleTimeout: 255,
+    })
     // 详设 §3.1 第 9 步：服务起 → 后台任务起（心跳调度；workbenchId 在才真起，幂等）
     access.scheduler.ensureRunning()
     return server

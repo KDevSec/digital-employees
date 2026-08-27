@@ -85,6 +85,33 @@ describe('engine 域 · 任务生命周期与读面', () => {
     expect(fj.flows).toEqual([{ flow: 'demo-flow', file: 'demo-flow.node-table.yml' }])
   })
 
+  it('GET :id/table → 200 {ok,table}（run 级表快照只读端点——契约歧义 A 落定：看板经此取表，getTask 详情不含表）', async () => {
+    const created = await post('/api/engine/tasks', {
+      mode: 'team', flow: 'demo-flow', workspace: ws(), title: '登录页交付', input: '做一个登录页',
+    })
+    const { task_id } = (await created.json()) as { task_id: string }
+
+    const res = await get(`/api/engine/tasks/${task_id}/table`)
+    expect(res.status).toBe(200)
+    const j = (await res.json()) as {
+      ok: boolean
+      table: { flow: string; display_name: string; nodes: { id: string; kind: string; stage?: string }[]; gate_specs: Record<string, unknown> }
+    }
+    expect(j.ok).toBe(true)
+    expect(j.table.flow).toBe('demo-flow')
+    expect(j.table.display_name).toBe('五阶段演示交付')
+    expect(j.table.nodes.length).toBe(12)
+    expect(j.table.nodes.map((n) => n.id)).toContain('n-adm')
+    expect(j.table.nodes.map((n) => n.id)).toContain('g-sec-code')
+    expect(Object.keys(j.table.gate_specs)).toContain('g-req-review')
+    // 阶段字段在场（看板 StageBand 聚组依据）
+    expect(j.table.nodes.find((n) => n.id === 'n0-req')?.stage).toBe('需求核验')
+
+    // 未知任务 → 404
+    const nf = await get('/api/engine/tasks/t-not-exist/table')
+    expect(nf.status).toBe(404)
+  })
+
   it('GET :id/events?after_seq= 分页过滤', async () => {
     const created = await post('/api/engine/tasks', { mode: 'solo', employee: 'dev-engineer', workspace: ws(), title: 'T', input: 'x' })
     const { task_id } = (await created.json()) as { task_id: string }

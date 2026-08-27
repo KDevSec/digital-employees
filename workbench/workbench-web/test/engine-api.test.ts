@@ -38,25 +38,53 @@ describe('httpEngineApi（真实 HTTP 实现，fetch 注入断言）', () => {
     expect(JSON.parse(init.body as string)).toEqual(payload)
   })
 
-  it('getTask：GET /api/engine/tasks/:id → task + table + employees', async () => {
+  it('getTask：GET :id + GET :id/table 两调用合并（歧义 A 引擎口径）→ task + table + employees（静态七员工映射，歧义 B）', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ task: { task_id: 'R-1' }, table: { flow: 'demo-flow', nodes: [] }, employees: { 'sec-compliance': '安全合规审核员' } }))
+      // ① 任务详情（真实引擎响应：{ok, task: TaskView}——不含表）
+      .mockResolvedValueOnce(jsonResponse({
+        ok: true,
+        task: { task_id: 'R-1', flow: 'demo-flow', title: '登录页交付', workspace: 'D:/demo', status: 'in_progress', current_node: 'n-adm', gate_iters: {}, gate_calls: 0, retries: {}, blocked_reason: null },
+      }))
+      // ② 表快照（新端点 :id/table——{ok, table: NodeTable}）
+      .mockResolvedValueOnce(jsonResponse({
+        ok: true,
+        table: { flow: 'demo-flow', display_name: '五阶段演示交付', version: 1, max_retries: 6, terminal_fail: 'n-fail', delivery_node: 'n-done', nodes: [{ id: 'n-adm', name: '准入', kind: 'action', stage: '准入', emp: 'sec-compliance', next: ['n0-req'] }], gate_specs: {} },
+      }))
     vi.stubGlobal('fetch', fetchMock)
     const res = await httpEngineApi.getTask('R-1')
     expect(fetchMock.mock.calls[0][0]).toBe('/api/engine/tasks/R-1')
-    expect(res.table.flow).toBe('demo-flow')
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/engine/tasks/R-1/table')
+    expect(res.task.task_id).toBe('R-1')
+    expect(res.table).toBeDefined()
+    expect(res.table!.flow).toBe('demo-flow')
+    expect(res.table!.nodes[0].id).toBe('n-adm')
+    // 静态七员工映射（歧义 B 先行口径——L4 registry 查询面就位后替换）
     expect(res.employees['sec-compliance']).toBe('安全合规审核员')
+    expect(Object.keys(res.employees).length).toBe(7)
   })
 
-  it('getFlows：GET /api/engine/flows → 表清单', async () => {
+  it('getTask 容错：表端点失败 → table 缺省 undefined（骨架态，任务详情仍可用）', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse([{ flow: 'demo-flow', display_name: '五阶段演示交付' }]))
+      .mockResolvedValueOnce(jsonResponse({ ok: true, task: { task_id: 'R-1' } }))
+      .mockResolvedValueOnce(jsonResponse({ ok: false }, 404))
+    vi.stubGlobal('fetch', fetchMock)
+    const res = await httpEngineApi.getTask('R-1')
+    expect(res.task.task_id).toBe('R-1')
+    expect(res.table).toBeUndefined()
+  })
+
+  it('getFlows：GET /api/engine/flows → 拆包 {ok,flows} 信封取数组（引擎真实响应形状，L5×L3 联调实锤）', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ok: true, flows: [{ flow: 'demo-flow', file: 'demo-flow.node-table.yml' }] }))
     vi.stubGlobal('fetch', fetchMock)
     const flows = await httpEngineApi.getFlows()
     expect(fetchMock.mock.calls[0][0]).toBe('/api/engine/flows')
+    expect(Array.isArray(flows)).toBe(true)
     expect(flows[0].flow).toBe('demo-flow')
+    expect(flows.length).toBe(1)
   })
 
   it('confirmGate：POST /api/engine/tasks/:id/confirm-gate 带 node/verdict（人工闸辅通道）', async () => {

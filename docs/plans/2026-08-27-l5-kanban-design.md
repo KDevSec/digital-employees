@@ -244,18 +244,26 @@ KanbanView（/kanban）
 
 基线承接：main 实测 web 224 全绿（交接基线数字 224 一致）；service 126 全绿（交接说 101，main 已增长，以实测为准）。本线新增测试不动既有测试（placeholder.test.ts 若专测 kanban 占位则随路由替换改写，属行为变更非破坏）。
 
-## 10. 契约歧义与待裁决（不自创接口，记录对齐）
+## 10. 契约歧义与待裁决（✅ 已全部落定——L5×L3 联调 2026-08-27 实测，裁决 D-060/D-061）
 
-| # | 歧义 | 临时立场（fixture 口径） | 需对齐方 |
+| # | 歧义 | 联调前临时立场（fixture 口径） | **落定结论（引擎真源实测）** |
 |---|---|---|---|
-| A | **表快照到看板的通道**：run.created 不含 table；getTask 响应形状未定 | fixture `getTask` 返回 `{...state, table, employees}`；UI 对 table 未到渲染骨架 | 引擎线（HTTP getTask 响应定稿） |
-| B | **员工 display 名映射来源**：事件只有 emp id，UI 显示中文名需映射 | fixture 内置七员工映射随 getTask 下发 | 引擎线/L4 registry（查询面未定） |
-| C | **solo 模式员工清单查询面**：11 操作无员工清单 | fixture 静态七员工下拉 | 引擎线/L4 |
-| D | **gate 事件 node 字段语义**（闸 id vs 被评节点） | fixture 定 node=闸 covers 的被评节点（如 g-req-review 事件 node=n0-req） | 引擎线（事件生成处） |
-| E | 模型下拉真实数据源 `listModels(base)`（L2 adapter） | fixture 五档位+手输 | L2 安装线 |
-| F | dispatch done 的 status 取值集 | fixture 定 'ok'\|'error' | 引擎线 |
+| A | **表快照到看板的通道**：run.created 不含 table；getTask 响应形状未定 | fixture `getTask` 返回 `{...state, table, employees}`；UI 对 table 未到渲染骨架 | **引擎补 `GET :id/table` 只读端点**（归档任务可读）；getTask（TaskView）不含表——前端双调用装配。**D-060-①** |
+| B | **员工 display 名映射来源**：事件只有 emp id，UI 显示中文名需映射 | fixture 内置七员工映射随 getTask 下发 | **前端 STATIC_EMPLOYEES 静态七员工映射**；L4 registry 查询面就位后替换（已登记 L4 待办）。**D-060-②** |
+| C | **solo 模式员工清单查询面**：11 操作无员工清单 | fixture 静态七员工下拉 | 同 B 静态映射；L4 待办。**D-060-③** |
+| D | **gate 事件 node 字段语义**（闸 id vs 被评节点） | fixture 定 node=闸 covers 的被评节点（如 g-req-review 事件 node=n0-req） | **引擎为准：node=闸位节点 id**（recordGate 记 state.current_node；covers 目标不进事件）。fixture 已修订对齐；UI 不消费该字段，零渲染影响。**D-060-④** |
+| E | 模型下拉真实数据源 `listModels(base)`（L2 adapter） | fixture 五档位+手输 | 跳过（未交付）；**登记 L2 待办**。**D-060-⑤** |
+| F | dispatch done 的 status 取值集 | fixture 定 'ok'\|'error' | **引擎为准：'done' \| 'blocked'**（HTTP zod enum 同源）。store/观战摘要/scenarios 全部修订。**D-060-⑥** |
 
-以上在联调前与引擎线会话逐条对齐；fixture 侧结论以引擎侧真源为准修订（fixtures 单文件收敛，改动面小）。
+**联调新发现三项**（六条之外，裁决 **D-061**）：
+
+| # | 发现（main 实测） | 落定 |
+|---|---|---|
+| G | 引擎事件载荷**不带 task_id 字段**（设计 §7.3 通用壳本就 trace_id=task_id；fixture 冗余自带致守卫误判必填）→ **全部真实帧被守卫静默丢弃**（SSE live 但零事件到达） | 身份锚=trace_id，parseEngineEvent 过检后 trace_id 兜底注入 task_id（fixture 原值保留，兼容） |
+| H | R3 gate 回流 transition.reflow=**false**（reflow 标志只属 R2 机械回流·两套溢出语义）→ 原重访不重置 doneNodes，返工期间进度虚高 100% | applyEvent「重访即返工」：落点已在 done 集即重置为活跃（不依赖 reflow 标志） |
+| I | 看板初值拉取缺失（stream.ts 契约注释「首屏经 GET /api/engine/tasks」未实现）→ 页面重载即空板 | hydrate = 清单 + 逐任务事件重放（事件溯源式重建）+ applyIncoming per-task seq 幂等（与 SSE 增量/回放不重复） |
+
+工程修复随批：SSE `Bun.serve idleTimeout: 255`（默认 10s 在首个 15s 心跳前掐死空闲流，EventSource 经代理收 500 → 连接态「已断开」；mock 侧同款修法补齐真实 service）。
 
 ## 11. 验收清单
 
@@ -282,6 +290,8 @@ KanbanView（/kanban）
 | D-053 | mock 三分法与硬约束：页面纯真实接线、mock 绝不自动启动（原占位 D-kb04 的页面内演出形态被 v0.2 用户裁决推翻，§13.1） |
 | D-054 | 闸位停靠看板辅按钮实做 confirmGate；对话式放行为主通道（原占位 D-kb05） |
 | D-055 | 任务看板 UI 对齐 1.0 demo 任务看板形态（v0.2 用户裁决，§13.2） |
+| **D-060** | **L5×L3 契约歧义六条落定**（联调实测，§10）：A 表快照独立端点 `GET :id/table`（归档可读）+ 前端双调用装配 / B·C 静态七员工映射（L4 待办）/ D gate node=闸位节点 id（引擎为准）/ E 登记待办 / F dispatch status 取值集 done\|blocked（引擎为准）——修订 D-052 的 A/B 先行口径 |
+| **D-061** | **看板事件流消费三语义**（联调实测，§10 新发现三项）：事件身份锚=trace_id（task_id 兜底注入）/ R3 回流重访重置（reflow 标志只属 R2）/ 初值拉取事件溯源式重建 + applyIncoming per-task seq 幂等；附 SSE idleTimeout 255 工程修复 |
 
 ## 13. v0.2 修订（2026-08-27 用户裁决：移除演出 + UI 对齐 1.0 demo 任务看板）
 
@@ -324,6 +334,15 @@ grid: 330px | 1fr，height:100vh（整页工作台式）
 
 `use-kanban-runtime.ts` 删除；KanbanView 直接 `createEngineStream(streamUrl())` + `httpEngineApi`（getFlows/getTask/confirmGate）。测试经 `vi.stubGlobal('EventSource'/'fetch')` 注入替身——页面代码零测试分支。
 
+### 13.4 泳道任务列表层（T4 · L5×L3 联调补强，2026-08-27）
+
+任务看板（本设计主体）= **任务内推进视图**（工作区树/StageBand/EmpBand/事件观战——D-055）；1.0 协同编排页是**任务间泳道管理视图**——两层互补（用户裁决：参考 1.0 设计，抄形不抄管线）：
+
+- **/kanban/board 泳道全景**（新 BoardView）：五列泳道（需求池→待办池→协同执行→待人工决策→已交付，laneOf 纯派生零硬编码）；仅需求池→待办池可拖（=发起编排 createTask，派单失败留池可重拖——1.0 语义）；创建需求抽屉（40% 宽滑入，只建草稿不发起）；任务卡六件套（标题/tag 组/错误块/停靠提示+决策按钮组·驳回必填 note/进度条+阶段链 pill/卡脚员工）
+- **双层衔接**：点卡 → `/kanban?task=<id>` 任务详情（KanbanView 经 URL 查询参数初始选中）；侧栏「协同编排」一等菜单与「任务看板」同级（用户裁决 2026-08-27；D-036 澄清：协同编排=任务执行全景页 ≠ workflow 编辑器，后者仍留 L2）
+- **不抄 1.0 数据通道**：SSE tick+2s 全量重拉 → 2.0 事件推送（D-056 复合 id）+ hydrate 事件重放（D-061）
+- 数据层全部复用（kanban store/board store 仅加需求草稿本地态）；api 可注入（默认 httpEngineApi，D-053 纪律）
+
 ## 变更记录
 
 | 日期 | 变更 |
@@ -332,3 +351,5 @@ grid: 330px | 1fr，height:100vh（整页工作台式）
 | 2026-08-27 | 验收回写：T1~T11 全绿（354 测试），K1~K8 逐条勾；走查实捕修复三件（seq 分域去重/emitOpen 顺序/辅按钮接线） |
 | 2026-08-27 | v0.2 修订（用户裁决）：§13 移除页面内演出（mock 三分法）+ UI 重做为 1.0 demo 任务看板形态（工作区树/stageband/empband/事件观战/告警/评审流水） |
 | 2026-08-27 | v0.2 验收回写：347 测试全绿 + TS 干净；浏览器四剧本闭环（happy/gate-pause 含真实 HTTP confirm-gate 放行/abort）；**bundle 隔离实证通过**（grep 无 demo-flow/五阶段演示交付/员工名/mock 字样，仅契约字段名 reflow 与 AbortController 子串）；走查实捕修复：SSE 空闲掐断（首字节+5s 心跳+idleTimeout 255）、mock 强杀半开连接（EventSource 假 live——真实 service 优雅重启无此问题，工程增强记演进）、闸分母补人工闸节点（6/6）、空态发起入口可达 |
+| 2026-08-27 | **L5×L3 联调回写**：§10 六条歧义全部落定（D-060）+ 新发现三项（D-061）；§12 补两号；契约真源修订——引擎事件载荷身份锚=trace_id（无 task_id 字段）、gate node=闸位节点 id、dispatch status done\|blocked、表快照 `GET :id/table` 独立端点（归档可读）、初值拉取事件溯源式重建（hydrate）；真实环境端到端全链跑通（service 19980 + web dev 19986 + SSE live，五阶段全链含 FAIL 回流浏览器实时渲染 + 重载不丢板） |
+| 2026-08-27 | **§13.4 泳道任务列表层**（T4，用户裁决「参考 1.0 协同编排设计·抄形不抄管线」+「协同编排与任务看板同级菜单」）：/kanban/board 五列泳道全景（laneOf 派生/需求池拖拽发起/创建需求抽屉/任务卡六件套）+ 双层衔接（点卡进 /kanban?task=）；见[联调记录](2026-08-27-l5-l3-联调.md) §4 |
