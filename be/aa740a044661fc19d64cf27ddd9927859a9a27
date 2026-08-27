@@ -1,0 +1,27 @@
+workbench/workbench-service/test/routes-employees.test.ts
+  s_b9259474bd2245::t_e375acb2628410 223-349
+  s_b9259474bd2245::t_5aaad8a41fd9d0 78,85
+workbench/workbench-service/src/server/routes/employees.ts
+  s_b9259474bd2245::t_c8a2e936f567a8 183
+  s_b9259474bd2245::t_70a18e905f4455 25,31,33-36
+  s_b9259474bd2245::t_cf3415487b646e 139-178
+workbench/workbench-service/test/routes-registry.test.ts
+  s_b9259474bd2245::t_77953864f47dc2 121,125
+  s_b9259474bd2245::t_135cf9af82fd11 53,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "beaa740a044661fc19d64cf27ddd9927859a9a27",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
