@@ -34,6 +34,8 @@ onMounted(() => {
   } catch {
     store.connection = 'closed'
   }
+  // 初值拉取（重载不丢板）：清单 + 每任务事件重放；store 级 seq 幂等保证与 SSE 增量不重复
+  void store.hydrate(httpEngineApi)
 })
 
 onUnmounted(() => {

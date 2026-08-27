@@ -4,6 +4,7 @@
  * 同源相对路径（health.ts 同款——页面由 service 伺服，dev 由 Vite 代理）；失败 reject 带
  * Error 不吞错。fixture 运行时实现同一 EngineApi 接口（kanban-fixture-service.ts）。
  */
+import { parseEngineEvent, type EngineEvent } from './engine-events'
 import type { TableSnapshot } from './engine-table'
 
 /** 发起任务载荷（§9.1 createTask 参数 1:1；表单逐字段映射见 CreateTaskModal） */
@@ -58,11 +59,21 @@ export interface FlowSummary {
   display_name?: string
 }
 
+export interface TaskListItem {
+  task_id: string
+  status: string
+  title: string
+}
+
 export interface EngineApi {
   createTask(payload: CreateTaskPayload): Promise<{ task_id: string }>
   getTask(taskId: string): Promise<TaskDetail>
   getFlows(): Promise<FlowSummary[]>
   confirmGate(taskId: string, node: string, verdict: 'approve' | 'reject', note?: string): Promise<{ ok: boolean }>
+  /** 任务清单（活动 + 归档——看板初值拉取，重载不丢板） */
+  listTasks(): Promise<{ tasks: TaskListItem[]; archived: TaskListItem[] }>
+  /** 事件拉取（初值重放/断线补拉共用；载荷经 parseEngineEvent 同一守卫归一） */
+  getEvents(taskId: string, afterSeq?: number): Promise<EngineEvent[]>
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -109,4 +120,21 @@ export const httpEngineApi: EngineApi = {
       verdict,
       ...(note ? { note } : {}),
     }),
+  // 任务清单：{ok, tasks, archived} 拆信封（看板初值拉取）
+  listTasks: async () => {
+    const res = await request<{ ok: boolean; tasks: TaskListItem[]; archived: TaskListItem[] }>('/api/engine/tasks')
+    return { tasks: res?.tasks ?? [], archived: res?.archived ?? [] }
+  },
+  // 事件拉取：坏行（守卫不过）静默跳过——与 SSE 帧消费同一纪律
+  getEvents: async (taskId, afterSeq = 0) => {
+    const res = await request<{ ok: boolean; events: unknown[] }>(
+      `/api/engine/tasks/${encodeURIComponent(taskId)}/events?after_seq=${afterSeq}`,
+    )
+    const out: EngineEvent[] = []
+    for (const raw of res?.events ?? []) {
+      const parsed = parseEngineEvent(raw)
+      if (parsed.ok) out.push(parsed.event)
+    }
+    return out
+  },
 }

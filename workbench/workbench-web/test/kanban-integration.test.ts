@@ -80,4 +80,48 @@ describe('KanbanView × 真实 SSE 链路集成', () => {
     expect(w.find('.watch-box').findAll('.watch-line').length).toBe(scenario.length)
     w.unmount()
   })
+
+  it('初值拉取（重载不丢板）：mount → GET tasks 列表 + :id/events 重放 → 看板重建 + store 级 seq 幂等防 SSE 重放重复', async () => {
+    // stream.ts 契约注释明确「看板首屏经 GET /api/engine/tasks 拉取，SSE 只管增量」——
+    // L5×L3 联调实锤：原实现无初值拉取，页面重载即空板。hydrate = 事件溯源式重建
+    const scenario = buildScenario('happy-path', { taskId: 'R-1', title: '重载任务', workspace: 'D:/demo' })
+    const getEventsUrl = '/api/engine/tasks/R-1/events?after_seq=0'
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url === '/api/engine/tasks') {
+        return new Response(JSON.stringify({ ok: true, tasks: [{ task_id: 'R-1', status: 'completed', title: '重载任务' }], archived: [] }), { status: 200 })
+      }
+      if (url === getEventsUrl) {
+        return new Response(JSON.stringify({ ok: true, events: scenario }), { status: 200 })
+      }
+      if (url.includes('/api/engine/tasks/R-1/table')) {
+        return new Response(JSON.stringify({ ok: true, table: demoFlowTable }), { status: 200 })
+      }
+      if (url.includes('/api/engine/tasks/R-1')) {
+        return new Response(JSON.stringify({ ok: true, task: { task_id: 'R-1', title: '重载任务', flow: 'demo-flow', workspace: 'D:/demo' } }), { status: 200 })
+      }
+      if (url.includes('/api/engine/flows')) {
+        return new Response(JSON.stringify({ ok: true, flows: [] }), { status: 200 })
+      }
+      return new Response('{}', { status: 404 })
+    }))
+
+    const store = useKanbanStore()
+    const w = mount(KanbanView)
+    await flushPromises()
+
+    // 看板经事件重放重建：标题/完成态/阶段横幅全部在场（无任何 SSE emit）
+    expect(store.tasks['R-1'].status).toBe('completed')
+    expect(w.find('h1').text()).toBe('重载任务')
+    expect(w.find('.status-tag').text()).toBe('已完成')
+    expect(w.findAll('.sbstage').length).toBeGreaterThanOrEqual(5)
+
+    // store 级 seq 幂等：SSE 重放同帧（Last-Event-ID 回放窗口重叠）不重复入 feed
+    const feedBefore = store.feed.length
+    const gatesBefore = store.tasks['R-1'].gateRecords.length
+    FakeEventSource.last!.emit(scenario[0]) // run.created seq=1 已重放过
+    await flushPromises()
+    expect(store.feed.length).toBe(feedBefore)
+    expect(store.tasks['R-1'].gateRecords.length).toBe(gatesBefore)
+    w.unmount()
+  })
 })

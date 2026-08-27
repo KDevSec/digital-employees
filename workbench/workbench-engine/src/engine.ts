@@ -368,11 +368,13 @@ export class Engine {
     })
   }
 
-  private snapshotTable(taskId: string, meta: TaskMeta): NodeTable {
-    const dir = taskDir(meta.workspace, taskId)
-    const p = join(dir, 'table.snapshot.yml')
+  private snapshotTable(taskId: string, _meta: TaskMeta): NodeTable {
+    // 经索引解析目录（活动走工作区、归档走 archive_path）——getTable 兼归档任务
+    // （看板重载初值拉取，L5×L3 联调）；meta 仅保留签名兼容，路径真源在索引
+    void _meta
+    const p = join(this.ledger.taskDirOf(taskId), 'table.snapshot.yml')
     if (!existsSync(p)) {
-      throw new EngineError(`[engine] 表快照缺失（task ${taskId} 可能已归档）: ${p}`)
+      throw new EngineError(`[engine] 表快照缺失（task ${taskId}）: ${p}`)
     }
     return parseNodeTable(yamlLoad(readFileSync(p, 'utf8')))
   }

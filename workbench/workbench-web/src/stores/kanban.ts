@@ -12,6 +12,7 @@
 import { defineStore } from 'pinia'
 
 import type { Connection, EngineStream } from '../api/engine-stream'
+import type { EngineApi } from '../api/engine-api'
 import type { EngineEvent } from '../api/engine-events'
 import type { TableSnapshot } from '../api/engine-table'
 
@@ -213,11 +214,33 @@ export const useKanbanStore = defineStore('kanban', {
     },
   },
   actions: {
-    /** SSE 事件入口（stream.onEvent 接线目标） */
+    /** SSE 事件入口（stream.onEvent 接线目标）。per-task seq 幂等——初值重放（hydrate）
+     *  与 SSE 增量/Last-Event-ID 回放窗口重叠不重复入状态（事件 seq=行号，append-only 单调） */
     applyIncoming(ev: EngineEvent): void {
+      const prev = this.tasks[ev.task_id]
+      if (prev && ev.seq <= prev.lastSeq) return
       const next = applyEvent(this.$state, ev)
       this.tasks = next.tasks
       this.feed = next.feed
+    },
+    /** 初值拉取（重载不丢板）：任务清单（活动+归档）→ 每任务事件重放（事件溯源式重建，
+     *  表快照由视图层 tasks watcher 补拉）。已在本会话建卡的任务跳过（SSE 增量已在管） */
+    async hydrate(api: EngineApi): Promise<void> {
+      let list: { tasks: { task_id: string }[]; archived: { task_id: string }[] }
+      try {
+        list = await api.listTasks()
+      } catch {
+        return // 引擎未通：保持空板（连接态由 SSE 层表达）
+      }
+      for (const t of [...list.tasks, ...list.archived]) {
+        if (this.tasks[t.task_id]) continue
+        try {
+          const events = await api.getEvents(t.task_id, 0)
+          for (const ev of events) this.applyIncoming(ev)
+        } catch {
+          // 单任务事件拉取失败不拖垮其余任务（该任务保持缺席，SSE 增量仍会补）
+        }
+      }
     },
     /** 表快照/员工映射写入（getTask 装配产物落地；表未到/拉取失败 → undefined 只更员工映射，
      *  tables 不落键——保持骨架态且下次任务列表变动可重试） */
