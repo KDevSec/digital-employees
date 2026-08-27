@@ -1,0 +1,23 @@
+workbench/templates/README.md
+  s_b9259474bd2245::t_4bfb2dd52168a8 14-16
+  s_b9259474bd2245::t_964d3aee7bf37c 56
+  s_b9259474bd2245::t_7f8de2b5ec310c 28
+workbench/templates/skills-remaining.md
+  s_b9259474bd2245::t_5bee6cdee4aafd 10-12,20-21,24-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9bb7b9740a3de5f2d5fc6e7abf9d477d85d19832",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
