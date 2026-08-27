@@ -69,8 +69,12 @@ export interface WizardDraft {
   selectedTemplateId: string | null
 }
 
-/** 七步名称（StepBar 渲染） */
-export const WIZARD_STEPS = ['模板', '身份', '能力', '约束', '流程', '知识', '连接器'] as const
+/**
+ * 六步名称（StepBar 渲染）——2026-08-28 对齐 1.0 demo `feat/demo-4stage-flow` /specs/new：
+ * 原七步「模板/身份/能力/约束/流程/知识/连接器」重排为「模板/Agent定义/Skills/约束Hook/连接器MCP/其他」，
+ * 五轻类（Tools/Hook/知识库/其他）收进 step6 chip 折叠区，不再各占一步。
+ */
+export const WIZARD_STEPS = ['模板', 'Agent定义', 'Skills', '约束Hook', '连接器MCP', '其他'] as const
 
 /** 空 draft 初值（Custom 起步态） */
 function emptyDraft(): WizardDraft {

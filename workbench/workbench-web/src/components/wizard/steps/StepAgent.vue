@@ -101,6 +101,11 @@ function onIdentityInput(event: Event): void {
     </div>
 
     <div class="form-row">
+      <label>一句话职责（写入 brief）</label>
+      <input class="input" data-field="brief" :value="store.draft.brief" placeholder="如：承接前端需求的实现与联调" @input="store.draft.brief = ($event.target as HTMLInputElement).value" />
+    </div>
+
+    <div class="form-row">
       <label>头像</label>
       <div class="avatar-row">
         <button

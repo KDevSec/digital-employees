@@ -191,7 +191,7 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
     vi.unstubAllGlobals()
   })
 
-  async function mountWizardToStep7() {
+  async function mountWizardToLastStep() {
     const pinia = createPinia()
     setActivePinia(pinia)
     const router = makeRouter()
@@ -201,13 +201,13 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
     await flushPromises()
     const store = useWizardStore()
     Object.assign(store.draft, goodDraft())
-    store.gotoStep(7)
+    store.gotoStep(6)
     await flushPromises()
     return { wrapper, store, router }
   }
 
-  it('step7 底部「生成员工包」按钮在位', async () => {
-    const { wrapper } = await mountWizardToStep7()
+  it('step6 底部「生成员工包」按钮在位', async () => {
+    const { wrapper } = await mountWizardToLastStep()
     const btn = wrapper.findAll('button').find((b) => b.text().includes('生成员工包'))
     expect(btn, '生成员工包按钮应存在').toBeTruthy()
   })
@@ -219,7 +219,7 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
       json: async () => GEN_OK,
     } as unknown as Response)
     vi.stubGlobal('fetch', fetchMock)
-    const { wrapper } = await mountWizardToStep7()
+    const { wrapper } = await mountWizardToLastStep()
     // 设置草稿键
     localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...goodDraft() }))
     expect(localStorage.getItem(DRAFT_KEY)).not.toBeNull()
@@ -249,7 +249,7 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
       }),
     } as unknown as Response)
     vi.stubGlobal('fetch', fetchMock)
-    const { wrapper, store } = await mountWizardToStep7()
+    const { wrapper, store } = await mountWizardToLastStep()
     const btn = wrapper.findAll('button').find((b) => b.text().includes('生成员工包'))
     await btn!.trigger('click')
     await flushPromises()
@@ -263,7 +263,7 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
       json: async () => ({ code: 'ID_CONFLICT', message: 'id 已被占用' }),
     } as unknown as Response)
     vi.stubGlobal('fetch', fetchMock)
-    const { wrapper, store } = await mountWizardToStep7()
+    const { wrapper, store } = await mountWizardToLastStep()
     const btn = wrapper.findAll('button').find((b) => b.text().includes('生成员工包'))
     await btn!.trigger('click')
     await flushPromises()
@@ -278,7 +278,7 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
       json: async () => ({ code: 'SKILL_MISSING', message: 'skill 素材缺失：my-skill' }),
     } as unknown as Response)
     vi.stubGlobal('fetch', fetchMock)
-    const { wrapper } = await mountWizardToStep7()
+    const { wrapper } = await mountWizardToLastStep()
     const btn = wrapper.findAll('button').find((b) => b.text().includes('生成员工包'))
     await btn!.trigger('click')
     await flushPromises()
@@ -292,12 +292,12 @@ describe('CreateWizard 生成动作（最后步「生成员工包」按钮 → g
       json: async () => GEN_OK,
     } as unknown as Response)
     vi.stubGlobal('fetch', fetchMock)
-    const { wrapper } = await mountWizardToStep7()
+    const { wrapper } = await mountWizardToLastStep()
     // 未生成态——不应出现「安装到底座」字样（仅在完成态显示）
     const text = wrapper.text()
     expect(text).not.toContain('AgentHub')
-    // 完成态前的 step7 不应出现「安装到底座」（按钮文案在生成成功后才显）
-    // 此处检查 step7 默认态——不应有「安装到底座」
+    // 完成态前的 step6 不应出现「安装到底座」（按钮文案在生成成功后才显）
+    // 此处检查 step6 默认态——不应有「安装到底座」
     expect(text).not.toContain('安装到底座')
   })
 })

@@ -120,16 +120,15 @@ async function onUpload(event: Event): Promise<void> {
     </div>
 
     <div class="form-row">
-      <div class="check-grid">
+      <div class="skill-grid-compact">
         <div
           v-for="skill in filteredSkills"
           :key="skill.name"
-          class="check-item"
+          class="skill-card skill-card-clamped"
           :class="{ on: isSkillSelected(skill.name) }"
           data-skill
           @click="toggleSkill(skill)"
         >
-          <span class="box">✓</span>
           <div class="skill-info">
             <div class="skill-name">
               {{ skill.name }}
@@ -250,53 +249,45 @@ async function onUpload(event: Event): Promise<void> {
   margin-top: 6px;
 }
 
-/* 原型 .check-grid */
-.check-grid {
+/* demo .skill-grid：自适应网格（minmax 230px） + 卡片式（无 checkbox，点选即切换） */
+.skill-grid-compact {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 8px;
 }
 
-.check-item {
+.skill-card {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  border: 1px solid var(--g200);
-  border-radius: 8px;
-  padding: 8px 11px;
+  border: 1.5px solid var(--g200);
+  border-radius: 10px;
+  padding: 9px 11px;
   font-size: 12.5px;
   cursor: pointer;
   transition: 0.12s;
   background: #fff;
 }
 
-.check-item:hover {
-  border-color: var(--blue-300);
+.skill-card:hover {
+  border-color: var(--blue-400);
 }
 
-.check-item.on {
-  border-color: var(--blue-500);
-  background: var(--blue-50);
-  color: var(--blue-800);
-}
-
-.check-item .box {
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
-  border: 1.5px solid var(--g300);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #fff;
-  margin-top: 2px;
-}
-
-.check-item.on .box {
-  background: var(--blue-600);
+.skill-card.on {
   border-color: var(--blue-600);
+  background: var(--blue-50);
+}
+
+/* 卡片压缩：描述截 2 行，无 min-height */
+.skill-card-clamped .skill-desc {
+  font-size: 11.5px;
+  color: var(--g500);
+  margin-top: 3px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .skill-info {
@@ -312,11 +303,16 @@ async function onUpload(event: Event): Promise<void> {
   flex-wrap: wrap;
 }
 
+/* demo .skill-desc：截 2 行（line-clamp），无 min-height */
 .skill-desc {
   font-size: 11.5px;
   color: var(--g500);
-  margin-top: 2px;
-  line-height: 1.4;
+  margin-top: 3px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .badge {

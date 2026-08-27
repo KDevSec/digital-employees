@@ -153,19 +153,18 @@ describe('CreateWizard 步骤条与下一步校验', () => {
     vi.mocked(fetchSkills).mockReset()
   })
 
-  it('StepBar 渲染七步名称', async () => {
+  it('StepBar 渲染六步名称（demo 对齐）', async () => {
     const { wrapper } = await mountWizard()
     const steps = wrapper.findAll('.step')
-    expect(steps.length).toBe(7)
+    expect(steps.length).toBe(6)
     const text = wrapper.text()
-    // 七步名称（spec W1）：模板/身份/能力/约束/流程/知识/连接器
+    // 六步名称（2026-08-28 demo 对齐）：模板/Agent定义/Skills/约束Hook/连接器MCP/其他
     expect(text).toContain('模板')
-    expect(text).toContain('身份')
-    expect(text).toContain('能力')
-    expect(text).toContain('约束')
-    expect(text).toContain('流程')
-    expect(text).toContain('知识')
-    expect(text).toContain('连接器')
+    expect(text).toContain('Agent定义')
+    expect(text).toContain('Skills')
+    expect(text).toContain('约束Hook')
+    expect(text).toContain('连接器MCP')
+    expect(text).toContain('其他')
   })
 
   it('StepBar 点击步骤 → currentStep 切换', async () => {

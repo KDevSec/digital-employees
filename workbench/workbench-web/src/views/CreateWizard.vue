@@ -7,10 +7,9 @@ import CompletionPanel from '../components/wizard/CompletionPanel.vue'
 import PreviewPanel from '../components/wizard/PreviewPanel.vue'
 import TplGrid from '../components/wizard/TplGrid.vue'
 import StepAgent from '../components/wizard/steps/StepAgent.vue'
-import StepCommandsFlow from '../components/wizard/steps/StepCommandsFlow.vue'
 import StepConnectors from '../components/wizard/steps/StepConnectors.vue'
+import StepExtensions from '../components/wizard/steps/StepExtensions.vue'
 import StepHooksTools from '../components/wizard/steps/StepHooksTools.vue'
-import StepKnowledge from '../components/wizard/steps/StepKnowledge.vue'
 import StepSkills from '../components/wizard/steps/StepSkills.vue'
 import { generateEmployee } from '../api/employees'
 import type { GenerateResult } from '../api/employees'
@@ -230,23 +229,20 @@ onBeforeUnmount(() => {
               <!-- Step 1 模板：左栏 TplGrid 已涵盖，此处提示文案 -->
               <p v-if="store.currentStep === 1" class="step-hint">请在上方选择角色模板，然后点「下一步」开始配置。</p>
 
-              <!-- Step 2 Agent 定义 -->
+              <!-- Step 2 Agent定义 -->
               <StepAgent v-else-if="store.currentStep === 2" />
 
               <!-- Step 3 Skills -->
               <StepSkills v-else-if="store.currentStep === 3" />
 
-              <!-- Step 4 Hooks 与 Tools -->
+              <!-- Step 4 约束Hook -->
               <StepHooksTools v-else-if="store.currentStep === 4" />
 
-              <!-- Step 5 Commands 与流程 -->
-              <StepCommandsFlow v-else-if="store.currentStep === 5" />
+              <!-- Step 5 连接器MCP -->
+              <StepConnectors v-else-if="store.currentStep === 5" />
 
-              <!-- Step 6 Knowledge -->
-              <StepKnowledge v-else-if="store.currentStep === 6" />
-
-              <!-- Step 7 Connectors -->
-              <StepConnectors v-else-if="store.currentStep === 7" />
+              <!-- Step 6 其他（五轻 chip 折叠区） -->
+              <StepExtensions v-else-if="store.currentStep === 6" />
 
               <p v-if="stepValidationError" class="step-error">{{ stepValidationError }}</p>
               <p v-if="idConflictMsg && store.currentStep === 2" class="step-error" data-role="id-conflict">{{ idConflictMsg }}</p>
@@ -255,7 +251,7 @@ onBeforeUnmount(() => {
             <div class="wizard-foot">
               <button class="btn btn-ghost" type="button" :disabled="store.currentStep <= 1" @click="onPrev">上一步</button>
               <button
-                v-if="store.currentStep < 7"
+                v-if="store.currentStep < 6"
                 class="btn btn-primary"
                 type="button"
                 @click="onNext"

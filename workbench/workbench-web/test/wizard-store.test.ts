@@ -109,12 +109,17 @@ describe('useWizardStore（向导 store 骨架）', () => {
     expect(store.draft.skills).toEqual([])
   })
 
-  it('gotoStep(n)：currentStep 直接设置（1~7 范围）', () => {
+  it('gotoStep(n)：currentStep 直接设置（1~6 范围）', () => {
     const store = useWizardStore()
     store.gotoStep(3)
     expect(store.currentStep).toBe(3)
+    store.gotoStep(6)
+    expect(store.currentStep).toBe(6)
+    // 越界不生效
     store.gotoStep(7)
-    expect(store.currentStep).toBe(7)
+    expect(store.currentStep).toBe(6)
+    store.gotoStep(0)
+    expect(store.currentStep).toBe(6)
   })
 
   it('next()：step2 空 display 拦截（步级必填校验）', () => {
@@ -145,12 +150,12 @@ describe('useWizardStore（向导 store 骨架）', () => {
     expect(store.currentStep).toBe(4)
   })
 
-  it('next()：已到最后一步（7）不再递增', () => {
+  it('next()：已到最后一步（6）不再递增', () => {
     const store = useWizardStore()
-    store.gotoStep(7)
+    store.gotoStep(6)
     const result = store.next()
     expect(result).toBe(false)
-    expect(store.currentStep).toBe(7)
+    expect(store.currentStep).toBe(6)
   })
 
   it('prev()：currentStep 递减，已在第一步不再递减', () => {
