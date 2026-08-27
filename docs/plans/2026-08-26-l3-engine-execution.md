@@ -27,13 +27,13 @@
 
 **交付物合计**：@devzero/engine 纯库（schema/R1/R2/R3/门面/secretgate，108 测试）+ service 编排域（HTTP 12 端点 + SSE + MCP /mcp + 驱动器 + spawn runner mock，150 测试）+ 契约真源三件（demo 表/schema/events 类型）+ **L5 fixture**（`workbench-engine/test/fixtures/demo-run-events.jsonl`——五阶段全链 30 事件含一次 FAIL 回流）+ full-14 兼容表 fixture。
 
-## 2. 执行期裁决清单（占位号，待白天统一编真号入决策记录——现到 D-048）
+## 2. 执行期裁决清单（占位号（合流勘误：D-049~051 撞 main 并行线 → 实际落 D-056~058，见决策记录批次注记））
 
 | 占位 | 裁决 | 一句话理由 |
 |------|------|-----------|
-| **D-049** | SSE 事件 id 采用复合形式 `<task_id>:<seq>`（设计 §8 字面 `id:<seq>` 的修订） | seq 为 per-task 计数，多任务订阅下跨任务不可比——EventSource 重放需复合 id 解析；单任务语义不变。**影响面：看板 fixture 不受影响**（events.jsonl 本体不变，仅 SSE 帧的 id 行）；L5 消费 SSE 时重放解析按复合格式 |
-| **D-050** | spawn 失败挂起语义 = 驱动器侧停派（suspendedTasks 可观测），任务状态保持 in_progress 停在节点 | 引擎 11 操作无 setBlocked（契约未列）；挂起不做引擎级状态污染——L0 人接管或无状态重启天然重试；若需引擎级 blocked 留契约演进 |
-| **D-051** | T4 账本布局回归 D-045 的工作区形态 + 新增 `tasks-index.json` 轻量索引件 | T4 首版实现误用 dataDir 布局（任务书错误指令），reviewer 依「架构裁决不可静默推翻」拦截；索引是工作区布局下的必要补充（活动任务分散各 workspace 的定位/列表之源）。**索引 schema 已随实现测试锁定，设计 §7.1 补充说明待白天回写** |
+| **D-056** | SSE 事件 id 采用复合形式 `<task_id>:<seq>`（设计 §8 字面 `id:<seq>` 的修订） | seq 为 per-task 计数，多任务订阅下跨任务不可比——EventSource 重放需复合 id 解析；单任务语义不变。**影响面：看板 fixture 不受影响**（events.jsonl 本体不变，仅 SSE 帧的 id 行）；L5 消费 SSE 时重放解析按复合格式 |
+| **D-057** | spawn 失败挂起语义 = 驱动器侧停派（suspendedTasks 可观测），任务状态保持 in_progress 停在节点 | 引擎 11 操作无 setBlocked（契约未列）；挂起不做引擎级状态污染——L0 人接管或无状态重启天然重试；若需引擎级 blocked 留契约演进 |
+| **D-058** | T4 账本布局回归 D-045 的工作区形态 + 新增 `tasks-index.json` 轻量索引件 | T4 首版实现误用 dataDir 布局（任务书错误指令），reviewer 依「架构裁决不可静默推翻」拦截；索引是工作区布局下的必要补充（活动任务分散各 workspace 的定位/列表之源）。**索引 schema 已随实现测试锁定，设计 §7.1 补充说明待白天回写** |
 
 ## 3. 跳过项与待办
 
@@ -44,7 +44,7 @@
 | MCP 多客户端 per-session transport | spike 未压测（Q5）；当前单 transport（@hono/mcp README 形态） | I2 真机多员工并发时验证（CB/Qoder 多会话同连 /mcp） |
 | OR-04 团队装配（7 员工 EmployeeSpec 物化） | 依赖 L1 员工域契约（E-01~03/shared-protocol——I0-3 评审中未定稿），授权「勿自创员工包格式」 | 骨架见 §5；L1 契约冻结后物化（素材全部在手） |
 | U7 Windows 进程管理真机形态（超时 kill/孤儿回收） | 同真机 launcher——mock 层已实现超时语义（Promise.race）与失败重试/挂起 | I2 |
-| 设计文档 §7.1 补 tasks-index.json 说明 + §8 id 复合形式修订注记 | 契约修订落档纪律（本记录 §2 已记） | 白天随 D-049~051 入决策记录时一并回写设计文档 |
+| 设计文档 §7.1 补 tasks-index.json 说明 + §8 id 复合形式修订注记 | 契约修订落档纪律（本记录 §2 已记） | 白天随 D-056~058 入决策记录时一并回写设计文档 |
 
 ## 4. 契约三件套状态（L5 看板线对齐用）
 
@@ -52,7 +52,7 @@
 |------|------|------|
 | node-table schema | ✅ 冻结基线（T1）+ model_tier/emp/prompt/stage 四新字段随表锁定 | 无修订 |
 | events 账本 | ✅ 六类事件+span 基因；**fixture 已产出**（demo-run-events.jsonl） | 无修订（本体不变） |
-| SSE 通道 | ✅ T7 实现 | **id 复合形式**（D-049）——L5 EventSource 重放解析注意 `task:seq` 格式；心跳/帧格式/重放语义与设计 §8 一致 |
+| SSE 通道 | ✅ T7 实现 | **id 复合形式**（D-056）——L5 EventSource 重放解析注意 `task:seq` 格式；心跳/帧格式/重放语义与设计 §8 一致 |
 
 ## 5. OR-04 团队装配骨架（素材就绪，待 L1 契约物化）
 
@@ -81,4 +81,4 @@
 
 **🟡2 .mcp.json 覆盖语义裁决（用户 2026-08-27）**：文件名是底座生态约定不可改（CB/Qoder/CC 项目级 MCP 标准名——改名底座不加载、L0 人肉会话断）；撞车双向防护用**键级合并 + 派发前自愈**：`ensureMcpConfig()` 只写自己的命名空间键 `mcpServers.devzero-engine`（用户键零改动；坏 JSON 用户文件 LedgerError 指引人工不覆盖不吞）；init ensure 一次 + **spawn 每次派发前幂等 ensure**——用户/底座 CLI 中途重写丢键的**自愈窗口=一个派发周期**（底座 CLI 是否保留未知键留 I2 真机验证，无论结果本机制都兜底）。
 
-**L5 看板前端参考输入（用户指示 2026-08-27）**：「协同编排的前端页面可以参考 1.0 demo 的协同编排实现」——即 agents-team  的  协同看板（需求池→待办池→协同执行→待人工决策→已交付五列泳道 + 卡片阶段链缩略 + 闸标 ⛩ + SSE 触发全量重拉形态——**注意 2.0 数据通道不同**：SSE 事件推送（D-049 复合 id）非 1.0 的通知+重拉；UI 布局/交互参照、数据管线按设计 §8 契约）。
+**L5 看板前端参考输入（用户指示 2026-08-27）**：「协同编排的前端页面可以参考 1.0 demo 的协同编排实现」——即 agents-team  的  协同看板（需求池→待办池→协同执行→待人工决策→已交付五列泳道 + 卡片阶段链缩略 + 闸标 ⛩ + SSE 触发全量重拉形态——**注意 2.0 数据通道不同**：SSE 事件推送（D-056 复合 id）非 1.0 的通知+重拉；UI 布局/交互参照、数据管线按设计 §8 契约）。
