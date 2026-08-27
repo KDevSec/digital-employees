@@ -1,0 +1,27 @@
+workbench/workbench-service/src/employees/seed.ts
+  s_b9259474bd2245::t_67d98a5583d0fd 1-134
+workbench/workbench-service/test/seed.test.ts
+  s_b9259474bd2245::t_a6e88c97a72c28 1-204
+workbench/workbench-service/src/main.ts
+  s_b9259474bd2245::t_1e1e5f9cf187e4 287,294
+  s_b9259474bd2245::t_5fa339cd74bded 247-248
+  s_b9259474bd2245::t_ebd3f5c8139242 185,198,200-201,203,214-246
+  s_b9259474bd2245::t_d54099e656867e 42
+  s_b9259474bd2245::t_8b9b6e19554d5e 337-357
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "089699eaa5905c0cc5b7b406625683cb38159da4",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
