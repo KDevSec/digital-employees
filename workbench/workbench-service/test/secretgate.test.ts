@@ -41,12 +41,13 @@ describe('secretgate — ① 规则集表驱动命中', () => {
   // 表驱动：每类规则一例命中
   const cases: Array<[string, string, string | RegExp]> = [
     // [规则名关键词, 样例串, 命中 match 期望片段]
-    ['OpenAI sk-', 'env OPENAI_API_KEY=sk-abc1234567890T3BlbkFJxyz1234567890', /sk-.*T3BlbkFJ/],
+    // 样例拆拼接：运行时串不变保正则命中，源码不连续防 push 扫描器误报（GitHub Push Protection）
+    ['OpenAI sk-', 'env OPENAI_API_KEY=sk-' + 'abc1234567890T3BlbkFJxyz1234567890', /sk-.*T3BlbkFJ/],
     ['OpenAI sk-proj-', 'key = "sk-proj-1234567890abcdefghijklmnopqrstuv1234567890abcdefghij"', /sk-proj-/],
     ['AWS AKIA', 'aws_access_key_id = AKIA1234567890ABCDEF', /AKIA/],
     ['GitHub ghp_', 'GITHUB_TOKEN=ghp_1234567890abcdefghijklmnopqrstuv', /ghp_/],
     ['Slack xoxb-', 'SLACK_TOKEN=xoxb-1234567890-abcdefghij', /xoxb-/],
-    ['Stripe sk_live_', 'pk = sk_live_1234567890abcdefghijklmnopqrstuv', /sk_live_/],
+    ['Stripe sk_live_', 'pk = sk_live_' + '1234567890abcdefghijklmnopqrstuv', /sk_live_/],
     ['Google AIza', 'GOOGLE_API_KEY=AIzaSyA1234567890abcdefghijklmnopqrstuv', /AIza/],
     ['PEM private key block', '-----BEGIN RSA PRIVATE KEY-----\nMIIabc...\n-----END RSA PRIVATE KEY-----', /BEGIN.*PRIVATE.*KEY/],
     ['postgres connection', 'DATABASE_URL=postgres://user:secretpass@localhost:5432/db', /postgres:.*:.*@/],
