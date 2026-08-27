@@ -2,6 +2,7 @@
 import type { BaseAdapter } from '../contract'
 import { buildPlan } from '../common/plan'
 import { buildLaunchSpec } from '../common/launch'
+import { listModelsFor } from '../common/models'
 import { profile } from './profile'
 
 export function createClaudeCodeAdapter(): BaseAdapter {
@@ -9,6 +10,6 @@ export function createClaudeCodeAdapter(): BaseAdapter {
     profile,
     plan(spec, opts) { return buildPlan(profile, spec, opts) },
     async launch(input) { return await buildLaunchSpec(profile, input) },
-    async listModels() { throw new Error('NOT_IMPLEMENTED: Task 9') },
+    async listModels() { return await listModelsFor(profile.id) },
   }
 }
