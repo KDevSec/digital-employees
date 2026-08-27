@@ -1,0 +1,22 @@
+workbench/workbench-web/src/components/wizard/InstallModal.vue
+  s_b9259474bd2245::t_ff2c635f06da70 81-84,86,93,100-106
+workbench/workbench-web/test/install-modal.test.ts
+  s_b9259474bd2245::t_86ad54c5a0e1d3 226-272
+  s_b9259474bd2245::t_0ae6dc4c90ca24 56-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6472e77b7cbb0848cbe3fb7b4d9f9fbcdca5a486",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
