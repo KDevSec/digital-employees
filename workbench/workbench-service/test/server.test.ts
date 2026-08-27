@@ -7,10 +7,15 @@ import { isLocalHost } from '../src/server/guard'
 import { createRegistry } from '../src/server/registry'
 import type { Ctx, Res } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
+import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
 
 function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
+  // Task 15 起全量装配含 A 系列三域：service 切片 + sessionGuard 注入（enrollment 全 session 档，
+  // 无 guard 时 toHonoApp 装配保险丝即炸）；temp profile 供 platform-access 落 auth 密钥。
+  const profileDir = mkdtempSync(join(tmpdir(), 'wb-server-'))
+  const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
   const registry = createRegistry()
   registerAllRoutes(registry, {
     version: '9.9.9',
@@ -19,13 +24,14 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     dataDir: 'D:/data/.devzero',
     uptime: () => 12_345,
     indexHtml: readEmbeddedIndexHtml(),
-    // I0-5 T8 config 域：真实读写函数 + 占位 profile（本文件不触达该域端点，行为断言在 routes-config.test.ts）
-    profileDir: 'D:/data/.devzero',
+    // I0-5 T8 config 域：真实读写函数 + temp profile（本文件不触达该域端点，行为断言在 routes-config.test.ts）
+    profileDir,
     loadConfig,
     writeConfigOverride,
+    service,
     ...overrides,
   })
-  return toHonoApp(registry)
+  return toHonoApp(registry, { sessionGuard: (ctx, grade) => service.sessionGuard(ctx, grade) })
 }
 
 /** 提交进仓的嵌入源（S-01）：测试直接消费真实产物，与 main 组装同源 */

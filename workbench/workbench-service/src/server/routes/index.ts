@@ -18,16 +18,22 @@ import { registerConfigRoutes } from './config'
 import type { ConfigRouteDeps } from './config'
 import { registerSessionRoutes } from './session'
 import type { SessionRouteDeps } from './session'
+import { registerAuthRoutes } from './auth'
+import type { AuthRouteDeps } from './auth'
+import { registerEnrollmentRoutes } from './enrollment'
+import type { EnrollmentRouteDeps } from './enrollment'
 
 /** 全量路由依赖 = 各域依赖之和（main 装配一次给全；域文件各取所需字段） */
-export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & SessionRouteDeps
+export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & SessionRouteDeps & AuthRouteDeps & EnrollmentRouteDeps
 
 /** 汇总注册（静态表：一行一域；新增域在此追加一行） */
 export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps: RouteDeps): void {
   registerInfraRoutes(reg, deps)
   registerShellRoutes(reg, deps)
   registerConfigRoutes(reg, deps) // I0-5 T8 config 域（设计 D-14：GET/PUT /api/config/platform）
-  registerSessionRoutes(reg, deps) // D-049 session 域（GET /api/state 开发环境桥接）
+  registerSessionRoutes(reg, deps) // A 系列 session 域（GET /api/state + POST /api/logout；D-049 桥接退役）
+  registerAuthRoutes(reg, deps) // A 系列 auth 域（GET /auth/login + GET /auth/callback，无档位）
+  registerEnrollmentRoutes(reg, deps) // A 系列 enrollment 域（POST /api/enroll|progress|reset|heartbeat，全 session 档）
   assertNoDuplicateRoutes(reg.routes)
 }
 

@@ -2,21 +2,18 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
+
+import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig } from '../src/config/load'
 import { toHonoApp } from '../src/server/hono-adapter'
 import { createRegistry } from '../src/server/registry'
 import { registerSessionRoutes } from '../src/server/routes/session'
 
 /**
- * session 域路由（D-049 开发环境桥接，2026-08-27）：GET /api/state。
- * 背景：A 系列（认证后端 demo→service 迁移）未落地，/api/state 此前不存在——web 守卫
- * 拉不到状态一律按未认证（只能看接入页），本地无平台时调试被卡（用户痛点 2026-08-27）。
- * D-049 裁决：平台地址未配置 = 开发环境——本端点注入开发态（authenticated + ACTIVE + 开发用户），
- * web 零改动全放行（顶栏/设置浮层显示「开发模式」用户）；已配置平台地址 = 生产语义 → 401
- * （web fetchAccessState 非 2xx 归一 null → 未认证，与「端点不存在」的现行行为等价）。
- * A 系列落地后本域升级为真实会话端点，开发环境语义沿用 schema.isDevEnvironment 同一判据。
- * 响应形状 = demo /api/state 消费子集（web api/access.ts parseStateJson 契约）：
- * installationId 必须为字符串（整包拒绝判据）+ status 八枚举 + authenticated === true 才认证。
+ * session 域（D-049 桥接退役后的真实会话端点）：
+ * - 开发环境：真 installationId（D-am4）+ ACTIVE + authenticated（D-049 语义不回归）
+ * - 生产语义：未登录 200 + authenticated:false（D-am3——桥接期的 401 已退役）
+ * - /api/logout：清 cookie
  */
 
 let profileDir: string
@@ -25,55 +22,56 @@ beforeEach(() => {
   profileDir = mkdtempSync(join(tmpdir(), 'wb-session-routes-'))
 })
 
-/** 域装配：只挂 session 域 */
-function buildApp(): ReturnType<typeof toHonoApp> {
+function buildApp() {
+  const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: '11112222-3333', version: '0.0.1' })
   const registry = createRegistry()
-  registerSessionRoutes(registry, { profileDir, loadConfig })
-  return toHonoApp(registry)
+  registerSessionRoutes(registry, { service })
+  return toHonoApp(registry, { sessionGuard: (ctx, grade) => service.sessionGuard(ctx, grade) })
 }
 
-describe('分域注册（routes/session.ts 只注册本域端点）', () => {
-  it('session 域路由表 = GET /api/state，无其他端点', () => {
+describe('分域注册（routes/session.ts）', () => {
+  it('session 域路由表 = GET /api/state + POST /api/logout', () => {
+    const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'i', version: '0' })
     const reg = createRegistry()
-    registerSessionRoutes(reg, { profileDir, loadConfig })
-    expect(reg.routes.map((r) => [r.method, r.path])).toEqual([['GET', '/api/state']])
+    registerSessionRoutes(reg, { service })
+    expect(reg.routes.map((r) => [r.method, r.path])).toEqual([['GET', '/api/state'], ['POST', '/api/logout']])
   })
 })
 
-describe('GET /api/state（D-049 开发环境桥接）', () => {
-  it('平台地址未配置（默认）→ 200 开发态：authenticated + ACTIVE + 开发用户（web 零改动全放行）', async () => {
+describe('GET /api/state', () => {
+  it('开发环境（默认无配置）→ 200 开发态：真 installationId（D-am4）+ ACTIVE + 开发用户', async () => {
     const res = await buildApp().request('/api/state')
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({
-      installationId: 'dev',
+      installationId: '11112222-3333',
       status: 'ACTIVE',
       authenticated: true,
       user: { name: '开发模式', preferred_username: 'dev', email: 'dev@localhost' },
     })
   })
 
-  it('config.json 显式空串 → 同默认：开发态（清除配置的落盘形态与未配置语义一致）', async () => {
-    writeFileSync(join(profileDir, 'config.json'), JSON.stringify({ platform: { baseUrl: '' } }), 'utf8')
+  it('已配置平台（生产语义）未登录 → 200 + authenticated:false（D-am3 桥接退役；状态卡仍可渲染）', async () => {
+    writeFileSync(join(profileDir, 'config.json'), JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }), 'utf8')
     const res = await buildApp().request('/api/state')
     expect(res.status).toBe(200)
-    expect(((await res.json()) as { authenticated: boolean }).authenticated).toBe(true)
+    const json = (await res.json()) as { installationId: string; status: string; authenticated: boolean; user?: unknown }
+    expect(json.installationId).toBe('11112222-3333')
+    expect(json.status).toBe('NEW')
+    expect(json.authenticated).toBe(false)
+    expect(json.user).toBeUndefined()
   })
 
-  it('已配置平台地址 → 401 + {error:{code,message}}（生产语义：与端点不存在的现行行为等价，web 归一未认证）', async () => {
-    writeFileSync(
-      join(profileDir, 'config.json'),
-      JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }),
-      'utf8',
-    )
-    const res = await buildApp().request('/api/state')
-    expect(res.status).toBe(401)
-    const json = (await res.json()) as { error: { code: string; message: string } }
-    expect(json.error.code).toBe('NO_SESSION')
-    expect(json.error.message.length).toBeGreaterThan(0)
-  })
-
-  it('Host 白名单守卫照常：Host: evil.com → 403（守卫先于 handler，S-12 不因开发环境松动）', async () => {
+  it('Host 白名单守卫照常（S-12 不因开发环境松动）', async () => {
     const res = await buildApp().request('/api/state', { headers: { Host: 'evil.com' } })
     expect(res.status).toBe(403)
+  })
+})
+
+describe('POST /api/logout', () => {
+  it('清 cookie + logged_out（匿名也 200，偏差 #3）', async () => {
+    const res = await buildApp().request('/api/logout', { method: 'POST' })
+    expect(res.status).toBe(200)
+    expect((await res.json() as { status: string }).status).toBe('logged_out')
+    expect(res.headers.getSetCookie().some((c) => c.startsWith('workbench_session=; Max-Age=0'))).toBe(true)
   })
 })

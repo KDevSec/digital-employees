@@ -1,3 +1,6 @@
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { createRegistry } from '../src/server/registry'
 import type { Res, Route } from '../src/server/registry'
@@ -6,6 +9,7 @@ import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
 import { registerConfigRoutes } from '../src/server/routes/config'
 import { registerSessionRoutes } from '../src/server/routes/session'
+import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 
 /**
@@ -14,7 +18,9 @@ import { loadConfig, writeConfigOverride } from '../src/config/load'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
-/** 域注册依赖：infra 五项 + shell 一项 + config 三项（I0-5 T8，与 main 装配同形状，值非契约） */
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + A 系列 platform-access（Task 15 起 service 切片注入；与 main 装配同形状，值非契约） */
+const profileDir = mkdtempSync(join(tmpdir(), 'wb-registry-'))
+const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -22,9 +28,10 @@ const deps = {
   dataDir: 'D:/data/.devzero',
   uptime: () => 12_345,
   indexHtml: '<html>DevZero</html>',
-  profileDir: 'D:/data/.devzero',
+  profileDir,
   loadConfig,
   writeConfigOverride,
+  service,
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -35,7 +42,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform、GET /api/state）', () => {
+  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform、GET /api/state、POST /api/logout、GET /auth/login|callback、POST /api/enroll|progress|reset|heartbeat）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -44,7 +51,14 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/config/platform'],
       ['GET', '/api/events'],
       ['GET', '/api/state'],
+      ['GET', '/auth/callback'],
+      ['GET', '/auth/login'],
       ['GET', '/healthz'],
+      ['POST', '/api/enroll'],
+      ['POST', '/api/heartbeat'],
+      ['POST', '/api/logout'],
+      ['POST', '/api/progress'],
+      ['POST', '/api/reset'],
       ['PUT', '/api/config/platform'],
     ])
   })
@@ -80,10 +94,10 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     expect(table(reg.routes)).toEqual([['GET', '/']])
   })
 
-  it('session 域：仅 GET /api/state（D-049 开发环境桥接，不含其他域端点）', () => {
+  it('session 域：GET /api/state + POST /api/logout（A 系列真实会话端点；D-049 桥接退役，不含其他域端点）', () => {
     const reg = createRegistry()
     registerSessionRoutes(reg, deps)
-    expect(table(reg.routes)).toEqual([['GET', '/api/state']])
+    expect(table(reg.routes)).toEqual([['GET', '/api/state'], ['POST', '/api/logout']])
   })
 
   it('config 域：GET+PUT /api/config/platform（I0-5 T8，不含其他域端点）', () => {
