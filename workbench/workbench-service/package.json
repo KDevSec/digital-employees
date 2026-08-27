@@ -11,7 +11,8 @@
   "dependencies": {
     "hono": "^4",
     "zod": "^3",
-    "commander": "^12"
+    "commander": "^12",
+    "jose": "^6"
   },
   "devDependencies": {
     "typescript": "^5",
