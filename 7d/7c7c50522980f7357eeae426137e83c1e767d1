@@ -1,0 +1,21 @@
+workbench/workbench-service/src/app/platform-access/auth-secret.ts
+  s_d4823793916f9d::t_368d02c70d4207 1-33
+workbench/workbench-service/test/auth-secret.test.ts
+  s_d4823793916f9d::t_0cb8bf36294f85 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7d7c7c50522980f7357eeae426137e83c1e767d1",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
