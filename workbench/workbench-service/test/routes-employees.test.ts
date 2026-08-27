@@ -75,13 +75,14 @@ async function postGenerate(body: unknown): Promise<Response> {
 }
 
 describe('分域注册（routes/employees.ts 只注册本域端点）', () => {
-  it('employees 域路由表 = POST /api/employees/generate + GET /api/employees/validate-id', () => {
+  it('employees 域路由表 = POST /api/employees/generate + GET /api/employees/validate-id + GET /api/employees', () => {
     const reg = createRegistry()
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const store = createEmployeeStore(employeesRoot, tmpRoot)
     const builder = createEmployeeBuilder({ provider, store, tmpRoot })
     registerEmployeesRoutes(reg, { builder, store })
     expect(reg.routes.map((r) => [r.method, r.path]).sort()).toEqual([
+      ['GET', '/api/employees'],
       ['GET', '/api/employees/validate-id'],
       ['POST', '/api/employees/generate'],
     ])
@@ -218,5 +219,132 @@ describe('Host 白名单守卫照常（employees 域）', () => {
       headers: { Host: 'evil.com' },
     })
     expect(res.status).toBe(403)
+  })
+
+  it('GET /api/employees 带 Host: evil.com → 403', async () => {
+    const res = await buildApp().request('/api/employees', { headers: { Host: 'evil.com' } })
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('GET /api/employees（花名册扫描派生）', () => {
+  it('空员工库 → 200 + items=[] + invalid=[]', async () => {
+    const res = await buildApp().request('/api/employees')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { items: unknown[]; invalid: unknown[] }
+    expect(Array.isArray(json.items)).toBe(true)
+    expect(json.items).toEqual([])
+    expect(Array.isArray(json.invalid)).toBe(true)
+    expect(json.invalid).toEqual([])
+  })
+
+  it('materialize 一个假员工后 GET → items 含其卡片字段（id/display/brief/avatar/kind/version）', async () => {
+    // 用真实 store 物化一个最小假员工（manifest 含卡片字段）
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    const manifestYaml = [
+      'id: fake-emp',
+      'display: 假员工',
+      'brief: 测试用',
+      'avatar: 🧪',
+      "version: '0.1.0'",
+      "upp_version: '2.1'",
+      'kind: flow-owner',
+      'org: local',
+      'operator: demo@devzero.local',
+      'requires: {level: L1}',
+      'agent:',
+      '  persona:',
+      '    role: 测试岗',
+      '    identity: 测试用假员工身份描述不少于十字',
+      '    principles: []',
+      '    usage_modes: [裸用]',
+      'skills: []',
+      'hooks: {redlines: []}',
+      'tools: {deny: []}',
+      "commands: commands/",
+      "knowledge: knowledge/",
+      'connectors: []',
+      'custom: {}',
+      'constraints: {tier: 探索档}',
+      'governance: {level: L3, visibility: team, audit: exceptions-only}',
+    ].join('\n')
+    await store.materialize('fake-emp', [{ path: 'manifest.yml', content: manifestYaml }])
+
+    // 装配 app（store 与上面同一 employeesRoot）
+    const registry = createRegistry()
+    const provider = createTemplatesProvider(builtinTemplates, customRoot)
+    const builder = createEmployeeBuilder({ provider, store, tmpRoot })
+    registerEmployeesRoutes(registry, { builder, store })
+    const app = toHonoApp(registry)
+
+    const res = await app.request('/api/employees')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as {
+      items: Array<{ id: string; display: string; brief: string; avatar: string; kind: string; version: string }>
+      invalid: string[]
+    }
+    expect(json.items.length).toBe(1)
+    const card = json.items[0]!
+    expect(card.id).toBe('fake-emp')
+    expect(card.display).toBe('假员工')
+    expect(card.brief).toBe('测试用')
+    expect(card.avatar).toBe('🧪')
+    expect(card.kind).toBe('flow-owner')
+    expect(card.version).toBe('0.1.0')
+  })
+
+  it('invalid 传递：坏 yaml 目录进 invalid 列表', async () => {
+    // 手工构造坏 yaml 目录
+    const { mkdirSync, writeFileSync } = await import('node:fs')
+    mkdirSync(join(employeesRoot, 'bad-yaml'), { recursive: true })
+    writeFileSync(join(employeesRoot, 'bad-yaml', 'manifest.yml'), '"unclosed string', 'utf8')
+
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    const registry = createRegistry()
+    const provider = createTemplatesProvider(builtinTemplates, customRoot)
+    const builder = createEmployeeBuilder({ provider, store, tmpRoot })
+    registerEmployeesRoutes(registry, { builder, store })
+    const app = toHonoApp(registry)
+
+    const res = await app.request('/api/employees')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { items: unknown[]; invalid: string[] }
+    expect(json.invalid).toContain('bad-yaml')
+    // 坏 yaml 不在 items 里
+    expect(json.items.find((c) => (c as { id: string }).id === 'bad-yaml')).toBeUndefined()
+  })
+
+  it('防御性提取：manifest 是对象但字段类型不对 → 兜底空串/undefined', async () => {
+    // manifest 字段全错（display 是数字、kind 不在枚举外等）—— yaml 合法但 schema 拒
+    // store.list 不过 schema，原样返回；端点做防御性字段提取
+    const { mkdirSync, writeFileSync } = await import('node:fs')
+    mkdirSync(join(employeesRoot, 'weird-fields'), { recursive: true })
+    // manifest 是合法 yaml 对象，但字段类型与 Manifest 不符（display=数字、kind=未知）
+    writeFileSync(
+      join(employeesRoot, 'weird-fields', 'manifest.yml'),
+      'id: weird-fields\ndisplay: 123\nkind: unknown-kind\nversion: 0.1.0\n',
+      'utf8',
+    )
+
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    const registry = createRegistry()
+    const provider = createTemplatesProvider(builtinTemplates, customRoot)
+    const builder = createEmployeeBuilder({ provider, store, tmpRoot })
+    registerEmployeesRoutes(registry, { builder, store })
+    const app = toHonoApp(registry)
+
+    const res = await app.request('/api/employees')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as {
+      items: Array<{ id: string; display: string; brief: string; avatar: string; kind: string; version: string }>
+      invalid: string[]
+    }
+    // weird-fields 不算 invalid（yaml 合法）—— 但字段类型不对，端点做防御性兜底
+    expect(json.invalid).not.toContain('weird-fields')
+    const card = json.items.find((c) => c.id === 'weird-fields')
+    expect(card).toBeDefined()
+    // 防御性提取：display 是 number → 兜底空串
+    expect(typeof card!.display).toBe('string')
+    expect(card!.display).toBe('')
   })
 })

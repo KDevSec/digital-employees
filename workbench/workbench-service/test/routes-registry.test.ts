@@ -50,13 +50,14 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（含 Task 11 B6 employees + Task 12 C1 skills 域）', () => {
+  it('注册产物 = 期望路由表（含 Task 11 B6 employees + Task 12 C1 skills 域 + Task 17 花名册）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
       ['GET', '/'],
       ['GET', '/api/activity'],
       ['GET', '/api/config/platform'],
+      ['GET', '/api/employees'],
       ['GET', '/api/employees/validate-id'],
       ['GET', '/api/events'],
       ['GET', '/api/skills'],
@@ -117,10 +118,11 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     ])
   })
 
-  it('employees 域：POST /api/employees/generate + GET /api/employees/validate-id（Task 11 B6，不含其他域端点）', () => {
+  it('employees 域：POST /api/employees/generate + GET /api/employees/validate-id + GET /api/employees（Task 11 B6 + Task 17 花名册，不含其他域端点）', () => {
     const reg = createRegistry()
     registerEmployeesRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
+      ['GET', '/api/employees'],
       ['GET', '/api/employees/validate-id'],
       ['POST', '/api/employees/generate'],
     ])

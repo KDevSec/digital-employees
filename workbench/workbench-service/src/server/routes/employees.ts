@@ -22,13 +22,18 @@ import {
 } from '../../employees/builder'
 import { EmployeeIdConflictError } from '../../employees/store'
 
-/** employees 域依赖：builder（管线八步）+ store（id 冲突预检/suggestion） */
+/** employees 域依赖：builder（管线八步）+ store（id 冲突预检/suggestion + 花名册扫描派生） */
 export interface EmployeesRouteDeps {
   builder: {
     generate(draft: EmployeeDraft): Promise<GenerateResult>
   }
   store: {
+    /** id 冲突预检（generate 路径用） */
     exists(id: string): boolean
+    /** 花名册扫描：返回 [{id, manifest}]，manifest 是 unknown（yaml load 原样，不过 schema） */
+    list(): Array<{ id: string; manifest: unknown }>
+    /** 最近一次 list() 收集的坏 yaml 目录 id 列表 */
+    readonly invalid: string[]
   }
 }
 
@@ -131,8 +136,49 @@ export function employeesValidateIdHandler(deps: EmployeesRouteDeps) {
   }
 }
 
+/**
+ * 花名册卡片字段（GET /api/employees 派生；仅展示所需字段子集，无安装数据——E-10 后续批）。
+ * 字段全部 string（id/display/brief/avatar/version）+ kind 枚举；防御性提取后兜底空串。
+ */
+export interface EmployeeCard {
+  id: string
+  display: string
+  brief: string
+  avatar: string
+  kind: string
+  version: string
+}
+
+/**
+ * 从 manifest（unknown，store.list 返回的 yaml load 原样）防御性提取卡片字段。
+ * - manifest 非对象 → 全兜底空串（id 仍取 store.list 的 id）
+ * - 各字段类型不对（display 非字符串、kind 非枚举等）→ 兜底空串
+ */
+function extractCard(id: string, manifest: unknown): EmployeeCard {
+  const empty: EmployeeCard = { id, display: '', brief: '', avatar: '', kind: '', version: '' }
+  if (typeof manifest !== 'object' || manifest === null) return empty
+  const m = manifest as Record<string, unknown>
+  return {
+    id,
+    display: typeof m['display'] === 'string' ? m['display'] : '',
+    brief: typeof m['brief'] === 'string' ? m['brief'] : '',
+    avatar: typeof m['avatar'] === 'string' ? m['avatar'] : '',
+    kind: typeof m['kind'] === 'string' ? m['kind'] : '',
+    version: typeof m['version'] === 'string' ? m['version'] : '',
+  }
+}
+
+/** GET /api/employees —— 花名册扫描派生（store.list → 卡片字段 + invalid 透传） */
+export function employeesListHandler(deps: EmployeesRouteDeps) {
+  return (_ctx: Ctx): Res => {
+    const items = deps.store.list().map(({ id, manifest }) => extractCard(id, manifest))
+    return { status: 200, json: { items, invalid: deps.store.invalid } }
+  }
+}
+
 /** employees 域注册（只注册本域端点；汇总见 routes/index.ts） */
 export function registerEmployeesRoutes(reg: RouteRegistry, deps: EmployeesRouteDeps): void {
   reg.post('/api/employees/generate', employeesGenerateHandler(deps))
   reg.get('/api/employees/validate-id', employeesValidateIdHandler(deps))
+  reg.get('/api/employees', employeesListHandler(deps))
 }
