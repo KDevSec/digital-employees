@@ -8,7 +8,7 @@
 | 性质 | 设计文档（design+plan 文档对之 design 篇）——KB-01/KB-02 两功能点的实现级方案 |
 | 依据 | [协同编排设计 v0.1](2026-08-26-协同编排-design.md) 🟢（§7.3 events schema / §8 SSE 契约 / §9.1 引擎 11 操作 / §9.3 HTTP 面 / §9.4 发起操作面 / §3.3 demo 剧本 / §2 裁决 11）、[功能点分工总表 v1.0](2026-08-26-功能点分工总表.md) §3 协调规则、原型 `docs/prototype/workbench.html`（蓝系 token + lane/task-card/run-card/node-chain 语言）、1.0 参照 `agents-team feat/demo-4stage-flow` `docs/demo/collab-board.html`、QoderWaker 任务看板截图（`docs/references/QoderWaker/`） |
 | 关联 | 同域引擎线（另一会话，`.worktrees/l3-engine`）实现同一契约，双方各自绿后联调 |
-| 决策号 | 本文档用占位号（D-kb01~D-kbNN），合流 main 时统一编真号（分工表 §3 规则 2） |
+| 决策号 | 合流已转真号 D-049~D-054（见 §12 与决策记录） |
 
 ---
 
@@ -272,15 +272,16 @@ KanbanView（/kanban）
 
 走查实捕修复三件（均含回归锚）：① seq 去重按 task_id 分域（原全局累计把新任务同号帧误吞——seq 是 per-task 事件文件行号，§7.3）② fixture 流 emitOpen 顺序（先建流再 open，否则连接条滞留「连接中」）③ 人工闸辅按钮 → confirmGate 接线遗漏。
 
-## 12. 决策记录（占位号，合流时编真号）
+## 12. 决策记录（合流转真号：D-049~D-054 已落[决策记录](../design/设计决策记录-2026-08-13.md)）
 
-| 占位号 | 决策 |
+| 真号 | 决策 |
 |---|---|
-| D-kb01 | SSE 消费层 EventSourceLike 可注入（测试前提 + fixture 先行的结构保证） |
-| D-kb02 | 归并层 applyEvent 纯函数 + 剧本重放测试 = 看板行为规格（事件流→UI 状态的唯一映射点） |
-| D-kb03 | 表快照 + 员工映射经 getTask 随任务下发（待 A/B 裁决的临时口径） |
-| D-kb04 | fixture 模块动态 import 隔离，生产 bundle 不含演出设施 |
-| D-kb05 | 闸位停靠看板辅按钮（通过/驳回）实做 confirmGate；主通道对话式提示文案引导 |
+| D-049 | SSE 消费层 EventSourceLike 可注入 + 连接状态机 + seq 按 task_id 分域去重（原占位 D-kb01，含走查实捕修复） |
+| D-050 | 归并层 applyEvent 纯函数 + 剧本重放测试 = 看板行为规格（原占位 D-kb02） |
+| D-051 | 表快照 + 员工映射经 getTask 随任务下发（原占位 D-kb03，契约歧义 A/B 先行口径） |
+| D-052 | mock 三分法与硬约束：页面纯真实接线、mock 绝不自动启动（原占位 D-kb04 的页面内演出形态被 v0.2 用户裁决推翻，§13.1） |
+| D-053 | 闸位停靠看板辅按钮实做 confirmGate；对话式放行为主通道（原占位 D-kb05） |
+| D-054 | 任务看板 UI 对齐 1.0 demo 任务看板形态（v0.2 用户裁决，§13.2） |
 
 ## 13. v0.2 修订（2026-08-27 用户裁决：移除演出 + UI 对齐 1.0 demo 任务看板）
 
