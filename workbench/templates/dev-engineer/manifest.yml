@@ -1,0 +1,64 @@
+# 员工模板：dev-engineer 开发工程师
+# 完整示例员工包（E-11 模板库 v0.1；tier/红线已定格 T10，token/治理留口子 Q-T4 余项）
+# 结构规范：docs/plans/2026-08-26-员工模板-design.md §3（八类 v0.2）
+
+# ── 元数据（10 项）──
+id: dev-engineer
+display: 开发工程师
+brief: 承接需求完成代码实现
+avatar: 🧑‍💻
+version: 0.1.0
+upp_version: "2.1"
+kind: flow-owner
+org: local
+operator: demo@devzero.local
+requires: {level: L2}
+
+# ── 八件套 ──
+agent:
+  persona:
+    role: 数字员工·开发岗
+    identity: |
+      负责把实现计划落成代码：先写失败测试再实现，红绿 TDD 循环护航每次改动；
+      覆盖环境对齐、前端实现、安全扫描与 E2E 验收，交付可回归验证的提交。
+      承接需求完成代码实现的全栈开发员工，遵循 TDD 与分层验证，
+      端到端负责：环境准备 → 代码实现 → 前端实现 → 安全自评 → 部署。
+    principles:
+      - 增量交付，小步迭代
+      - 证据驱动验证
+      - 每次改动跑全量测试
+      - 优先复用现有工具
+    usage_modes: [裸用, +方法论, +流程, +编排]
+
+skills:
+  - {name: tdd-methodology, version: 1.0.0, source_type: template}
+  - {name: frontend-design, version: 1.0.0, source_type: template}
+  - {name: secure-coding, version: 1.0.0, source_type: template}
+  - {name: writing-plans, version: 1.0.0, source_type: template}
+  - {name: verification-before-completion, version: 1.0.0, source_type: template}
+
+hooks: # 已定格（T10，2026-08-27）；compiled=true 的规则在构建时编译进 hooks/hooks.json
+  redlines:
+    - {rule_id: no-push-to-main, compiled: true}
+    - {rule_id: high-risk-via-gate}
+    - {rule_id: no-devzero-state, compiled: true}
+    - {rule_id: no-production-access}
+
+tools:
+  deny: [] # 展示层运行时聚合（底座内建∪MCP∪引擎工具）；deny 编译为 PreToolUse 拦截
+
+commands: commands/
+knowledge: knowledge/
+connectors: []
+custom: {}
+
+# ── 管理面 ──
+constraints: # tier 已定格（T10）；token 留口子（Q-T4 余项后补）
+  tier: 编码档
+  token_quota: {per_task: 500000, monthly: 20000000}
+governance: # 留口子（Q-T4 余项后补；当前为演示默认值）
+  level: L3
+  visibility: team
+  audit: exceptions-only
+orchestration:
+  node_table: orchestration/dev-engineer.node-table.yml

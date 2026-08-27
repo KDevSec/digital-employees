@@ -31,7 +31,7 @@ docs/
 │   ├── 详细设计/                    开发依据（V0.1 实现 consume；含平台侧 as-built 两篇）
 │   │   ├── 工作台服务本体详细设计-v0.1.md           S/U 系列（daemon/CLI/守护/更新）
 │   │   ├── 登录与认证设计-v0.2.md                   A 系列（OIDC/enrollment/机器身份，🟢基线）
-│   │   ├── shared-protocol详细设计-v0.1.md          E-01~03（manifest/skill schema）
+│   │   ├── shared-protocol详细设计-v0.2.md          E-01~03（manifest/skill schema 八类版）
 │   │   ├── 员工业务与前端详细设计-v0.1.md           E-10~15 + F 系列 + E-13 AgentHub
 │   │   ├── 员工安装与底座适配详细设计-v0.1.md       B 系列（含 Qoder 真机验证卡点 §11）
 │   │   ├── 托盘壳详细设计-v0.1.md                   TR 系列（Go + systray）

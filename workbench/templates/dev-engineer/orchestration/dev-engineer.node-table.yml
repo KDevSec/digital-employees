@@ -1,0 +1,23 @@
+# dev-engineer 个人 SOP 表（TDD 开发循环，8 节点 = 4 action + 2 gate + 2 terminal）
+# 模板自带员工自有流程（T2：员工自有流程随员工包；团队流程在工作台 templates/flows/，两层分家）
+# 由旧 1.0 十四节点 coding-flow 裁剪；节点 schema 对齐协同编排设计 §6（node-table 契约）
+# reviewer: self = 驻留员工自评闸（不 spawn 评审会话）——个人表专属语义，契约补注待 I0-4 收录（Q-selfgate）
+#   （团队表 reviewer 必须是员工 id，见编排设计 §6.2 语义升级；个人表 self 与 runbook 自检语义同源）
+flow: dev-engineer-flow
+display_name: TDD 开发循环
+version: 1
+max_retries: 3
+terminal_fail: n-fail
+delivery_node: n-done
+nodes:
+  - {id: n0-req,    name: 理解需求,   kind: action, stage: 理解, emp: dev-engineer, prompt: '解析输入需求 {{input}}，列出变更范围与影响面，产出理解确认', next: [n1-red]}
+  - {id: n1-red,    name: 编写失败测试, kind: action, stage: 红灯, emp: dev-engineer, prompt: 按 tdd-methodology 编写失败测试并运行确认红灯, next: [g-review-1]}
+  - {id: g-review-1, name: 测试评审,   kind: gate,   stage: 红灯, gate: g-review-1, next: [n2-green, n1-red]}
+  - {id: n2-green,  name: 最小实现,   kind: action, stage: 绿灯, emp: dev-engineer, prompt: 最小实现使测试通过，不引入多余改动, next: [n3-refactor]}
+  - {id: n3-refactor, name: 重构优化,  kind: action, stage: 重构, emp: dev-engineer, model_tier: 编码档, prompt: 在全量测试护航下重构，测试全绿后收尾, human_gate: false, next: [g-accept]}
+  - {id: g-accept,  name: 验收闸,     kind: gate,   stage: 交付, gate: g-accept, next: [n-done, n2-green]}
+  - {id: n-done,    name: 完成,       kind: terminal, next: []}
+  - {id: n-fail,    name: 终止,       kind: terminal, next: []}
+gate_specs:
+  g-review-1: {kind: review, reviewer: self, on_pass: n2-green, on_reflow: n1-red, covers: [n1-red]}
+  g-accept:   {kind: review, reviewer: self, on_pass: n-done,   on_reflow: n2-green, covers: [n2-green, n3-refactor]}
