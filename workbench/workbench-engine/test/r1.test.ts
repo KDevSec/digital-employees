@@ -6,11 +6,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  appendFileSync, existsSync, mkdirSync, mkdtempSync,
-  readFileSync, readdirSync, rmSync, writeFileSync,
+  appendFileSync, chmodSync, existsSync, mkdirSync, mkdtempSync,
+  readFileSync, readdirSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { load as yamlLoad } from 'js-yaml'
 import { parseNodeTable, type NodeTable } from '../src/schema/node-table'
@@ -414,5 +414,76 @@ describe('R1 账本 · write 防线', () => {
     const events = ledger.readEvents(task_id)
     expect(events.map((e) => e.seq)).toEqual([1, 2, 3])
     expect(events[2].type).toBe('gate')
+  })
+})
+
+describe('R1 账本 · T4 独立复审修复批（🟡5/🟡3/🟡1/🟡4）', () => {
+  it('🟡5 rename 首次失败重试成功（Windows 瞬时句柄释放——兜底机制最常见的真实路径）', () => {
+    let calls = 0
+    const flaky = createLedger(dirs, {
+      rename: (src, dest) => { if (++calls === 1) throw new Error('EPERM 瞬时占用'); renameSync(src, dest) },
+    })
+    const { task_id } = flaky.init(mkInput(), table)
+    flaky.write(task_id, stateA, batch1(task_id))
+
+    flaky.archive(task_id) // 第一次抛→重试成功（rename 路径，无 copy）
+
+    expect(calls).toBe(2)
+    expect(existsSync(taskDir(workspace, task_id))).toBe(false)
+    expect(existsSync(archiveDir(dirs, task_id))).toBe(true)
+    expect(readIndexRaw().tasks[task_id]).toMatchObject({ archived: true, archive_path: archiveDir(dirs, task_id) })
+  })
+
+  it('🟡3 init 中段失败（.devzero 已存在 + TASK.md 只读）→ dzExisted=true 回滚分支：账本清/骨架保留/索引无行', () => {
+    mkdirSync(join(workspace, '.devzero'), { recursive: true }) // 预置骨架——dzExisted=true 分支
+    const ro = join(workspace, '.devzero', 'TASK.md')
+    writeFileSync(ro, '旧内容')
+    chmodSync(ro, 0o444) // Windows 只读属性 → writeFileSync EPERM（中段失败：账本四件已落、工作区三样失败）
+
+    try {
+      ledger.init(mkInput(), table)
+      expect.unreachable()
+    } catch (err) {
+      expect(err).toBeInstanceOf(LedgerError)
+      expect((err as Error).message).toContain('init 失败已回滚')
+    }
+    // 回滚断言：账本目录清（不知 task_id——扫 tasks/ 应空）；骨架保留；索引无行
+    expect(readdirSync(join(workspace, '.devzero', 'tasks'))).toEqual([])
+    expect(existsSync(join(workspace, '.devzero'))).toBe(true)
+    expect(ledger.list()).toEqual([])
+  })
+
+  it('🟡1 工作区 .gitignore 自动追加：无则建、有则不重复（设计 §7.1 明文契约）', () => {
+    ledger.init(mkInput(), table)
+    const gi = readFileSync(join(workspace, '.gitignore'), 'utf8')
+    expect(gi.trimEnd().endsWith('.devzero/')).toBe(true)
+
+    // 已有内容 → 追加不覆盖
+    writeFileSync(join(workspace, '.gitignore'), 'node_modules' + String.fromCharCode(10))
+    ledger.init(mkInput(), table)
+    const gi2 = readFileSync(join(workspace, '.gitignore'), 'utf8')
+    expect(gi2.startsWith('node_modules' + String.fromCharCode(10))).toBe(true)
+    expect(gi2.trimEnd().endsWith('.devzero/')).toBe(true)
+    // 不重复堆叠
+    expect(gi2.split('.devzero/').length - 1).toBe(1)
+  })
+
+  it('🟡4 孤儿任务自愈：archive 搬运成功+索引写失败 → resolveTask 归档侧探测可读 + archive 重试补索引自愈', () => {
+    const { task_id } = ledger.init(mkInput(), table)
+    ledger.write(task_id, stateA, batch1(task_id))
+    // 构造孤儿：手工搬目录（绕过 archive 的索引写）
+    const dest = archiveDir(dirs, task_id)
+    mkdirSync(join(dirname(dest)), { recursive: true })
+    renameSync(taskDir(workspace, task_id), dest)
+    // 此时索引仍 archived=false、活动目录缺失——孤儿态
+
+    // ① read 经归档侧探测仍可读（降级）
+    expect(ledger.read(task_id).state.current_node).toBe('n0-req')
+    // ② write 仍拒（entry.archived=false 但目录在归档——防误写，见 resolveTask 探测不改写路径）
+    // ③ archive 重试 → 探测归档侧存在 → 补索引（自愈）→ no-op
+    ledger.archive(task_id)
+    expect(readIndexRaw().tasks[task_id]).toMatchObject({ archived: true, archive_path: dest })
+    // 自愈后 read 正常
+    expect(ledger.readEvents(task_id)).toHaveLength(2)
   })
 })

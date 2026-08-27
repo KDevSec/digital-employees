@@ -10,7 +10,7 @@
  */
 import { randomUUID } from 'node:crypto'
 import {
-  appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
+  appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { dump as yamlDump } from 'js-yaml'
@@ -72,6 +72,7 @@ const SNAPSHOT = 'table.snapshot.yml'
 const HANDOFFS = 'handoffs'
 
 const AGENTS_LINE = '- DevZero 任务上下文见 .devzero/TASK.md（编排引擎工具与当前状态）'
+const GITIGNORE_LINE = '.devzero/'
 const MCP_JSON = '{"mcpServers":{"devzero-engine":{"type":"http","url":"http://127.0.0.1:19980/mcp"}}}'
 
 /** UTC ISO 时间戳（ms 精度，避免同秒碰撞） */
@@ -126,6 +127,13 @@ function writeWorkspaceArtifacts(input: CreateTaskInput, meta: TaskMeta, state: 
   }
 
   writeFileSync(join(input.workspace, '.mcp.json'), MCP_JSON)
+
+  // .gitignore：账本不随用户 git 入库（设计 §7.1）——无则建、有则检测追加（同 AGENTS.md 模式，幂等）
+  const giPath = join(input.workspace, '.gitignore')
+  const prevGi = existsSync(giPath) ? readFileSync(giPath, 'utf8') : ''
+  if (!prevGi.split('\n').some((l) => l.trim() === GITIGNORE_LINE)) {
+    writeFileSync(giPath, prevGi ? `${prevGi.endsWith('\n') ? prevGi : `${prevGi}\n`}${GITIGNORE_LINE}\n` : `${GITIGNORE_LINE}\n`)
+  }
 }
 
 /** 原子写 flow-state：同目录 tmp + rename（1.0 flow_state._write_doc 对应），失败清 tmp 重抛 */
@@ -176,9 +184,14 @@ function readIndex(dirs: EngineDirs): TaskIndexDoc {
   const p = indexPath(dirs)
   if (!existsSync(p)) return { tasks: {} }
   try {
-    return JSON.parse(readFileSync(p, 'utf8')) as TaskIndexDoc
+    const doc: unknown = JSON.parse(readFileSync(p, 'utf8'))
+    // 形状校验（⚪3）：顶层非对象/tasks 缺失 → LedgerError（坏结构不静默当空索引）
+    if (typeof doc !== 'object' || doc === null || typeof (doc as TaskIndexDoc).tasks !== 'object') {
+      throw new Error('顶层结构非 { tasks: {...} }')
+    }
+    return doc as TaskIndexDoc
   } catch (err) {
-    throw new LedgerError(`[ledger] tasks-index.json 损坏（坏 JSON）: ${p}: ${(err as Error).message}`)
+    throw new LedgerError(`[ledger] tasks-index.json 损坏（坏 JSON 或坏结构）: ${p}: ${(err as Error).message}`)
   }
 }
 
@@ -196,17 +209,27 @@ function writeIndexAtomic(dirs: EngineDirs, doc: TaskIndexDoc): void {
   }
 }
 
-/** 经索引定位任务目录（归档任务走 archive_path；活动走工作区） */
+/** 归档侧探测（🟡4 孤儿窗口）：archive root 下找 <taskId> 或 <taskId>.rN 代际目录——
+ *  archive 搬运成功+索引写失败的窗口自愈之读侧（命中即可读，不改索引——写侧自愈在 archive 重试路径） */
+function probeArchiveDir(dirs: EngineDirs, taskId: string): string | null {
+  const root = join(dirs.dataDir, 'archive', 'tasks')
+  if (!existsSync(root)) return null
+  const hit = readdirSync(root).find((n) => n === taskId || n.startsWith(`${taskId}.r`))
+  return hit ? join(root, hit) : null
+}
+
+/** 经索引定位任务目录（归档任务走 archive_path；活动走工作区；活动目录缺失时归档侧探测兜底） */
 function resolveTask(dirs: EngineDirs, taskId: string): { dir: string; entry: IndexEntry } {
   const entry = readIndex(dirs).tasks[taskId]
   if (!entry) {
     throw new LedgerError(`[ledger] 任务不存在于索引: ${taskId}（index: ${indexPath(dirs)}）`)
   }
   const dir = entry.archived && entry.archive_path ? entry.archive_path : taskDir(entry.workspace, taskId)
-  if (!existsSync(dir)) {
-    throw new LedgerError(`[ledger] 任务目录缺失: ${dir}（task ${taskId}${entry.archived ? ' archived' : ''}）`)
-  }
-  return { dir, entry }
+  if (existsSync(dir)) return { dir, entry }
+  // 🟡4 孤儿窗口读侧兜底：索引仍记活动但目录已搬（archive 索引写失败窗口）——归档侧探测降级可读
+  const probed = probeArchiveDir(dirs, taskId)
+  if (probed) return { dir: probed, entry }
+  throw new LedgerError(`[ledger] 任务目录缺失: ${dir}（task ${taskId}${entry.archived ? ' archived' : ''}）`)
 }
 
 /** 索引行 → 列表行（按 archived 分区，task_id 排序） */
@@ -342,6 +365,15 @@ export function createLedger(dirs: EngineDirs, hooks: LedgerHooks = {}): Ledger 
 
       const src = taskDir(entry.workspace, taskId)
       if (!existsSync(src)) {
+        // 🟡4 孤儿窗口写侧自愈：目录已到归档侧（索引写失败窗口）——补索引行后按幂等 no-op
+        const probed = probeArchiveDir(dirs, taskId)
+        if (probed) {
+          entry.archived = true
+          entry.archive_path = probed
+          entry.updated_at = nowIso()
+          writeIndexAtomic(dirs, idx)
+          return
+        }
         throw new LedgerError(`[ledger] archive 失败——活动目录缺失: ${src}`)
       }
       // 目标占用 → .r2/.r3 代际名（首个可用）

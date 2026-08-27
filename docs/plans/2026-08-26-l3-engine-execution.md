@@ -2,7 +2,7 @@
 
 > 计划：[2026-08-26-l3-engine.md](2026-08-26-l3-engine.md)（状态随本文转 ✅）｜设计：[协同编排设计 🟢](2026-08-26-协同编排-design.md)
 > 执行方式变更（已报备授权）：subagent 通道自 T4 修复起连续 3 次工具注入故障（Read/Write/Edit/Bash/Glob/Grep 均未随会话加载，实现/只读审查均不可执行）——T4 修复起全部任务主会话 inline 执行（真红绿 TDD 纪律不变，测试数据全绿实证）
-> 基线 → 终态：engine 0 → **108 绿**；service 126 → **150 绿**；web 224 回归不动；全部分包 vitest 口径（根 bun test 扫非 workspace 目录的 163 固有失败与改动无关——T1 时 stash 实测基线即如此）
+> 基线 → 终态：engine 0 → **112 绿**（108 + 独立复审修复批 4）；service 126 → **150 绿**；web 224 回归不动；全部分包 vitest 口径（根 bun test 扫非 workspace 目录的 163 固有失败与改动无关——T1 时 stash 实测基线即如此）
 
 ---
 
@@ -14,7 +14,7 @@
 | T2 | R2 节点机（adjacency/guard/bounded reflow） | 6bc246f+eaa8bb2 | +21 | ✅ 单审双 PASS（含 T1 流转顺手项） |
 | T3 | R3 三类 gate（两套溢出语义） | 961e5fd+31d3bcb | +17 | ✅ 单审 9/9+Quality PASS |
 | T4 | R1 账本（单级 task+事件流+归档） | 2823352 | +12 | ✅ 实现 → 单审拦 🟡1 布局偏离 D-045 |
-| T4r | 修复：布局回归+索引+占用兜底+三收口 | c6c4d62 | +6（12→18） | ✅ inline 闭环（首轮 reviewer 意见为锚；局限=自审，建议补独立复审） |
+| T4r | 修复：布局回归+索引+占用兜底+三收口 | c6c4d62 | +8（12→20——独立复审 ⚪1 更正计数） | ✅ inline 闭环 + **独立复审通过**（[2026-08-27-T4修复独立复审.md](2026-08-27-T4修复独立复审.md)：🟡1~5 处置见修复批提交） |
 | T5 | 引擎门面（11 操作+emitter，E1~E7+fixture） | 8c2cb68 | +12 | ✅ inline（含 2 处实现缺陷自纠） |
 | T6 | HTTP API（12 端点+zod+Ctx.query 扩展+main 装配 ensure 表） | 3f2326d | +6 | ✅ inline |
 | T7 | SSE（帧/重放/心跳/过滤+Res.stream/Ctx.headers 扩展） | c947467+6e62480 | +6 | ✅ inline（id 复合形式修订） |
