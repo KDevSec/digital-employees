@@ -1,0 +1,21 @@
+workbench/workbench-service/src/app/platform-access/config-cache.ts
+  s_d4823793916f9d::t_a5c3f3e2af501c 1-46
+workbench/workbench-service/test/config-cache.test.ts
+  s_d4823793916f9d::t_fb16909525d167 1-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8872af7b15204f483752d91416d1804e231f0e3b",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
