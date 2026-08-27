@@ -1,0 +1,20 @@
+workbench/workbench-service/test/boundary-guard.test.ts
+  s_b9259474bd2245::t_7d7fbf69bd9cfc 1-232,236,244-248,250-329
+  s_b9259474bd2245::t_b2878f5d648afe 233-235,237-243,249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6a4795afb94ef660d2e5e42023dfdb7a17e54080",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
