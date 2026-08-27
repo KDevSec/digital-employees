@@ -1,0 +1,31 @@
+workbench/shared-protocol/src/identity.ts
+  s_b9259474bd2245::t_20fd6bb475d7a5 1-17
+workbench/shared-protocol/src/level.ts
+  s_b9259474bd2245::t_b8dba5bb636024 1-12
+workbench/shared-protocol/test/skill.test.ts
+  s_b9259474bd2245::t_dabdd52c109a7c 1-26
+workbench/shared-protocol/src/manifest.ts
+  s_b9259474bd2245::t_35304d1428fd16 2
+workbench/shared-protocol/src/skill.ts
+  s_b9259474bd2245::t_d13496aa69cf68 1-38
+workbench/shared-protocol/src/index.ts
+  s_b9259474bd2245::t_92ac964c758b18 2-4
+workbench/shared-protocol/test/identity-level.test.ts
+  s_b9259474bd2245::t_a91066ba4b25ce 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e5e7944f607adcbba0b3a2f355276c23928fa194",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
