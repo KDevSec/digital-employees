@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import StepBar from '../components/wizard/StepBar.vue'
@@ -14,7 +14,7 @@ import StepKnowledge from '../components/wizard/steps/StepKnowledge.vue'
 import StepSkills from '../components/wizard/steps/StepSkills.vue'
 import { generateEmployee } from '../api/employees'
 import type { GenerateResult } from '../api/employees'
-import { clearDraft, restoreDraft, saveDraft } from '../composables/useWizardDraft'
+import { clearDraft, flushDraft, restoreDraft, saveDraft } from '../composables/useWizardDraft'
 import type { TemplateMeta } from '../api/templates'
 import { useWizardStore } from '../stores/wizard'
 
@@ -175,6 +175,16 @@ onMounted(async () => {
     restoredDraft.value = draft
     draftPrompt.value = true
   }
+})
+
+/**
+ * F4：unmount flush——离开页面时立即落键（清除 pending 防抖 timer + 同步写 localStorage）。
+ * 防止用户在 draft 变更后 ≤1s 内离开页面丢失最后一段编辑（防抖 timer 还未触发就 unmount）。
+ * 仅在未生成成功时 flush（生成成功已 clearDraft，无需再写）。
+ */
+onBeforeUnmount(() => {
+  if (genResult.value) return
+  flushDraft(store.draft, saveTimer)
 })
 </script>
 

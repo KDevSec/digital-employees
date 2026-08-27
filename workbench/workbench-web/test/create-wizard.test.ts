@@ -228,3 +228,29 @@ describe('CreateWizard 禁词红线（Global Constraint）', () => {
     expect(text).not.toContain('AgentHub')
   })
 })
+
+describe('CreateWizard unmount flush（F4）', () => {
+  beforeEach(() => {
+    vi.mocked(fetchTemplates).mockReset()
+    vi.mocked(fetchSkills).mockReset()
+    localStorage.clear()
+  })
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('unmount 时立即落键——draft 变更后 ≤1s 内 unmount 不丢最后一段编辑', async () => {
+    vi.useFakeTimers()
+    const { wrapper, store } = await mountWizard()
+    // 改 draft 触发 watch → saveDraft 设置 1s 防抖 timer（尚未落键）
+    store.draft.display = '前端开发'
+    await wrapper.vm.$nextTick()
+    expect(localStorage.getItem('devzero:wizard-draft')).toBeNull()
+    // unmount → flushDraft 立即落键
+    wrapper.unmount()
+    expect(localStorage.getItem('devzero:wizard-draft')).not.toBeNull()
+    const raw = localStorage.getItem('devzero:wizard-draft')
+    expect(raw).toContain('前端开发')
+    vi.useRealTimers()
+  })
+})

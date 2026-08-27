@@ -72,6 +72,22 @@ export function saveDraft(draft: WizardDraft, timer: { value: ReturnType<typeof 
   }, 1000)
 }
 
+/**
+ * 立即落键（同步）：清除 pending 防抖 timer 并直接写 localStorage。
+ * 用于 CreateWizard onBeforeUnmount——避免用户离开页面时还差 ≤1s 的 draft 丢失。
+ */
+export function flushDraft(draft: WizardDraft, timer: { value: ReturnType<typeof setTimeout> | null }): void {
+  if (timer.value) {
+    clearTimeout(timer.value)
+    timer.value = null
+  }
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(toSerializable(draft)))
+  } catch {
+    // 静默
+  }
+}
+
 /** 读取草稿；不存在/解析失败返回 null */
 export function restoreDraft(): SerializableDraft | null {
   try {
@@ -105,6 +121,7 @@ export function useWizardDraft() {
   return {
     slugify,
     saveDraft,
+    flushDraft,
     restoreDraft,
     clearDraft,
     DRAFT_KEY,

@@ -182,6 +182,36 @@ describe('StepSkills（能力配置 + 搜索 + 上传）', () => {
     expect(wrapper.text()).toContain('本地上传')
   })
 
+  it('F2：草稿恢复场景 local skill needsReupload=true → 已选清单显示「需重新上传」徽章', async () => {
+    const { store, pinia } = setupStore()
+    // 模拟草稿恢复：local skill 带 needsReupload=true
+    store.draft.skills = [
+      { name: 'restored-skill', version: '0.1.0', source_type: 'local', description: '恢复的 skill', needsReupload: true },
+    ]
+    const wrapper = mount(StepSkills, { global: { plugins: [pinia] } })
+    await flushPromises()
+    const reuploadBadge = wrapper.find('[data-role="needs-reupload"]')
+    expect(reuploadBadge.exists()).toBe(true)
+    expect(reuploadBadge.text()).toContain('需重新上传')
+  })
+
+  it('F2：上传新 skill（非草稿恢复）不带 needsReupload → 不显示「需重新上传」徽章', async () => {
+    vi.mocked(uploadSkillZip).mockResolvedValue({ name: 'fresh-skill', version: '0.1.0', description: '新上传' })
+    const { pinia } = setupStore()
+    const wrapper = mount(StepSkills, { global: { plugins: [pinia] } })
+    await flushPromises()
+    const file = new File(['zip-content'], 'fresh-skill.zip', { type: 'application/zip' })
+    const fileInput = wrapper.find('input[type="file"]')
+    Object.defineProperty(fileInput.element, 'files', {
+      value: [file],
+      writable: false,
+      configurable: true,
+    })
+    await fileInput.trigger('change')
+    await flushPromises()
+    expect(wrapper.find('[data-role="needs-reupload"]').exists()).toBe(false)
+  })
+
   it('上传失败 → toast 错误信息（不进已选）', async () => {
     vi.mocked(uploadSkillZip).mockRejectedValue(new Error('zip 解压失败'))
     const { store, pinia } = setupStore()

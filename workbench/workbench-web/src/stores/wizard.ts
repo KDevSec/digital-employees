@@ -31,6 +31,8 @@ export interface DraftSkill {
   template_id?: string
   origin?: string
   description: string
+  /** 草稿恢复场景：local skill 的 zip 文件不可序列化恢复 → 标 true 提示用户重传（F2） */
+  needsReupload?: boolean
 }
 
 /** 向导草稿（manifest 字段映射 + skills 勾选态） */
@@ -87,8 +89,9 @@ function emptyDraft(): WizardDraft {
     version: '',
     redlines: [],
     deny: [],
-    tier: '',
-    governanceLevel: '',
+    // 管理面初值对齐 manifestSchema 枚举（tier default '编码档'；governance.level 原型默认 L2）
+    tier: '编码档',
+    governanceLevel: 'L2',
     visibility: 'team',
     audit: 'exceptions-only',
     connectors: [],

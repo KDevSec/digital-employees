@@ -39,13 +39,17 @@ const REDLINES: RedlineOption[] = [
   { rule_id: 'custom', label: '自定义红线（V0.2 开放）', disabled: true },
 ]
 
-/** tier 五档 */
+/**
+ * tier 五档（值 = manifestSchema 的中文枚举，直接透传 buildManifestFromDraft 不需映射）：
+ *   '评审安全档' / '设计档' / '探索档' / '编码档' / '执行档'
+ * label 直接复用枚举值（schema 枚举本身即中文），sub 补充语义说明。
+ */
 const TIERS = [
-  { value: 'review-security', label: '评审安全档', sub: '高风险评审 + 安全审计节点' },
-  { value: 'design', label: '设计档', sub: '架构设计与方案评审节点' },
-  { value: 'explore', label: '探索档', sub: '调研与原型探索节点' },
-  { value: 'coding', label: '编码档', sub: '常规编码 + 自测节点' },
-  { value: 'execution', label: '执行档', sub: '轻量执行 + 通报节点' },
+  { value: '评审安全档', label: '评审安全档', sub: '高风险评审 + 安全审计节点' },
+  { value: '设计档', label: '设计档', sub: '架构设计与方案评审节点' },
+  { value: '探索档', label: '探索档', sub: '调研与原型探索节点' },
+  { value: '编码档', label: '编码档', sub: '常规编码 + 自测节点' },
+  { value: '执行档', label: '执行档', sub: '轻量执行 + 通报节点' },
 ]
 
 /** 红线勾选态 */

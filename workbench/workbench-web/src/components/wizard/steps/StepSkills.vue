@@ -149,6 +149,10 @@ async function onUpload(event: Event): Promise<void> {
           <span class="badge" :class="s.source_type === 'local' ? 'badge-local' : 'badge-template'">
             {{ s.source_type === 'local' ? '本地上传' : '模板' }}
           </span>
+          <!-- F2：local skill 在草稿恢复场景下 needsReupload=true（zip 文件本身不可序列化恢复）→ 显示 amber 徽章提示用户重传 -->
+          <span v-if="s.needsReupload === true" class="badge badge-reupload" data-role="needs-reupload">
+            需重新上传
+          </span>
           <button type="button" class="remove-btn" aria-label="移除" @click="removeSkill(s.name)">✕</button>
         </div>
       </div>
@@ -337,6 +341,12 @@ async function onUpload(event: Event): Promise<void> {
 .badge-local {
   background: var(--green-bg);
   color: var(--green);
+}
+
+/* F2：需重新上传徽章（amber 色系——草稿恢复场景 local skill 的 zip 文件不可序列化恢复） */
+.badge-reupload {
+  background: var(--amber-bg);
+  color: var(--amber);
 }
 
 /* 已选清单 */

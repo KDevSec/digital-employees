@@ -23,12 +23,16 @@ const store = useWizardStore()
 /** 头像 emoji 池（12 个，demo AVATARS 同源） */
 const AVATARS = ['🧑‍💻', '👩‍💻', '🧑‍🔬', '🧑‍🎨', '🧑‍🏫', '⚖️', '🕵️', '🧙', '🤖', '🦾', '🐱', '🦊'] as const
 
-/** 使用深度四档 */
+/**
+ * 使用深度四档（值 = manifestSchema 的中文枚举，直接透传 buildManifestFromDraft 不需映射）：
+ *   '裸用' / '+方法论' / '+流程' / '+编排'
+ * 标签可保持中文展示（schema 枚举本身即中文，label 直接复用）。
+ */
 const USAGE_MODES = [
-  { value: 'bare', label: '裸用（直接对话）' },
-  { value: 'methodology', label: '+方法论（skill 调用序列）' },
-  { value: 'flow', label: '+流程（runbook 流程档）' },
-  { value: 'orchestration', label: '+编排（node-table 多员工接力）' },
+  { value: '裸用', label: '裸用（直接对话）' },
+  { value: '+方法论', label: '+方法论（skill 调用序列）' },
+  { value: '+流程', label: '+流程（runbook 流程档）' },
+  { value: '+编排', label: '+编排（node-table 多员工接力）' },
 ] as const
 
 /** 工作原则文本（每行一条） */
