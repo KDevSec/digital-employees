@@ -113,6 +113,85 @@ describe('createEmployeeStore.materialize（原子落盘）', () => {
   })
 })
 
+describe('createEmployeeStore.materialize（id 安全校验——防 targetDir 越出 employeesRoot）', () => {
+  it('id 含 ../foo 越界 → 抛错且无越界写（base/foo 未被创建、tmp 无残留）', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('../foo', [{ path: 'manifest.yml', content: 'id: foo\n' }]),
+    ).rejects.toThrow(/员工 ID/)
+
+    // 关键：base/foo（即 join(employeesRoot, '../foo') 解析后）未被创建——rename 没发生
+    expect(existsSync(join(base, 'foo'))).toBe(false)
+    // 无越界写：base 下不应有任何被创建的子目录（employees/ 与 tmp/ 也未被创建——id 校验先于 mkdir）
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 为 ".." → 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('..', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/员工 ID/)
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 为 "." → 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('.', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/员工 ID/)
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 含路径分隔符（a/b）→ 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('a/b', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/不得含路径分隔符/)
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 含反斜杠（a\\b）→ 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('a\\b', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/不得含路径分隔符/)
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 以盘符开头（C:foo）→ 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('C:foo', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/不得以盘符开头/)
+    expect(readdirSync(base)).toEqual([])
+  })
+
+  it('id 为空字符串 → 抛错', async () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    await expect(
+      store.materialize('', [{ path: 'manifest.yml', content: 'x\n' }]),
+    ).rejects.toThrow(/不得为空/)
+    expect(readdirSync(base)).toEqual([])
+  })
+})
+
+describe('createEmployeeStore.exists（id 安全校验）', () => {
+  it('id 含 ../foo 越界 → 抛错（不静默 stat 越界）', () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    expect(() => store.exists('../foo')).toThrow(/员工 ID/)
+  })
+
+  it('id 含路径分隔符 → 抛错', () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    expect(() => store.exists('a/b')).toThrow(/不得含路径分隔符/)
+  })
+
+  it('合法 id（不存在）→ false，不抛错', () => {
+    const store = createEmployeeStore(employeesRoot, tmpRoot)
+    expect(store.exists('e1')).toBe(false)
+  })
+})
+
 describe('createEmployeeStore.list（扫描）', () => {
   it('employeesRoot 不存在 → 返回 []，invalid 也为空', () => {
     const store = createEmployeeStore(employeesRoot, tmpRoot)

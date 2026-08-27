@@ -5,9 +5,11 @@
  *
  * 原子性：files 全量写 tmpRoot/<uuid>/ → 校验目标不存在（存在抛 EmployeeIdConflictError）
  *         → renameSync 到 employeesRoot/<id>/。半写态对外不可见（rename 前目标不存在）。
- * 路径防御：files[].path 不得含 .. 段、不得以 / 或盘符开头（zip-slip 同款防御，防越出员工包目录）。
+ * 路径防御：
+ *   - id（单段目录名语义）：拒绝空 / "." / ".." / 含 / 或 \ / 盘符前缀——防 targetDir 解析到 employeesRoot 之外
+ *   - files[].path（包内相对路径）：不得含 .. 段、不得以 / 或盘符开头（zip-slip 同款防御，防越出员工包目录）
  * 失败回滚：任何一步失败 best-effort 清理本次 temp 目录后抛带具体路径的错误。
- * Windows rename 撞占用：重试 3 次、间隔 100ms，仍败抛错（不静默——12.1 坑表教训）。
+ * Windows rename 撞占用：3 attempts（初试 + 2 retries，相邻间隔 100ms），仍败抛错（不静默——12.1 坑表教训）。
  *
  * 目录边界红线：本模块写域止于注入的 employeesRoot/tmpRoot，绝不触碰其他目录。
  */
@@ -24,6 +26,22 @@ export class EmployeeIdConflictError extends Error {
 }
 
 const RE_DRIVE_LETTER = /^[a-zA-Z]:/
+
+/** 员工 ID 安全校验：单段目录名语义（拒空 / "." / ".." / 含分隔符 / 盘符前缀）——防 targetDir 越出 employeesRoot */
+function validateId(id: string): void {
+  if (id === '') {
+    throw new Error(`员工 ID 不得为空`)
+  }
+  if (id === '.' || id === '..') {
+    throw new Error(`员工 ID 不得为 "." 或 ".."：${id}`)
+  }
+  if (id.includes('/') || id.includes('\\')) {
+    throw new Error(`员工 ID 不得含路径分隔符：${id}`)
+  }
+  if (RE_DRIVE_LETTER.test(id)) {
+    throw new Error(`员工 ID 不得以盘符开头：${id}`)
+  }
+}
 
 /** 员工包内文件路径安全校验：仅允许相对路径，禁绝对/盘符/.. 段（zip-slip 同款防御） */
 function validateRelPath(p: string): void {
@@ -42,7 +60,7 @@ function validateRelPath(p: string): void {
   }
 }
 
-/** Windows rename 撞占用时重试 3 次、间隔 100ms，仍败抛错（不静默） */
+/** Windows rename 撞占用时 3 attempts（初试 + 2 retries，相邻间隔 100ms），仍败抛错（不静默） */
 async function renameWithRetry(src: string, dest: string): Promise<void> {
   let lastErr: unknown
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -56,7 +74,7 @@ async function renameWithRetry(src: string, dest: string): Promise<void> {
       }
     }
   }
-  throw new Error(`原子 rename 失败（重试 3 次仍败）src=${src} dest=${dest}`, {
+  throw new Error(`原子 rename 失败（3 attempts，相邻间隔 100ms 仍败）src=${src} dest=${dest}`, {
     cause: lastErr,
   })
 }
@@ -70,8 +88,9 @@ export function createEmployeeStore(employeesRoot: string, tmpRoot: string) {
   let invalid: string[] = []
 
   return {
-    /** employeesRoot/<id>/ 是否存在 */
+    /** employeesRoot/<id>/ 是否存在（id 安全校验：拒越界 id） */
     exists(id: string): boolean {
+      validateId(id)
       return existsSync(join(employeesRoot, id))
     },
 
@@ -79,11 +98,14 @@ export function createEmployeeStore(employeesRoot: string, tmpRoot: string) {
      * 原子落盘：files 全量写 tmpRoot/<uuid>/ → 校验目标不存在（存在抛 EmployeeIdConflictError）
      * → renameSync 到 employeesRoot/<id>/ → 返回 { packagePath }
      * 任何一步失败：清理本次 temp 目录（best-effort）后抛带具体路径的错误。
+     * id 安全校验先于任何 IO（拒越界 id，防 rename 把 tmpDir 搬到员工库外）。
      */
     async materialize(
       id: string,
       files: Array<{ path: string; content: string }>,
     ): Promise<{ packagePath: string }> {
+      validateId(id)
+
       const sessionId = randomUUID()
       const tmpDir = join(tmpRoot, sessionId)
       mkdirSync(tmpDir, { recursive: true })
