@@ -1,0 +1,27 @@
+workbench/workbench-service/test/adapters-launch.test.ts
+  s_3d694229081e72::t_80b5373109b91e 23,28-29,31-33
+workbench/workbench-service/src/adapters/common/launch.ts
+  s_3d694229081e72::t_28a5d412d175b4 5-7
+  s_3d694229081e72::t_c729be4aa70545 35
+  s_3d694229081e72::t_359d7645322dc0 28
+workbench/workbench-service/test/adapters/common/launch.test.ts
+  s_3d694229081e72::t_2715afbed01053 1-54
+workbench/workbench-service/src/adapters/contract.ts
+  s_3d694229081e72::t_a0621e9ca62483 41,43-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f6933e13b2ef81a27518cb0995155865eac90352",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
