@@ -1,0 +1,23 @@
+workbench/workbench-service/test/oidc.test.ts
+  s_d4823793916f9d::t_f6c1ceae857f09 1-78,86-89,91,93-150
+  s_d4823793916f9d::t_41f88d0f2b96d1 79-85
+  s_d4823793916f9d::t_32c13ef7d88cdf 90,92
+workbench/workbench-service/src/app/platform-access/oidc.ts
+  s_d4823793916f9d::t_82beedee174d17 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "f9dfa84f709f809304f48c803e54058edfa284c8",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
