@@ -1,0 +1,19 @@
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_ae9313906bcd90::t_fb78c43683bfd6 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8c00d6f68a5c6dd53d1e9214eba8d470d901238d",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": null
+    }
+  }
+}
