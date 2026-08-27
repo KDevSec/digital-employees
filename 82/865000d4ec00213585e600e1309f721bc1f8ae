@@ -1,0 +1,19 @@
+docs/plans/2026-08-26-功能点分工总表.md
+  s_46f7f3afbb6303::t_86e872cca7b6d1 5,7,21,60-61,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "82865000d4ec00213585e600e1309f721bc1f8ae",
+  "prompts": {},
+  "sessions": {
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
