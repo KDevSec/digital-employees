@@ -1,0 +1,125 @@
+workbench/templates/sys-engineer/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-45
+workbench/templates/sec-compliance/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-44
+workbench/templates/sys-engineer/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-44
+workbench/templates/dev-engineer/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_1a482b5da3a784 1-8,11-14,17,22,27-33
+  s_b9259474bd2245::t_df17208340c38e 9-10,15-16,18-21,23-26
+workbench/templates/req-clarifier/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_cd11d2f35a21a4 1-45
+workbench/templates/sec-code/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_ef02b4e5399ada 1-44
+workbench/templates/sys-engineer/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-44
+workbench/templates/reviewer-expert/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_565074db2e9908 1-48
+workbench/templates/req-clarifier/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_d0e9236f750b59 1-16
+workbench/templates/dev-engineer/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_e16d64b24c1113 1-44
+workbench/templates/sys-engineer/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-46
+workbench/templates/sec-code/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_22fb8e2549ee58 1-46
+workbench/templates/sec-design/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-48
+workbench/templates/sec-compliance/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-45
+workbench/templates/sec-compliance/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-16
+workbench/workbench-service/test/redline-scripts.test.ts
+  s_b9259474bd2245::t_80c58deb03d8b7 51-52,56,64
+  s_b9259474bd2245::t_82fc36815a5f77 1-50,53-55,57-63,65-228,230-286
+  s_b9259474bd2245::t_174236318c5d4a 229
+workbench/templates/dev-engineer/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_8e9bfd33e70e98 1-44
+workbench/templates/sec-code/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_89efc125fca9dc 1-44
+workbench/templates/reviewer-expert/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_63fd69e8dfced0 1-44
+workbench/templates/sys-engineer/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 9-10,15-16,18-21,23-26
+  s_b9259474bd2245::t_7acec3667c5c19 1-8,11-14,17,22,27-33
+workbench/templates/sec-compliance/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-48
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_de87752c5587cf 119
+  s_b9259474bd2245::t_7acec3667c5c19 8-14,42-48,63-69,76-82,88-94,100-106,113-118
+workbench/templates/sec-compliance/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_774474ba813759 1-44
+workbench/templates/req-clarifier/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 1-33
+workbench/templates/sec-code/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_26f883aef69c3f 1-45
+workbench/templates/sec-code/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_b4b271aeec3b88 1-48
+workbench/templates/sec-design/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-45
+workbench/templates/dev-engineer/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_bacf2381abf111 1-48
+workbench/templates/sys-engineer/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-16
+workbench/templates/reviewer-expert/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_66a8a17b8708c6 1-45
+workbench/templates/sec-compliance/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-46
+workbench/templates/req-clarifier/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_15ea26bf1d6349 1-44
+workbench/templates/req-clarifier/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_233a8401197172 1-46
+workbench/templates/reviewer-expert/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 1-33
+workbench/templates/req-clarifier/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_e4cfce2c40a8bc 1-44
+workbench/templates/sec-design/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-44
+workbench/templates/dev-engineer/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_78a3e760d5eed0 1-46
+workbench/templates/reviewer-expert/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_f8a1cf06883f49 1-16
+workbench/templates/dev-engineer/hooks/redlines/no-devzero-state.py
+  s_b9259474bd2245::t_e28d5f1f7be7a8 1-45
+workbench/templates/sec-design/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 9-10,15-16,18-21,23-26
+  s_b9259474bd2245::t_7acec3667c5c19 1-8,11-14,17,22,27-33
+workbench/templates/dev-engineer/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_618e71b2c67661 1-16
+workbench/templates/sec-compliance/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 1-33
+workbench/templates/sec-code/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_2d093cea279fe4 1-16
+workbench/templates/sec-design/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-44
+workbench/templates/reviewer-expert/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_168d8c2e7cc9be 1-46
+workbench/templates/sys-engineer/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-48
+workbench/templates/reviewer-expert/hooks/redlines/no-production-access.py
+  s_b9259474bd2245::t_04b5d37b47d0d8 1-44
+workbench/templates/sec-design/hooks/redlines/deny-tool.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-16
+workbench/templates/sec-design/hooks/redlines/no-external-request.py
+  s_b9259474bd2245::t_7acec3667c5c19 1-46
+workbench/templates/sec-code/hooks/redlines/run-hook.cmd
+  s_b9259474bd2245::t_bb087a6f2b9e43 1-33
+workbench/templates/req-clarifier/hooks/redlines/no-db-schema.py
+  s_b9259474bd2245::t_a8beb7b7dc4352 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5477336d4c30b579f86ac6d925a6f1ff8c7bfdcd",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
