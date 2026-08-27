@@ -6,13 +6,11 @@ tools_dir="$root/tools"
 . "$tools_dir/runtime-env.sh"
 
 platform_url="http://$PUBLIC_HOST:18000"
-workbench_url="http://$PUBLIC_HOST:19820"
 
-"$tools_dir/compose.sh" exec -T keycloak sh -s -- "$platform_url" "$workbench_url" <<'KEYCLOAK_SYNC'
+"$tools_dir/compose.sh" exec -T keycloak sh -s -- "$platform_url" <<'KEYCLOAK_SYNC'
 set -eu
 
 platform_url=$1
-workbench_url=$2
 kcadm=/opt/keycloak/bin/kcadm.sh
 
 "$kcadm" config credentials \
@@ -51,7 +49,6 @@ update_client_urls() {
 }
 
 update_client_urls platform-web "$platform_url/auth/callback" "$platform_url" "$platform_url/" "${PLATFORM_INTERNAL_URL}/auth/backchannel-logout"
-update_client_urls workbench-desktop "$workbench_url/auth/callback" "$workbench_url" "" ""
 
 # Existing realms are not re-imported, so keep the IAM service account's least-privilege
 # group/user management roles synchronized as part of every deployment.

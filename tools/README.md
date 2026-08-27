@@ -41,7 +41,6 @@ python3 tools/realm-import/import.py
 | `IAM_SYNC_CLIENT_SECRET` | `platform-iam-sync` 服务账号的 client secret，后台目录同步拉取用户/组 | platform-api、Keycloak realm 导入 | `.env` 唯一来源；更换后需 drop 数据卷重新导入 |
 | `SESSION_SECRET` | OIDC 登录流程 cookie 的签名密钥（≥32 字符） | platform-api `OidcFlowCodec` | 所有进行中的登录流程失效，用户需重新登录 |
 | `MACHINE_SIGNING_SECRET` | 工作台机器令牌的签名密钥（≥32 字符） | platform-api enrollment 签发/验证 | 已注册的工作台机器令牌全部失效，需重新注册 |
-| `WORKBENCH_STATE_SECRET` | 工作台本地状态文件 `state.enc` 的 AES-256-GCM 加密密钥（≥32 字符） | workbench `state-store.ts` | 已有状态文件无法解密，工作台需重新注册 |
 
 **OIDC_CLIENT_SECRET 和 IAM_SYNC_CLIENT_SECRET 以 `.env` 为唯一来源。** realm JSON 中使用 `${OIDC_CLIENT_SECRET}` / `${IAM_SYNC_CLIENT_SECRET}` 占位符，Keycloak 导入时从容器环境变量替换，无需手动修改 realm JSON。更换后需 drop 数据卷重新导入。
 
