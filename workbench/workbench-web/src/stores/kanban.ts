@@ -124,7 +124,8 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
         ...prev,
         title: ev.title,
         flow: ev.flow,
-        displayName: ev.display_name,
+        // 引擎事件 display_name 条件展开（solo 动态表无）——缺省空串
+        displayName: ev.display_name ?? '',
         workspace: ev.workspace,
         status: 'in_progress',
       }
