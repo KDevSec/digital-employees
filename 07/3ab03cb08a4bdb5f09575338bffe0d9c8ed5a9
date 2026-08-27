@@ -1,0 +1,22 @@
+docs/design/详细设计/I2自动驱动真机闭环详细设计-v0.1.md
+  s_3d694229081e72::t_44f537e759fff9 62,65-67,71,73,77,79
+  s_3d694229081e72::t_c0bbbd0e604489 5,7
+  s_3d694229081e72::t_2ae8440e94cef0 109
+  s_3d694229081e72::t_f4f1f8198d7f79 99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "073ab03cb08a4bdb5f09575338bffe0d9c8ed5a9",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
