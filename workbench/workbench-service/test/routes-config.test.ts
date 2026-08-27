@@ -8,10 +8,12 @@ import { createRegistry } from '../src/server/registry'
 import { registerConfigRoutes } from '../src/server/routes/config'
 
 /**
- * config 域路由（I0-5 T8，设计 D-13~D-18 方案 A）：GET/PUT /api/config/platform。
+ * config 域路由（I0-5 T8 + D-049）：GET/PUT /api/config/platform。
  * - 真实文件 IO（temp profile 目录）——「PUT 写入 config.json」是契约本体（D-13），不做函数桩；
  * - 错误响应形状 { error: { code, message } }：沿 demo PlatformError 错误处理器形状
  *   （web 侧 api/access.ts postAction 按 error.message 消费同款形状，前端免适配）——测试注明；
+ * - D-049（2026-08-27）：baseUrl 空串合法（清除配置 → 回开发环境）；GET/PUT 响应增 devEnvironment
+ *   标志（单一判据 = schema.isDevEnvironment），前端/后续消费方免重复推导；
  * - Host 白名单守卫在 hono-adapter 层先于 handler（S-12），本域照常生效。
  * 鉴权注记（D-15）：暂无会话机制（G-1），与 healthz 同档无鉴权；本机边界 = 仅绑 127.0.0.1 + Host 白名单。
  */
@@ -50,13 +52,13 @@ describe('分域注册（routes/config.ts 只注册本域端点，设计 D-14）
 })
 
 describe('GET /api/config/platform', () => {
-  it('profile 无 config.json → 返回代码默认 http://127.0.0.1:18000', async () => {
+  it('profile 无 config.json → 默认空串 + devEnvironment:true（D-049：未配置平台 = 开发环境）', async () => {
     const res = await buildApp().request('/api/config/platform')
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: 'http://127.0.0.1:18000' })
+    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
   })
 
-  it('config.json 已带 platform.baseUrl → 返回当前值', async () => {
+  it('config.json 已带 platform.baseUrl → 返回当前值 + devEnvironment:false', async () => {
     writeFileSync(
       join(profileDir, 'config.json'),
       JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }),
@@ -64,15 +66,22 @@ describe('GET /api/config/platform', () => {
     )
     const res = await buildApp().request('/api/config/platform')
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: 'http://192.168.1.5:18000' })
+    expect(await res.json()).toEqual({ baseUrl: 'http://192.168.1.5:18000', devEnvironment: false })
+  })
+
+  it('config.json 显式空串 → devEnvironment:true（清除配置的落盘形态与默认语义一致）', async () => {
+    writeFileSync(join(profileDir, 'config.json'), JSON.stringify({ platform: { baseUrl: '' } }), 'utf8')
+    const res = await buildApp().request('/api/config/platform')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
   })
 })
 
 describe('PUT /api/config/platform', () => {
-  it('合法 http URL → 200 回显新值；写入 config.json；后续 GET 立即反映（D-14：GET 每次重读文件）', async () => {
+  it('合法 http URL → 200 回显新值 + devEnvironment:false；写入 config.json；后续 GET 立即反映（D-14：GET 每次重读文件）', async () => {
     const res = await put({ baseUrl: 'http://10.1.2.3:18000' })
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000' })
+    expect(await res.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', devEnvironment: false })
 
     // 写入文件（D-13：只落覆盖键——首写即全量覆盖键）
     const onDisk = JSON.parse(readFileSync(join(profileDir, 'config.json'), 'utf8'))
@@ -80,7 +89,25 @@ describe('PUT /api/config/platform', () => {
 
     // 后续 GET 立即可见（handler 不缓存，每次 loadConfig 重读）
     const after = await buildApp().request('/api/config/platform')
-    expect(await after.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000' })
+    expect(await after.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', devEnvironment: false })
+  })
+
+  it('空串 → 200 清除配置回开发环境（D-049）；落盘空串；后续 GET devEnvironment:true', async () => {
+    // 先配置一个地址（非 dev 起点），再 PUT 空串清除
+    writeFileSync(
+      join(profileDir, 'config.json'),
+      JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }),
+      'utf8',
+    )
+    const res = await put({ baseUrl: '' })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
+
+    const onDisk = JSON.parse(readFileSync(join(profileDir, 'config.json'), 'utf8'))
+    expect(onDisk).toEqual({ platform: { baseUrl: '' } })
+
+    const after = await buildApp().request('/api/config/platform')
+    expect(await after.json()).toEqual({ baseUrl: '', devEnvironment: true })
   })
 
   it('合法 https URL 同样收（http/https 均过，D-14）', async () => {
@@ -90,11 +117,10 @@ describe('PUT /api/config/platform', () => {
   })
 
   it.each([
-    ['空串', ''],
     ['非 URL', 'not-a-url'],
     ['缺 scheme', '192.168.1.5:18000'],
     ['非 http(s) scheme（zod url() 收任意 scheme，http(s) 限定由 refine 收口）', 'ftp://files.example.com'],
-  ])('非法 baseUrl（%s）→ 400 + {error:{code,message}}（PlatformError 风格形状，测试注明）', async (_label, baseUrl) => {
+  ])('非法 baseUrl（%s）→ 400 + {error:{code,message}}（PlatformError 风格形状，测试注明；空串不在此列——D-049 起为合法清除值）', async (_label, baseUrl) => {
     const res = await put({ baseUrl })
     expect(res.status).toBe(400)
     const json = (await res.json()) as { error: { code: string; message: string } }

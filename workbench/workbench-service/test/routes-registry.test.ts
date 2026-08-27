@@ -5,6 +5,7 @@ import { registerAllRoutes } from '../src/server/routes'
 import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
 import { registerConfigRoutes } from '../src/server/routes/config'
+import { registerSessionRoutes } from '../src/server/routes/session'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 
 /**
@@ -34,7 +35,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform）', () => {
+  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform、GET /api/state）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -42,6 +43,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/activity'],
       ['GET', '/api/config/platform'],
       ['GET', '/api/events'],
+      ['GET', '/api/state'],
       ['GET', '/healthz'],
       ['PUT', '/api/config/platform'],
     ])
@@ -76,6 +78,12 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     const reg = createRegistry()
     registerShellRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([['GET', '/']])
+  })
+
+  it('session 域：仅 GET /api/state（D-049 开发环境桥接，不含其他域端点）', () => {
+    const reg = createRegistry()
+    registerSessionRoutes(reg, deps)
+    expect(table(reg.routes)).toEqual([['GET', '/api/state']])
   })
 
   it('config 域：GET+PUT /api/config/platform（I0-5 T8，不含其他域端点）', () => {
