@@ -53,6 +53,13 @@ const BASES_ONE_PRESENT: BaseCard[] = [
   { id: 'qoder', label: 'Qoder', present: false, version: null, version_tested: '0.9.0', supported: null, employees_count: 0, last_install_at: null },
 ]
 
+/** reprobe 后 claude-code 也变 absent（防滞留测试用——选中态不应滞留） */
+const BASES_NONE_PRESENT: BaseCard[] = [
+  { id: 'claude-code', label: 'Claude Code', present: false, version: null, version_tested: '1.0.0', supported: null, employees_count: 0, last_install_at: null },
+  { id: 'codebuddy', label: 'CodeBuddy', present: false, version: null, version_tested: '2.0.0', supported: null, employees_count: 0, last_install_at: null },
+  { id: 'qoder', label: 'Qoder', present: false, version: null, version_tested: '0.9.0', supported: null, employees_count: 0, last_install_at: null },
+]
+
 const BASES_ALL_PRESENT: BaseCard[] = [
   { id: 'claude-code', label: 'Claude Code', present: true, version: '1.0.0', version_tested: '1.0.0', supported: true, employees_count: 0, last_install_at: null },
   { id: 'codebuddy', label: 'CodeBuddy', present: true, version: '2.0.0', version_tested: '2.0.0', supported: true, employees_count: 0, last_install_at: null },
@@ -214,6 +221,53 @@ describe('InstallModal —— bases 检测消费', () => {
     const probeCalls = callIndices(fetchMock, (u, i) => u === '/api/bases/probe' && (i?.method ?? 'GET') === 'POST')
     expect(probeCalls.length).toBe(1)
     expect(wrapper.findAll('[data-role="base-card"]').filter((c) => c.attributes('data-present') === 'true').length).toBe(3)
+  })
+
+  it('防滞留：选中底座在 reprobe 后变 absent → 自动从 selectedBaseIds 清除（卡片不再 on / 下一步 disabled）', async () => {
+    vi.stubGlobal('fetch', makeFetchMock({ bases: BASES_ONE_PRESENT, basesAfterProbe: BASES_NONE_PRESENT, probe: PROBE_ALL }))
+    const { wrapper } = await mountModal()
+    // 初始：claude-code 在场，选中它
+    const presentCard = wrapper.findAll('[data-role="base-card"]').find((c) => c.attributes('data-present') === 'true')!
+    await presentCard.trigger('click')
+    await flushPromises()
+    expect(presentCard.classes()).toContain('on')
+    // 重新探测 → claude-code 也变 absent
+    const probeBtn = wrapper.findAll('button').find((b) => b.text().includes('重新探测'))!
+    await probeBtn.trigger('click')
+    await flushPromises()
+    // claude-code 卡现在 disabled（absent）且不再 on（selectedBaseIds 已被过滤清除）
+    const cards = wrapper.findAll('[data-role="base-card"]')
+    const claudeCard = cards.find((c) => c.text().includes('Claude Code'))!
+    expect(claudeCard.attributes('data-present')).toBe('false')
+    expect(claudeCard.classes()).toContain('disabled')
+    expect(claudeCard.classes()).not.toContain('on')
+    // 「下一步」按钮 disabled（无选中）
+    const nextBtn = wrapper.findAll('button').find((b) => b.text().includes('下一步'))
+    expect(nextBtn?.attributes('disabled')).toBeDefined()
+  })
+
+  it('toggleBase 允许反选「已选-but-now-absent」的底座（防御：reprobe 漏过滤时手动反选仍生效）', async () => {
+    // 构造场景：初始选中 claude-code（present）→ reprobe 后变 absent，但若 reprobe 漏过滤，
+    // 用户点 absent 卡应能反选（不会卡死 disabled+on 不可点击）
+    vi.stubGlobal('fetch', makeFetchMock({ bases: BASES_ONE_PRESENT, basesAfterProbe: BASES_NONE_PRESENT, probe: PROBE_ALL }))
+    const { wrapper } = await mountModal()
+    // 选中 claude-code（present）
+    const presentCard = wrapper.findAll('[data-role="base-card"]').find((c) => c.attributes('data-present') === 'true')!
+    await presentCard.trigger('click')
+    await flushPromises()
+    expect(presentCard.classes()).toContain('on')
+    // reprobe → claude-code 变 absent；即便 reprobe 已自动过滤，再点 absent 卡也不应 stuck
+    const probeBtn = wrapper.findAll('button').find((b) => b.text().includes('重新探测'))!
+    await probeBtn.trigger('click')
+    await flushPromises()
+    const claudeCard = wrapper.findAll('[data-role="base-card"]').find((c) => c.text().includes('Claude Code'))!
+    expect(claudeCard.attributes('data-present')).toBe('false')
+    // 点击 absent 卡——不应增选（不在场不可新勾选）；也不报错
+    await claudeCard.trigger('click')
+    await flushPromises()
+    expect(claudeCard.classes()).not.toContain('on')
+    const nextBtn = wrapper.findAll('button').find((b) => b.text().includes('下一步'))
+    expect(nextBtn?.attributes('disabled')).toBeDefined()
   })
 
   it('零假数据：fetchBases 返回空数组 → 不渲染任何底座卡（无静态底座残留）', async () => {

@@ -78,22 +78,32 @@ onMounted(async () => {
 /** 已选底座对象清单（确认页渲染） */
 const selectedCards = computed(() => baseCards.value.filter((c) => selectedBaseIds.value.has(c.id)))
 
-/** 切换底座勾选——不在场卡不可勾选 */
+/**
+ * 切换底座勾选——不在场卡不可「新勾选」，但允许反选「已选-but-now-absent」的底座
+ * （配合 reprobe 自动过滤——防御 reprobe 漏过滤时仍可手动反选，避免 disabled+on 卡死不可点击）
+ */
 function toggleBase(card: BaseCard): void {
-  if (!card.present) return
+  if (!card.present && !selectedBaseIds.value.has(card.id)) return
   const next = new Set(selectedBaseIds.value)
   if (next.has(card.id)) next.delete(card.id)
   else next.add(card.id)
   selectedBaseIds.value = next
 }
 
-/** 重新探测——POST /api/bases/probe（缺省全刷）+ GET /api/bases 刷新列表 */
+/** 重新探测——POST /api/bases/probe（缺省全刷）+ GET /api/bases 刷新列表 + 过滤滞留选中 */
 async function reprobe(): Promise<void> {
   if (probePending.value) return
   probePending.value = true
   try {
     await probeBases()
     baseCards.value = await fetchBases()
+    // 刷新后过滤 selectedBaseIds——仅保留仍 present 的 id（防滞留：reprobe 前选中、reprobe 后变 absent 的底座不应滞留）
+    const stillPresent = new Set(baseCards.value.filter((c) => c.present).map((c) => c.id))
+    const filtered = new Set<BaseId>()
+    for (const id of selectedBaseIds.value) {
+      if (stillPresent.has(id)) filtered.add(id)
+    }
+    selectedBaseIds.value = filtered
   } finally {
     probePending.value = false
   }
