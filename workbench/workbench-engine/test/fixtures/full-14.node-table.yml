@@ -1,0 +1,35 @@
+# E5 引擎语义完备性用例——1.0 coding-flow 全表适配版（14 节点 / 8 gate_specs 含 2 decision）。
+# 源：agents-team feat/demo-4stage-flow plugins/agents-team/orchestration/dev-engineer.node-table.yml
+# 唯一适配面：human_gate: off → false（js-yaml v5 = YAML 1.2，off 不再是布尔——2.0 schema 布尔严格）。
+# 本表即「1.0 full 表拿过来要能直接跑」验收锚（设计 §1.1 范围基线）：无 emp/prompt/model_tier
+# 也不影响加载与推进（三者为可选字段）；reviewer: self 是 1.0 字面量（2.0 语义=员工 id，
+# recordGate 的 by 参数为准——兼容性本意即原样保留）。
+flow: coding-flow
+max_retries: 3
+terminal_fail: n-fail
+delivery_node: n11-merge
+nodes:
+  - {id: n0-env,          name: 项目背景对齐,     kind: action,   human_gate: false, next: [n1-relevance]}
+  - {id: n1-relevance,    name: 关联度自检,       kind: gate,     gate: g-relevance, next: [n5-complexity, n2-worktree]}
+  - {id: n2-worktree,     name: 新建worktree,     kind: action,   human_gate: false, next: [n5-complexity]}
+  - {id: n5-complexity,   name: 复杂度判断,       kind: gate,     gate: g-complexity, next: [n6a-impl-inline, n6b-impl-subagent]}
+  - {id: n6a-impl-inline, name: 主控直接实现,     kind: action,   human_gate: false, next: [n8-verify]}
+  - {id: n6b-impl-subagent, name: 子代理实现,     kind: action,   human_gate: false, next: [n8-verify]}
+  - {id: n8-verify,       name: 完成验证,         kind: gate,     gate: g-verify, next: [n9a-code-review, n6b-impl-subagent]}
+  - {id: n9a-code-review, name: 代码评审,         kind: gate,     gate: g-code-review, next: [n9b-e2e, n6b-impl-subagent]}
+  - {id: n9b-e2e,         name: 增量E2E,          kind: gate,     gate: g-e2e, next: [n9c-increment, n6b-impl-subagent]}
+  - {id: n9c-increment,   name: 增量循环判断,     kind: gate,     gate: g-increment, next: [n6b-impl-subagent, n10-sec]}
+  - {id: n10-sec,         name: 安全评审,         kind: gate,     gate: g-sec-review, next: [n11-merge, n6b-impl-subagent]}
+  - {id: n11-merge,       name: 合并主分支,       kind: action,   human_gate: false, next: [n12-deploy]}
+  - {id: n12-deploy,      name: 部署验收,         kind: gate,     gate: g-deploy, next: [n13-done, n6b-impl-subagent]}
+  - {id: n13-done,        name: 产出清点,         kind: terminal, next: []}
+  - {id: n-fail,          name: 溢出终止,         kind: terminal, next: []}
+gate_specs:
+  g-relevance:   {kind: decision, branches: {high: n5-complexity, low: n2-worktree}, reviewer: self}
+  g-complexity:  {kind: decision, branches: {simple: n6a-impl-inline, complex: n6b-impl-subagent}, reviewer: self}
+  g-verify:      {kind: review, on_pass: n9a-code-review, on_reflow: n6b-impl-subagent, reviewer: self}
+  g-code-review: {kind: review, on_pass: n9b-e2e, on_reflow: n6b-impl-subagent, reviewer: reviewer-expert}
+  g-e2e:         {kind: acceptance, on_pass: n9c-increment, on_reflow: n6b-impl-subagent, reviewer: self}
+  g-increment:   {kind: decision, branches: {more: n6b-impl-subagent, done: n10-sec}, reviewer: self}
+  g-sec-review:  {kind: review, on_pass: n11-merge, on_reflow: n6b-impl-subagent, reviewer: reviewer-expert}
+  g-deploy:      {kind: acceptance, on_pass: n13-done, on_reflow: n6b-impl-subagent, reviewer: self}

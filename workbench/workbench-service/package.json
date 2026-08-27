@@ -9,10 +9,13 @@
     "build": "bash scripts/build.sh"
   },
   "dependencies": {
-    "commander": "^12",
     "hono": "^4",
     "yaml": "^2.9.0",
-    "zod": "^3"
+    "zod": "^3",
+    "commander": "^12",
+    "@devzero/engine": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@hono/mcp": "^0.3.2"
   },
   "devDependencies": {
     "typescript": "^5",

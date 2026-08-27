@@ -22,7 +22,7 @@ BASE_IMAGES='
   node:22.22.0-alpine
   nginx:1.28-alpine
   postgres:18.4-alpine
-  quay.io/keycloak/keycloak:26.7.0
+  quay.io/keycloak/keycloak:26.7.2
 '
 
 [ "$(id -u)" -eq 0 ] || { echo "ERROR: 需要 root，请用 sudo 运行：sudo ./tools/configure-mirrors.sh" >&2; exit 1; }
@@ -80,13 +80,28 @@ echo ""
 echo "开始预拉取基础镜像（首次较慢，请耐心等待）..."
 fail=0
 for img in $BASE_IMAGES; do
-  printf "  -> %s ... " "$img"
-  if docker pull "$img" >/dev/null 2>&1; then
-    echo "OK"
-  else
-    echo "FAILED"
-    fail=$((fail + 1))
-  fi
+  echo "  -> $img"
+  # quay.io 不受 registry-mirrors 加速，走国内镜像 quay.m.daocloud.io 并 retag 回原名；
+  # 拉取输出不再静默，避免大镜像慢速下载时误判为卡死。
+  case "$img" in
+    quay.io/*)
+      mirror_img="quay.m.daocloud.io/${img#quay.io/}"
+      if docker pull "$mirror_img"; then
+        docker tag "$mirror_img" "$img" >/dev/null 2>&1 && echo "  OK (via $mirror_img)" || { echo "  FAILED (retag)"; fail=$((fail + 1)); }
+      else
+        echo "  FAILED (pull $mirror_img)"
+        fail=$((fail + 1))
+      fi
+      ;;
+    *)
+      if docker pull "$img"; then
+        echo "  OK"
+      else
+        echo "  FAILED"
+        fail=$((fail + 1))
+      fi
+      ;;
+  esac
 done
 
 echo ""

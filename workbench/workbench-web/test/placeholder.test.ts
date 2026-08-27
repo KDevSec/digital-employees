@@ -6,12 +6,12 @@ import type { RouteRecordRaw } from 'vue-router'
 import Placeholder from '../src/views/Placeholder.vue'
 import { basesRoutes } from '../src/router/routes/bases'
 import { employeesRoutes } from '../src/router/routes/employees'
-import { kanbanRoutes } from '../src/router/routes/kanban'
 
 /**
- * Placeholder 参数化占位页（I0-5 T3，D-6）：三域路由各自以 props 传标题/说明文案，
- * 组件只做展示（风格简朴）。路由级渲染（Layout 嵌套命中三路径后的页面标题）
- * 由 guard-integration 测试端到端覆盖；此处锁定「参数化契约 + 三页文案区分」。
+ * Placeholder 参数化占位页（I0-5 T3，D-6）：占位域路由以 props 传标题/说明文案，
+ * 组件只做展示（风格简朴）。路由级渲染由 guard-integration 端到端覆盖。
+ * L5 看板线（2026-08-27）：kanban 域已替换为真实页面 KanbanView，占位断言摘除，
+ * 仅剩 employees/bases 两域（待 L1/L4、L2 线填充）。
  */
 
 interface PlaceholderProps {
@@ -41,19 +41,11 @@ describe('Placeholder 占位页（三域参数化渲染）', () => {
     expect(wrapper.text()).toContain(props.description ?? '')
   })
 
-  it('kanban 域：渲染「任务看板」标题与「任务看板即将上线」说明（L5 前为占位页）', () => {
-    const props = placeholderProps(kanbanRoutes[0])
-    expect(props.title).toBe('任务看板')
-    const wrapper = mount(Placeholder, { props })
-    expect(wrapper.text()).toContain(props.title)
-    expect(wrapper.text()).toContain(props.description ?? '')
-  })
-
-  it('三页文案互异（标题与说明均区分，不共用同一占位文案）', () => {
-    const domains = [employeesRoutes, basesRoutes, kanbanRoutes]
+  it('两页文案互异（标题与说明均区分，不共用同一占位文案）', () => {
+    const domains = [employeesRoutes, basesRoutes]
     const titles = domains.map((routes) => placeholderProps(routes[0]).title)
     const descriptions = domains.map((routes) => placeholderProps(routes[0]).description ?? '')
-    expect(new Set(titles).size).toBe(3)
-    expect(new Set(descriptions).size).toBe(3)
+    expect(new Set(titles).size).toBe(2)
+    expect(new Set(descriptions).size).toBe(2)
   })
 })
