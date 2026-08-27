@@ -288,6 +288,12 @@ KanbanView（/kanban）
 
 ### 13.1 mock 三分法（替代原 D-kb04 的「页面内演出」形态）
 
+**硬约束（用户裁决 2026-08-27 二次强调）：mock 绝不自动启动，默认一切环境接入真实接口。**
+三层防回归锚（test/dependency-audit.test.ts，机器化验证非口头承诺）：① src/ 产品代码零 import
+fixtures/scripts（源码级，bundle grep 为构建期双保险）② npm scripts 零 mock 启动命令（无自动路径，
+mock 只能手动 `bun scripts/mock-engine-server.ts`）③ vite dev 默认代理锁 `?? 'http://127.0.0.1:19980'`
+（真实 service；19990 仅显式 VITE_PROXY_TARGET 可指定）。生产 build 同源直连真 service，不经过代理链。
+
 | 层 | 处置 |
 |---|---|
 | fixture 演出 UI（FixtureControls / use-kanban-runtime 的 fixture 分支 / 页面内剧本播放） | **删除**——页面数据源唯一：真实 `/api/engine/*` + 原生 EventSource；引擎未通即诚实显示不可达/空态 |

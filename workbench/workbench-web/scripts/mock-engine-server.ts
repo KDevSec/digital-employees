@@ -2,6 +2,12 @@
  * L5 看板线网络层 mock engine server（L5 v0.2，design §13.1——开发/视觉调试专用，
  * 页面代码零分支的网络层替身；演示当天起真 service+引擎，页面不改一行）：
  * 提供 /api/state（登录态）+ /healthz + 引擎 HTTP/SSE 全套（§9.3 契约形状）。
+ *
+ * ⚠ 硬约束（用户裁决 2026-08-27）：本文件**只能手动启动**（`bun scripts/mock-engine-server.ts`），
+ * 绝不挂入 npm scripts / predev 等任何自动路径；默认一切环境接入真实接口
+ * （dev 默认代理 19980 真 service，生产同源直连）。三重防回归锚见
+ * test/dependency-audit.test.ts（源码零引用 / scripts 零 mock / 默认代理 19980）。
+ *
  * 事件数据来自 src/fixtures/scenarios.ts 剧本（引擎线联调对齐锚的同一数据源）。
  * 剧本选择：环境变量 MOCK_SCENARIO（happy-path|gate-pause|reflow|abort，默认 happy-path）；
  * POST tasks 时按当前剧本播流；gate-pause 推到停靠帧自动暂停，confirm-gate 恢复。
