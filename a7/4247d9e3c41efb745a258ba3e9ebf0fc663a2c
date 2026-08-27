@@ -1,0 +1,38 @@
+workbench/templates/reviewer-expert/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/workbench-service/test/redline-scripts.test.ts
+  s_b9259474bd2245::t_55e79f7c843bfd 150-205
+workbench/templates/sec-compliance/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/templates/sec-design/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/templates/sec-code/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/templates/sys-engineer/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/templates/req-clarifier/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_a344e4f5f4d9cd 5-7,31,36-39
+workbench/workbench-service/scripts/import-sec-zips.ts
+  s_b9259474bd2245::t_06eb0cb6f36b71 46-63
+  s_b9259474bd2245::t_ba113488b35020 88-89,93
+workbench/templates/dev-engineer/hooks/redlines/no-push-to-main.py
+  s_b9259474bd2245::t_32a7242d836334 5-7,31,36-39
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_2258d8453bb3c3 13,47,68,81,151,165,194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a74247d9e3c41efb745a258ba3e9ebf0fc663a2c",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
