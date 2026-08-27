@@ -1,0 +1,21 @@
+docs/plans/2026-08-27-l5-l3-联调.md
+  s_43abe8ab21de8c::t_bccd443c220707 1-77
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_43abe8ab21de8c::t_62bcef23cbe2ff 337-345,355
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2bcca9f834fb08e0a20851e9e7f3a03f386d49af",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
