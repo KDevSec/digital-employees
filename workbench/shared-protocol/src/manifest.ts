@@ -1,13 +1,5 @@
 import { z } from 'zod'
-
-// A3 实装前先在此文件内用占位 z.unknown()？——不：
-// 本任务先内联一个最小 skillEntry（z.object({name/version/source_type}).passthrough()），
-// A3 任务再抽到 skill.ts 并 import（小步可编译）。
-const skillEntrySchema = z.object({
-  name: z.string(),
-  version: z.string(),
-  source_type: z.string(),
-}).passthrough()
+import { skillEntrySchema } from './skill'
 
 const semver = /^\d+\.\d+\.\d+$/
 
