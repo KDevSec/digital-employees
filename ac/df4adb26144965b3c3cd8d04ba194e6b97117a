@@ -1,0 +1,24 @@
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_43abe8ab21de8c::t_7e078a328d8c1e 132
+workbench/workbench-web/test/engine-api.test.ts
+  s_43abe8ab21de8c::t_b88d28d72b0fd1 52,55,59,61
+workbench/workbench-web/src/api/engine-api.ts
+  s_43abe8ab21de8c::t_53920734e36ee3 80-84
+  s_43abe8ab21de8c::t_4fd4e3fd9f91d1 44-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "acdf4adb26144965b3c3cd8d04ba194e6b97117a",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
