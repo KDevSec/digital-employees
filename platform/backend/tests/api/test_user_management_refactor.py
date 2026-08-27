@@ -1,7 +1,8 @@
 """RED tests for 015-user-management-refactor.
 
 Covers: list does not trigger sync_directory, aggregated detail endpoint,
-role_code filter semantics, scope-options caching, async iam/sync, overview removal.
+role_code filter semantics, scope-options caching, synchronous iam/sync with counts,
+overview removal.
 """
 from pathlib import Path
 
@@ -61,9 +62,9 @@ async def client_no_sync(db_factory, tmp_path: Path):
 
     calls = {"count": 0}
 
-    async def counting_sync(session):
+    async def counting_sync(session, *, force=False):
         calls["count"] += 1
-        return 0
+        return {"principals_synced": 0, "principals_disabled": 0, "org_nodes_synced": 0}
 
     app.state.oidc.sync_directory = counting_sync
 
@@ -157,10 +158,14 @@ async def test_scope_options_cached(client, system_headers, monkeypatch):
     assert custom_roles_module._scope_options_cache is cache_after, "second request must hit cache"
 
 
-async def test_iam_sync_returns_accepted_immediately(client_no_sync, system_headers):
+async def test_iam_sync_runs_synchronously_and_returns_counts(client_no_sync, system_headers):
     resp = await client_no_sync.post("/api/v1/iam/sync", headers=system_headers)
-    assert resp.status_code == 202, resp.text
-    assert resp.json()["status"] == "SYNCING"
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["status"] == "SYNCED"
+    assert body["principals_synced"] == 0
+    assert body["org_nodes_synced"] == 0
+    assert client_no_sync.sync_calls["count"] == 1, "endpoint must run the sync inline"
 
 
 async def test_overview_removed(client, system_headers):

@@ -368,11 +368,19 @@ async function syncFromIAM() {
   syncing.value = true
   message.value = ''
   try {
-    const result = await api<{ principals_synced: boolean; org_nodes_synced: number; status: string }>(
-      '/api/v1/iam/sync',
-      { method: 'POST' },
-    )
-    message.value = t('users.syncDone', { orgs: result.org_nodes_synced })
+    const result = await api<{
+      principals_synced: number
+      principals_disabled: number
+      org_nodes_synced: number
+      status: string
+    }>('/api/v1/iam/sync', { method: 'POST' })
+    message.value = t('users.syncDone', {
+      principals: result.principals_synced,
+      orgs: result.org_nodes_synced,
+    })
+    if (result.principals_disabled > 0) {
+      message.value += ' ' + t('users.syncDisabled', { disabled: result.principals_disabled })
+    }
     await load()
   } catch (e: any) {
     message.value = e?.error?.message || e?.message || t('users.syncFailed')
