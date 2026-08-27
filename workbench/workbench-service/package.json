@@ -21,12 +21,14 @@
     "@hono/mcp": "^0.3.2",
     "jose": "^6",
     "fflate": "^0.8",
-    "@devzero/shared-protocol": "workspace:*"
+    "@devzero/shared-protocol": "workspace:*",
+    "js-yaml": "^4"
   },
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^2",
     "@types/bun": "latest",
-    "@playwright/test": "^1"
+    "@playwright/test": "^1",
+    "@types/js-yaml": "^4"
   }
 }
