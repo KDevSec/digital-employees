@@ -1,0 +1,23 @@
+docs/design/设计决策记录-2026-08-13.md
+  s_ae9313906bcd90::t_6f6b7458af801d 376,378,385,392
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_ae9313906bcd90::t_5086c85299fe24 30,34-35,47,55
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_6ac44cc63235cb 272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "bddfaa2e311b679b4dfbfcfb1f327d62f45a1c96",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
