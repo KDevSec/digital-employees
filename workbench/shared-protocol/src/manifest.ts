@@ -11,7 +11,8 @@ const skillEntrySchema = z.object({
 
 const semver = /^\d+\.\d+\.\d+$/
 
-export const manifestSchema = z.object({
+// 八类 v0.2 全字段基础对象（A1 产物）；A2 在此基础上挂 superRefine 形成完整 manifestSchema。
+const manifestObject = z.object({
   // ── 元数据（10 项）──
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
   display: z.string().min(1),
@@ -70,5 +71,64 @@ export const manifestSchema = z.object({
     node_table: z.string().regex(/^orchestration\/.+\.node-table\.yml$/),
   }).optional(),
 }).strict()
+
+// A2: 跨字段六规则 superRefine
+// R1: usage_modes 含 +编排 ⇒ requires.level 必须为 L2、orchestration.node_table 必填
+// R2: kind=callee 不得带 orchestration
+// R3: skills name 不得重复
+// R4: 红线声明一致性属安装期校验，schema 不拒（无 addIssue）
+// R5: connectors stdio 必填 command；http 必填 url
+// R6: tools.deny 与 connectors 并存属运行时语义，schema 不拒（无 addIssue）
+export const manifestSchema = manifestObject.superRefine((m, ctx) => {
+  const hasOrch = m.agent.persona.usage_modes.includes('+编排')
+  if (hasOrch) {
+    if (m.requires.level !== 'L2') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['requires', 'level'],
+        message: 'usage_modes 含 +编排 时 requires.level 必须为 L2',
+      })
+    }
+    if (!m.orchestration) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['orchestration'],
+        message: 'usage_modes 含 +编排 时 orchestration.node_table 必填',
+      })
+    }
+  }
+  if (m.kind === 'callee' && m.orchestration) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['orchestration'],
+      message: 'kind=callee 不得有 orchestration',
+    })
+  }
+  const names = m.skills.map((s) => s.name)
+  const dup = names.find((n, i) => names.indexOf(n) !== i)
+  if (dup) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['skills'],
+      message: `skills name 重复：${dup}`,
+    })
+  }
+  for (const [i, c] of m.connectors.entries()) {
+    if (c.type === 'stdio' && !c.command) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['connectors', i, 'command'],
+        message: 'stdio 连接器 command 必填',
+      })
+    }
+    if (c.type === 'http' && !c.url) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['connectors', i, 'url'],
+        message: 'http 连接器 url 必填',
+      })
+    }
+  }
+})
 
 export type Manifest = z.infer<typeof manifestSchema>
