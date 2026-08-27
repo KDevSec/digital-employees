@@ -1,0 +1,24 @@
+rule_id: A06-INSECURE-DESIGN
+name: Insecure Design
+owasp: A06
+severity: HIGH
+priority: constitutional
+description: |
+  Previously A04:2021. Insecure design is a broad category representing
+  different weaknesses expressed as missing or ineffective control design.
+  It is not the same as insecure implementation — design flaws cannot be
+  fixed by perfect implementation. Missing rate limiting, business logic
+  flaws, and trust boundary violations are examples.
+categories:
+  - id: missing-rate-limit
+    name: Missing Rate Limiting
+    description: Authentication or critical endpoints without rate limiting
+  - id: missing-lockout
+    name: Missing Account Lockout
+    description: Password checking without attempt counting or lockout
+  - id: business-logic-flaw
+    name: Business Logic Flaw
+    description: Price/amount/discount from request without validation
+  - id: trust-boundary-violation
+    name: Trust Boundary Violation
+    description: Session data directly from request without validation

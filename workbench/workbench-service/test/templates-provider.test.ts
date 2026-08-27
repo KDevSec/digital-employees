@@ -198,17 +198,17 @@ describe('createTemplatesProvider — read()', () => {
 })
 
 describe('createTemplatesProvider — listSkills()', () => {
-  it('builtin 全集跨模板聚合：dev-engineer 5 + req-clarifier 5 + reviewer-expert 1 + sys-engineer 5 = 16（无 custom）', () => {
+  it('builtin 全集跨模板聚合：dev-engineer 5 + req-clarifier 5 + reviewer-expert 1 + sys-engineer 5 + sec-design 1 + sec-code 1 = 18（无 custom）', () => {
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const skills = provider.listSkills()
-    // builtin 16
+    // builtin 18
     const builtinSkills = skills.filter((s) => s.builtin)
-    expect(builtinSkills.length).toBe(16)
+    expect(builtinSkills.length).toBe(18)
     // 所有都标 builtin=true
     expect(skills.every((s) => s.templateId.length > 0)).toBe(true)
   })
 
-  it('listSkills 跨模板聚合 + custom：17 = 16 builtin + 1 custom', () => {
+  it('listSkills 跨模板聚合 + custom：19 = 18 builtin + 1 custom', () => {
     writeCustomTemplate(customRoot)
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const skills = provider.listSkills()

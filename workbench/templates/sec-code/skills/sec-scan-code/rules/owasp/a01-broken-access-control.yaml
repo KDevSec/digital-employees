@@ -1,0 +1,27 @@
+rule_id: A01-BROKEN-ACCESS-CONTROL
+name: Broken Access Control
+owasp: A01
+severity: CRITICAL
+priority: constitutional
+description: |
+  Access control enforces policy such that users cannot act outside their
+  intended permissions. Failures typically lead to unauthorized information
+  disclosure, modification, or destruction of data, or performing a business
+  function outside the user's limits. In OWASP 2025, SSRF is now included
+  under A01 as a form of access control violation.
+categories:
+  - id: missing-auth
+    name: Missing Authentication
+    description: Endpoints or functions without authentication checks
+  - id: privilege-escalation
+    name: Privilege Escalation
+    description: Users can access resources or perform actions beyond their assigned role
+  - id: insecure-direct-object-reference
+    name: Insecure Direct Object Reference (IDOR)
+    description: Access to objects by manipulating parameter values
+  - id: ssrf-url
+    name: Server-Side Request Forgery (URL)
+    description: Application makes requests to user-controlled URLs
+  - id: ssrf-dns
+    name: Server-Side Request Forgery (DNS)
+    description: DNS resolution with user-controlled input

@@ -1,0 +1,16 @@
+rule_id: RACE-CONDITIONS
+name: Race Conditions
+owasp: null
+severity: MEDIUM
+priority: supplementary
+description: Concurrent access to shared resources without proper synchronization
+categories:
+  - id: toctou
+    name: Time-of-Check to Time-of-Use
+    description: File check then open/modify without atomicity
+  - id: missing-lock
+    name: Missing Lock
+    description: Thread/goroutine creation without mutex or synchronization
+  - id: atomic-violation
+    name: Atomic Violation
+    description: Non-atomic check-then-act on shared data

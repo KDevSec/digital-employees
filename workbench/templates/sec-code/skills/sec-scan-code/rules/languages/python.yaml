@@ -1,0 +1,3740 @@
+language: python
+file_extensions: [".py", ".pyw"]
+version: "3.1"
+
+# =====================================================
+# 扫描输出格式要求（重要）
+# =====================================================
+# 发现漏洞后，必须按以下格式输出：
+#
+# ## 漏洞报告
+#
+# **漏洞类型**: [category名称]
+# **OWASP分类**: [owasp编号]
+# **严重级别**: [severity]
+# **文件位置**: [文件名:行号]
+#
+# **漏洞描述**:
+# [描述该漏洞的原理和危害]
+#
+# **漏洞代码**:
+# ```python
+# [原始漏洞代码]
+# ```
+#
+# **数据流分析**:
+# - 污点源: [用户输入来源]
+# - 污点汇聚: [危险函数调用]
+# - 数据流路径: [描述数据如何从源头流到汇聚点]
+#
+# **修复方案**:
+#
+# 修复原则: [简述修复原则]
+#
+# 修复后代码:
+# ```python
+# [根据原始代码生成的修复后代码，保持原有逻辑，只修复漏洞点]
+# ```
+#
+# 修复说明: [解释修复代码的改动点]
+#
+# =====================================================
+
+# 全局配置：用户输入源（污点源）
+taint_sources:
+  - name: "Flask请求"
+    patterns:
+      - "request.args"
+      - "request.form"
+      - "request.json"
+      - "request.data"
+      - "request.values"
+      - "request.files"
+      - "request.cookies"
+      - "request.headers"
+
+  - name: "Django请求"
+    patterns:
+      - "request.GET"
+      - "request.POST"
+      - "request.body"
+      - "request.META"
+      - "request.COOKIES"
+
+  - name: "FastAPI请求"
+    patterns:
+      - "Request."
+      - "Form("
+      - "Query("
+      - "Path("
+      - "Body("
+      - "Header("
+      - "Cookie("
+
+  - name: "标准输入"
+    patterns:
+      - "input("
+      - "sys.argv"
+      - "sys.stdin"
+
+  - name: "环境变量"
+    patterns:
+      - "os.environ"
+      - "os.getenv("
+
+  - name: "文件读取"
+    patterns:
+      - ".read("
+      - ".readlines("
+      - "open("
+
+  - name: "HTTP请求路径"
+    patterns:
+      - "self.path"
+      - "urlparse"
+      - "path.split"
+      - "path.split(\"/\")"
+
+  - name: "HTTP请求体"
+    patterns:
+      - "self.rfile"
+      - "self._read_body"
+      - "rfile.read"
+
+rules:
+  # ===== A01 - Broken Access Control =====
+  - category: missing-auth
+    owasp: A01
+    severity: CRITICAL
+
+    description: |
+      缺少认证：路由或视图函数未添加认证装饰器。
+      未授权用户可以访问受限资源或执行敏感操作。
+
+    detection:
+      taint_sinks:
+        - "@app.route("
+        - "@app.get("
+        - "@app.post("
+        - "@router.get("
+        - "@router.post("
+        - "def get_"
+        - "def post_"
+        - "class.*Handler"
+        - "do_GET"
+        - "do_POST"
+        - "do_PUT"
+        - "do_DELETE"
+        - "do_PATCH"
+
+      steps:
+        - "定位路由装饰器和视图函数"
+        - "检查是否有认证装饰器"
+        - "判断是否需要认证保护"
+
+      safety_conditions:
+        - "有 @login_required 装饰器"
+        - "有 Depends() 认证检查"
+        - "有 permission_required 装饰器"
+        - "有 _check_auth 方法"
+        - "有 require_auth 装饰器"
+
+    remediation:
+      principle: "为敏感路由添加认证装饰器"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "Flask路由"
+          use: "添加 @login_required 装饰器"
+
+        - scenario: "FastAPI路由"
+          use: "添加 Depends(get_current_user) 依赖"
+
+        - scenario: "Django视图"
+          use: "添加 @login_required 装饰器或 LoginRequiredMixin"
+
+        - scenario: "原生HTTP服务器"
+          use: "在 do_GET/do_POST 开始处添加认证检查方法"
+
+      requirements:
+        - "添加认证装饰器"
+        - "验证用户身份"
+        - "检查用户权限"
+
+    patterns:
+      - pattern: "@app\\.(route|get|post|put|delete|patch)\\("
+        description: "Flask route without @login_required or auth decorator"
+      - pattern: "@router\\.(get|post|put|delete|patch)\\("
+        description: "FastAPI route without Depends() auth check"
+      - pattern: "def (get|post|put|delete|patch)_.*\\(.*request"
+        description: "Django view without @login_required"
+      - pattern: "def do_(GET|POST|PUT|DELETE|PATCH)\\(self"
+        description: "HTTP handler method without authentication check"
+      - pattern: "class.*Handler.*BaseHTTPRequestHandler"
+        description: "HTTP request handler class - check for auth"
+
+    safe_patterns:
+      - "@login_required"
+      - "Depends\\(.*auth"
+      - "require_auth"
+      - "permission_required"
+      - "_check_auth"
+      - "current_user"
+      - "validate_token"
+      - "verify_token"
+
+  - category: privilege-escalation
+    owasp: A01
+    severity: HIGH
+
+    description: |
+      权限提升：使用硬编码的字符串或布尔值进行权限判断。
+      攻击者可以通过修改请求或会话数据绕过权限检查。
+
+    detection:
+      taint_sinks:
+        - "if role =="
+        - "if is_admin"
+        - "if is_superuser"
+
+      steps:
+        - "定位权限检查代码"
+        - "检查是否使用硬编码值"
+        - "判断是否可被绕过"
+
+      safety_conditions:
+        - "使用权限检查函数"
+        - "权限值从数据库获取"
+
+    remediation:
+      principle: "使用权限检查函数而非硬编码值判断权限"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 has_permission 函数"
+        - "权限值从数据库或配置获取"
+        - "避免直接比较硬编码字符串"
+
+    patterns:
+      - pattern: "if.*role.*==.*['\"]admin['\"]"
+        description: "Hardcoded role string comparison"
+      - pattern: "if.*is_admin|if.*is_superuser"
+        description: "Boolean flag check for admin access"
+
+    safe_patterns:
+      - "has_permission"
+      - "check_permission"
+
+  - category: insecure-direct-object-reference
+    owasp: A01
+    severity: HIGH
+
+    description: |
+      不安全的直接对象引用：使用用户提供的ID直接访问对象，未验证所有权。
+      攻击者可以访问其他用户的数据。
+
+    detection:
+      taint_sinks:
+        - ".get("
+        - "Model.query.get("
+        - ".get_by_id("
+        - "int(path"
+        - "int(path.split"
+
+      steps:
+        - "定位对象查询代码"
+        - "检查ID是否来自用户输入"
+        - "判断是否验证了所有权"
+
+      safety_conditions:
+        - "查询时过滤当前用户"
+        - "验证对象所有权"
+        - "有 is_member 检查"
+        - "有 ownership 验证"
+
+    remediation:
+      principle: "查询对象时验证当前用户是否为所有者"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "查询时添加 user=current_user 条件"
+        - "验证对象所有权后返回"
+
+    patterns:
+      # Flask/Django patterns
+      - pattern: "\\.get\\(.*request\\.(args|form|json|data)"
+        description: "Object lookup with user-controlled ID without ownership check"
+      - pattern: "Model\\.query\\.get\\(.*request"
+        description: "SQLAlchemy query with user-controlled ID"
+      # 通用 patterns - URL路径解析ID
+      - pattern: "int\\(.*path.*split"
+        description: "URL path parameter parsed as int without ownership check"
+      - pattern: "\\.get_by_id\\([^)]*\\)"
+        description: "Direct object lookup by ID without ownership verification"
+      - pattern: "_svc\\.get_by_id\\("
+        description: "Service method lookup by ID - check for auth"
+      - pattern: "_by_id\\(.*\\)"
+        description: "Generic lookup by ID pattern"
+
+    safe_patterns:
+      - "filter_by.*user"
+      - "owner"
+      - "current_user"
+      - "is_member"
+      - "is_author"
+      - "check_permission"
+      - "verify_ownership"
+
+  - category: ssrf-url
+    owasp: A01
+    severity: HIGH
+
+    description: |
+      SSRF服务端请求伪造：使用用户输入构造请求URL。
+      攻击者可以访问内部资源、发起攻击或绕过防火墙。
+
+    detection:
+      taint_sinks:
+        - "requests.get("
+        - "requests.post("
+        - "urllib.request.urlopen("
+        - "httpx.get("
+
+      steps:
+        - "定位HTTP请求函数调用"
+        - "追溯URL参数来源"
+        - "判断是否来自用户输入"
+
+      safety_conditions:
+        - "URL使用白名单验证"
+        - "限制允许的域名"
+
+    remediation:
+      principle: "使用白名单验证请求URL，限制可访问的域名"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证URL格式和协议"
+        - "使用域名白名单"
+        - "禁止访问内网地址"
+
+    patterns:
+      - pattern: "requests\\.(get|post|put|delete|patch|head)\\(.*request"
+        description: "requests library with user-controlled URL"
+      - pattern: "urllib\\.request\\.urlopen\\(.*request"
+        description: "urllib with user-controlled URL"
+      - pattern: "httpx\\.(get|post|Client)\\(.*request"
+        description: "httpx with user-controlled URL"
+
+    safe_patterns:
+      - "validate_url"
+      - "ALLOWED_DOMAINS"
+      - "urlparse"
+
+  - category: ssrf-dns
+    owasp: A01
+    severity: MEDIUM
+
+    description: |
+      DNS SSRF：使用用户输入进行DNS解析。
+      攻击者可以进行DNS重绑定攻击或信息泄露。
+
+    detection:
+      taint_sinks:
+        - "socket.getaddrinfo("
+        - "socket.gethostbyname("
+        - "dns.resolver.query("
+
+      steps:
+        - "定位DNS解析调用"
+        - "检查参数来源"
+        - "判断是否来自用户输入"
+
+      safety_conditions:
+        - "主机名使用白名单验证"
+        - "验证解析结果"
+
+    remediation:
+      principle: "使用白名单验证主机名，验证解析结果"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用主机名白名单"
+        - "验证解析结果IP地址"
+
+    patterns:
+      - pattern: "socket\\.getaddrinfo\\(.*request|socket\\.gethostbyname\\(.*request"
+        description: "DNS resolution with user input"
+      - pattern: "dns\\.resolver\\.(query|resolve)\\(.*request"
+        description: "dnspython with user input"
+
+    safe_patterns:
+      - "validate_hostname"
+      - "ALLOWED_HOSTS"
+
+  # ===== A02 - Security Misconfiguration =====
+  - category: default-credentials
+    owasp: A02
+    severity: HIGH
+
+    description: |
+      默认凭据：代码中硬编码默认密码、密钥或API密钥。
+      攻击者可使用默认凭据获取系统访问权限。
+
+    detection:
+      taint_sinks:
+        - "password ="
+        - "SECRET_KEY ="
+        - "API_KEY ="
+
+      steps:
+        - "扫描硬编码的凭据"
+        - "检查是否为默认值"
+        - "判断是否应从外部获取"
+
+      safety_conditions:
+        - "从环境变量读取"
+        - "从配置文件读取"
+
+    remediation:
+      principle: "凭据从环境变量或配置文件读取，不在代码中硬编码"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 os.environ 或 os.getenv"
+        - "移除硬编码的凭据"
+
+    patterns:
+      - pattern: "password.*=.*['\"]admin['\"]|password.*=.*['\"]123456['\"]|password.*=.*['\"]password['\"]"
+        description: "Default/hardcoded password"
+      - pattern: "SECRET_KEY.*=.*['\"][a-zA-Z0-9]{8,}['\"]"
+        description: "Hardcoded Django SECRET_KEY"
+      - pattern: "API_KEY.*=.*['\"][a-zA-Z0-9]+['\"]"
+        description: "Hardcoded API key"
+
+    safe_patterns:
+      - "os\\.environ"
+      - "os\\.getenv"
+      - "settings\\."
+
+  - category: verbose-errors
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      详细错误信息：生产环境启用调试模式，泄露敏感信息。
+      攻击者可获取堆栈跟踪、路径、配置等敏感信息。
+
+    detection:
+      taint_sinks:
+        - "DEBUG = True"
+        - "app.config['DEBUG']"
+
+      steps:
+        - "定位调试配置"
+        - "检查是否为生产环境"
+        - "判断是否应关闭"
+
+      safety_conditions:
+        - "从环境变量读取调试配置"
+        - "生产环境禁用调试"
+
+    remediation:
+      principle: "从环境变量读取调试配置，生产环境禁用调试模式"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 os.environ 获取调试配置"
+        - "默认值设为 False"
+
+    patterns:
+      - pattern: "DEBUG\\s*=\\s*True"
+        description: "Debug mode enabled"
+      - pattern: "app\\.config\\[.*DEBUG.*\\]\\s*=\\s*True"
+        description: "Flask debug mode enabled"
+
+    safe_patterns:
+      - "os\\.environ"
+      - "os\\.getenv"
+
+  - category: cors-wildcard
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      CORS通配符：CORS配置使用通配符允许任意来源。
+      攻击者可以从任意域发起跨域请求读取敏感数据。
+
+    detection:
+      taint_sinks:
+        - "CORS.*\\*"
+        - "Access-Control-Allow-Origin"
+
+      steps:
+        - "定位CORS配置"
+        - "检查是否使用通配符"
+        - "判断是否过于宽松"
+
+      safety_conditions:
+        - "使用明确的域名列表"
+        - "不使用通配符"
+
+    remediation:
+      principle: "使用明确的允许域名列表，避免使用通配符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "配置允许的域名列表"
+        - "移除通配符配置"
+
+    patterns:
+      - pattern: "CORS.*\\*|cors.*origins.*\\*|Access-Control-Allow-Origin.*\\*"
+        description: "CORS wildcard origin"
+      - pattern: "CORSMiddleware.*allow_origins.*\\[.*\\*.*\\]"
+        description: "FastAPI CORS with wildcard"
+
+    safe_patterns:
+      - "allowed_origins"
+      - "ALLOWED_ORIGINS"
+
+  - category: debug-enabled
+    owasp: A02
+    severity: HIGH
+
+    description: |
+      调试模式启用：Flask应用在调试模式下运行。
+      可能导致代码执行（通过调试器）、信息泄露等问题。
+
+    detection:
+      taint_sinks:
+        - "app.run("
+        - "FLASK_DEBUG"
+
+      steps:
+        - "定位应用启动代码"
+        - "检查调试模式设置"
+        - "判断是否为生产环境"
+
+      safety_conditions:
+        - "从环境变量读取配置"
+        - "生产环境禁用调试"
+
+    remediation:
+      principle: "生产环境禁用调试模式，从环境变量读取配置"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除 debug=True 参数"
+        - "使用环境变量控制调试模式"
+
+    patterns:
+      - pattern: "app\\.run\\(.*debug\\s*=\\s*True"
+        description: "Flask app running in debug mode"
+      - pattern: "FLASK_DEBUG\\s*=\\s*1|FLASK_ENV.*development"
+        description: "Flask debug environment variable"
+
+    safe_patterns:
+      - "os\\.environ"
+
+  - category: unnecessary-features
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      不必要功能：生产环境暴露API文档端点。
+      攻击者可获取API结构、参数等信息辅助攻击。
+
+    detection:
+      taint_sinks:
+        - "swagger_ui"
+        - "redoc_url"
+        - "docs_url"
+
+      steps:
+        - "定位API文档配置"
+        - "检查是否在生产环境暴露"
+        - "判断是否应禁用"
+
+      safety_conditions:
+        - "生产环境禁用文档端点"
+        - "使用环境变量控制"
+
+    remediation:
+      principle: "生产环境禁用API文档端点"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "设置 docs_url=None"
+        - "设置 redoc_url=None"
+
+    patterns:
+      - pattern: "swagger_ui|redoc_url|docs_url"
+        description: "API documentation endpoint exposed"
+
+    safe_patterns:
+      - "None"
+
+  - category: django-security
+    owasp: A02
+    severity: HIGH
+
+    description: |
+      Django安全配置问题：Django框架的安全配置不正确。
+      可能导致会话劫持、CSRF绕过、敏感信息泄露等问题。
+
+    detection:
+      taint_sinks:
+        - "SECRET_KEY"
+        - "ALLOWED_HOSTS"
+        - "SESSION_SERIALIZER"
+        - "SECURE_SSL_REDIRECT"
+        - "SECURE_HSTS_SECONDS"
+        - "DEBUG"
+
+      steps:
+        - "检查 SECRET_KEY 是否硬编码"
+        - "检查 ALLOWED_HOSTS 是否包含通配符"
+        - "检查 SESSION_SERIALIZER 是否使用 PickleSerializer"
+        - "检查安全相关配置是否正确设置"
+
+      safety_conditions:
+        - "SECRET_KEY 从环境变量读取"
+        - "ALLOWED_HOSTS 不包含 '*'"
+        - "SESSION_SERIALIZER 使用 JSONSerializer"
+        - "SECURE_SSL_REDIRECT = True (生产环境)"
+
+    remediation:
+      principle: "正确配置Django安全设置，使用环境变量存储敏感配置"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "SECRET_KEY 从环境变量读取"
+        - "ALLOWED_HOSTS 明确指定域名"
+        - "使用 JSONSerializer 而非 PickleSerializer"
+        - "生产环境关闭 DEBUG"
+        - "启用 SSL 和 HSTS"
+
+    patterns:
+      - pattern: "SECRET_KEY\\s*=\\s*['\"][^'\"]+['\"]"
+        description: "Hardcoded Django SECRET_KEY"
+      - pattern: "ALLOWED_HOSTS\\s*=\\s*\\[.*\\*.*\\]"
+        description: "ALLOWED_HOSTS with wildcard"
+      - pattern: "SESSION_SERIALIZER\\s*=\\s*PickleSerializer"
+        description: "Using PickleSerializer for sessions (use JSONSerializer)"
+      - pattern: "SECURE_SSL_REDIRECT\\s*=\\s*False"
+        description: "SSL redirect disabled"
+      - pattern: "SECURE_HSTS_SECONDS\\s*=\\s*0"
+        description: "HSTS disabled"
+      - pattern: "SECURE_HSTS_INCLUDE_SUBDOMAINS\\s*=\\s*False"
+        description: "HSTS subdomains not included"
+
+    safe_patterns:
+      - "os\\.environ"
+      - "os\\.getenv"
+      - "JSONSerializer"
+
+  - category: csp-misconfiguration
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      CSP配置错误：Content-Security-Policy 配置过于宽松。
+      可能导致XSS攻击、数据注入等风险。
+
+    detection:
+      taint_sinks:
+        - "Content-Security-Policy"
+        - "CSP_DEFAULT_SRC"
+        - "django-csp配置"
+
+      steps:
+        - "定位 CSP 配置"
+        - "检查是否包含 unsafe-inline 或 unsafe-eval"
+        - "检查是否使用通配符 *"
+        - "判断配置是否过于宽松"
+
+      safety_conditions:
+        - "不使用 unsafe-inline"
+        - "不使用 unsafe-eval"
+        - "不使用通配符 *"
+        - "使用 nonce 或 hash 替代 unsafe"
+
+    remediation:
+      principle: "配置严格的CSP策略，避免 unsafe-inline、unsafe-eval 和通配符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除 unsafe-inline 指令"
+        - "移除 unsafe-eval 指令"
+        - "使用 nonce- 或 hash- 替代"
+        - "明确指定允许的源"
+
+    patterns:
+      - pattern: "Content-Security-Policy.*unsafe-inline"
+        description: "CSP with unsafe-inline directive"
+      - pattern: "Content-Security-Policy.*unsafe-eval"
+        description: "CSP with unsafe-eval directive"
+      - pattern: "Content-Security-Policy.*\\*"
+        description: "CSP with wildcard source"
+      - pattern: "CSP_DEFAULT_SRC\\s*=\\s*['\"]\\*['\"]"
+        description: "Django CSP default-src wildcard"
+
+    safe_patterns:
+      - "self"
+      - "nonce-"
+      - "strict-dynamic"
+
+  - category: file-permission
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      文件权限管理：设置过于宽松的文件权限。
+      可能导致其他用户读取或修改敏感文件。
+
+    detection:
+      taint_sinks:
+        - "os.chmod("
+        - "os.mkdir("
+        - "umask("
+
+      steps:
+        - "定位文件权限设置操作"
+        - "检查权限值是否过于宽松"
+        - "判断是否允许其他用户读写"
+
+      safety_conditions:
+        - "权限不包含其他用户写权限"
+        - "敏感文件权限 <= 0o600"
+        - "目录权限 <= 0o755"
+
+    remediation:
+      principle: "遵循最小权限原则，仅授予必要的权限"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "文件权限: 0o600 或 0o644"
+        - "目录权限: 0o755 或 0o700"
+        - "敏感文件: 0o600"
+
+    patterns:
+      - pattern: "os\\.chmod\\(.*0o777|os\\.chmod\\(.*0777"
+        description: "Setting file permission to 777 (world-writable)"
+      - pattern: "os\\.mkdir\\(.*mode\\s*=\\s*0o777"
+        description: "Creating directory with 777 permission"
+      - pattern: "umask\\(0\\)|umask\\(0000\\)"
+        description: "Setting umask to 0 (insecure)"
+
+    safe_patterns:
+      - "0o755"
+      - "0o644"
+      - "0o600"
+
+  - category: hardcoded-separator
+    owasp: A02
+    severity: LOW
+
+    description: |
+      硬编码文件分隔符：在代码中硬编码 Windows 或 Unix 文件分隔符。
+      导致跨平台兼容性问题。
+
+    detection:
+      taint_sinks:
+        - "硬编码的反斜杠或正斜杠字符"
+
+      steps:
+        - "定位硬编码的文件分隔符"
+        - "检查是否应使用 os.path.sep"
+        - "判断是否影响跨平台兼容性"
+
+      safety_conditions:
+        - "使用 os.path.join()"
+        - "使用 os.path.sep"
+        - "使用 pathlib"
+
+    remediation:
+      principle: "使用 os.path.join 或 pathlib 处理路径，避免硬编码分隔符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 os.path.join() 拼接路径"
+        - "使用 os.path.sep 获取分隔符"
+        - "使用 pathlib.Path 处理路径"
+
+    patterns:
+      - pattern: "\\\\\""
+        description: "Hardcoded Windows backslash separator in double-quoted string"
+      - pattern: "'\\\\'"
+        description: "Hardcoded Windows backslash separator in single-quoted string"
+
+    safe_patterns:
+      - "os.path.join"
+      - "os.path.sep"
+      - "pathlib"
+
+  - category: response-security
+    owasp: A02
+    severity: MEDIUM
+
+    description: |
+      HTTP响应安全：缺少必要的安全响应头或响应类型设置不正确。
+      可能导致XSS、点击劫持、MIME类型混淆等风险。
+
+    detection:
+      taint_sinks:
+        - "X-Frame-Options"
+        - "X-Content-Type-Options"
+        - "Content-Type"
+        - "HttpResponse("
+
+      steps:
+        - "检查响应头是否设置 X-Frame-Options"
+        - "检查是否设置 X-Content-Type-Options: nosniff"
+        - "检查 Content-Type 是否正确"
+        - "判断响应内容是否经过编码处理"
+
+      safety_conditions:
+        - "设置 X-Frame-Options"
+        - "设置 X-Content-Type-Options: nosniff"
+        - "HTML响应经过转义处理"
+
+    remediation:
+      principle: "设置必要的安全响应头，正确处理响应内容"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "设置 X-Frame-Options: DENY 或 SAMEORIGIN"
+        - "设置 X-Content-Type-Options: nosniff"
+        - "HTML内容使用 bleach 或 escape 处理"
+        - "正确设置 Content-Type"
+
+    patterns:
+      - pattern: "X-Frame-Options.*DENY|X-Frame-Options.*SAMEORIGIN"
+        description: "X-Frame-Options header should be set"
+      - pattern: "X-Content-Type-Options.*nosniff"
+        description: "X-Content-Type-Options should be set"
+      - pattern: "Content-Type.*text/html.*response"
+        description: "HTML content type without sanitization"
+      - pattern: "HttpResponse\\(.*request"
+        description: "HttpResponse with user input"
+
+    safe_patterns:
+      - "bleach\\.clean"
+      - "escape"
+      - "markupsafe"
+
+  - category: verbose-output
+    owasp: A09
+    severity: MEDIUM
+
+    description: |
+      详细输出风险：使用 print、sys.stdout 直接输出而非使用日志系统。
+      可能泄露敏感信息，且难以管理和审计。
+
+    detection:
+      taint_sinks:
+        - "print("
+        - "sys.stdout.write("
+        - "sys.stderr.write("
+        - "pprint.pprint("
+
+      steps:
+        - "定位 print 或 stdout 输出语句"
+        - "检查输出内容是否可能包含敏感信息"
+        - "判断是否应使用日志系统替代"
+
+      safety_conditions:
+        - "使用 logging 模块"
+        - "输出内容不包含敏感信息"
+        - "DEBUG 模式下才输出详细信息"
+
+    remediation:
+      principle: "使用 logging 模块替代 print，便于管理和控制输出级别"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "替换 print 为 logging 调用"
+        - "设置合适的日志级别"
+        - "敏感信息使用脱敏处理"
+
+    patterns:
+      - pattern: "print\\((?!.*#|.*debug)"
+        description: "Using print() instead of logging"
+      - pattern: "sys\\.stdout\\.write\\(|sys\\.stderr\\.write\\("
+        description: "Direct stdout/stderr output"
+      - pattern: "pprint\\.pprint\\("
+        description: "Pretty print output (may leak sensitive data)"
+
+    safe_patterns:
+      - "logging\\."
+      - "logger\\."
+
+  # ===== A03 - Supply Chain Failures =====
+  - category: known-vulnerability
+    owasp: A03
+    severity: HIGH
+
+    description: |
+      已知漏洞：使用存在已知漏洞的依赖版本。
+      攻击者可利用公开的漏洞利用代码进行攻击。
+
+    detection:
+      taint_sinks:
+        - "Flask=="
+        - "Django=="
+        - "requests=="
+
+      steps:
+        - "检查依赖版本声明"
+        - "对比已知漏洞数据库"
+        - "判断是否存在已知漏洞"
+
+      safety_conditions:
+        - "使用最新稳定版本"
+        - "定期更新依赖"
+
+    remediation:
+      principle: "升级到安全版本，使用版本范围而非固定版本"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "升级到安全版本"
+        - "使用 >= 或 ~= 版本范围"
+
+    patterns:
+      - pattern: "Flask==[01]\\.|Django==[12]\\.[012]\\."
+        description: "Known vulnerable Flask/Django version"
+      - pattern: "requests==2\\.[0-9][^0-9]|urllib3==1\\.[0-9][^0-9]"
+        description: "Potentially outdated requests/urllib3 version"
+
+    safe_patterns:
+      - ">=|~="
+
+  - category: outdated-dependency
+    owasp: A03
+    severity: MEDIUM
+
+    description: |
+      过时依赖：固定依赖版本可能导致无法获取安全补丁。
+      应使用版本范围以获取安全更新。
+
+    detection:
+      taint_sinks:
+        - "=="
+
+      steps:
+        - "检查依赖版本约束"
+        - "判断是否固定版本"
+        - "评估更新策略"
+
+      safety_conditions:
+        - "使用版本范围"
+        - "定期更新依赖"
+
+    remediation:
+      principle: "使用版本范围以便获取安全补丁"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 >= 或 ~= 版本范围"
+
+    patterns:
+      - pattern: "==[0-9]+\\.[0-9]+\\.[0-9]+"
+        description: "Pinned exact version (may miss security patches)"
+
+    safe_patterns:
+      - ">=|~="
+
+  - category: insecure-pipeline
+    owasp: A03
+    severity: HIGH
+
+    description: |
+      不安全流水线：CI/CD中下载依赖未验证完整性。
+      攻击者可能通过供应链攻击植入恶意代码。
+
+    detection:
+      taint_sinks:
+        - "subprocess.run(.*curl"
+        - "pip install.*--no-verify"
+
+      steps:
+        - "定位依赖下载代码"
+        - "检查是否有验证机制"
+        - "判断是否存在风险"
+
+      safety_conditions:
+        - "验证哈希值"
+        - "使用安全下载方式"
+
+    remediation:
+      principle: "下载依赖时验证完整性，使用安全下载方式"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证下载文件的哈希值"
+        - "使用 pip 的哈希验证功能"
+
+    patterns:
+      - pattern: "subprocess\\.run\\(.*curl|subprocess\\.run\\(.*wget"
+        description: "Downloading dependencies via subprocess without verification"
+      - pattern: "pip install.*--no-verify|pip install.*--trusted-host"
+        description: "pip install with verification disabled"
+
+    safe_patterns:
+      - "hash"
+      - "verify"
+      - "checksum"
+
+  - category: unverified-dependency
+    owasp: A03
+    severity: MEDIUM
+
+    description: |
+      未验证依赖：从Git URL安装依赖未验证哈希。
+      可能安装被篡改的代码。
+
+    detection:
+      taint_sinks:
+        - "pip install.*git+"
+
+      steps:
+        - "定位pip安装命令"
+        - "检查是否有哈希验证"
+        - "判断是否安全"
+
+      safety_conditions:
+        - "使用哈希验证"
+        - "使用PyPI官方源"
+
+    remediation:
+      principle: "使用哈希验证或从PyPI官方源安装"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加哈希验证"
+        - "优先使用PyPI"
+
+    patterns:
+      - pattern: "pip install.*-e git\\+|pip install.*git\\+https"
+        description: "Installing from git URL without hash verification"
+
+    safe_patterns:
+      - "hash"
+      - "verify"
+
+  # ===== A04 - Cryptographic Failures =====
+  - category: weak-hash
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      弱哈希算法：使用MD5或SHA1等已被破解的哈希算法。
+      攻击者可以构造碰撞，伪造数据。
+
+    detection:
+      taint_sinks:
+        - "hashlib.md5("
+        - "hashlib.sha1("
+        - "MD5("
+
+      steps:
+        - "定位哈希函数调用"
+        - "检查使用的算法"
+        - "判断是否为弱算法"
+
+      safety_conditions:
+        - "使用 SHA256 或更强算法"
+        - "使用 blake2"
+
+    remediation:
+      principle: "使用SHA256或更强的哈希算法"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "密码哈希"
+          use: "使用 bcrypt、argon2 或 pbkdf2"
+
+        - scenario: "数据完整性"
+          use: "使用 SHA256 或 blake2"
+
+      requirements:
+        - "替换 MD5/SHA1 为 SHA256 或更强"
+        - "密码存储使用专用哈希函数"
+
+    patterns:
+      - pattern: "hashlib\\.md5\\(|hashlib\\.sha1\\("
+        description: "MD5/SHA1 hash function"
+      - pattern: "MD5\\(|MD5\\.new"
+        description: "Crypto MD5"
+
+    safe_patterns:
+      - "sha256|sha384|sha512|blake2"
+
+  - category: hardcoded-secret
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      硬编码密钥：在代码中硬编码密码、密钥、令牌等敏感信息。
+      导致敏感信息泄露。
+
+    detection:
+      taint_sinks:
+        - "password ="
+        - "secret ="
+        - "api_key ="
+        - "token ="
+        - "private_key ="
+        - "DATABASE_URL"
+
+      steps:
+        - "扫描代码中的字符串赋值"
+        - "检查变量名是否包含敏感关键词"
+        - "判断是否为硬编码的敏感信息"
+
+      safety_conditions:
+        - "从环境变量读取"
+        - "从配置文件读取"
+
+    remediation:
+      principle: "敏感信息从环境变量或配置文件读取"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 os.environ 或 os.getenv"
+        - "移除硬编码的敏感信息"
+
+    patterns:
+      - pattern: "(password|secret|api_key|token|private_key)\\s*=\\s*['\"][^'\"]+['\"]"
+        description: "Hardcoded secret string"
+      - pattern: "DATABASE_URL.*=.*['\"]postgres.*://.*:.*@"
+        description: "Database URL with credentials"
+
+    safe_patterns:
+      - "os\\.environ"
+      - "os\\.getenv"
+      - "settings\\."
+
+  - category: insecure-random
+    owasp: A04
+    severity: MEDIUM
+
+    description: |
+      不安全的随机数：使用random模块用于安全敏感场景。
+      攻击者可以预测随机数。
+
+    detection:
+      taint_sinks:
+        - "random.random("
+        - "random.randint("
+        - "random.choice("
+
+      steps:
+        - "定位随机数生成调用"
+        - "判断是否用于安全场景"
+        - "检查是否使用secrets模块"
+
+      safety_conditions:
+        - "使用 secrets 模块"
+        - "使用 SystemRandom"
+
+    remediation:
+      principle: "安全敏感场景使用secrets模块"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "替换 random 为 secrets"
+        - "使用 SystemRandom"
+
+    patterns:
+      - pattern: "random\\.(random|randint|choice|shuffle)\\("
+        description: "Insecure random module (use secrets for security)"
+
+    safe_patterns:
+      - "secrets\\."
+      - "SystemRandom"
+
+  - category: weak-encryption
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      弱加密：使用DES、RC4等弱加密算法或ECB模式。
+      攻击者可以解密数据。
+
+    detection:
+      taint_sinks:
+        - "DES."
+        - "MODE_ECB"
+        - "Blowfish"
+        - "RC4"
+
+      steps:
+        - "定位加密函数调用"
+        - "检查算法和模式"
+        - "判断是否为弱算法"
+
+      safety_conditions:
+        - "使用 AES"
+        - "使用 GCM 或 CBC 模式"
+
+    remediation:
+      principle: "使用AES加密和GCM/CBC模式"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 AES.new 创建加密器"
+        - "使用 MODE_GCM 或 MODE_CBC"
+
+    patterns:
+      - pattern: "DES\\.|AES.*MODE_ECB|Blowfish|RC4|ARC4"
+        description: "Weak cipher or ECB mode"
+
+    safe_patterns:
+      - "MODE_GCM|MODE_CBC"
+      - "AES\\.new"
+
+  - category: plaintext-transmission
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      明文传输：敏感数据通过HTTP而非HTTPS传输。
+      数据可能被窃听。
+
+    detection:
+      taint_sinks:
+        - "http://"
+        - "SMTP("
+        - "FTP("
+
+      steps:
+        - "检查URL协议"
+        - "判断是否传输敏感数据"
+        - "检查是否使用加密协议"
+
+      safety_conditions:
+        - "使用 HTTPS"
+        - "使用 SMTP_SSL"
+        - "使用 FTPS"
+
+    remediation:
+      principle: "敏感数据使用加密传输"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "URL使用 https://"
+        - "邮件使用 SMTP_SSL"
+        - "文件传输使用 FTPS"
+
+    patterns:
+      - pattern: "http://.*(password|token|secret|key|credential)"
+        description: "Sensitive data over HTTP (not HTTPS)"
+      - pattern: "SMTP\\(.*port.*25|FTP\\(.*21"
+        description: "Unencrypted protocol for sensitive data"
+
+    safe_patterns:
+      - "https://"
+      - "SMTP_SSL"
+      - "ftps"
+
+  - category: weak-signature
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      弱签名算法：使用不安全的密钥长度或签名算法。
+      攻击者可以伪造签名，破坏数据完整性和认证。
+
+    detection:
+      taint_sinks:
+        - "DSA.generate("
+        - "RSA.generate("
+        - "ECDSA.generate("
+
+      steps:
+        - "定位密钥生成调用"
+        - "检查密钥长度参数"
+        - "判断是否满足最低安全要求"
+        - "RSA/DSA: 至少2048位; ECDSA: 至少NIST256p"
+
+      safety_conditions:
+        - "RSA/DSA 密钥长度 >= 2048"
+        - "ECDSA 使用 NIST256p 或更强曲线"
+
+    remediation:
+      principle: "使用足够强度的密钥长度，RSA/DSA至少2048位"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "RSA: 密钥长度 >= 2048"
+        - "DSA: 密钥长度 >= 2048"
+        - "ECDSA: 使用 NIST256p 或更强"
+
+    patterns:
+      - pattern: "DSA\\.generate\\(.*[0-9]{1,3}\\)"
+        description: "DSA key with insufficient key length (<2048 bits)"
+      - pattern: "RSA\\.generate\\(.*[0-9]{1,3}\\)"
+        description: "RSA key with insufficient key length (<2048 bits)"
+      - pattern: "ECDSA\\.generate\\(.*NIST192p|ECDSA\\.generate\\(.*NIST224p"
+        description: "ECDSA with weak curve"
+
+    safe_patterns:
+      - "2048"
+      - "3072"
+      - "4096"
+      - "NIST256p"
+      - "NIST384p"
+
+  - category: sensitive-data-exposure
+    owasp: A04
+    severity: HIGH
+
+    description: |
+      敏感数据暴露：密码、密钥、令牌等敏感信息被输出到日志、响应或控制台。
+      导致敏感信息泄露，可能被用于进一步攻击。
+
+    detection:
+      taint_sinks:
+        - "print("
+        - "logging."
+        - "logger."
+        - "response["
+        - "json("
+        - "return.*password"
+
+      steps:
+        - "定位输出语句（print、logging、response）"
+        - "检查输出内容是否包含敏感变量"
+        - "追溯敏感变量的来源"
+        - "判断是否经过脱敏处理"
+
+      safety_conditions:
+        - "敏感数据经过脱敏(mask/redact)"
+        - "敏感数据不输出到日志"
+        - "响应中不包含敏感字段"
+
+    remediation:
+      principle: "敏感数据不输出到日志、控制台或响应，必须脱敏处理"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除敏感数据的输出语句"
+        - "使用脱敏函数处理敏感数据"
+        - "日志中用占位符替代敏感数据"
+        - "响应中排除敏感字段"
+
+    patterns:
+      - pattern: "print\\(.*password|print\\(.*token|print\\(.*secret"
+        description: "Printing sensitive data to console"
+      - pattern: "response\\[.*password\\]|json\\(.*password"
+        description: "Returning sensitive data in response"
+      - pattern: "open\\(.*'w'.*password|open\\(.*'w'.*token"
+        description: "Writing sensitive data to file"
+      - pattern: "cache\\..*password|redis\\..*password"
+        description: "Caching sensitive data without encryption"
+
+    safe_patterns:
+      - "mask"
+      - "redact"
+      - "sanitize"
+      - "encrypt"
+
+  # ===== A05 - Injection =====
+  - category: sql-injection
+    owasp: A05
+    severity: CRITICAL
+
+    description: |
+      SQL注入：使用字符串拼接或格式化构造SQL语句。
+      攻击者可以执行任意SQL命令，读取、修改或删除数据。
+
+    detection:
+      taint_sinks:
+        - "execute("
+        - "raw("
+        - "cursor.execute("
+
+      steps:
+        - "定位SQL执行函数"
+        - "检查参数构造方式"
+        - "判断是否使用参数化查询"
+
+      safety_conditions:
+        - "使用参数化查询"
+        - "使用 ORM 安全方法"
+
+    remediation:
+      principle: "使用参数化查询，禁止字符串拼接SQL"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "原生SQL"
+          use: "使用 ? 或 :name 占位符"
+
+        - scenario: "ORM查询"
+          use: "使用 filter() 等安全方法"
+
+      requirements:
+        - "使用参数化查询"
+        - "禁止字符串拼接或格式化"
+
+    patterns:
+      - pattern: "execute\\(.*%s|execute\\(.*\\.format|execute\\(.*f['\"]"
+        description: "String formatting in SQL execute"
+      - pattern: "raw\\(.*%s|raw\\(.*\\.format|raw\\(.*f['\"]"
+        description: "Raw SQL query with string formatting"
+      - pattern: "cursor\\.execute\\(.*\\+"
+        description: "String concatenation in cursor.execute"
+
+    safe_patterns:
+      - "execute\\(.*\\?"
+      - "execute\\(.*:\\w+[^+]*\\)"
+      - "text\\(.*:"
+
+  - category: command-injection
+    owasp: A05
+    severity: CRITICAL
+
+    description: |
+      命令注入：使用os.system、os.popen或subprocess.shell=True执行命令。
+      攻击者可以执行任意系统命令。
+
+    detection:
+      taint_sinks:
+        - "os.system("
+        - "os.popen("
+        - "subprocess.run("
+        - "eval("
+        - "exec("
+
+      steps:
+        - "定位命令执行函数"
+        - "检查是否使用shell=True"
+        - "追溯命令参数来源"
+
+      safety_conditions:
+        - "使用数组形式传递参数"
+        - "shell=False"
+        - "使用shlex.quote转义"
+
+    remediation:
+      principle: "使用数组形式传递命令参数，禁用shell=True"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除 shell=True"
+        - "使用数组形式传递参数"
+        - "避免 eval/exec"
+
+    patterns:
+      - pattern: "os\\.system\\("
+        description: "os.system() with potential user input"
+      - pattern: "os\\.popen\\("
+        description: "os.popen() with potential user input"
+      - pattern: "subprocess\\.(call|run|Popen)\\(.*shell\\s*=\\s*True"
+        description: "subprocess with shell=True"
+      - pattern: "eval\\("
+        description: "eval() with potential user input"
+      - pattern: "exec\\("
+        description: "exec() with potential user input"
+
+    safe_patterns:
+      - "subprocess\\.run\\("
+      - "shlex\\.quote"
+
+  - category: code-evaluation
+    owasp: A05
+    severity: CRITICAL
+
+    description: |
+      代码动态评估漏洞：使用 eval()、exec()、compile() 等函数执行用户控制的代码字符串。
+      攻击者可以注入任意Python代码，导致远程代码执行(RCE)。
+
+    detection:
+      taint_sinks:
+        - "eval("
+        - "exec("
+        - "compile("
+        - "ast.literal_eval("
+
+      steps:
+        - "定位代码中的 eval/exec/compile 调用"
+        - "追溯第一个参数的来源"
+        - "判断参数是否直接或间接来自用户输入"
+        - "检查是否经过白名单验证或安全处理"
+
+      safety_conditions:
+        - "参数是硬编码字符串常量"
+        - "参数经过严格的白名单验证"
+        - "使用 ast.literal_eval 且输入已验证"
+
+    remediation:
+      principle: "禁止使用 eval/exec 执行用户输入，使用安全的替代方案"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "解析JSON数据"
+          use: "json.loads()"
+
+        - scenario: "解析字面量"
+          use: "ast.literal_eval() 配合输入验证"
+
+        - scenario: "动态函数调用"
+          use: "使用字典映射到允许的函数"
+
+      requirements:
+        - "移除 eval/exec 调用"
+        - "使用安全的解析方法"
+        - "如必须动态执行，使用白名单限制"
+
+    patterns:
+      - pattern: "eval\\(.*request|eval\\(.*input"
+        description: "eval() with user-controlled input"
+      - pattern: "exec\\(.*request|exec\\(.*input"
+        description: "exec() with user-controlled input"
+      - pattern: "compile\\(.*request|compile\\(.*input"
+        description: "compile() with user-controlled input"
+      - pattern: "ast\\.literal_eval\\(.*request"
+        description: "ast.literal_eval with request data"
+
+    safe_patterns:
+      - "ast\\.literal_eval\\(['\\\"]"
+      - "json\\.loads"
+
+  - category: template-injection
+    owasp: A05
+    severity: CRITICAL
+
+    description: |
+      模板注入(SSTI)：用户输入直接拼接到模板字符串中。
+      攻击者可以执行任意代码。
+
+    detection:
+      taint_sinks:
+        - "Template("
+        - "render_template_string("
+
+      steps:
+        - "定位模板渲染函数"
+        - "检查模板内容来源"
+        - "判断是否包含用户输入"
+
+      safety_conditions:
+        - "使用 render_template"
+        - "启用 autoescape"
+        - "使用沙箱环境"
+
+    remediation:
+      principle: "使用render_template渲染模板文件，避免拼接用户输入"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 render_template 替代 render_template_string"
+        - "避免在模板字符串中拼接用户输入"
+
+    patterns:
+      - pattern: "Template\\(.*\\+|Template\\(.*%s|Template\\(.*\\.format"
+        description: "Jinja2 Template with string concatenation/formatting"
+      - pattern: "render_template_string\\(.*\\+|render_template_string\\(.*%s"
+        description: "Flask render_template_string with user input"
+      - pattern: "\\{\\{.*__class__|\\{\\{.*__mro__|\\{\\{.*__subclasses__"
+        description: "SSTI payload patterns in templates"
+
+    safe_patterns:
+      - "render_template\\("
+      - "autoescape"
+      - "sandboxed"
+
+  - category: ldap-injection
+    owasp: A05
+    severity: HIGH
+
+    description: |
+      LDAP注入：用户输入直接拼接到LDAP查询中。
+      攻击者可以绕过认证或获取敏感数据。
+
+    detection:
+      taint_sinks:
+        - "search_s("
+
+      steps:
+        - "定位LDAP查询函数"
+        - "检查参数构造方式"
+        - "判断是否拼接用户输入"
+
+      safety_conditions:
+        - "使用参数化查询"
+        - "转义特殊字符"
+
+    remediation:
+      principle: "使用参数化查询或转义特殊字符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 escape_filter_chars 转义"
+        - "使用参数化LDAP查询"
+
+    patterns:
+      - pattern: "search_s\\(.*%s|search_s\\(.*\\.format|search_s\\(.*f['\"]"
+        description: "LDAP search with string formatting"
+
+    safe_patterns:
+      - "escape_filter_chars"
+      - "ldap3\\."
+
+  - category: nosql-injection
+    owasp: A05
+    severity: HIGH
+
+    description: |
+      NoSQL注入：用户输入直接用于MongoDB等NoSQL查询。
+      攻击者可以绕过查询条件或执行任意操作。
+
+    detection:
+      taint_sinks:
+        - "$where"
+        - "find("
+        - "find_one("
+
+      steps:
+        - "定位NoSQL查询函数"
+        - "检查查询条件来源"
+        - "判断是否包含用户输入"
+
+      safety_conditions:
+        - "验证和清理用户输入"
+        - "避免使用$where"
+
+    remediation:
+      principle: "验证用户输入，避免使用$where操作符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证和清理用户输入"
+        - "禁止使用$where执行JavaScript"
+
+    patterns:
+      - pattern: "\\$where.*request|\\$where.*input"
+        description: "MongoDB $where with user input"
+      - pattern: "find\\(.*request|find_one\\(.*request"
+        description: "MongoDB find with user-controlled query"
+
+    safe_patterns:
+      - "sanitize"
+      - "validate_input"
+
+  - category: xml-external-entity
+    owasp: A05
+    severity: HIGH
+
+    description: |
+      XML外部实体攻击(XXE)：解析XML时允许加载外部实体。
+      攻击者可以读取本地文件、发起SSRF攻击、导致拒绝服务。
+
+    detection:
+      taint_sinks:
+        - "etree.parse("
+        - "xml.etree.ElementTree.parse("
+        - "minidom.parse("
+        - "pulldom.parse("
+        - "etree.XMLParser("
+
+      steps:
+        - "定位XML解析调用"
+        - "检查解析器配置"
+        - "判断是否禁用了外部实体解析"
+        - "检查 resolve_entities 是否设为 False"
+
+      safety_conditions:
+        - "使用 defusedxml 库"
+        - "resolve_entities=False"
+        - "使用 lxml 且禁用外部实体"
+
+    remediation:
+      principle: "禁用XML外部实体解析，使用安全的XML解析器"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "解析XML"
+          use: "使用 defusedxml 库"
+
+        - scenario: "使用lxml"
+          use: "设置 resolve_entities=False"
+
+      requirements:
+        - "禁用外部实体解析"
+        - "禁用DTD处理"
+        - "限制实体扩展深度"
+
+    patterns:
+      - pattern: "etree\\.parse\\(.*resolve_entities\\s*=\\s*True"
+        description: "lxml parse with external entities enabled"
+      - pattern: "xml\\.etree\\.ElementTree\\.parse\\("
+        description: "ElementTree parse without XXE protection"
+      - pattern: "etree\\.XMLParser\\(.*resolve_entities\\s*=\\s*True"
+        description: "XMLParser with external entities enabled"
+      - pattern: "minidom\\.parse\\(|pulldom\\.parse\\("
+        description: "XML parsing without XXE protection"
+
+    safe_patterns:
+      - "resolve_entities\\s*=\\s*False"
+      - "defusedxml"
+
+  - category: email-injection
+    owasp: A05
+    severity: MEDIUM
+
+    description: |
+      件注入漏洞：用户输入未经验证直接用于邮件头或内容。
+      攻击者可以注入额外的邮件头、修改收件人、发送垃圾邮件。
+
+    detection:
+      taint_sinks:
+        - "smtplib.SMTP.sendmail("
+        - "EmailMessage.set_content("
+        - "EmailMessage.set_subject("
+        - "MIMEText("
+        - "MIMEMultipart("
+
+      steps:
+        - "定位邮件发送相关调用"
+        - "追溯邮件头、收件人、内容的来源"
+        - "判断是否包含用户输入"
+        - "检查是否包含换行符等特殊字符"
+
+      safety_conditions:
+        - "邮件头不包含换行符(\\n, \\r)"
+        - "收件人地址经过验证"
+        - "使用邮件验证库"
+
+    remediation:
+      principle: "验证和过滤邮件相关输入，防止注入换行符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除输入中的换行符"
+        - "验证邮件地址格式"
+        - "限制邮件头长度"
+        - "使用白名单验证收件人"
+
+    patterns:
+      - pattern: "smtplib\\.SMTP\\(.*sendmail\\(.*request"
+        description: "SMTP sendmail with user-controlled parameters"
+      - pattern: "EmailMessage\\(.*request|MIMEText\\(.*request"
+        description: "Email construction with user input"
+      - pattern: "\\n.*Bcc:|\\n.*Cc:|\\r\\n.*To:"
+        description: "Email header injection patterns"
+      - pattern: "set_content\\(.*request|set_subject\\(.*request"
+        description: "Email content with user input"
+
+    safe_patterns:
+      - "email_validator"
+      - "validate_email"
+
+  - category: regex-injection
+    owasp: A05
+    severity: MEDIUM
+
+    description: |
+      正则表达式注入：用户输入直接用于构造正则表达式模式。
+      攻击者可以注入恶意正则导致ReDoS(正则拒绝服务)攻击。
+
+    detection:
+      taint_sinks:
+        - "re.compile("
+        - "re.search("
+        - "re.match("
+        - "re.findall("
+        - "re.sub("
+
+      steps:
+        - "定位正则表达式编译或匹配调用"
+        - "追溯第一个参数(模式)的来源"
+        - "判断模式是否包含用户输入"
+        - "检查是否使用 re.escape 处理"
+
+      safety_conditions:
+        - "模式是硬编码字符串常量"
+        - "用户输入经过 re.escape 处理"
+        - "使用白名单限制模式"
+
+    remediation:
+      principle: "不要让用户控制正则表达式模式，对用户输入使用 re.escape"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "模式使用硬编码常量"
+        - "动态部分使用 re.escape 处理"
+        - "限制正则复杂度，避免回溯爆炸"
+
+    patterns:
+      - pattern: "re\\.compile\\(.*request|re\\.compile\\(.*input"
+        description: "Regex compilation with user-controlled pattern"
+      - pattern: "re\\.(search|match|findall)\\(.*request.*\\)"
+        description: "re.search/match/findall with user-controlled pattern"
+
+    safe_patterns:
+      - "re\\.escape"
+      - "whitelist"
+
+  # ===== A06 - Insecure Design =====
+  - category: missing-rate-limit
+    owasp: A06
+    severity: HIGH
+
+    description: |
+      缺少速率限制：登录等敏感端点未实施速率限制。
+      攻击者可以进行暴力破解攻击。
+
+    detection:
+      taint_sinks:
+        - "@app.post("
+        - "@router.post("
+        - "login"
+
+      steps:
+        - "定位登录端点"
+        - "检查是否有速率限制"
+        - "判断是否需要保护"
+
+      safety_conditions:
+        - "使用限流装饰器"
+        - "使用 limiter"
+
+    remediation:
+      principle: "为登录等敏感端点添加速率限制"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加限流装饰器"
+        - "配置速率限制策略"
+
+    patterns:
+      - pattern: "@app\\.(route|post).*login|@router\\.post.*login"
+        description: "Login endpoint without rate limiting"
+
+    safe_patterns:
+      - "limiter"
+      - "rate_limit"
+      - "throttle"
+
+  - category: missing-lockout
+    owasp: A06
+    severity: HIGH
+
+    description: |
+      缺少账户锁定：密码验证失败后无账户锁定机制。
+      攻击者可以进行暴力破解攻击。
+
+    detection:
+      taint_sinks:
+        - "check_password"
+        - "verify_password"
+        - "authenticate"
+
+      steps:
+        - "定位密码验证函数"
+        - "检查是否有失败计数"
+        - "判断是否有锁定机制"
+
+      safety_conditions:
+        - "实施账户锁定"
+        - "限制失败次数"
+
+    remediation:
+      principle: "实施账户锁定机制，限制失败尝试次数"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "记录失败尝试次数"
+        - "达到阈值后锁定账户"
+
+    patterns:
+      - pattern: "check_password|verify_password|authenticate"
+        description: "Password verification without attempt counting"
+
+    safe_patterns:
+      - "lockout"
+      - "MAX_ATTEMPTS"
+      - "rate_limit"
+
+  - category: business-logic-flaw
+    owasp: A06
+    severity: HIGH
+
+    description: |
+      业务逻辑缺陷：价格、数量等关键业务参数来自用户输入未验证。
+      攻击者可以篡改价格或数量获利。
+
+    detection:
+      taint_sinks:
+        - "price ="
+        - "amount ="
+        - "quantity ="
+
+      steps:
+        - "定位业务参数来源"
+        - "检查是否有验证"
+        - "判断是否可被篡改"
+
+      safety_conditions:
+        - "从数据库或后端获取"
+        - "验证参数范围"
+
+    remediation:
+      principle: "关键业务参数从后端获取或严格验证"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "从数据库获取价格等关键参数"
+        - "验证数量范围"
+
+    patterns:
+      - pattern: "price.*=.*request|amount.*=.*request|discount.*=.*request"
+        description: "Price/amount/discount from request without validation"
+      - pattern: "quantity.*=.*request\\.json"
+        description: "Quantity from request without bounds check"
+
+    safe_patterns:
+      - "validate"
+      - "min_value"
+      - "max_value"
+
+  - category: trust-boundary-violation
+    owasp: A06
+    severity: HIGH
+
+    description: |
+      信任边界违规：用户输入直接写入会话或其他信任区域。
+      攻击者可以篡改会话数据提升权限。
+
+    detection:
+      taint_sinks:
+        - "session["
+        - "session.update("
+
+      steps:
+        - "定位会话操作"
+        - "检查数据来源"
+        - "判断是否验证"
+
+      safety_conditions:
+        - "验证用户输入"
+        - "清理会话数据"
+
+    remediation:
+      principle: "用户输入写入会话前必须验证"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证用户输入"
+        - "清理会话数据"
+
+    patterns:
+      - pattern: "session\\[.*request|session\\.update.*request"
+        description: "Session data from request without validation"
+      - pattern: "request\\.session\\[.*\\]\\s*="
+        description: "Django session data set from request"
+
+    safe_patterns:
+      - "validate"
+      - "clean"
+
+  # ===== A07 - Identification and Authentication Failures =====
+  - category: weak-password
+    owasp: A07
+    severity: MEDIUM
+
+    description: |
+      弱密码策略：密码长度要求过短或复杂度不足。
+      攻击者可以更容易进行暴力破解。
+
+    detection:
+      taint_sinks:
+        - "len(password)"
+        - "min_length"
+
+      steps:
+        - "定位密码验证代码"
+        - "检查长度和复杂度要求"
+        - "判断是否足够安全"
+
+      safety_conditions:
+        - "密码长度 >= 8"
+        - "要求复杂度"
+
+    remediation:
+      principle: "实施强密码策略，最小长度8位并要求复杂度"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "密码最小长度 >= 8"
+        - "要求包含数字、字母、特殊字符"
+
+    patterns:
+      - pattern: "len\\(.*password.*\\)\\s*<\\s*[1-6]"
+        description: "Weak password length check"
+      - pattern: "min_length.*[1-5]"
+        description: "Password minimum length too short"
+
+    safe_patterns:
+      - "bcrypt"
+      - "argon2"
+      - "pbkdf2"
+
+  - category: broken-session
+    owasp: A07
+    severity: HIGH
+
+    description: |
+      会话管理缺陷：会话Cookie未设置安全属性。
+      可能导致会话劫持。
+
+    detection:
+      taint_sinks:
+        - "session["
+        - "SESSION_COOKIE_SECURE"
+        - "SESSION_COOKIE_HTTPONLY"
+
+      steps:
+        - "定位会话配置"
+        - "检查Cookie安全属性"
+        - "判断是否安全"
+
+      safety_conditions:
+        - "SESSION_COOKIE_SECURE = True"
+        - "SESSION_COOKIE_HTTPONLY = True"
+
+    remediation:
+      principle: "设置Cookie安全属性：Secure和HttpOnly"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "设置 SESSION_COOKIE_SECURE = True"
+        - "设置 SESSION_COOKIE_HTTPONLY = True"
+
+    patterns:
+      - pattern: "session\\[.*request|session\\.update.*request"
+        description: "Session data from request without validation"
+      - pattern: "SESSION_COOKIE_SECURE\\s*=\\s*False|SESSION_COOKIE_HTTPONLY\\s*=\\s*False"
+        description: "Insecure session cookie settings"
+
+    safe_patterns:
+      - "validate"
+      - "SESSION_COOKIE_SECURE\\s*=\\s*True"
+
+  - category: credential-exposure
+    owasp: A07
+    severity: HIGH
+
+    description: |
+      凭据泄露：密码或其他凭据输出到日志或响应中。
+      导致凭据泄露。
+
+    detection:
+      taint_sinks:
+        - "print("
+        - "logger."
+        - "json("
+
+      steps:
+        - "定位输出语句"
+        - "检查是否包含敏感数据"
+        - "判断是否可能泄露"
+
+      safety_conditions:
+        - "脱敏处理"
+        - "不输出敏感数据"
+
+    remediation:
+      principle: "敏感数据脱敏或不输出"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除敏感数据输出"
+        - "使用脱敏函数"
+
+    patterns:
+      - pattern: "print\\(.*password|log\\(.*password|logger\\..*password"
+        description: "Password in print/log output"
+      - pattern: "json\\(.*password|response\\(.*password"
+        description: "Password in API response"
+
+    safe_patterns:
+      - "sanitize"
+      - "mask"
+      - "redact"
+
+  - category: missing-mfa
+    owasp: A07
+    severity: MEDIUM
+
+    description: |
+      缺少多因素认证：仅使用密码进行认证。
+      增加账户被盗风险。
+
+    detection:
+      taint_sinks:
+        - "login"
+        - "authenticate"
+
+      steps:
+        - "定位认证函数"
+        - "检查是否有MFA"
+        - "判断是否需要增强"
+
+      safety_conditions:
+        - "实施MFA"
+        - "支持TOTP等"
+
+    remediation:
+      principle: "为敏感操作实施多因素认证"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加MFA验证"
+        - "支持TOTP或其他MFA方式"
+
+    patterns:
+      - pattern: "login.*password|authenticate.*password"
+        description: "Login with only password, no MFA"
+
+    safe_patterns:
+      - "mfa"
+      - "totp"
+      - "verify_code"
+
+  # ===== A08 - Software and Data Integrity Failures =====
+  - category: insecure-deserialization
+    owasp: A08
+    severity: CRITICAL
+
+    description: |
+      不安全的反序列化：使用pickle、yaml.load等不安全的反序列化函数。
+      攻击者可以执行任意代码。
+
+    detection:
+      taint_sinks:
+        - "pickle.loads("
+        - "yaml.load("
+        - "marshal.loads("
+
+      steps:
+        - "定位反序列化函数"
+        - "检查是否使用安全方法"
+        - "判断数据来源"
+
+      safety_conditions:
+        - "使用 yaml.safe_load"
+        - "使用 json.loads"
+
+    remediation:
+      principle: "使用安全的反序列化方法：json或yaml.safe_load"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 json.loads 替代 pickle.loads"
+        - "使用 yaml.safe_load 替代 yaml.load"
+
+    patterns:
+      - pattern: "pickle\\.loads\\("
+        description: "pickle.loads() — arbitrary code execution risk"
+      - pattern: "yaml\\.load\\(.*Loader\\s*=\\s*yaml\\.FullLoader|yaml\\.load\\(.*Loader\\s*=\\s*yaml\\.SafeLoader"
+        description: "yaml.load with potentially unsafe loader"
+      - pattern: "marshal\\.loads\\("
+        description: "marshal.loads() — unsafe deserialization"
+
+    safe_patterns:
+      - "yaml\\.safe_load"
+      - "json\\.loads"
+      - "pickle\\.HIGHEST_PROTOCOL"
+
+  - category: unsigned-update
+    owasp: A08
+    severity: HIGH
+
+    description: |
+      未签名更新：下载文件后未验证完整性或签名。
+      可能安装被篡改的代码。
+
+    detection:
+      taint_sinks:
+        - "requests.get("
+        - "urllib.request.urlopen("
+
+      steps:
+        - "定位下载代码"
+        - "检查是否有验证"
+        - "判断是否安全"
+
+      safety_conditions:
+        - "验证哈希值"
+        - "验证签名"
+
+    remediation:
+      principle: "下载后验证文件完整性或签名"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证下载文件的哈希值"
+        - "验证数字签名"
+
+    patterns:
+      - pattern: "requests\\.get\\(.*download|urllib\\.request\\.urlopen\\(.*download"
+        description: "Download without integrity verification"
+
+    safe_patterns:
+      - "hashlib"
+      - "checksum"
+      - "verify_signature"
+
+  - category: insecure-cicd
+    owasp: A08
+    severity: HIGH
+
+    description: |
+      不安全的CI/CD：CI/CD中执行未验证的代码或命令。
+      可能导致供应链攻击。
+
+    detection:
+      taint_sinks:
+        - "subprocess.run(.*git"
+        - "subprocess.run(.*pip"
+
+      steps:
+        - "定位CI/CD相关代码"
+        - "检查是否有验证"
+        - "判断是否安全"
+
+      safety_conditions:
+        - "验证命令来源"
+        - "使用签名验证"
+
+    remediation:
+      principle: "CI/CD中验证执行的命令和代码"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证远程代码来源"
+        - "使用签名验证"
+
+    patterns:
+      - pattern: "subprocess\\.run\\(.*git.*clone|subprocess\\.run\\(.*pip.*install"
+        description: "CI/CD running git/pip without verification"
+
+    safe_patterns:
+      - "verify"
+      - "checksum"
+      - "signature"
+
+  - category: integrity-missing
+    owasp: A08
+    severity: MEDIUM
+
+    description: |
+      完整性检查缺失：写入下载内容时未验证哈希。
+      可能写入被篡改的内容。
+
+    detection:
+      taint_sinks:
+        - "open("
+        - "requests"
+        - "urllib"
+
+      steps:
+        - "定位文件写入代码"
+        - "检查是否有哈希验证"
+        - "判断是否安全"
+
+      safety_conditions:
+        - "验证哈希值"
+
+    remediation:
+      principle: "写入下载内容前验证哈希"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "写入前验证哈希值"
+
+    patterns:
+      - pattern: "open\\(.*'w'.*requests|open\\(.*'w'.*urllib"
+        description: "Writing downloaded content without hash check"
+
+    safe_patterns:
+      - "hashlib"
+      - "checksum"
+
+  - category: insecure-tempfile
+    owasp: A08
+    severity: MEDIUM
+
+    description: |
+      不安全临时文件：使用不安全的方式创建临时文件。
+      可能导致竞态条件、信息泄露、符号链接攻击。
+
+    detection:
+      taint_sinks:
+        - "open('/tmp/"
+        - "tempfile.mktemp("
+        - "NamedTemporaryFile(delete=False)"
+
+      steps:
+        - "定位临时文件创建操作"
+        - "检查是否使用安全的 tempfile 方法"
+        - "判断是否使用硬编码路径"
+        - "检查文件权限设置"
+
+      safety_conditions:
+        - "使用 tempfile.mkstemp()"
+        - "使用 tempfile.TemporaryFile()"
+        - "不使用硬编码路径"
+        - "临时文件自动清理"
+
+    remediation:
+      principle: "使用 tempfile 模块的安全方法创建临时文件"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用 tempfile.mkstemp() 创建临时文件"
+        - "使用 tempfile.TemporaryFile() 创建自动清理的临时文件"
+        - "设置适当的文件权限"
+        - "确保临时文件在使用后被删除"
+
+    patterns:
+      - pattern: "open\\(['\"]/tmp/"
+        description: "Hardcoded /tmp path (use tempfile module)"
+      - pattern: "tempfile\\.mktemp\\("
+        description: "mktemp() is deprecated and insecure"
+      - pattern: "NamedTemporaryFile\\(.*delete\\s*=\\s*False"
+        description: "NamedTemporaryFile with delete=False"
+
+    safe_patterns:
+      - "tempfile\\.mkstemp"
+      - "tempfile\\.TemporaryFile"
+      - "tempfile\\.NamedTemporaryFile\\("
+
+  # ===== A09 - Security Logging and Monitoring Failures =====
+  - category: missing-logging
+    owasp: A09
+    severity: MEDIUM
+
+    description: |
+      日志缺失：异常被静默捕获未记录，或整个项目缺少安全事件日志。
+      可能错过安全事件。
+
+    detection:
+      taint_sinks:
+        - "except.*:"
+        - "pass"
+        - "class.*Handler"
+        - "do_GET"
+        - "do_POST"
+
+      steps:
+        - "定位异常处理代码或HTTP处理类"
+        - "检查是否有日志记录"
+        - "判断是否静默处理"
+
+      safety_conditions:
+        - "使用 logger 记录异常"
+        - "项目有 logging 配置"
+
+    remediation:
+      principle: "异常必须记录日志或适当处理"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加日志记录"
+        - "避免空except块"
+
+    patterns:
+      - pattern: "except.*:\\s*pass"
+        description: "Empty except block (swallowed exception)"
+      - pattern: "except Exception.*:\\s*$"
+        description: "Broad exception catch without logging"
+      # 通用 patterns - HTTP处理器缺少日志
+      - pattern: "class.*Handler.*:\\s*$"
+        description: "Handler class - check for logging import"
+      - pattern: "import json.*import os[^\\n]*$"
+        description: "Imports without logging module"
+
+    safe_patterns:
+      - "logger\\."
+      - "logging\\."
+      - "log\\."
+      - "import logging"
+      - "getLogger"
+
+  - category: sensitive-in-log
+    owasp: A09
+    severity: MEDIUM
+
+    description: |
+      日志中记录敏感信息：密码、令牌等输出到日志。
+      导致敏感信息泄露。
+
+    detection:
+      taint_sinks:
+        - "logger."
+        - "logging."
+        - "log("
+
+      steps:
+        - "定位日志输出"
+        - "检查是否包含敏感信息"
+        - "判断是否需要脱敏"
+
+      safety_conditions:
+        - "脱敏处理"
+        - "不记录敏感信息"
+
+    remediation:
+      principle: "日志中不记录敏感信息或脱敏处理"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "移除敏感信息的日志输出"
+        - "使用脱敏函数"
+
+    patterns:
+      - pattern: "logger\\..*password|logging\\..*password|log\\(.*password"
+        description: "Password in log output"
+      - pattern: "logger\\..*token|logging\\..*token|log\\(.*token"
+        description: "Token in log output"
+
+    safe_patterns:
+      - "sanitize"
+      - "mask"
+      - "redact"
+
+  - category: missing-alert
+    owasp: A09
+    severity: MEDIUM
+
+    description: |
+      缺少告警：安全事件（如登录失败）未触发告警。
+      可能错过攻击检测。
+
+    detection:
+      taint_sinks:
+        - "failed.*login"
+        - "login.*fail"
+        - "authenticate.*fail"
+
+      steps:
+        - "定位认证相关代码"
+        - "检查是否有告警机制"
+        - "判断是否需要告警"
+
+      safety_conditions:
+        - "发送安全告警"
+
+    remediation:
+      principle: "安全事件触发告警通知"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加告警通知机制"
+
+    patterns:
+      - pattern: "failed.*login|login.*fail|authenticate.*fail"
+        description: "Failed login without alerting mechanism"
+
+    safe_patterns:
+      - "alert"
+      - "notify"
+      - "send_alert"
+
+  - category: log-injection
+    owasp: A09
+    severity: MEDIUM
+
+    description: |
+      日志注入：用户输入直接写入日志未经验证。
+      攻击者可以注入伪造的日志条目。
+
+    detection:
+      taint_sinks:
+        - "logger."
+        - "logging."
+
+      steps:
+        - "定位日志输出"
+        - "检查内容来源"
+        - "判断是否验证"
+
+      safety_conditions:
+        - "验证用户输入"
+        - "过滤换行符"
+
+    remediation:
+      principle: "日志内容验证或过滤特殊字符"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "验证日志内容"
+        - "过滤换行符等特殊字符"
+
+    patterns:
+      - pattern: "logger\\..*%s.*request|logging\\..*%s.*request"
+        description: "User input in log without sanitization"
+
+    safe_patterns:
+      - "sanitize"
+      - "validate_input"
+
+  - category: sensitive-comment
+    owasp: A09
+    severity: LOW
+
+    description: |
+      注释敏感信息：代码注释中包含密码、密钥、账号等敏感信息。
+      可能导致敏感信息泄露。
+
+    detection:
+      taint_sinks:
+        - "# password"
+        - "# key"
+        - "# secret"
+        - "# admin"
+
+      steps:
+        - "扫描代码注释"
+        - "检查是否包含敏感关键词"
+        - "判断是否包含实际的敏感值"
+
+      safety_conditions:
+        - "注释不包含敏感信息"
+        - "敏感信息使用占位符描述"
+
+    remediation:
+      principle: "移除注释中的敏感信息，使用通用描述替代"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "删除注释中的密码、密钥等"
+        - "使用占位符如 '***' 或 '<secret>'"
+        - "敏感配置说明使用文档而非代码注释"
+
+    patterns:
+      - pattern: "#.*password\\s*[:=]|#.*passwd\\s*[:=]"
+        description: "Password in comment"
+      - pattern: "#.*api.?key\\s*[:=]|#.*secret.?key\\s*[:=]"
+        description: "API key or secret in comment"
+      - pattern: "#.*token\\s*[:=]|#.*access.?token\\s*[:=]"
+        description: "Token in comment"
+      - pattern: "#.*TODO.*password|#.*FIXME.*password"
+        description: "TODO/FIXME with password reference"
+      - pattern: "#.*admin.*password|#.*root.*password"
+        description: "Admin/root password reference in comment"
+
+    safe_patterns:
+      - "# TODO: secure"
+      - "# FIXME: validation"
+
+  # ===== A10 - Mishandling of Exceptional Conditions =====
+  - category: empty-catch
+    owasp: A10
+    severity: HIGH
+
+    description: |
+      空catch块：异常被静默捕获不做任何处理。
+      可能隐藏安全问题和程序错误。
+
+    detection:
+      taint_sinks:
+        - "except.*:"
+        - "pass"
+        - "..."
+
+      steps:
+        - "定位except块"
+        - "检查处理内容"
+        - "判断是否为空"
+
+      safety_conditions:
+        - "记录日志"
+        - "重新抛出异常"
+
+    remediation:
+      principle: "异常必须记录日志或适当处理"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加日志记录"
+        - "或重新抛出异常"
+
+    patterns:
+      - pattern: "except.*:\\s*pass"
+        description: "Empty except block — exception silently swallowed"
+      - pattern: "except.*:\\s*\\.\\.\\."
+        description: "Except block with only ellipsis"
+
+    safe_patterns:
+      - "logger\\."
+      - "logging\\."
+      - "raise"
+
+  - category: broad-exception
+    owasp: A10
+    severity: MEDIUM
+
+    description: |
+      宽泛异常捕获：捕获Exception或BaseException基类。
+      可能掩盖特定错误，影响调试和安全检测。
+
+    detection:
+      taint_sinks:
+        - "except Exception"
+        - "except BaseException"
+
+      steps:
+        - "定位except块"
+        - "检查捕获的异常类型"
+        - "判断是否过于宽泛"
+
+      safety_conditions:
+        - "捕获具体异常类型"
+
+    remediation:
+      principle: "捕获具体的异常类型而非基类"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "捕获具体的异常类型"
+        - "分别处理不同异常"
+
+    patterns:
+      - pattern: "except Exception\\s*:"
+        description: "Catching base Exception class — masks specific failures"
+      - pattern: "except BaseException\\s*:"
+        description: "Catching BaseException — masks KeyboardInterrupt/SystemExit"
+
+    safe_patterns:
+      - "except ValueError"
+      - "except IOError"
+      - "except TypeError"
+
+  - category: unhandled-edge-case
+    owasp: A10
+    severity: MEDIUM
+
+    description: |
+      未处理的边界情况：用户输入直接用于类型转换或索引。
+      可能导致程序崩溃或异常。
+
+    detection:
+      taint_sinks:
+        - "int("
+        - "[]"
+        - "float("
+        - ".split("
+
+      steps:
+        - "定位类型转换或索引操作"
+        - "检查是否有错误处理"
+        - "判断是否需要保护"
+
+      safety_conditions:
+        - "使用try/except"
+        - "使用验证函数"
+
+    remediation:
+      principle: "对可能失败的操作添加错误处理"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加try/except处理"
+        - "或添加验证逻辑"
+
+    patterns:
+      - pattern: "int\\(.*request|int\\(.*input"
+        description: "Direct int conversion from user input without try/except"
+      - pattern: "\\[.*request.*\\]|\\[.*input.*\\]"
+        description: "Direct indexing with user input without bounds check"
+      # 通用 patterns - URL路径int转换
+      - pattern: "int\\(.*path.*split"
+        description: "URL path int conversion without try/except"
+      - pattern: "= int\\([^)]*split"
+        description: "Direct int conversion from split result"
+      - pattern: "int\\(.*\\[.*\\]"
+        description: "Int conversion from list/index access"
+
+    safe_patterns:
+      - "try"
+      - "validate"
+      - "if.*is not None"
+      - "except"
+      - "ValueError"
+
+  - category: error-information-leak
+    owasp: A10
+    severity: MEDIUM
+
+    description: |
+      错误信息泄露：异常详情暴露给用户。
+      可能泄露敏感的系统信息。
+
+    detection:
+      taint_sinks:
+        - "str(e)"
+        - "repr(e)"
+        - "traceback.format_exc"
+
+      steps:
+        - "定位异常处理代码"
+        - "检查错误信息处理"
+        - "判断是否泄露信息"
+
+      safety_conditions:
+        - "使用通用错误消息"
+        - "异常详情记录日志"
+
+    remediation:
+      principle: "向用户返回通用错误消息，详情记录日志"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用通用错误消息"
+        - "异常详情记录到日志"
+
+    patterns:
+      - pattern: "str\\(e\\)|repr\\(e\\)|e\\.message"
+        description: "Exception details exposed in response"
+      - pattern: "traceback\\.format_exc|sys\\.exc_info"
+        description: "Full traceback exposed"
+
+    safe_patterns:
+      - "logger"
+      - "sanitize_error"
+      - "generic_error"
+
+  # ===== Supplementary: XSS =====
+  - category: xss-reflected
+    owasp: XSS
+    severity: HIGH
+
+    description: |
+      反射型XSS：用户输入直接输出到HTML页面。
+      攻击者可以注入恶意脚本。
+
+    detection:
+      taint_sinks:
+        - "render_template_string("
+        - "Markup("
+        - "|safe"
+
+      steps:
+        - "定位输出函数"
+        - "检查内容来源"
+        - "判断是否经过编码"
+
+      safety_conditions:
+        - "使用escape编码"
+        - "使用bleach清理"
+
+    remediation:
+      principle: "对用户输入进行HTML编码"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用escape或bleach.clean编码"
+        - "避免使用|safe过滤器"
+
+    patterns:
+      - pattern: "render_template_string\\(.*\\+|render_template_string\\(.*%s"
+        description: "Flask render_template_string with user input"
+      - pattern: "Markup\\(.*request|Markup\\(.*input"
+        description: "Markup with user input (XSS risk)"
+      - pattern: "\\|safe"
+        description: "Jinja2 |safe filter bypassing auto-escaping"
+
+    safe_patterns:
+      - "escape"
+      - "bleach\\.clean"
+      - "markupsafe"
+
+  # ===== Supplementary: CSRF =====
+  - category: missing-csrf-token
+    owasp: CSRF
+    severity: MEDIUM
+
+    description: |
+      缺少CSRF保护：POST表单未包含CSRF令牌。
+      攻击者可以伪造用户请求。
+
+    detection:
+      taint_sinks:
+        - "@app.post("
+        - "@router.post("
+        - "Form("
+
+      steps:
+        - "定位POST处理函数"
+        - "检查是否有CSRF保护"
+        - "判断是否需要保护"
+
+      safety_conditions:
+        - "使用CSRF令牌"
+        - "使用CSRFProtect"
+
+    remediation:
+      principle: "为POST请求添加CSRF保护"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "启用CSRFProtect"
+        - "表单包含csrf_token"
+
+    patterns:
+      - pattern: "@app\\.post\\(|@router\\.post\\("
+        description: "POST endpoint without CSRF protection"
+      - pattern: "Form\\(.*request"
+        description: "Form handling without CSRF token validation"
+
+    safe_patterns:
+      - "csrf_token"
+      - "CSRFProtect"
+      - "validate_csrf"
+
+  # ===== Supplementary: Path Traversal =====
+  - category: path-user-input
+    owasp: PATH-TRAVERSAL
+    severity: HIGH
+
+    description: |
+      路径遍历：用户输入直接用于文件路径。
+      攻击者可以读取任意文件。
+
+    detection:
+      taint_sinks:
+        - "open("
+        - "send_file("
+        - "send_from_directory("
+        - "os.path.join("
+        - "_serve_file("
+
+      steps:
+        - "定位文件操作函数"
+        - "检查路径来源"
+        - "判断是否验证"
+
+      safety_conditions:
+        - "使用os.path.normpath验证"
+        - "使用safe_join"
+        - "使用realpath验证"
+
+    remediation:
+      principle: "验证和规范化文件路径"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用os.path.normpath规范化"
+        - "验证路径在预期目录内"
+
+    patterns:
+      - pattern: "open\\(.*request|open\\(.*input"
+        description: "File open with user-controlled path"
+      - pattern: "send_file\\(.*request|send_from_directory\\(.*request"
+        description: "File send with user-controlled path"
+      # 通用 patterns - 路径拼接
+      - pattern: "os\\.path\\.join\\(.*path"
+        description: "Path join with potentially user-controlled path"
+      - pattern: "_serve_file\\(.*path"
+        description: "Serve file with path parameter - check for validation"
+      - pattern: "\\.lstrip\\(['\"]*/['\"]"
+        description: "Path lstrip for serving files - potential traversal"
+
+    safe_patterns:
+      - "os\\.path\\.normpath"
+      - "os\\.path\\.realpath"
+      - "validate_path"
+      - "safe_join"
+      - "startswith"
+      - "ALLOWED"
+      - "CLIENT_DIR"
+
+  - category: path-concatenation
+    owasp: PATH-TRAVERSAL
+    severity: HIGH
+
+    description: |
+      路径拼接：使用用户输入拼接文件路径。
+      攻击者可以使用../遍历目录。
+
+    detection:
+      taint_sinks:
+        - "os.path.join("
+        - "../"
+
+      steps:
+        - "定位路径拼接操作"
+        - "检查是否包含用户输入"
+        - "判断是否验证"
+
+      safety_conditions:
+        - "过滤../"
+        - "使用realpath验证"
+
+    remediation:
+      principle: "使用安全的路径处理方法"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "过滤路径遍历字符"
+        - "使用realpath验证最终路径"
+
+    patterns:
+      - pattern: "os\\.path\\.join\\(.*request|os\\.path\\.join\\(.*input"
+        description: "Path join with user input"
+      - pattern: "\\+.*\\.\\./|f['\"].*\\.\\./"
+        description: "Path traversal pattern in string"
+
+    safe_patterns:
+      - "os\\.path\\.normpath"
+      - "validate_path"
+      - "realpath"
+
+  # ===== Supplementary: File Upload =====
+  - category: file-upload
+    owasp: A01
+    severity: HIGH
+
+    description: |
+      文件上传安全：用户可控制上传文件的名称、路径或类型。
+      可能导致路径遍历、任意文件写入、恶意文件执行等风险。
+
+    detection:
+      taint_sinks:
+        - ".save("
+        - "filename"
+        - "upload_to"
+        - "send_file("
+        - "send_from_directory("
+
+      steps:
+        - "定位文件保存操作"
+        - "追溯文件名和路径的来源"
+        - "判断是否来自用户输入"
+        - "检查是否经过验证和随机化处理"
+
+      safety_conditions:
+        - "文件名经过随机化处理"
+        - "文件类型经过白名单验证"
+        - "路径不包含用户输入"
+        - "上传目录无执行权限"
+
+    remediation:
+      principle: "验证文件类型、随机化文件名、限制上传目录"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用白名单验证文件类型"
+        - "使用 UUID 或随机字符串作为文件名"
+        - "限制文件大小"
+        - "上传目录设置无执行权限"
+        - "验证文件内容与扩展名匹配"
+
+    patterns:
+      - pattern: "save\\(.*request\\.files|save\\(.*request\\.POST"
+        description: "File save with user-controlled filename"
+      - pattern: "filename\\s*=\\s*request\\."
+        description: "User-controlled filename"
+      - pattern: "upload_to\\s*=\\s*['\"]"
+        description: "Static upload path (should validate)"
+      - pattern: "\\.\\./.*\\.py$|\\.\\./.*\\.sh$"
+        description: "Potential path traversal to executable files"
+
+    safe_patterns:
+      - "allowed_file"
+      - "validate_filename"
+      - "secure_filename"
+      - "uuid"
+
+  # ===== Supplementary: Insecure Deserialization =====
+  - category: unsafe-deserialize
+    owasp: INSECURE-DESERIALIZATION
+    severity: CRITICAL
+
+    description: |
+      不安全的反序列化：对网络数据使用pickle或yaml.load。
+      攻击者可以执行任意代码。
+
+    detection:
+      taint_sinks:
+        - "pickle.loads("
+        - "yaml.load("
+
+      steps:
+        - "定位反序列化函数"
+        - "检查数据来源"
+        - "判断是否来自网络"
+
+      safety_conditions:
+        - "使用json.loads"
+        - "使用yaml.safe_load"
+
+    remediation:
+      principle: "对网络数据使用json或yaml.safe_load"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "替换为json.loads或yaml.safe_load"
+
+    patterns:
+      - pattern: "pickle\\.loads\\(.*request|pickle\\.loads\\(.*socket"
+        description: "pickle.loads with network data — RCE"
+      - pattern: "yaml\\.load\\(.*request"
+        description: "yaml.load with request data"
+
+    safe_patterns:
+      - "yaml\\.safe_load"
+      - "json\\.loads"
+
+  # ===== Supplementary: Race Conditions =====
+  - category: toctou
+    owasp: RACE-CONDITIONS
+    severity: MEDIUM
+
+    description: |
+      TOCTOU竞态条件：检查和使用之间的时间窗口。
+      攻击者可以在此窗口内修改资源。
+
+    detection:
+      taint_sinks:
+        - "os.path.exists("
+        - "open("
+
+      steps:
+        - "定位文件检查操作"
+        - "检查后续是否有使用操作"
+        - "判断是否存在时间窗口"
+
+      safety_conditions:
+        - "使用原子操作"
+        - "使用O_CREAT|O_EXCL"
+
+    remediation:
+      principle: "使用原子操作避免检查-使用时间窗口"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "使用os.open with O_CREAT|O_EXCL"
+
+    patterns:
+      - pattern: "os\\.path\\.exists\\(.*\\).*open\\("
+        description: "TOCTOU — os.path.exists then open"
+
+    safe_patterns:
+      - "atomic"
+      - "os\\.open\\(.*O_CREAT.*O_EXCL"
+
+  - category: missing-lock
+    owasp: RACE-CONDITIONS
+    severity: MEDIUM
+
+    description: |
+      缺少锁：多线程访问共享资源未使用同步机制。
+      可能导致数据损坏。
+
+    detection:
+      taint_sinks:
+        - "threading.Thread("
+        - "asyncio.create_task("
+
+      steps:
+        - "定位线程创建"
+        - "检查共享资源访问"
+        - "判断是否有锁保护"
+
+      safety_conditions:
+        - "使用Lock"
+        - "使用RLock"
+
+    remediation:
+      principle: "使用锁保护共享资源访问"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加Lock保护共享资源"
+
+    patterns:
+      - pattern: "threading\\.Thread\\("
+        description: "Thread creation without lock"
+      - pattern: "asyncio\\.create_task\\("
+        description: "Async task without synchronization on shared state"
+
+    safe_patterns:
+      - "Lock\\(\\)"
+      - "RLock\\(\\)"
+      - "threading\\.Lock"
+
+  - category: atomic-violation
+    owasp: RACE-CONDITIONS
+    severity: MEDIUM
+
+    description: |
+      原子性违反：非原子操作更新共享变量。
+      可能导致数据不一致。
+
+    detection:
+      taint_sinks:
+        - "global"
+        - "counter"
+
+      steps:
+        - "定位共享变量更新"
+        - "检查是否为原子操作"
+        - "判断是否需要保护"
+
+      safety_conditions:
+        - "使用Lock"
+        - "使用原子操作"
+
+    remediation:
+      principle: "使用锁或原子操作更新共享变量"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      requirements:
+        - "添加锁保护或使用原子操作"
+
+    patterns:
+      - pattern: "global.*\\+\\+|global.*-=|counter.*\\+\\+|counter.*\\+="
+        description: "Non-atomic increment on shared variable"
+
+    safe_patterns:
+      - "Lock"
+      - "atomic"
+      - "threading"
+
+  # ===== SUPPLY-CHAIN-ATTACKS - Hidden Network Request =====
+  - category: hidden-network-request
+    owasp: SUPPLY-CHAIN-ATTACKS
+    severity: CRITICAL
+
+    description: |
+      隐藏网络请求：代码中存在隐蔽的出站网络连接，可能用于C2回连、数据外泄或信标通信。
+      包括硬编码可疑IP/域名、混淆URL、通过子进程调用curl/wget、base64编码的URL等模式。
+
+    detection:
+      taint_sinks:
+        - "socket.socket("
+        - "urllib.request.urlopen("
+        - "requests.get("
+        - "requests.post("
+        - "os.system("
+        - "subprocess.call("
+        - "subprocess.run("
+        - "subprocess.Popen("
+        - "base64.b64decode("
+
+      steps:
+        - "定位所有网络请求相关调用（socket、urllib、requests等）"
+        - "检查目标地址是否为硬编码IP或可疑域名"
+        - "检查是否存在URL混淆（base64编码、字符串拼接）"
+        - "检查是否通过子进程调用curl/wget等网络工具"
+        - "判断网络请求是否与业务逻辑相关"
+
+      safety_conditions:
+        - "目标地址为localhost或内网地址"
+        - "目标地址来自配置文件或环境变量"
+        - "网络请求有明确的业务上下文和注释说明"
+        - "目标地址为已知可信域名"
+
+    remediation:
+      principle: "移除隐藏网络请求，所有外部通信必须显式声明并经过审批"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "硬编码IP地址请求"
+          use: "将目标地址移至配置文件，添加白名单校验"
+        - scenario: "base64编码URL"
+          use: "使用明文URL并添加注释说明用途"
+        - scenario: "通过子进程调用curl/wget"
+          use: "使用requests库等高层API，添加请求日志"
+
+      requirements:
+        - "移除硬编码的可疑IP/域名"
+        - "所有外部通信必须可配置和可审计"
+        - "添加网络请求日志记录"
+
+    patterns:
+      - pattern: "socket\\.socket\\(.*SOCK_STREAM"
+        description: "Raw TCP socket creation - potential C2 channel"
+        confidence: 6
+      - pattern: "urllib\\.request\\.urlopen\\("
+        description: "urllib request without context - potential hidden outbound"
+        confidence: 5
+      - pattern: "requests\\.(get|post|put|patch|delete)\\(\\s*['\"]https?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+        description: "HTTP request to hardcoded IP address"
+        confidence: 9
+      - pattern: "subprocess\\.(call|run|Popen)\\(.*curl\\b"
+        description: "curl invoked via subprocess - potential hidden request"
+        confidence: 7
+      - pattern: "subprocess\\.(call|run|Popen)\\(.*wget\\b"
+        description: "wget invoked via subprocess - potential hidden request"
+        confidence: 7
+      - pattern: "base64\\.b64decode\\(.*http"
+        description: "Base64-decoded URL - obfuscated network target"
+        confidence: 8
+      - pattern: "os\\.system\\(.*curl\\b"
+        description: "curl invoked via os.system - hidden network request"
+        confidence: 7
+      - pattern: "os\\.system\\(.*wget\\b"
+        description: "wget invoked via os.system - hidden network request"
+        confidence: 7
+      - pattern: "socket\\.socket\\(.*connect\\(.*\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+        description: "Socket connect to hardcoded IP - potential C2 callback"
+        confidence: 9
+
+    safe_patterns:
+      - "localhost"
+      - "127\\.0\\.0\\.1"
+      - "0\\.0\\.0\\.0"
+      - "::1"
+      - "\\.internal\\b"
+      - "\\.local\\b"
+      - "os\\.environ"
+      - "config\\["
+      - "settings\\."
+
+  # ===== SUPPLY-CHAIN-ATTACKS - Reverse Shell =====
+  - category: reverse-shell
+    owasp: SUPPLY-CHAIN-ATTACKS
+    severity: CRITICAL
+
+    description: |
+      反向Shell：代码中存在反向Shell模式，攻击者可通过网络连接获得交互式Shell访问。
+      包括socket+subprocess组合、os.dup2文件描述符重定向、pty.spawn伪终端、
+      交互式Shell执行等模式。这是供应链攻击中最危险的后门形式之一。
+
+    detection:
+      taint_sinks:
+        - "socket.socket("
+        - "socket.connect("
+        - "os.dup2("
+        - "pty.spawn("
+        - "subprocess.call("
+        - "subprocess.Popen("
+        - "os.system("
+        - "os.exec"
+
+      steps:
+        - "定位socket创建和网络连接调用"
+        - "检查是否存在文件描述符重定向（os.dup2）"
+        - "检查是否在连接后执行Shell命令"
+        - "检查是否存在交互式Shell模式（/bin/sh -i）"
+        - "检查pty.spawn等伪终端操作"
+
+      safety_conditions:
+        - "代码在测试文件中（test/unittest/mock）"
+        - "socket用于本地IPC而非远程连接"
+        - "subprocess调用有明确的业务用途和注释"
+
+    remediation:
+      principle: "移除反向Shell代码，如需远程管理应使用SSH等安全协议"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "需要远程管理功能"
+          use: "使用SSH、Ansible等安全远程管理方案"
+        - scenario: "需要进程间通信"
+          use: "使用本地Unix socket或命名管道"
+
+      requirements:
+        - "移除所有反向Shell模式"
+        - "禁止socket+shell组合使用"
+        - "如需远程管理使用安全协议"
+
+    patterns:
+      - pattern: "os\\.dup2\\("
+        description: "File descriptor redirection - common in reverse shell payloads"
+        confidence: 8
+      - pattern: "pty\\.spawn\\("
+        description: "PTY spawn - can create interactive shell"
+        confidence: 8
+      - pattern: "subprocess\\.(call|Popen)\\(.*\\/bin\\/(ba)?sh.*-i"
+        description: "Interactive shell execution via subprocess"
+        confidence: 9
+      - pattern: "os\\.system\\(.*\\/bin\\/(ba)?sh.*-i"
+        description: "Interactive shell execution via os.system"
+        confidence: 9
+      - pattern: "os\\.exec[lvpe]*\\(.*\\/bin\\/(ba)?sh"
+        description: "Shell execution via os.exec family"
+        confidence: 8
+      - pattern: "socket\\.socket\\(.*connect\\("
+        description: "Socket creation followed by connect - potential reverse shell setup"
+        confidence: 6
+      - pattern: "subprocess\\.(call|Popen)\\(.*nc\\s+-e"
+        description: "Netcat reverse shell via subprocess"
+        confidence: 9
+      - pattern: "os\\.system\\(.*nc\\s+-e"
+        description: "Netcat reverse shell via os.system"
+        confidence: 9
+      - pattern: "subprocess\\.(call|Popen)\\(.*socat"
+        description: "socat reverse shell via subprocess"
+        confidence: 8
+
+    safe_patterns:
+      - "test"
+      - "unittest"
+      - "mock"
+      - "pytest"
+      - "fixture"
+      - "localhost"
+      - "127\\.0\\.0\\.1"
+
+  # ===== SUPPLY-CHAIN-ATTACKS - Cryptojacking =====
+  - category: cryptojacking
+    owasp: SUPPLY-CHAIN-ATTACKS
+    severity: HIGH
+
+    description: |
+      加密劫持：代码中存在加密货币挖矿相关模式，包括已知挖矿库导入、
+      CryptoNight算法使用、Stratum矿池协议连接、XMRig矿机调用、
+      WebAssembly挖矿脚本等。攻击者通过植入挖矿代码窃取计算资源。
+
+    detection:
+      taint_sinks:
+        - "import coinhive"
+        - "import crypto_loot"
+        - "import jsecoin"
+        - "CryptoNight"
+        - "stratum+tcp://"
+        - "xmrig"
+        - "WebAssembly.instantiate("
+
+      steps:
+        - "检查是否导入了已知挖矿相关库"
+        - "检查是否存在CryptoNight等挖矿算法引用"
+        - "检查是否连接Stratum矿池协议"
+        - "检查是否通过子进程启动挖矿程序"
+        - "检查是否存在WebAssembly挖矿脚本"
+
+      safety_conditions:
+        - "代码在测试文件中"
+        - "CryptoNight仅用于密码学教学/研究"
+        - "hashrate指标用于性能监控而非挖矿"
+
+    remediation:
+      principle: "移除所有加密货币挖矿相关代码，禁止未经授权的挖矿行为"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "需要密码学哈希功能"
+          use: "使用标准密码学库（hashlib、cryptography）"
+        - scenario: "需要高性能计算"
+          use: "使用合法的云计算或HPC服务"
+
+      requirements:
+        - "移除所有挖矿库导入"
+        - "移除矿池连接代码"
+        - "移除WebAssembly挖矿脚本"
+
+    patterns:
+      - pattern: "import\\s+(coinhive|crypto_loot|jsecoin|miner)"
+        description: "Known cryptojacking library import"
+        confidence: 10
+      - pattern: "CryptoNight|cryptonight"
+        description: "CryptoNight mining algorithm reference"
+        confidence: 8
+      - pattern: "stratum\\+tcp://"
+        description: "Stratum mining pool protocol URL"
+        confidence: 10
+      - pattern: "xmrig|XMRig"
+        description: "XMRig cryptocurrency miner reference"
+        confidence: 9
+      - pattern: "WebAssembly\\.instantiate\\(.*mining"
+        description: "WebAssembly mining script instantiation"
+        confidence: 9
+      - pattern: "hashrate|hash_rate|hash_per_sec"
+        description: "Mining performance metrics"
+        confidence: 7
+      - pattern: "subprocess\\.(call|run|Popen)\\(.*xmrig"
+        description: "XMRig miner launched via subprocess"
+        confidence: 10
+      - pattern: "subprocess\\.(call|run|Popen)\\(.*minerd"
+        description: "minerd (cpuminer) launched via subprocess"
+        confidence: 10
+      - pattern: "os\\.system\\(.*xmrig"
+        description: "XMRig miner launched via os.system"
+        confidence: 10
+
+    safe_patterns:
+      - "test"
+      - "benchmark"
+      - "password_hash"
+      - "hashlib"
+      - "cryptography"
+      - "unittest"
+      - "pytest"
+
+  # ===== SUPPLY-CHAIN-ATTACKS - Time Bomb =====
+  - category: time-bomb
+    owasp: SUPPLY-CHAIN-ATTACKS
+    severity: HIGH
+
+    description: |
+      时间炸弹：代码中存在基于时间的触发逻辑，可能在特定日期或时间后执行恶意操作。
+      包括硬编码日期比较、Unix时间戳比较、超长sleep后执行操作、
+      可疑crontab操作、定时任务框架配合可疑操作等模式。
+
+    detection:
+      taint_sinks:
+        - "datetime.now()"
+        - "time.time()"
+        - "time.sleep("
+        - "os.system("
+        - "subprocess.call("
+        - "subprocess.Popen("
+        - "schedule.every("
+
+      steps:
+        - "定位所有日期/时间比较操作"
+        - "检查是否存在硬编码的日期或时间戳阈值"
+        - "检查是否存在超长sleep（数天以上）"
+        - "检查时间条件后是否执行危险操作"
+        - "检查是否存在可疑的crontab操作"
+
+      safety_conditions:
+        - "时间比较用于正常的业务逻辑（如许可证过期检查）"
+        - "sleep用于合理的等待场景（如重试间隔）"
+        - "定时任务有明确的业务用途和注释"
+        - "代码在测试文件中"
+
+    remediation:
+      principle: "移除时间炸弹逻辑，所有定时操作必须有明确的业务用途和审计日志"
+
+      output_requirements:
+        - "必须输出修复后的完整代码片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原代码"
+
+      alternatives:
+        - scenario: "需要定时任务"
+          use: "使用受监控的调度系统，添加审计日志"
+        - scenario: "需要过期检查"
+          use: "使用配置化的过期策略，添加告警机制"
+
+      requirements:
+        - "移除硬编码的日期/时间触发条件"
+        - "所有定时操作必须可配置和可审计"
+        - "禁止超长sleep后执行危险操作"
+
+    patterns:
+      - pattern: "datetime\\.now\\(\\)\\s*>\\s*datetime\\("
+        description: "Hardcoded date comparison - potential time bomb trigger"
+        confidence: 7
+      - pattern: "time\\.time\\(\\)\\s*>\\s*\\d{9,}"
+        description: "Unix timestamp comparison - potential time bomb trigger"
+        confidence: 8
+      - pattern: "time\\.sleep\\(\\s*\\d{6,}"
+        description: "Extremely long sleep (>11 days) - potential time bomb delay"
+        confidence: 8
+      - pattern: "os\\.system\\(.*crontab\\b"
+        description: "Crontab manipulation via os.system - suspicious scheduled task"
+        confidence: 8
+      - pattern: "subprocess\\.(call|Popen)\\(.*crontab\\b"
+        description: "Crontab manipulation via subprocess - suspicious scheduled task"
+        confidence: 8
+      - pattern: "schedule\\.every\\("
+        description: "Schedule library periodic task - check for malicious payloads"
+        confidence: 5
+      - pattern: "datetime\\.now\\(\\).*os\\.system\\("
+        description: "Date check followed by system command - potential time bomb"
+        confidence: 8
+      - pattern: "time\\.time\\(\\).*subprocess\\.(call|Popen)\\("
+        description: "Timestamp check followed by subprocess - potential time bomb"
+        confidence: 8
+
+    safe_patterns:
+      - "test"
+      - "mock"
+      - "unittest"
+      - "pytest"
+      - "timedelta"
+      - "license"
+      - "expire"
+      - "cache"
