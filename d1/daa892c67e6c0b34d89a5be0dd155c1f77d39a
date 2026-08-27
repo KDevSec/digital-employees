@@ -1,0 +1,30 @@
+workbench/shared-protocol/src/manifest.ts
+  s_b9259474bd2245::t_88ffb3604ea7b7 14-15,75-132
+  s_43abe8ab21de8c::t_5b63106fd1c80e 133
+workbench/shared-protocol/test/cross-field.test.ts
+  s_b9259474bd2245::t_78977519ece94d 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d1daa892c67e6c0b34d89a5be0dd155c1f77d39a",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
