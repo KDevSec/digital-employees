@@ -146,11 +146,14 @@ describe('fixture 产出（供 L5 看板 fixture 先行开发）', () => {
     expect(events.filter((e) => e.type === 'dispatch' && e.phase === 'done')).toHaveLength(6)
     expect(events.filter((e) => e.type === 'gate')).toHaveLength(7)
 
-    // 落 fixture（L5 消费真源——提交进仓）。源取归档侧（completeTask 已把工作区账本搬 archive）
-    const src = join(dirs.dataDir, 'archive', 'tasks', task_id, 'events.jsonl')
-    expect(existsSync(src)).toBe(true)
-    copyFileSync(src, join(HERE, 'fixtures', 'demo-run-events.jsonl'))
-    expect(readFileSync(join(HERE, 'fixtures', 'demo-run-events.jsonl'), 'utf8').trim().split('\n'))
-      .toHaveLength(events.length)
+    // fixture 对齐（L5 消费真源=仓内静态资产，勿覆写——随机 task_id/ts 每跑必漂移污染工作区）：
+    // 断言「本次全链事件流」与仓内 fixture 结构等价（事件类型序列逐条一致——含 FAIL 回流位置）；
+    // 引擎行为增强致事件序列变化时：REGEN_FIXTURE=1 bun run test 一次性再生
+    const fixture = readFileSync(join(HERE, 'fixtures', 'demo-run-events.jsonl'), 'utf8')
+      .trim().split('\n').map((l) => JSON.parse(l) as { type: string })
+    expect(events.map((e) => e.type)).toEqual(fixture.map((f) => f.type))
+    if (process.env.REGEN_FIXTURE === '1') {
+      copyFileSync(join(dirs.dataDir, 'archive', 'tasks', task_id, 'events.jsonl'), join(HERE, 'fixtures', 'demo-run-events.jsonl'))
+    }
   })
 })
