@@ -34,6 +34,10 @@ import { TAKEOVER_MIN_CONSECUTIVE_FAILS } from './runtime/instance'
 import type { HealthSnapshot } from './runtime/instance'
 import { createRegistry } from './server/registry'
 import { registerAllRoutes } from './server/routes'
+// L3 T6 编排域装配：引擎实例 + 模板目录 ensure（demo 表首启落位）
+import { Engine } from '@devzero/engine'
+import { buildEngineMcpServer } from './server/mcp/engine-mcp'
+import demoFlowYaml from '../../workbench-engine/assets/flows/demo-flow.node-table.yml' with { type: 'text' }
 import { toHonoApp } from './server/hono-adapter'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
@@ -179,6 +183,14 @@ function sleep(ms: number): Promise<void> {
 
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
+  // 编排域（L3 T6）：EngineDirs 注入（D-045 布局——templatesDir 在 profileDir 侧）；
+  // 首启 ensure demo-flow 表落位（bun --compile 单体内 assets 以 text 内联，不依赖 fs 布局）
+  const flowsDir = join(profileDir, 'templates', 'flows')
+  if (!existsSync(join(flowsDir, 'demo-flow.node-table.yml'))) {
+    mkdirSync(flowsDir, { recursive: true })
+    writeFileSync(join(flowsDir, 'demo-flow.node-table.yml'), demoFlowYaml as unknown as string)
+  }
+  const engine = new Engine({ dataDir: profileDir, templatesDir: flowsDir })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -190,8 +202,10 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     profileDir,
     loadConfig,
     writeConfigOverride,
+    engine,
   })
-  const app = toHonoApp(registry)
+  // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）
+  const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })
   startedAtMs = Date.now()
   try {
     return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })

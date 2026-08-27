@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -8,6 +8,10 @@ import { createRegistry } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
+import { Engine } from '@devzero/engine'
+/** 编排域引擎夹具（L3 T6）：临时目录真实例——本文件断言不触达 engine 端点，行为在 routes-engine.test.ts */
+const engineRoot = mkdtempSync(join(tmpdir(), 'server-engine-'))
+process.on('exit', () => rmSync(engineRoot, { recursive: true, force: true }))
 
 function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
   const registry = createRegistry()
@@ -22,6 +26,7 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     profileDir: 'D:/data/.devzero',
     loadConfig,
     writeConfigOverride,
+    engine: new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') }),
     ...overrides,
   })
   return toHonoApp(registry)

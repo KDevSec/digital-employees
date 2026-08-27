@@ -9,6 +9,10 @@ export interface Ctx {
   path: string
   host: string
   body?: unknown
+  /** 查询串解析（T6 起 engine 域 events?after_seq= 消费；缺省空——既有域不受影响） */
+  query?: URLSearchParams
+  /** 请求头小写键快照（T7 起 SSE 消费 last-event-id；缺省空——既有域不受影响） */
+  headers?: Record<string, string>
 }
 
 export interface Res {
@@ -17,6 +21,8 @@ export interface Res {
   text?: string
   /** HTML body（S-01 嵌入页）：adapter 以 text/html; charset=utf-8 透传 */
   html?: string
+  /** 流式 body（L3 T7 SSE）：adapter 以 text/event-stream 透传（无缓存） */
+  stream?: ReadableStream<Uint8Array>
 }
 
 export type Handler = (ctx: Ctx) => Res | Promise<Res>

@@ -1,0 +1,28 @@
+# 契约真源：demo-flow 表（docs/plans/2026-08-26-协同编排-design.md §6.1 逐字落盘）。
+# 唯一偏差：两条含 {{...}} 的 prompt 值加双引号——YAML flow 上下文内 plain scalar 不允许
+# 裸 { }（js-yaml 实测报 missed comma），引号不改变值本身。
+flow: demo-flow
+display_name: 五阶段演示交付
+version: 1
+max_retries: 6
+terminal_fail: n-fail
+delivery_node: n-done
+nodes:
+  - {id: n-adm,    name: 准入,     kind: action, stage: 准入,     emp: sec-compliance, model_tier: 评审安全档, prompt: 用 secretgate 规则扫描输入文档，报告密钥/Token 泄露情况, next: [n0-req]}
+  - {id: n0-req,   name: 需求核验, kind: action, stage: 需求核验, emp: req-clarifier,  prompt: "解析输入需求 {{input}}，产出需求核验文档", human_gate: false, next: [g-req-review]}
+  - {id: g-req-review, name: 需求评审, kind: gate, stage: 需求核验, gate: g-req-review, next: [n1-design, n0-req]}
+  - {id: n1-design, name: 设计核验, kind: action, stage: 设计核验, emp: sys-engineer, model_tier: 设计档, prompt: "基于需求文档产出系统设计，写入 {{run.workspace}}", next: [g-design-review]}
+  - {id: g-design-review, name: 设计评审, kind: gate, stage: 设计核验, gate: g-design-review, next: [g-sec-design, n1-design]}
+  - {id: g-sec-design, name: 安全设计审核, kind: gate, stage: 设计核验, gate: g-sec-design, next: [n2-impl, n1-design]}
+  - {id: n2-impl, name: 开发实现, kind: action, stage: 开发实现, emp: dev-engineer, model_tier: 编码档, prompt: 按设计文档实现，TDD 红绿循环, next: [g-code-review]}
+  - {id: g-code-review, name: 代码评审, kind: gate, stage: 开发实现, gate: g-code-review, next: [g-sec-code, n2-impl]}
+  - {id: g-sec-code, name: 代码安全审核, kind: gate, stage: 开发实现, gate: g-sec-code, next: [n3-sec, n2-impl]}
+  - {id: n3-sec,   name: 准出,     kind: action, stage: 准出,     emp: sec-compliance, model_tier: 评审安全档, prompt: 对交付产物做安全合规检查（检查点占位）, next: [n-done]}
+  - {id: n-done,   name: 交付清点, kind: terminal, next: []}
+  - {id: n-fail,   name: 终止,     kind: terminal, next: []}
+gate_specs:
+  g-req-review:    {kind: review, reviewer: reviewer-expert, on_pass: n1-design,   on_reflow: n0-req,   covers: [n0-req]}
+  g-design-review: {kind: review, reviewer: reviewer-expert, on_pass: g-sec-design, on_reflow: n1-design, covers: [n1-design]}
+  g-sec-design:    {kind: review, reviewer: sec-design,  on_pass: n2-impl, on_reflow: n1-design, covers: [n1-design]}
+  g-code-review:   {kind: review, reviewer: reviewer-expert, on_pass: g-sec-code, on_reflow: n2-impl, covers: [n2-impl]}
+  g-sec-code:      {kind: review, reviewer: sec-code,    on_pass: n3-sec,   on_reflow: n2-impl,   covers: [n2-impl]}
