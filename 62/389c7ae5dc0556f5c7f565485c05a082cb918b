@@ -1,0 +1,23 @@
+workbench/workbench-web/scripts/mock-engine-server.ts
+  s_85d3c34d21f4df::t_9adb0679afbd50 5-10
+workbench/workbench-web/test/dependency-audit.test.ts
+  s_85d3c34d21f4df::t_29bcd9d13247cc 1-54
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_9fcfa5d84a02da 291-296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "62389c7ae5dc0556f5c7f565485c05a082cb918b",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
