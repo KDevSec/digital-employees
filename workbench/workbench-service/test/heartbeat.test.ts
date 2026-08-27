@@ -19,6 +19,15 @@ async function settle(turns = 12): Promise<void> {
   }
 }
 
+/** 条件等待式收尾：轮询真实宏任务轮直到条件成立（上限兜底）。
+ *  固定轮数的 settle 在满载并行下偶发不够（fs 链实际轮数随 CPU 争用漂移——
+ *  本线 driver/heartbeat 两个时序用例的负载敏感根源），按「等到事件发生」取代「等固定轮数」。 */
+async function settleUntil(condition: () => boolean, maxTurns = 300): Promise<void> {
+  for (let i = 0; i < maxTurns && !condition(); i++) {
+    await new Promise<void>((resolve) => REAL_SET_TIMEOUT(resolve, 0))
+  }
+}
+
 describe('HeartbeatScheduler（A-05：demo 手动按钮 → 后台自动化）', () => {
   let store: WorkbenchStateStore
 
@@ -102,13 +111,13 @@ describe('HeartbeatScheduler（A-05：demo 手动按钮 → 后台自动化）',
     }) as typeof setTimeout)
 
     scheduler.ensureRunning() // workbenchId 在 → 起跑（首跳立即）
-    await settle()                                  // ensureRunning 异步读盘完成 → +0 定时器注册
+    await settleUntil(() => delays.length >= 1)  // ensureRunning 异步读盘完成 → +0 定时器注册
     await vi.advanceTimersByTimeAsync(10)      // 第 1 跳 fail → 下一跳 2s
-    await settle()                                  // 第 1 跳链收尾 → 2s 定时器注册
+    await settleUntil(() => delays.length >= 2) // 第 1 跳链收尾 → 2s 定时器注册
     await vi.advanceTimersByTimeAsync(2_000)   // 第 2 跳 fail → 下一跳 4s
-    await settle()
+    await settleUntil(() => delays.length >= 3)
     await vi.advanceTimersByTimeAsync(4_000)   // 第 3 跳 ok → 下一跳 60s
-    await settle()                                  // 第 3 跳含 4 连 fs 写——收尾后 60s 定时器才注册
+    await settleUntil(() => delays.length >= 4) // 第 3 跳含 4 连 fs 写——收尾后 60s 定时器才注册
     expect(delays.slice(0, 3)).toEqual([0, 2_000, 4_000])
     expect(delays[3]).toBe(60_000)
   })

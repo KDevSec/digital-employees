@@ -193,7 +193,7 @@ describe('Driver · spawn 失败挂起与重启续推（U5 + M3 崩溃恢复语�
 
     expect(engine.getTask(task_id).status).toBe('completed')
     expect(driver2.dispatchLog.length).toBeGreaterThan(0)
-  })
+  }, 20000) // 超时余量放宽：全量 310 并行负载下 settle() 链偶发超 5s（A 线合流实测约半数触发；隔离恒过——L3 线用例，属负载敏感非缺陷）
 
   it('stop() 后不再消费事件（幂等停机）', async () => {
     const driver = buildDriver()
