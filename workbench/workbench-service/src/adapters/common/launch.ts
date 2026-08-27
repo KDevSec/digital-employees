@@ -2,7 +2,9 @@
  * LaunchSpec 构造（设计 §4.3）：纯构造值（表驱动可测），进程管理归 L3 spawn runner（D-048 分工）。
  * - config-domain 档：CC/CB 用 env 注入，Qoder 用 --config-dir 旗标；
  * - project-file 回退档：薄壳身份落 workdir（覆盖式——互斥单值天然满足）；
- * - prompt 双通道：args 带全文（spawn args 数组不经 shell，多行安全）+ .devzero/prompt-<ts>.md 落盘（观测）。
+ * - prompt 单通道 stdin（I2 P0c）：M2 实锤 Windows .CMD 垫片多行 argv 截断——args 只带 `-p -` 占位，
+ *   全文走 stdin 字段（跨底座唯一可靠通道），消费方（L3 launcher）写 spawn input；
+ *   .devzero/prompt-<ts>.md 仍落盘（观测/审计）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -23,14 +25,14 @@ export async function buildLaunchSpec(profile: BaseProfile, input: LaunchInput):
     writeFallbackIdentity(profile, input)
   }
 
-  args.push('-p', input.prompt)
+  args.push('-p', '-')   // stdin 占位（M2：args 数组走 .CMD 垫片多行截断——prompt 全文只走 stdin）
   if (input.permission) args.push('--permission-mode', input.permission)
   if (input.model) args.push('--model', input.model)
   if (input.effort) args.push('--effort', input.effort)   // ⏳ 支持面 M2 清单 5 收口（B-Q9）
 
   const promptFile = writePromptFile(input.workdir, input.prompt)
 
-  return { command: profile.command, args, env, cwd: input.workdir, promptFile }
+  return { command: profile.command, args, env, cwd: input.workdir, promptFile, stdin: input.prompt }
 }
 
 function writePromptFile(workdir: string, prompt: string): string {

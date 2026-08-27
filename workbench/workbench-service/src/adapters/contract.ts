@@ -38,8 +38,10 @@ export interface LaunchInput {
 
 export interface LaunchSpec {
   command: string; args: string[]; env: Record<string, string>; cwd: string
-  /** prompt 文件中转产物（观测/审计；args 中同时带全文——spawn args 数组不经 shell 无截断坑） */
+  /** prompt 文件中转产物（观测/审计） */
   promptFile?: string
+  /** prompt 全文走 stdin（M2：args 数组经 .CMD 垫片多行截断）；消费方写 spawn input */
+  stdin?: string
 }
 
 export interface ModelInfo { id: string; label: string; tier?: string }
