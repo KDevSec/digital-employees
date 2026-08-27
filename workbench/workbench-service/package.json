@@ -15,7 +15,8 @@
     "commander": "^12",
     "@devzero/engine": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@hono/mcp": "^0.3.2"
+    "@hono/mcp": "^0.3.2",
+    "jose": "^6"
   },
   "devDependencies": {
     "typescript": "^5",

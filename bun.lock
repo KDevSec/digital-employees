@@ -27,6 +27,7 @@
         "@modelcontextprotocol/sdk": "^1.30.0",
         "commander": "^12",
         "hono": "^4",
+        "jose": "^6",
         "yaml": "^2.9.0",
         "zod": "^3",
       },
