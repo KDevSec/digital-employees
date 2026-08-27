@@ -1,5 +1,5 @@
 # 员工模板：sec-design 安全设计审核员（设计安全位 · sec-scan-design 规则集）
-# 结构规范：docs/plans/2026-08-26-员工模板-design.md §3；约束段候选值待 Q-T4
+# 结构规范：docs/plans/2026-08-26-员工模板-design.md §3；tier/红线已定格 T10，token/治理留口子
 
 # ── 元数据 ──
 id: sec-design
@@ -28,7 +28,7 @@ agent:
 
 skills: []  # L1 实施批补齐（sec 素材为 zip/TS 移植，见 skills-remaining.md #1~#3；避免声明-实物不符）
 
-hooks: # 候选值（Q-T4）
+hooks: # 已定格（T10，2026-08-27）
   redlines:
     - {rule_id: no-devzero-state, compiled: true}
     - {rule_id: no-external-request, compiled: true}
@@ -40,7 +40,7 @@ connectors: []
 custom: {}
 
 # ── 管理面 ──
-constraints: # 候选值（Q-T4）
+constraints: # tier 已定格（T10）；token 留口子（Q-T4 余项后补）
   tier: 评审安全档
   token_quota: {per_task: 300000, monthly: 10000000}
-governance: {level: L3, visibility: team, audit: full}
+governance: {level: L3, visibility: team, audit: full}   # 留口子（Q-T4 余项；演示默认值，sec 员工候选 full）

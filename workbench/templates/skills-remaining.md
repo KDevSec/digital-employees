@@ -18,7 +18,7 @@
 |---|----|------|------|------|
 | 1 | sec-scan-design（sec-design 的 skill） | `reference-projects/安全skill/` zip | 解包 → SKILL.md frontmatter 校验 → 进 `templates/sec-design/skills/sec-scan-design/` | SKILL.md + 12 模块 133 条规则；纯 LLM 语义 skill 开箱即用 |
 | 2 | sec-scan-code（sec-code 的 skill） | 同上 zip | 同上 → `templates/sec-code/skills/sec-scan-code/` | Python 扫描引擎 + OWASP Top 10:2025；**`.venv`（~40MB）经 install 脚本装员工 home，不进包不分发**（D-044） |
-| 3 | secretgate（sec-compliance 的 skill） | 1.0 仓 `plugins/agents-team/pyieidev/ieidev_hud/secretgate.py`（正则规则引擎） | 二选一：a) TS 移植为 skill 内置脚本（推荐，零 Python 依赖）；b) skill 内直接调 Python 原件 | 裁决点 Q-sg（员工模板设计 §8）；规则集 = API Key/私钥/连接串/凭证模式 |
+| 3 | secretgate（sec-compliance 的 skill） | 1.0 仓 `plugins/agents-team/pyieidev/ieidev_hud/secretgate.py`（正则规则引擎） | **已裁决（T11）：a) TS 移植为 skill 内置脚本** + A1 员工形态（LLM 做定性解读，见 sec-compliance AGENTS.md 分工段）；规则集 = API Key/私钥/连接串/凭证模式 |
 | 4 | hooks/redlines/ 拦截脚本本体 | 规则库定义（员工模板设计 §5 + shared-protocol v0.2 §2.1 rule_id 枚举） | 实现 `no-push-to-main` / `no-devzero-state` / `no-external-request` 等 compiled 规则的可执行脚本（1.0 有 `.cmd` 包装器先例） | 与 hooks.json 预编译产物配套；红线规则内容随 Q-T4 裁决定格 |
 
 ## 模板物料校验现状
