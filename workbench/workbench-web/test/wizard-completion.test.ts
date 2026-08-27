@@ -16,24 +16,22 @@ import {
   validateId,
 } from '../src/api/employees'
 import CompletionPanel from '../src/components/wizard/CompletionPanel.vue'
-import InstallModal from '../src/components/wizard/InstallModal.vue'
 import CreateWizard from '../src/views/CreateWizard.vue'
 import type { WizardDraft } from '../src/stores/wizard'
 import { useWizardStore } from '../src/stores/wizard'
 import { clearDraft, DRAFT_KEY } from '../src/composables/useWizardDraft'
 
 /**
- * Task 16（C5）：生成动作 + 完成态三动作 + 安装弹层。
+ * Task 16（C5）：生成动作 + 完成态三动作。
  * - api/employees.ts：generateEmployee / validateId / saveAsTemplate（fetch 包装）
  * - CreateWizard step7 「生成员工包」按钮 → generate 三态处理（200/422/409/SKILL_MISSING）
  * - CompletionPanel：包路径 + files 清单 + 三动作（安装到底座/保存为角色模板/完成离开）
- * - InstallModal：静态三底座 [Claude Code/CodeBuddy/Qoder] + 多选 + 「开始安装」→ POST /api/installs
- *   预留路径——任何失败/404 catch → 显示「安装服务待接入」提示态（不抛错不模拟进度）
+ * - InstallModal：底座数据 + 三步链行为由 test/install-modal.test.ts 详测（Task 23 W6 升级——
+ *   消费 bases 域检测 + deployments 三步链 plan/execute/verify）；本文件只测生成与完成态动作。
  * - 保存模板：POST /api/templates（service 端未实现，404 → toast「保存模板服务未就绪」）
  * - 完成离开：router.push('/employees') + clearDraft()
  *
  * 禁词红线：除完成态显式「安装到底座」动作外全程无「底座」「安装」「AgentHub」字样。
- * InstallModal「待接入」文案断言：含「待接入」且不含「digital-staff」字样。
  */
 
 function setupStore() {
@@ -339,80 +337,6 @@ describe('CompletionPanel 三动作', () => {
     expect(labels.some((l) => l.includes('安装到底座'))).toBe(true)
     expect(labels.some((l) => l.includes('保存为角色模板'))).toBe(true)
     expect(labels.some((l) => l.includes('完成离开'))).toBe(true)
-  })
-})
-
-describe('InstallModal（静态三底座 + API 预留 + 待接入提示）', () => {
-  function mountModal() {
-    const pinia = createPinia()
-    setActivePinia(pinia)
-    const wrapper = mount(InstallModal, {
-      global: { plugins: [pinia] },
-      props: { employeeId: 'frontend-dev' },
-    })
-    return { wrapper }
-  }
-
-  it('三底座渲染：Claude Code / CodeBuddy / Qoder', () => {
-    const { wrapper } = mountModal()
-    const text = wrapper.text()
-    expect(text).toContain('Claude Code')
-    expect(text).toContain('CodeBuddy')
-    expect(text).toContain('Qoder')
-  })
-
-  it('多选：可同时勾选三个底座', async () => {
-    const { wrapper } = mountModal()
-    const cards = wrapper.findAll('[data-host]')
-    expect(cards.length).toBe(3)
-    // 全勾
-    for (const c of cards) {
-      await c.trigger('click')
-    }
-    await flushPromises()
-    // 点「下一步」 → 进入确认页
-    const nextBtn = wrapper.findAll('button').find((b) => b.text().includes('下一步'))
-    expect(nextBtn).toBeTruthy()
-    await nextBtn!.trigger('click')
-    await flushPromises()
-    // 确认页：三个底座清单 + 「开始安装」按钮
-    const confirmItems = wrapper.findAll('[data-role="confirm-host-item"]')
-    expect(confirmItems.length).toBe(3)
-    const installBtn = wrapper.findAll('button').find((b) => b.text().includes('开始安装'))
-    expect(installBtn).toBeTruthy()
-  })
-
-  it('「开始安装」→ fetch POST /api/installs 404 catch → 显示「待接入」文案', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 404,
-      json: async () => ({ code: 'NOT_FOUND' }),
-    } as unknown as Response)
-    vi.stubGlobal('fetch', fetchMock)
-    const { wrapper } = mountModal()
-    // 选第一个底座 → 下一步 → 开始安装
-    await wrapper.find('[data-host]').trigger('click')
-    await flushPromises()
-    const nextBtn = wrapper.findAll('button').find((b) => b.text().includes('下一步'))
-    await nextBtn!.trigger('click')
-    await flushPromises()
-    const installBtn = wrapper.findAll('button').find((b) => b.text().includes('开始安装'))
-    expect(installBtn).toBeTruthy()
-    await installBtn!.trigger('click')
-    await flushPromises()
-    // 断言：显示「待接入」文案
-    const text = wrapper.text()
-    expect(text).toContain('待接入')
-    // 断言：不含「digital-staff」字样（禁词红线）
-    expect(text).not.toContain('digital-staff')
-    expect(text.toLowerCase()).not.toContain('digital-staff')
-  })
-
-  it('禁词红线：UI 文案不含「AgentHub」「digital-staff」（仅允许「安装到底座」动作文案）', () => {
-    const { wrapper } = mountModal()
-    const text = wrapper.text()
-    expect(text).not.toContain('AgentHub')
-    expect(text).not.toContain('digital-staff')
   })
 })
 
