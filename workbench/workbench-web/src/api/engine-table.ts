@@ -32,7 +32,8 @@ export interface GateSpec {
 
 export interface TableSnapshot {
   flow: string
-  display_name: string
+  /** 表显示名（引擎 schema 可选——solo 动态表/无 display_name 的表缺省） */
+  display_name?: string
   version: number
   max_retries: number
   terminal_fail: string

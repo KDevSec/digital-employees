@@ -154,8 +154,10 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
     case 'transition': {
       const doneNodes = [...prev.doneNodes]
       if (ev.from && !doneNodes.includes(ev.from)) doneNodes.push(ev.from)
-      if (ev.reflow) {
-        // 回流：目标节点重新活跃，从 done 集移除
+      // 回流重置（双口径合并）：① 显式 reflow=true（R2 机械回流标志）② 重访即返工——
+      // 引擎 R3 gate 回流的 transition.reflow=false（reflow 标志只属 R2 两套溢出语义，
+      // L3 实测），落点若已在 done 集同样重置为活跃，否则返工期间阶段进度虚高、chip 卡 done
+      if (ev.reflow || doneNodes.includes(ev.to)) {
         const i = doneNodes.indexOf(ev.to)
         if (i >= 0) doneNodes.splice(i, 1)
       }
@@ -217,9 +219,10 @@ export const useKanbanStore = defineStore('kanban', {
       this.tasks = next.tasks
       this.feed = next.feed
     },
-    /** 表快照/员工映射写入（getTask 响应落地；契约歧义 A/B 先行口径） */
-    setTable(taskId: string, table: TableSnapshot, employees?: Record<string, string>): void {
-      this.tables = { ...this.tables, [taskId]: table }
+    /** 表快照/员工映射写入（getTask 装配产物落地；表未到/拉取失败 → undefined 只更员工映射，
+     *  tables 不落键——保持骨架态且下次任务列表变动可重试） */
+    setTable(taskId: string, table: TableSnapshot | undefined, employees?: Record<string, string>): void {
+      if (table) this.tables = { ...this.tables, [taskId]: table }
       if (employees) this.employeesMap = { ...this.employeesMap, ...employees }
     },
     /** 发起成功即建占位卡（createTask 202 与 SSE run.created 之间的窗口；归并幂等覆盖） */

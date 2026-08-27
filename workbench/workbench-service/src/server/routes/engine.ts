@@ -154,6 +154,16 @@ export function registerEngineRoutes(reg: RouteRegistry, deps: EngineRouteDeps):
     } catch (err) { return engineErrorRes(err) }
   })
 
+  /** run 级表快照只读端点（契约歧义 A 落定 2026-08-27 联调）：看板 StageBand/节点渲染的表来源——
+   *  getTask 详情（TaskView）不含表；表快照独立通道，对应引擎 11 操作之 getTable */
+  reg.get('/api/engine/tasks/:id/table', (ctx) => {
+    const p = parseTaskPath(ctx.path)
+    if (!p || p.action !== 'table') return notFound(ctx.path)
+    try {
+      return { status: 200, json: { ok: true, table: engine.getTable(p.taskId) } }
+    } catch (err) { return engineErrorRes(err) }
+  })
+
   reg.post('/api/engine/tasks/:id/advance', (ctx) => {
     const p = parseTaskPath(ctx.path)
     if (!p || p.action !== 'advance') return notFound(ctx.path)
