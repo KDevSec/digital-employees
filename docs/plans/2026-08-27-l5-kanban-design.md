@@ -334,6 +334,15 @@ grid: 330px | 1fr，height:100vh（整页工作台式）
 
 `use-kanban-runtime.ts` 删除；KanbanView 直接 `createEngineStream(streamUrl())` + `httpEngineApi`（getFlows/getTask/confirmGate）。测试经 `vi.stubGlobal('EventSource'/'fetch')` 注入替身——页面代码零测试分支。
 
+### 13.4 泳道任务列表层（T4 · L5×L3 联调补强，2026-08-27）
+
+任务看板（本设计主体）= **任务内推进视图**（工作区树/StageBand/EmpBand/事件观战——D-055）；1.0 协同编排页是**任务间泳道管理视图**——两层互补（用户裁决：参考 1.0 设计，抄形不抄管线）：
+
+- **/kanban/board 泳道全景**（新 BoardView）：五列泳道（需求池→待办池→协同执行→待人工决策→已交付，laneOf 纯派生零硬编码）；仅需求池→待办池可拖（=发起编排 createTask，派单失败留池可重拖——1.0 语义）；创建需求抽屉（40% 宽滑入，只建草稿不发起）；任务卡六件套（标题/tag 组/错误块/停靠提示+决策按钮组·驳回必填 note/进度条+阶段链 pill/卡脚员工）
+- **双层衔接**：点卡 → `/kanban?task=<id>` 任务详情（KanbanView 经 URL 查询参数初始选中）；侧栏「协同编排」一等菜单与「任务看板」同级（用户裁决 2026-08-27；D-036 澄清：协同编排=任务执行全景页 ≠ workflow 编辑器，后者仍留 L2）
+- **不抄 1.0 数据通道**：SSE tick+2s 全量重拉 → 2.0 事件推送（D-056 复合 id）+ hydrate 事件重放（D-061）
+- 数据层全部复用（kanban store/board store 仅加需求草稿本地态）；api 可注入（默认 httpEngineApi，D-053 纪律）
+
 ## 变更记录
 
 | 日期 | 变更 |
@@ -343,3 +352,4 @@ grid: 330px | 1fr，height:100vh（整页工作台式）
 | 2026-08-27 | v0.2 修订（用户裁决）：§13 移除页面内演出（mock 三分法）+ UI 重做为 1.0 demo 任务看板形态（工作区树/stageband/empband/事件观战/告警/评审流水） |
 | 2026-08-27 | v0.2 验收回写：347 测试全绿 + TS 干净；浏览器四剧本闭环（happy/gate-pause 含真实 HTTP confirm-gate 放行/abort）；**bundle 隔离实证通过**（grep 无 demo-flow/五阶段演示交付/员工名/mock 字样，仅契约字段名 reflow 与 AbortController 子串）；走查实捕修复：SSE 空闲掐断（首字节+5s 心跳+idleTimeout 255）、mock 强杀半开连接（EventSource 假 live——真实 service 优雅重启无此问题，工程增强记演进）、闸分母补人工闸节点（6/6）、空态发起入口可达 |
 | 2026-08-27 | **L5×L3 联调回写**：§10 六条歧义全部落定（D-060）+ 新发现三项（D-061）；§12 补两号；契约真源修订——引擎事件载荷身份锚=trace_id（无 task_id 字段）、gate node=闸位节点 id、dispatch status done\|blocked、表快照 `GET :id/table` 独立端点（归档可读）、初值拉取事件溯源式重建（hydrate）；真实环境端到端全链跑通（service 19980 + web dev 19986 + SSE live，五阶段全链含 FAIL 回流浏览器实时渲染 + 重载不丢板） |
+| 2026-08-27 | **§13.4 泳道任务列表层**（T4，用户裁决「参考 1.0 协同编排设计·抄形不抄管线」+「协同编排与任务看板同级菜单」）：/kanban/board 五列泳道全景（laneOf 派生/需求池拖拽发起/创建需求抽屉/任务卡六件套）+ 双层衔接（点卡进 /kanban?task=）；见[联调记录](2026-08-27-l5-l3-联调.md) §4 |
