@@ -1,0 +1,21 @@
+docs/plans/2026-08-27-L1员工新建-design.md
+  s_b9259474bd2245::t_ce3db87abc63c1 233
+  s_b9259474bd2245::t_b67c285734ca20 1-232,234-261,263-280
+  s_b9259474bd2245::t_ccf0633ae294df 262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c33cc8651fd96fc62293cc198cfbf8e16dceb16a",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
