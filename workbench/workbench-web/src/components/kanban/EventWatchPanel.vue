@@ -47,7 +47,8 @@ watch(
   () => props.feed.length,
   async () => {
     await nextTick()
-    boxEl.value?.scrollTo({ top: boxEl.value.scrollHeight })
+    // scrollTo?. 方法级探测：jsdom 元素无 scrollTo 实现，缺方法时跳过滚底（真浏览器不受影响）
+    boxEl.value?.scrollTo?.({ top: boxEl.value.scrollHeight })
   },
 )
 </script>
