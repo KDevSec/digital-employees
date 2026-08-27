@@ -1,0 +1,24 @@
+workbench/workbench-service/test/assembly.test.ts
+  s_d4823793916f9d::t_8bf12fd2ccfd84 1-57
+workbench/workbench-service/src/main.ts
+  s_d4823793916f9d::t_ae53bab0de3787 15
+  s_d4823793916f9d::t_a95ab875bbbce4 326
+  s_d4823793916f9d::t_bc1dbe7f7e9733 57-61
+  s_d4823793916f9d::t_7b208095fad959 187-190,203,205,208-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1d9b510c3c19090c342c9593d392029f08233fd4",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
