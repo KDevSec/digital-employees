@@ -1,0 +1,48 @@
+workbench/workbench-service/test/routes-registry.test.ts
+  s_d4823793916f9d::t_96d3e0f127b1f6 45,54-55,57-61
+  s_d4823793916f9d::t_77366bc453bdd4 1-3,12,21-23,31,34
+  s_d4823793916f9d::t_8b2a77afe7e894 97,100
+workbench/workbench-service/test/server.test.ts
+  s_d4823793916f9d::t_befb324a24fc82 10,15-18,27-28,31,34
+workbench/workbench-service/test/routes-session.test.ts
+  s_d4823793916f9d::t_8557f4043471cd 5-6,13-16,25-26,28-29,32-34,36-37,41-42,46,53-54,57-61,64,69-75
+  s_43abe8ab21de8c::t_a0dc05f1bab6a5 76-77
+workbench/workbench-service/src/server/routes/enrollment.ts
+  s_d4823793916f9d::t_66b1ebe80b80c4 1-21
+workbench/workbench-service/src/server/routes/auth.ts
+  s_d4823793916f9d::t_ae9c6ee4850a02 1-18
+workbench/workbench-service/src/server/routes/session.ts
+  s_d4823793916f9d::t_b611fa282bfded 2-6,11-13,18-19
+workbench/workbench-service/test/routes-auth.test.ts
+  s_d4823793916f9d::t_da34474625a45a 4
+  s_d4823793916f9d::t_23d098e6a42453 48-50,54
+  s_d4823793916f9d::t_465a9ba16b75ca 1-3,5-47,51-53,55-65
+workbench/workbench-service/src/server/routes/index.ts
+  s_d4823793916f9d::t_a11001ef6e6810 21-24,27,34-36
+workbench/workbench-service/test/routes-enrollment.test.ts
+  s_d4823793916f9d::t_3428e07c71ccc6 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ddaf07e75f179d3613ef60c57e4dd346c1e2db78",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
