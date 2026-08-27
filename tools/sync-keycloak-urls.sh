@@ -5,7 +5,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 tools_dir="$root/tools"
 . "$tools_dir/runtime-env.sh"
 
-platform_url="http://$PUBLIC_HOST:18000"
+platform_url="https://$PUBLIC_HOST:18000"
 
 "$tools_dir/compose.sh" exec -T keycloak sh -s -- "$platform_url" <<'KEYCLOAK_SYNC'
 set -eu
@@ -49,6 +49,16 @@ update_client_urls() {
 }
 
 update_client_urls platform-web "$platform_url/auth/callback" "$platform_url" "$platform_url/" "${PLATFORM_INTERNAL_URL}/auth/backchannel-logout"
+
+# workbench-desktop runs on each end user's own machine (bound to 127.0.0.1:19980);
+# the OAuth redirect is a browser-side jump to the user's own loopback, so the URIs
+# are fixed loopback values and must NOT use the server's PUBLIC_HOST.
+wb_id=$("$kcadm" get clients -r digital-employees -q "clientId=workbench-desktop" --fields id --format csv --noquotes | head -n 1 | tr -d '\r')
+if [ -n "$wb_id" ]; then
+  "$kcadm" update "clients/$wb_id" -r digital-employees \
+    -s 'redirectUris=["http://127.0.0.1:19980/auth/callback","http://localhost:19980/auth/callback"]' \
+    -s 'webOrigins=["http://127.0.0.1:19980","http://localhost:19980"]' >/dev/null
+fi
 
 # Existing realms are not re-imported, so keep the IAM service account's least-privilege
 # group/user management roles synchronized as part of every deployment.

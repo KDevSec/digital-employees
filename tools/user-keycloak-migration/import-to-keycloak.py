@@ -23,11 +23,12 @@ import-to-keycloak.py - 把 export-agenthub.py 产出的组织结构 + 成员导
 自检：bcrypt 模式默认先建探针用户实登录验证 Keycloak 能校验 $2a$12$ 哈希；失败则中止
       并给修复建议（SPI 未加载 / 未启用 passwordPolicy(bcrypt) 时常见）。
 
-用法（本机 dev：admin / Horse~test@2026）：
+用法（连接信息与 KC_ADMIN_PASSWORD 默认取自仓库 tools/.env；
+  Keycloak 为 HTTPS，自签证书默认用 tools/certs/ca.crt 校验，KC_INSECURE=1 可跳过）：
   IMPORT_ORG_FILE=org-structure.json IMPORT_USERS_FILE=users.json \
-  KEYCLOAK_URL=http://127.0.0.1:18080 KEYCLOAK_REALM=digital-employees \
-  KC_AUTH_MODE=admin KC_ADMIN_PASSWORD='Horse~test@2026' \
   python3 import-to-keycloak.py
+  # 也可显式覆盖：KEYCLOAK_URL=https://127.0.0.1:18080 KC_ADMIN_PASSWORD=... \
+  #   KC_CA_CERT=/path/to/ca.crt python3 import-to-keycloak.py
   # 只导组织：python3 import-to-keycloak.py org-structure.json
   # 只导成员：python3 import-to-keycloak.py users.json
   # 干跑：DRY_RUN=1 python3 import-to-keycloak.py
@@ -43,8 +44,11 @@ from pathlib import Path
 
 import requests
 
-# 连接信息优先从 .env 读取（默认 digital-employees 的 .env），进程环境变量可覆盖。
-ENV_FILE = os.getenv("ENV_FILE", "/root/works/plan/digestuser/digital-employees/tools/.env")
+# 连接信息优先从 .env 读取：默认取仓库内 tools/.env（相对本脚本位置推导，
+# 不写死绝对路径），进程环境变量可覆盖（ENV_FILE / KEYCLOAK_URL / KC_ADMIN_PASSWORD 等）。
+SCRIPT_DIR = Path(__file__).resolve().parent
+TOOLS_DIR = SCRIPT_DIR.parent
+ENV_FILE = os.getenv("ENV_FILE", str(TOOLS_DIR / ".env"))
 
 
 def _load_dotenv(path):
@@ -77,19 +81,62 @@ def _cfg(key, default=None):
 
 
 _PUBLIC_HOST = _cfg("PUBLIC_HOST", "127.0.0.1")
-KC_URL = _cfg("KEYCLOAK_URL", f"http://{_PUBLIC_HOST}:18080").rstrip("/")
+KC_URL = _cfg("KEYCLOAK_URL", f"https://{_PUBLIC_HOST}:18080").rstrip("/")
 KC_REALM = _cfg("KEYCLOAK_REALM", "digital-employees")
 AUTH_MODE = _cfg("KC_AUTH_MODE", "admin").lower()          # admin | service
 KC_ADMIN_USER = _cfg("KC_ADMIN_USER", "admin")
-KC_ADMIN_PASSWORD = _cfg("KC_ADMIN_PASSWORD", "Horse~test@2026")
+KC_ADMIN_PASSWORD = _cfg("KC_ADMIN_PASSWORD")  # 必填：取自 tools/.env 的 KC_ADMIN_PASSWORD
 KC_CLIENT_ID = _cfg("KC_CLIENT_ID", "platform-iam-sync")
-KC_CLIENT_SECRET = _cfg("KC_CLIENT_SECRET", _ENV.get("IAM_SYNC_CLIENT_SECRET", "platform-iam-sync-secret"))
+KC_CLIENT_SECRET = _cfg("KC_CLIENT_SECRET", _ENV.get("IAM_SYNC_CLIENT_SECRET"))
+
+
+def _configure_tls():
+    """HTTPS（自签）下的证书信任：
+
+    - 默认使用 up.sh 生成的 tools/certs/ca.crt 验证（REQUESTS_CA_BUNDLE 对全部
+      requests 调用生效）；
+    - KC_CA_CERT 可指定其他 CA；
+    - KC_INSECURE=1 跳过证书校验（仅排障用），并抑制 InsecureRequestWarning。
+    """
+    if not KC_URL.startswith("https"):
+        return
+    if os.getenv("KC_INSECURE", "") == "1":
+        _disable_tls_verify()
+        print("WARN: KC_INSECURE=1，已跳过 HTTPS 证书校验（仅限排障）。", file=sys.stderr)
+        return
+    ca = Path(os.getenv("KC_CA_CERT", str(TOOLS_DIR / "certs" / "ca.crt")))
+    if ca.exists():
+        os.environ["REQUESTS_CA_BUNDLE"] = str(ca)
+        return
+    _disable_tls_verify()
+    print(
+        f"WARN: 未找到 CA 证书（{ca}），已跳过 HTTPS 证书校验。"
+        "生产环境请用 KC_CA_CERT 指定可信 CA。",
+        file=sys.stderr,
+    )
+
+
+def _disable_tls_verify():
+    try:
+        import urllib3
+
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except Exception:
+        pass
+    _orig = requests.api.request
+
+    def _insecure_request(*args, **kwargs):
+        kwargs.setdefault("verify", False)
+        return _orig(*args, **kwargs)
+
+    requests.api.request = _insecure_request
+    requests.request = _insecure_request
 
 IMPORT_ORG_FILE = os.getenv("IMPORT_ORG_FILE", "org-structure.json")
 IMPORT_USERS_FILE = os.getenv("IMPORT_USERS_FILE", "users.json")
 IMPORT_MODE = os.getenv("IMPORT_MODE", "bcrypt").lower()        # bcrypt | temporary | skip
 IF_EXISTS = os.getenv("IF_EXISTS", "skip").lower()             # skip | overwrite | fail
-DEFAULT_TEMP_PASSWORD = os.getenv("DEFAULT_TEMP_PASSWORD", "Horse~test@2026")
+DEFAULT_TEMP_PASSWORD = os.getenv("DEFAULT_TEMP_PASSWORD")  # 缺省时运行期随机生成
 DO_PROBE = os.getenv("KC_BCRYPT_PROBE", "1") == "1"
 DRY_RUN = os.getenv("DRY_RUN", "0") == "1"
 TIMEOUT = 20
@@ -406,6 +453,10 @@ class KeycloakClient:
             return False
         raise RuntimeError(f"create_user failed ({r.status_code}): {r.text[:300]}")
 
+    def get_user_groups(self, user_id):
+        r = self._req("GET", f"{self.admin()}/users/{user_id}/groups")
+        return r.json() if r.status_code == 200 and isinstance(r.json(), list) else []
+
     def set_password(self, user_id, password, temporary):
         self._req("PUT", f"{self.admin()}/users/{user_id}/reset-password",
                   json_body={"type": "password", "value": password, "temporary": temporary})
@@ -542,6 +593,39 @@ def load_json(path):
         return json.load(f)
 
 
+def verify_imports(client, org_config, users):
+    """导入后核对组与用户是否实际落库：
+    - 组织文件中的每个组 path 都能在 Keycloak 查到；
+    - 每个用户存在，且其 groupPath 已出现在用户所属组中。
+    返回 (校验组数, 校验用户数, 问题明细列表)。
+    """
+    problems = []
+    checked_groups = checked_users = 0
+
+    if org_config and org_config.get("groups"):
+        for path in sorted(build_org_index(org_config["groups"]).keys()):
+            checked_groups += 1
+            if not client.get_group_by_path(path):
+                problems.append(f"  [MISSING GROUP] {path}")
+
+    for entry in users or []:
+        username = entry.get("username")
+        if not username:
+            continue
+        checked_users += 1
+        user = client.get_user_by_username(username)
+        if not user:
+            problems.append(f"  [MISSING USER]  {username}")
+            continue
+        group_path = entry.get("groupPath")
+        if group_path:
+            actual = {g.get("path") for g in client.get_user_groups(user["id"])}
+            if group_path not in actual:
+                problems.append(f"  [NOT IN GROUP] {username} -> {group_path}（实际: {sorted(p for p in actual if p)}）")
+
+    return checked_groups, checked_users, problems
+
+
 def main() -> int:
     args = sys.argv[1:]
     if args:
@@ -567,6 +651,16 @@ def main() -> int:
     realm = (org_config or {}).get("realm") or (users_config or {}).get("realm") or KC_REALM
     has_org = bool(org_config and org_config.get("groups"))
     has_users = bool(users_config and users_config.get("users"))
+
+    _configure_tls()
+
+    if AUTH_MODE == "admin" and not KC_ADMIN_PASSWORD:
+        print(
+            f"ERROR: 缺少管理员口令：请在 {ENV_FILE} 中设置 KC_ADMIN_PASSWORD，"
+            "或通过环境变量 KC_ADMIN_PASSWORD 传入。",
+            file=sys.stderr,
+        )
+        return 1
 
     print(f"Keycloak:    {KC_URL}")
     print(f"Realm:       {realm}")
@@ -605,11 +699,23 @@ def main() -> int:
         print("WARN: 无组织索引，用户将不带组织属性。\n", file=sys.stderr)
 
     if not has_users:
-        print("无用户文件，结束。")
+        print("无用户文件，跳过成员导入。")
+        if has_org and not DRY_RUN:
+            cg, _cu, problems = verify_imports(client, org_config, [])
+            print(f"\n校验：组 {cg} 个...")
+            if problems:
+                print("\n".join(problems), file=sys.stderr)
+                print(f"校验失败 {len(problems)} 项", file=sys.stderr)
+                return 1
+            print("校验通过：所有组均已创建。")
         return 0
 
     users = users_config["users"]
-    default_password = users_config.get("defaultPassword", DEFAULT_TEMP_PASSWORD)
+    default_password = users_config.get("defaultPassword") or DEFAULT_TEMP_PASSWORD
+    if IMPORT_MODE == "temporary" and not default_password and not DRY_RUN:
+        alphabet = string.ascii_letters + string.digits
+        default_password = "".join(secrets.choice(alphabet) for _ in range(20))
+        print(f"  [INFO] 未配置临时口令，已随机生成: {default_password}")
     filter_user = os.getenv("IMPORT_USERNAME", "").strip().lower()
     if filter_user:
         users = [u for u in users if (u.get("username") or "").lower() == filter_user]
@@ -734,6 +840,18 @@ def main() -> int:
             print(f"  [ERROR] {username}: {e}", file=sys.stderr)
 
     print(f"\n完成：新建 {created}，已存在 {existed}，失败 {failed}")
+
+    if not DRY_RUN and not failed:
+        cg, cu, problems = verify_imports(client, org_config, users)
+        print(f"\n校验导入结果：组 {cg} 个、用户 {cu} 个...")
+        if problems:
+            print("\n".join(problems[:50]), file=sys.stderr)
+            if len(problems) > 50:
+                print(f"  ... 其余 {len(problems) - 50} 项省略", file=sys.stderr)
+            print(f"校验失败 {len(problems)} 项", file=sys.stderr)
+            return 1
+        print("校验通过：所有组与用户均已落库，且用户挂组正确。")
+
     if IMPORT_MODE == "bcrypt" and not DRY_RUN and not failed:
         print(f"验证：用任一 agenthub 用户名 + 原密码登录\n  {KC_URL}/realms/{realm}/account/")
     return 1 if failed else 0

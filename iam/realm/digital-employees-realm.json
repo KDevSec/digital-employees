@@ -48,10 +48,12 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
-        "${WORKBENCH_PUBLIC_URL}/auth/callback"
+        "http://127.0.0.1:19980/auth/callback",
+        "http://localhost:19980/auth/callback"
       ],
       "webOrigins": [
-        "${WORKBENCH_PUBLIC_URL}"
+        "http://127.0.0.1:19980",
+        "http://localhost:19980"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
