@@ -1,0 +1,27 @@
+workbench/workbench-service/test/installs-report.test.ts
+  s_3164dc039eb46c::t_772e2dc8ebc419 60
+  s_3164dc039eb46c::t_da2dd017f3f97c 32-33
+  s_3164dc039eb46c::t_76110c8e9dd711 5-6
+  s_3164dc039eb46c::t_2d4bf10b9d9df7 1-4,7-31,34-59,61-76
+workbench/workbench-service/src/installs/report.ts
+  s_3164dc039eb46c::t_dce7d28617c104 1-4,6-35
+  s_3164dc039eb46c::t_208c713f6d5193 5
+workbench/workbench-service/src/installs/service.ts
+  s_3164dc039eb46c::t_c6f7cee44fccde 1-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "5e1608d3b4b2d1ec7b26654d13bd17c702b60368",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
