@@ -1,0 +1,112 @@
+workbench/workbench-web/src/stores/derive-board.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-56
+workbench/workbench-web/test/emp-band.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-44
+workbench/workbench-web/test/engine-api.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-78
+workbench/workbench-web/test/engine-events.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-233
+workbench/workbench-web/src/components/kanban/ConnectionBar.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-81
+workbench/workbench-web/test/event-watch-panel.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-60
+workbench/workbench-web/test/kanban-store.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-169
+workbench/workbench-web/src/api/engine-table.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-45
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-384
+workbench/workbench-web/src/components/kanban/StageBand.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-222
+workbench/workbench-web/src/fixtures/scenarios.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-231
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-121
+workbench/workbench-web/test/placeholder.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 11-14,44-45,48-49
+docs/design/设计决策记录-2026-08-13.md
+  s_85d3c34d21f4df::t_c1421314eb1a24 384
+  s_85d3c34d21f4df::t_63d76432399645 377-383,385-417
+workbench/workbench-service/web-dist/index.html
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-7,11,15,19,23-24,28,32,36-42
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_c1421314eb1a24 1-334
+workbench/workbench-web/src/fixtures/mock-event-source.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-141
+workbench/workbench-web/test/derive-board.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-130
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-150
+workbench/workbench-web/test/kanban-feedback-parts.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-24
+workbench/workbench-web/test/scenarios.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-181
+workbench/workbench-web/test/stage-band.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-66
+workbench/workbench-web/src/api/engine-stream.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-116
+workbench/workbench-web/src/views/KanbanView.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-387
+workbench/workbench-web/test/alert-panel.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-79
+workbench/workbench-web/src/components/kanban/TaskSidebar.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-232
+docs/plans/2026-08-27-l5-kanban.md
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-138
+workbench/workbench-web/src/api/engine-api.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-86
+workbench/workbench-web/test/kanban-integration.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-83
+workbench/workbench-web/src/components/kanban/EmpBand.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-131
+workbench/workbench-web/src/fixtures/demo-flow.table.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-58
+workbench/workbench-web/test/kanban-view.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-110
+workbench/workbench-web/scripts/mock-engine-server.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-166
+workbench/workbench-web/src/components/kanban/AlertPanel.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-113
+workbench/workbench-web/test/dependency-audit.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-54
+workbench/workbench-web/test/engine-stream.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-199
+workbench/workbench-web/test/guard-integration.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 106-107,118,150-153
+workbench/workbench-web/src/api/engine-events.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-206
+workbench/workbench-web/src/stores/kanban.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-246
+workbench/workbench-web/test/gate-feed-panel.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-63
+workbench/workbench-web/test/task-sidebar.test.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-82
+workbench/workbench-web/src/components/kanban/GateFeedPanel.vue
+  s_46f7f3afbb6303::t_182bcd5e50110a 1-168
+workbench/workbench-web/src/router/routes/kanban.ts
+  s_46f7f3afbb6303::t_182bcd5e50110a 3,6-9,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4e5ed1596a7a782c64439c4939b99de1ba290a81",
+  "prompts": {},
+  "sessions": {
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
