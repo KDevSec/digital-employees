@@ -18,7 +18,7 @@
 - 密钥/Token 泄露扫描（secretgate 正则规则引擎：API Key/私钥/连接串/凭证模式）
 - 交付产物合规检查（准出检查点，内容按任务类型配置）
 
-（技能清单：L1 实施批补齐——sec 素材（zip/TS 移植）解包入包后生效，见模板库 skills-remaining.md）
+（技能清单：secretgate@1.0.0 —— 按需加载对应 SKILL.md）
 
 ## 我的边界（软约束）
 

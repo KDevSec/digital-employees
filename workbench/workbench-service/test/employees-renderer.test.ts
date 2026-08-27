@@ -146,14 +146,17 @@ describe('renderAgentsMd — callee kind 双变体（reviewer-expert）', () => 
   })
 })
 
-describe('renderAgentsMd — 无 skills 模板（sec-compliance）技能清单行', () => {
-  const manifest = parseManifest('sec-compliance')
-  const skills = buildSkillsList('sec-compliance', manifest)
-  const rendered = renderAgentsMd(manifest, skills)
+describe('renderAgentsMd — 无 skills 模板技能清单行（占位文案）', () => {
+  // 构造空 skills 的合成 manifest（builtin 模板现已全部有 skills——用合成 manifest 测占位分支）
+  const emptySkillsManifest: Manifest = {
+    ...parseManifest('sec-compliance'),
+    skills: [],
+  }
+  const rendered = renderAgentsMd(emptySkillsManifest, [])
 
-  it('空 skills 时技能清单行用占位文案（L1 实施批补齐）', () => {
+  it('空 skills 时技能清单行用占位文案', () => {
     expect(rendered).toContain(
-      '（技能清单：L1 实施批补齐——sec 素材（zip/TS 移植）解包入包后生效，见模板库 skills-remaining.md）',
+      '（技能清单：本员工暂无内置技能（如需扩展请编辑 manifest.skills 后重渲染））',
     )
   })
 })

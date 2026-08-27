@@ -198,7 +198,7 @@ const TEMPLATE_COLLAB_BODY: Record<string, string> = {
 - **引擎工具不可用 = 工作台未运行** → 停止并上报，不得绕路`,
 }
 
-const NO_SKILLS_PLACEHOLDER = 'L1 实施批补齐——sec 素材（zip/TS 移植）解包入包后生效，见模板库 skills-remaining.md'
+const NO_SKILLS_PLACEHOLDER = '本员工暂无内置技能（如需扩展请编辑 manifest.skills 后重渲染）'
 const BOUNDARY_FOOTER = '> 硬约束由工作台编译的 hooks 与 CQO 双重执行，越界操作会被阻断。'
 const SKILLS_LIST_SUFFIX = ' —— 按需加载对应 SKILL.md'
 

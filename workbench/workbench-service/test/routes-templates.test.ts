@@ -70,12 +70,12 @@ describe('GET /api/templates', () => {
 })
 
 describe('GET /api/skills', () => {
-  it('200 + { items: SkillMeta[] }；含 18 个 builtin skill（跨模板聚合）', async () => {
+  it('200 + { items: SkillMeta[] }；含 19 个 builtin skill（跨模板聚合）', async () => {
     const res = await buildApp().request('/api/skills')
     expect(res.status).toBe(200)
     const json = (await res.json()) as { items: Array<Record<string, unknown>> }
     expect(Array.isArray(json.items)).toBe(true)
-    expect(json.items.length).toBe(18)
+    expect(json.items.length).toBe(19)
     const tdd = json.items.find((i) => i.name === 'tdd-methodology')
     expect(tdd).toBeDefined()
     expect(tdd?.version).toBe('1.0.0')
