@@ -75,7 +75,7 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
     emp: string,
     node: string,
     parent: number,
-    status = 'ok',
+    status = 'done',
   ): number =>
     emit(
       'dispatch',
@@ -94,10 +94,11 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
   const runAction = (emp: string, node: string, parent: number): number =>
     dispatchDone(emp, node, dispatchStart(emp, node, parent))
 
-  /** AI 评审段：spawn 评审会话 → gate verdict → 会话收工（§5.2 模板时序） */
+  /** AI 评审段：spawn 评审会话 → gate verdict → 会话收工（§5.2 模板时序）。
+   *  gate 事件 node = 闸位节点 id（歧义 D 裁决·引擎为准：recordGate 记 state.current_node，
+   *  评审时任务已 advance 进闸节点——demo-run-events.jsonl 实证；covers 目标节点不进事件） */
   const runGate = (
     gateId: string,
-    coversNode: string,
     reviewer: string,
     verdict: 'PASS' | 'FAIL',
     iter: number,
@@ -111,7 +112,7 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
       {
         gate: gateId,
         kind: 'review',
-        node: coversNode,
+        node: gateId,
         verdict,
         iter,
         reviewer,
@@ -152,30 +153,30 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
 
   /** 需求→设计→开发→准出的既有链（happy 后半与 reflow/gate-pause 复用；fromNode 起 g-req-review 评审） */
   function afterRequirement(parent: number, opts2: { failCodeReview: boolean }): number {
-    let p = runGate('g-req-review', 'n0-req', 'reviewer-expert', 'PASS', 1, parent)
+    let p = runGate('g-req-review', 'reviewer-expert', 'PASS', 1, parent)
     p = transition('g-req-review', 'n1-design', 'in_progress', p)
     p = runAction('sys-engineer', 'n1-design', p)
     p = transition('n1-design', 'g-design-review', 'in_progress', p)
-    p = runGate('g-design-review', 'n1-design', 'reviewer-expert', 'PASS', 1, p)
+    p = runGate('g-design-review', 'reviewer-expert', 'PASS', 1, p)
     p = transition('g-design-review', 'g-sec-design', 'in_progress', p)
-    p = runGate('g-sec-design', 'n1-design', 'sec-design', 'PASS', 1, p)
+    p = runGate('g-sec-design', 'sec-design', 'PASS', 1, p)
     p = transition('g-sec-design', 'n2-impl', 'in_progress', p)
     p = runAction('dev-engineer', 'n2-impl', p)
     p = transition('n2-impl', 'g-code-review', 'in_progress', p)
     if (opts2.failCodeReview) {
       // reflow 支线：首轮 FAIL → 回流重派 → 次轮 PASS（iter 递增）
-      p = runGate('g-code-review', 'n2-impl', 'reviewer-expert', 'FAIL', 1, p, [
+      p = runGate('g-code-review', 'reviewer-expert', 'FAIL', 1, p, [
         '测试未覆盖边界条件 X',
       ])
       p = transition('g-code-review', 'n2-impl', 'in_progress', p, { reflow: true })
       p = runAction('dev-engineer', 'n2-impl', p)
       p = transition('n2-impl', 'g-code-review', 'in_progress', p)
-      p = runGate('g-code-review', 'n2-impl', 'reviewer-expert', 'PASS', 2, p)
+      p = runGate('g-code-review', 'reviewer-expert', 'PASS', 2, p)
     } else {
-      p = runGate('g-code-review', 'n2-impl', 'reviewer-expert', 'PASS', 1, p)
+      p = runGate('g-code-review', 'reviewer-expert', 'PASS', 1, p)
     }
     p = transition('g-code-review', 'g-sec-code', 'in_progress', p)
-    p = runGate('g-sec-code', 'n2-impl', 'sec-code', 'PASS', 1, p)
+    p = runGate('g-sec-code', 'sec-code', 'PASS', 1, p)
     p = transition('g-sec-code', 'n3-sec', 'in_progress', p)
     p = runAction('sec-compliance', 'n3-sec', p)
     p = transition('n3-sec', 'n-done', 'completed', p)
@@ -218,7 +219,7 @@ export function buildScenario(name: ScenarioName, opts: ScenarioOptions): Engine
     p = runAction('sec-compliance', 'n-adm', p)
     p = transition('n-adm', 'n0-req', 'in_progress', p)
     const s = dispatchStart('req-clarifier', 'n0-req', p)
-    const d = dispatchDone('req-clarifier', 'n0-req', s, 'error')
+    const d = dispatchDone('req-clarifier', 'n0-req', s, 'blocked')
     emit(
       'run.aborted',
       'engine',

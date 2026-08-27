@@ -46,6 +46,19 @@ describe('applyEvent 单事件矩阵（设计 §5.1 七行语义）', () => {
     expect(end.tasks['R-100'].blockedReason).toContain('spawn 失败')
   })
 
+  it('dispatch done status 取值集 = 引擎真源 done|blocked（歧义 F 落定）：blocked → 常驻错误', () => {
+    // 引擎 HTTP 面 zod enum ['done','blocked']（routes/engine.ts dispatchDoneSchema）；
+    // 原 fixture 口径 'ok'|'error' 以引擎真源为准修订
+    const base = { seq: 2, ts: '2026-08-27T00:00:00.000Z', type: 'dispatch', trace_id: 'R-1', parent_seq: null, actor: 'req-clarifier', task_id: 'R-1', emp: 'req-clarifier', dispatch_id: 'd-1', node: 'n0-req' } as const
+    let s = applyEvent(emptyKanbanState(), {
+      ...base, seq: 1, type: 'run.created', flow: 'demo-flow', title: 'T', workspace: 'D:/w',
+    } as never)
+    s = applyEvent(s, { ...base, phase: 'start' } as never)
+    s = applyEvent(s, { ...base, phase: 'done', status: 'blocked' } as never)
+    expect(s.tasks['R-1'].activeDispatches).toHaveLength(0)
+    expect(s.tasks['R-1'].blockedReason).toContain('req-clarifier')
+  })
+
   it('transition：currentNode 推进 + from 入 doneNodes + status 快照覆盖', () => {
     const events = buildScenario('happy-path', OPTS)
     // seq4 = transition n-adm→n0-req

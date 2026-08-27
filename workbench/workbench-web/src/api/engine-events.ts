@@ -61,7 +61,9 @@ export interface TransitionEvent extends EngineEventBase {
   status: string
 }
 
-/** gate：node = 闸所评节点（covers 目标，非闸自身 id）；verdict = PASS/FAIL（人工闸 approve/reject） */
+/** gate：node = 闸位节点 id（歧义 D 裁决·引擎为准——recordGate 记 state.current_node，
+ *  评审时任务已 advance 进闸节点；covers 目标节点不进事件，demo-run-events.jsonl 实证）；
+ *  verdict = PASS/FAIL（人工闸 approve/reject） */
 export interface GateEvent extends EngineEventBase {
   type: 'gate'
   gate: string
@@ -74,7 +76,8 @@ export interface GateEvent extends EngineEventBase {
   request_id?: string
 }
 
-/** dispatch：phase 区分 start/done（§7.3 原生）；done 带 status（ok|error，契约歧义 F 的 fixture 口径） */
+/** dispatch：phase 区分 start/done（§7.3 原生）；done 带 status（引擎取值集 'done'|'blocked'，
+ *  歧义 F 落定——HTTP 面 zod enum 同源，routes/engine.ts dispatchDoneSchema） */
 export interface DispatchEvent extends EngineEventBase {
   type: 'dispatch'
   phase: 'start' | 'done'

@@ -146,7 +146,7 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
           ...prev,
           activeDispatches: rest,
           blockedReason:
-            ev.status === 'error'
+            ev.status === 'blocked'
               ? (prev.blockedReason ?? `派发失败：${ev.emp}${ev.node ? `（${ev.node}）` : ''}`)
               : prev.blockedReason,
         }
