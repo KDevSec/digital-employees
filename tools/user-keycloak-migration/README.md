@@ -3,8 +3,11 @@
 - `export-agenthub.py`    - 从 agenthub PostgreSQL 导出组织结构 + 成员（含 BCrypt 密码哈希）。
 - `import-to-keycloak.py` - 把导出的组织 + 成员导入 Keycloak（先组织后成员，幂等）。
 
-导入脚本的 Keycloak 连接信息默认从 `.env`（`tools/.env`）读取
-（`PUBLIC_HOST` -> Keycloak URL、`KC_ADMIN_PASSWORD`），进程环境变量优先级最高，可用 `ENV_FILE` 指定别的 .env。
+导入脚本的 Keycloak 连接信息默认从仓库 `tools/.env` 读取（路径按脚本位置相对推导，
+不依赖绝对路径）：`PUBLIC_HOST` -> Keycloak URL（默认 **https**://`PUBLIC_HOST`:18080）、
+`KC_ADMIN_PASSWORD`；进程环境变量优先级最高，可用 `ENV_FILE` 指定别的 .env。
+Keycloak 现为 HTTPS（自签证书），脚本默认用 `tools/certs/ca.crt` 校验证书；
+证书路径可用 `KC_CA_CERT` 覆盖，排障时可用 `KC_INSECURE=1` 跳过校验。
 agenthub 无 `firstName`/`lastName`，导入时整个 `displayName` 放入 `firstName`、`lastName` 留空
 （脚本自动把 `lastName` 设为非必填，否则空 `lastName` 会致登录“账号未设置完成”）。
 
@@ -42,8 +45,10 @@ IMPORT_USERNAME=huowen python3 import-to-keycloak.py agenthub-users-export.json
 | 变量 | 默认 | 说明 |
 |------|------|------|
 | `ENV_FILE` | digital-employees .env | 连接信息来源 |
-| `KEYCLOAK_URL` | http://`PUBLIC_HOST`:18080 | 覆盖 .env |
-| `KC_ADMIN_PASSWORD` | .env | 覆盖 .env |
+| `KEYCLOAK_URL` | https://`PUBLIC_HOST`:18080 | 覆盖 .env |
+| `KC_CA_CERT` | `tools/certs/ca.crt` | HTTPS 校验用 CA |
+| `KC_INSECURE` | 0 | 设 1 跳过证书校验（排障） |
+| `KC_ADMIN_PASSWORD` | .env（必填） | 覆盖 .env |
 | `KEYCLOAK_REALM` | digital-employees | |
 | `IMPORT_MODE` | bcrypt | bcrypt\|temporary\|skip |
 | `IF_EXISTS` | skip | skip\|overwrite\|fail |

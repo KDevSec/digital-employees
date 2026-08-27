@@ -3,7 +3,11 @@ set -eu
 url=$1
 limit=${2:-120}
 elapsed=0
-until curl --fail --silent --show-error "$url" >/dev/null 2>&1; do
+curl_args="--fail --silent --show-error"
+case "$url" in
+  https://*) curl_args="$curl_args --insecure" ;;
+esac
+until curl $curl_args "$url" >/dev/null 2>&1; do
   [ "$elapsed" -lt "$limit" ] || {
     echo "Timed out waiting for $url (after ${elapsed}s)" >&2
     # 超时后打印疑似未就绪服务的容器日志，便于定位根因

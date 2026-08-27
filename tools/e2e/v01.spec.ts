@@ -1,8 +1,8 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
 const publicHost = process.env.PUBLIC_HOST ?? '127.0.0.1'
-const platformUrl = process.env.PLATFORM_URL ?? `http://${publicHost}:18000`
-const workbenchUrl = process.env.WORKBENCH_URL ?? `http://${publicHost}:19820`
+const platformUrl = process.env.PLATFORM_URL ?? `https://${publicHost}:18000`
+const workbenchUrl = process.env.WORKBENCH_URL ?? `http://127.0.0.1:19980`
 const password = process.env.E2E_PASSWORD ?? 'Horse~test@2026'
 
 async function login(page: Page, entryUrl: string, username: string): Promise<void> {

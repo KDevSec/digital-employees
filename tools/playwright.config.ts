@@ -6,5 +6,5 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  use: { headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  use: { headless: true, ignoreHTTPSErrors: true, trace: 'retain-on-failure', screenshot: 'only-on-failure' },
 })

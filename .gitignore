@@ -31,3 +31,4 @@ specs/
 # 并行开发 worktree（2026-08-25 路线图 I0-6，D-038）
 .worktrees/
 .playwright-mcp/
+tools/certs/
