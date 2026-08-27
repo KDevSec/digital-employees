@@ -67,4 +67,19 @@ describe('launch()（设计 §4.3；LaunchSpec 纯构造 + prompt 文件中转�
     expect(spec.args).not.toContain('--permission-mode')
     expect(spec.args).not.toContain('--model')
   })
+
+  it('B-07 并发 spawn 互不污染：两员工同底座各自 config 域 → 同一 workdir 各自 launch，env 指向各自域且 workdir 零身份文件', async () => {
+    const adapter = createClaudeCodeAdapter()
+    const homeA = mkdtempSync(join(tmpdir(), 'wb-b07-a-'))
+    const homeB = mkdtempSync(join(tmpdir(), 'wb-b07-b-'))
+    const sharedWork = mkdtempSync(join(tmpdir(), 'wb-b07-ws-'))   // 独立 workdir（防回退档用例的 AGENTS.md 残留干扰）
+    const specA = await adapter.launch({ deployment: { base: 'claude-code', home: homeA, employee_id: 'dev-a' }, workdir: sharedWork, prompt: '任务 A' })
+    const specB = await adapter.launch({ deployment: { base: 'claude-code', home: homeB, employee_id: 'dev-b' }, workdir: sharedWork, prompt: '任务 B' })
+    expect(specA.env.CLAUDE_CONFIG_DIR).toBe(join(homeA, 'config'))
+    expect(specB.env.CLAUDE_CONFIG_DIR).toBe(join(homeB, 'config'))
+    expect(specA.env.CLAUDE_CONFIG_DIR).not.toBe(specB.env.CLAUDE_CONFIG_DIR)
+    // config-domain 主路径：身份全在域内，workdir 零身份文件（.devzero/prompt-* 观测产物不算身份文件）
+    expect(existsSync(join(sharedWork, 'AGENTS.md'))).toBe(false)
+    expect(existsSync(join(sharedWork, 'CLAUDE.md'))).toBe(false)
+  })
 })

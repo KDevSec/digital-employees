@@ -105,4 +105,20 @@ describe('executeInstall（事务八条——设计 §6）', () => {
     expect(out.result).toBe('success')
     expect(input.registry.find('claude-code', 'dev-lite')?.status).toBe('installed')
   })
+
+  it('升级不触 memory：spec.version 变化重装 → memory/sessions 用户资产原样保留（B-03 验收口径）', async () => {
+    const spec = await parsePackage(fixturePackageDir())
+    const input = makeInput({ spec })
+    expect(executeInstall(input).result).toBe('success')
+    writeFileSync(join(input.home, 'memory', 'notes.md'), '用户跨会话记忆', 'utf8')
+    mkdirSync(join(input.home, 'sessions'), { recursive: true })
+    writeFileSync(join(input.home, 'sessions', 's1.json'), '{"workdir":"x"}', 'utf8')
+
+    const upgraded = { ...spec, version: '0.2.0' }
+    const out2 = executeInstall(makeInput({ spec: upgraded }))
+    expect(out2.result).toBe('success')
+    expect(readFileSync(join(input.home, 'memory', 'notes.md'), 'utf8')).toBe('用户跨会话记忆')
+    expect(readFileSync(join(input.home, 'sessions', 's1.json'), 'utf8')).toBe('{"workdir":"x"}')
+    expect(input.registry.find('claude-code', 'dev-lite')?.spec_version).toBe('0.2.0')
+  })
 })
