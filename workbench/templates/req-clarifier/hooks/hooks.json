@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${DEVZERO_HOOKS_ROOT}/redlines/no-devzero-state\"",
+            "command": "\"${DEVZERO_HOOKS_ROOT}/redlines/run-hook.cmd\" no-devzero-state.py",
             "timeout": 5
           }
         ]
