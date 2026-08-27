@@ -1,0 +1,183 @@
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a04-cryptographic-failures.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-26
+workbench/templates/sec-code/skills/sec-scan-code/bin/detect-languages.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-48
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a06-vulnerable-components.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-58
+workbench/templates/sec-design/skills/sec-scan-design/references/通用编码规范_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-16
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a01-broken-access-control.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-27
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a05-security-misconfiguration.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-56
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/rules_loader.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-465
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/cli.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-400
+workbench/templates/sec-code/skills/sec-scan-code/bin/detect-changes.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-57
+workbench/templates/sec-design/skills/sec-scan-design/VERSION
+  s_b9259474bd2245::t_7f4b8255580cbd 1
+workbench/templates/sec-code/skills/sec-scan-code/pyproject.toml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-17
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/__init__.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-47
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/race-conditions.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-16
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_249dd5d673cc81 84,94,166
+  s_b9259474bd2245::t_726f870f77622e 85-93,95-142,167-182
+  s_b9259474bd2245::t_64510f24067d2b 73,155
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a09-logging-failures.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-46
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/csrf.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/templates/sec-code/manifest.yml
+  s_b9259474bd2245::t_67559da24bd1bb 29-30
+workbench/templates/sec-code/AGENTS.md
+  s_b9259474bd2245::t_310454821bb1eb 22
+workbench/workbench-service/test/templates-provider.test.ts
+  s_b9259474bd2245::t_f74106a3b08b91 201,204,206,211
+workbench/templates/sec-code/skills/sec-scan-code/bin/_skill_util.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-32
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/path-traversal.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/config.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-81
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/supply-chain-attacks.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-25
+workbench/templates/sec-design/skills/sec-scan-design/references/会话管理_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-code/skills/sec-scan-code/install-note.md
+  s_b9259474bd2245::t_14b8b04ce24f88 1-19
+workbench/templates/sec-design/skills/sec-scan-design/references/数据库安全_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/workbench-service/test/routes-templates.test.ts
+  s_b9259474bd2245::t_2d16eedf57193b 73,78
+workbench/templates/sec-design/skills/sec-scan-design/references/个人信息安全_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-design/skills/sec-scan-design/references/内存管理_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/workbench-service/scripts/import-sec-zips.ts
+  s_b9259474bd2245::t_b05c542d2c4531 1-90
+workbench/templates/sec-design/skills/sec-scan-design/references/通讯安全_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a02-cryptographic-failures.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-103
+workbench/templates/sec-design/skills/sec-scan-design/references/系统配置_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a08-software-data-integrity.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-22
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/scanner.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-656
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/xss.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/reporter.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-465
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a07-identification-auth-failures.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-23
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/xss.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-38
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/race-conditions.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-65
+workbench/templates/sec-design/skills/sec-scan-design/CHANGELOG.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-20
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/go.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-2800
+workbench/templates/sec-code/skills/sec-scan-code/SKILL.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-905
+workbench/templates/sec-design/skills/sec-scan-design/references/文件管理_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-design/skills/sec-scan-design/references/数据保护_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/git_changes.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-129
+workbench/templates/sec-code/skills/sec-scan-code/bin/hook-inject-constitution.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-99
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/insecure-deserialization.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-47
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a05-injection.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-26
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a09-security-logging-monitoring.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-24
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/insecure-deserialization.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/csrf.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-68
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/javascript.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-2931
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a02-security-misconfiguration.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-26
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a01-broken-access-control.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-103
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/server.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-285
+workbench/templates/sec-design/skills/sec-scan-design/README.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-165
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/path-traversal.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-46
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/python.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-3740
+workbench/templates/sec-design/manifest.yml
+  s_b9259474bd2245::t_f55cc2cc0ad0b6 29-30
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/c.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-3591
+workbench/templates/sec-code/skills/sec-scan-code/rules/supplementary/config-secrets.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-12
+workbench/templates/sec-code/skills/sec-scan-code/CHANGELOG.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-106
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a03-injection.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-95
+workbench/templates/sec-code/skills/sec-scan-code/rules/constitution-project.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-7
+workbench/templates/sec-code/skills/sec-scan-code/bin/generate-constitution-brief.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-60
+workbench/templates/sec-design/skills/sec-scan-design/references/访问控制_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-23
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a03-supply-chain-failures.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-23
+workbench/templates/sec-code/skills/sec-scan-code/rules/languages/java.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-3239
+workbench/templates/sec-code/skills/sec-scan-code/secscancode/analyzer.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-194
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a07-auth-failures.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-45
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a10-mishandling-exceptions.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-26
+workbench/templates/sec-design/skills/sec-scan-design/references/加密规范_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-10
+workbench/templates/sec-code/skills/sec-scan-code/bin/hook-auto-scan.py
+  s_b9259474bd2245::t_7f4b8255580cbd 1-85
+workbench/templates/sec-design/skills/sec-scan-design/references/错误处理和日志_安全合规检查规则.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-13
+workbench/templates/sec-code/skills/sec-scan-code/rules/constitution-owasp.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-38
+workbench/templates/sec-design/AGENTS.md
+  s_b9259474bd2245::t_310454821bb1eb 21
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a10-ssrf.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-60
+workbench/templates/sec-code/skills/sec-scan-code/rules/docs/a04-insecure-design.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-49
+workbench/templates/sec-code/skills/sec-scan-code/rules/owasp/a06-insecure-design.yaml
+  s_b9259474bd2245::t_7f4b8255580cbd 1-24
+workbench/templates/sec-design/skills/sec-scan-design/SKILL.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-208
+workbench/templates/sec-code/skills/sec-scan-code/README.md
+  s_b9259474bd2245::t_7f4b8255580cbd 1-373
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4ad4f21e350207b143fe957b806e5a3c1528a69a",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
