@@ -147,6 +147,62 @@ describe('红线脚本 — ③ 6 规则命中/放行两态', () => {
     expect(r.exitCode).toBe(2)
   })
 
+  // ── I1 误报回归（feature/main-* 不应被拦） ──
+  it('no-push-to-main: git push origin feature/main-login → exit 0（feature/main-* 误报回归）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push origin feature/main-login' }),
+    )
+    expect(r.exitCode).toBe(0)
+  })
+
+  it('no-push-to-main: git push origin main-login → exit 0（main-前缀分支名不拦）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push origin main-login' }),
+    )
+    expect(r.exitCode).toBe(0)
+  })
+
+  it('no-push-to-main: git push origin feature/master-fix → exit 0（master 嵌入不拦）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push origin feature/master-fix' }),
+    )
+    expect(r.exitCode).toBe(0)
+  })
+
+  // ── I1 显式 refspec 形态补强 ──
+  it('no-push-to-main: git push origin HEAD:main → exit 2（HEAD:main refspec 拦）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push origin HEAD:main' }),
+    )
+    expect(r.exitCode).toBe(2)
+  })
+
+  it('no-push-to-main: git push -f origin master → exit 2（-f 短形式 force 拦）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push -f origin master' }),
+    )
+    expect(r.exitCode).toBe(2)
+  })
+
+  it('no-push-to-main: git push --force-with-lease origin main → exit 2（--force-with-lease 拦）', () => {
+    const r = runHook(
+      'dev-engineer',
+      'no-push-to-main.py',
+      stdin('Bash', { command: 'git push --force-with-lease origin main' }),
+    )
+    expect(r.exitCode).toBe(2)
+  })
+
   // ── no-devzero-state ──
   it('no-devzero-state: Write file_path 含 /.devzero/ → exit 2', () => {
     const r = runHook(

@@ -43,6 +43,24 @@ function isExcluded(name: string, excludes: readonly string[]): boolean {
   return excludes.some((ex) => name.includes(ex))
 }
 
+/**
+ * decodeFilename — fflate 解 zip 时按 UTF-8 解码文件名，本批 sec-design zip 的 GBK 字节恰好
+ * 是有效 UTF-8（中文落 CJK Unified Ideographs 段，UTF-8 编码 3 字节/字），解出即正确中文。
+ *
+ * 防御面向未来重跑（I2）：若 filename 含 U+FFFD（UTF-8 解码失败替换符），尝试 latin1 取原始
+ * 字节再 GBK 解码兜底。注意 fflate 解码失败时原始多字节序列可能已合并为 U+FFFD，此通道为
+ * best-effort——当前数据不触发，留作未来 GBK-only zip 的防御。
+ */
+function decodeFilename(name: string): string {
+  if (!name.includes('�')) return name
+  try {
+    const latin1Bytes = Buffer.from(name, 'latin1')
+    return new TextDecoder('gbk').decode(latin1Bytes)
+  } catch {
+    return name // GBK 解码也失败，返回原样（best-effort）
+  }
+}
+
 function sanitizePath(name: string): string {
   // zip-slip 防护 + 路径分隔统一
   const normalized = name.replace(/\\/g, '/').replace(/^\.\//, '')
@@ -67,11 +85,12 @@ for (const skill of SKILLS) {
   let kept = 0
   let excluded = 0
   for (const [name, content] of Object.entries(unzipped)) {
-    if (isExcluded(name, skill.exclude)) {
+    const decodedName = decodeFilename(name)
+    if (isExcluded(decodedName, skill.exclude)) {
       excluded++
       continue
     }
-    const rel = sanitizePath(name)
+    const rel = sanitizePath(decodedName)
     // 二进制检测：NUL 字节 → 拒（gen:templates 也会拒，提前拦）
     if (content.includes(0)) {
       console.warn(`  ⚠ 跳过二进制：${rel}（含 NUL 字节）`)
