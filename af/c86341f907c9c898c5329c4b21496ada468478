@@ -1,0 +1,252 @@
+workbench/workbench-engine/src/r2/node-machine.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-184
+workbench/workbench-engine/assets/flows/demo-flow.node-table.yml
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-28
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-34
+workbench/workbench-engine/package.json
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 11,13-23
+workbench/workbench-engine/test/r2.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-268
+workbench/workbench-service/package.json
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 14-17
+workbench/workbench-service/src/server/registry.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 12-15,24-25
+workbench/workbench-service/test/server.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1,11-14,29
+workbench/workbench-engine/test/secretgate.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-98
+workbench/workbench-engine/src/r3/gate.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-132
+workbench/workbench-engine/test/table-demo.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-113
+.playwright-mcp/console-2026-08-27T03-17-33-273Z.log
+  s_3164dc039eb46c::t_d21a840d2e39b4 1-17
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-91
+.playwright-mcp/console-2026-08-27T03-30-55-702Z.log
+  s_46f7f3afbb6303::t_f6ab1f7691900b 835
+  s_46f7f3afbb6303::t_f62c7ee5991fab 2-3
+  s_46f7f3afbb6303::t_32b3fce135d091 50-53
+  s_46f7f3afbb6303::t_0c6c9f859c090f 96-98
+  s_46f7f3afbb6303::t_f5b1e6b48cacf8 818-821
+  s_46f7f3afbb6303::t_caf7884527926d 31-33
+  s_46f7f3afbb6303::t_d291d64c112f94 22-23
+  s_85d3c34d21f4df::t_4ba50b832d5041 1,4-21,24-30,34-49,54-95,99-817,822-834,836-1115
+workbench/workbench-service/test/routes-registry.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 10-13,21-26,37,55-59,63-71
+workbench/workbench-service/src/server/mcp/engine-mcp.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-114
+workbench/workbench-service/test/mcp-engine.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-102
+workbench/workbench-engine/test/engine.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-286
+workbench/workbench-engine/src/r2/state.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-12
+workbench/workbench-service/test/routes-engine.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-157
+workbench/workbench-engine/src/engine.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-422
+workbench/workbench-engine/src/schema/events.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-65
+workbench/workbench-engine/test/r1.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-535
+workbench/workbench-service/src/types-assets.d.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-5
+workbench/workbench-engine/src/r1/paths.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-53
+workbench/workbench-service/test/engine-stream.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-120
+workbench/workbench-engine/src/schema/index.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-6
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 190,272-273
+workbench/workbench-engine/src/schema/node-table.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-178
+workbench/workbench-engine/test/engine-acceptance.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-156
+workbench/workbench-engine/test/r3.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-297
+workbench/workbench-service/src/engine/driver.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-129
+docs/plans/2026-08-26-l3-engine.md
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-254
+workbench/workbench-service/src/server/routes/engine.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-234
+.playwright-mcp/page-2026-08-27T03-18-03-184Z.yml
+  s_3164dc039eb46c::t_d21a840d2e39b4 1-9
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-84
+workbench/workbench-service/src/engine/stream.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-68
+docs/design/设计决策记录-2026-08-13.md
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 417-443
+workbench/workbench-service/test/driver.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-259
+docs/plans/2026-08-27-T4修复独立复审.md
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-115
+workbench/workbench-service/src/main.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 37-40,186-193,205,207-208
+workbench/workbench-engine/test/fixtures/full-14.node-table.yml
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-35
+.playwright-mcp/console-2026-08-27T03-26-40-759Z.log
+  s_46f7f3afbb6303::t_f6a873ab534412 1
+workbench/workbench-engine/src/r1/ledger.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-454
+.playwright-mcp/console-2026-08-27T03-18-02-644Z.log
+  s_3164dc039eb46c::t_d21a840d2e39b4 1-14
+  s_85d3c34d21f4df::t_d124c1f94dbd2a 15-66
+workbench/workbench-engine/src/security/secretgate.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-122
+workbench/workbench-engine/test/schema.test.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-142
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 8,11-18,22,25-31,38-42,44,56-59,69-74
+.playwright-mcp/console-2026-08-27T03-15-57-497Z.log
+  s_3164dc039eb46c::t_d21a840d2e39b4 23-41
+  s_3164dc039eb46c::t_27ae53760c68a5 20-22
+  s_85d3c34d21f4df::t_8370864a4e92bd 1-19
+.playwright-mcp/page-2026-08-27T03-14-33-921Z.yml
+  s_b9259474bd2245::t_7f8771990d7583 1-24
+workbench/workbench-service/src/engine/launcher.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 1-99
+.playwright-mcp/page-2026-08-27T03-17-33-832Z.yml
+  s_3164dc039eb46c::t_d21a840d2e39b4 1-9
+workbench/workbench-service/src/server/routes/index.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 25,33
+  s_ae9313906bcd90::t_5cffbb7c0ff95c 21-22
+.playwright-mcp/console-2026-08-26T03-38-49-673Z.log
+  s_2c1150e19dee71::t_25a262183ca100 1-1543
+.playwright-mcp/console-2026-08-26T17-38-14-475Z.log
+  s_85d3c34d21f4df::t_5904052fec502b 1-2
+.playwright-mcp/console-2026-08-26T17-48-25-368Z.log
+  s_85d3c34d21f4df::t_95c10bbd0e9be2 1
+.playwright-mcp/console-2026-08-27T03-20-28-721Z.log
+  s_85d3c34d21f4df::t_2a850304df3e00 1-2
+.playwright-mcp/console-2026-08-27T03-21-58-471Z.log
+  s_85d3c34d21f4df::t_9166fa637fecef 1-2
+.playwright-mcp/page-2026-08-27T03-20-29-137Z.yml
+  s_5ee33a429edb47::t_a55eaba40ac785 1-30
+.playwright-mcp/page-2026-08-27T03-26-41-345Z.yml
+  s_5ee33a429edb47::t_83510895fdaaae 1-30
+bun.lock
+  s_ae9313906bcd90::t_88af85bd1b0465 11-14,25-27,138-141,146-147,250-255,260-261,268-269,276-277,280-283,296-305,320-323,328-329,332-333,336-339,342-343,346-347,350-355,358-365,368-369,372-375,378-383,386-391,394-395,398-403,406-409,416-417,422-423,428-429,432-435,442-443,446-449,452-455,464-465,468-475,480-481,486-487,498-499,504-505,508-513,518-521,526-531,536-543,552-553,582-583,588-589,596-599,632-633,640-641,648-649,654-655,664-665
+.playwright-mcp/console-2026-08-26T07-50-33-459Z.log
+  s_46f7f3afbb6303::t_0508c67263666d 1-14766
+.playwright-mcp/console-2026-08-27T03-14-31-743Z.log
+  s_cb7d2f1052133c::t_2a40e39a012017 1
+.playwright-mcp/page-2026-08-26T03-38-52-679Z.yml
+  s_2c1150e19dee71::t_833e340986496c 1-67
+.playwright-mcp/page-2026-08-26T07-54-11-363Z.yml
+  s_2c1150e19dee71::t_e3a595065d4f7b 1-35
+.playwright-mcp/page-2026-08-26T17-38-17-833Z.yml
+  s_85d3c34d21f4df::t_bb0d651dd56260 1-8
+.playwright-mcp/page-2026-08-26T17-39-28-852Z.yml
+  s_85d3c34d21f4df::t_6916acf83fd5d5 1-29
+.playwright-mcp/page-2026-08-26T17-39-52-771Z.yml
+  s_85d3c34d21f4df::t_4f001ea759c8ef 1-100
+.playwright-mcp/page-2026-08-26T17-40-13-913Z.yml
+  s_85d3c34d21f4df::t_76bf251a99391f 1-95
+.playwright-mcp/page-2026-08-26T17-40-50-322Z.yml
+  s_85d3c34d21f4df::t_b85dee84cee1f6 1-111
+.playwright-mcp/page-2026-08-26T17-41-32-349Z.yml
+  s_85d3c34d21f4df::t_0633099a4ac3d3 1-111
+.playwright-mcp/page-2026-08-26T17-41-37-653Z.yml
+  s_85d3c34d21f4df::t_76ee0e123b529b 1-168
+.playwright-mcp/page-2026-08-26T17-41-56-392Z.yml
+  s_85d3c34d21f4df::t_58803ee47a9a44 1-159
+.playwright-mcp/page-2026-08-26T17-42-18-923Z.yml
+  s_85d3c34d21f4df::t_492506bb4e9a9c 1-159
+.playwright-mcp/page-2026-08-26T17-44-38-670Z.yml
+  s_85d3c34d21f4df::t_493159b98c6c56 1-40
+.playwright-mcp/page-2026-08-26T17-45-00-200Z.yml
+  s_85d3c34d21f4df::t_583924244de054 1-40
+.playwright-mcp/page-2026-08-26T17-46-12-553Z.yml
+  s_85d3c34d21f4df::t_403b4ab8216652 1-40
+.playwright-mcp/page-2026-08-26T17-46-29-317Z.yml
+  s_85d3c34d21f4df::t_cf24d8be5f16ef 1-40
+.playwright-mcp/page-2026-08-26T17-46-31-043Z.yml
+  s_85d3c34d21f4df::t_21fe0a82457867 1-100
+.playwright-mcp/page-2026-08-26T17-46-51-412Z.yml
+  s_85d3c34d21f4df::t_9835e25ab06a89 1-95
+.playwright-mcp/page-2026-08-26T17-48-25-865Z.yml
+  s_85d3c34d21f4df::t_994597c475b2e5 1-29
+.playwright-mcp/page-2026-08-27T03-15-57-978Z.yml
+  s_85d3c34d21f4df::t_9a9fa93157ba55 1-30
+.playwright-mcp/page-2026-08-27T03-21-59-018Z.yml
+  s_5ee33a429edb47::t_7d451bc02ab160 1-30
+.playwright-mcp/page-2026-08-27T03-30-56-858Z.yml
+  s_85d3c34d21f4df::t_796bba3bbfea42 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "afc86341f907c9c898c5329c4b21496ada468478",
+  "prompts": {},
+  "sessions": {
+    "s_2c1150e19dee71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fbfcb866-f912-42a1-8ce4-2752fdb33ca1",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_5ee33a429edb47": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4503a2ba-f506-4b34-b33b-cd96ffaf8fe8",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_cb7d2f1052133c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a5509eb289311b488",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
