@@ -1,0 +1,436 @@
+platform/backend/entrypoint.sh
+  s_b9259474bd2245::t_6b43778a16ba77 9
+workbench/workbench-web/src/api/engine-events.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-214
+workbench/workbench-web/src/fixtures/demo-flow.table.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-58
+workbench/workbench-service/test/driver.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-259
+workbench/workbench-service/src/adapters/qoder/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-15
+workbench/workbench-web/src/api/engine-api.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-140
+workbench/workbench-service/src/app/platform-access/state-store.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-57
+workbench/workbench-service/test/fixtures/packages/dev-lite/hooks/hooks.json
+  s_b9259474bd2245::t_6b43778a16ba77 2-6
+workbench/workbench-service/test/oidc.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-150
+workbench/workbench-web/src/api/engine-stream.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-116
+workbench/workbench-web/test/guard-integration.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 106-107,118,154-157
+workbench/workbench-web/src/components/kanban/EmpBand.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-131
+workbench/workbench-web/test/alert-panel.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-79
+workbench/workbench-web/test/kanban-integration.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-127
+workbench/workbench-engine/test/r3.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-297
+docs/design/设计决策记录-2026-08-13.md
+  s_b9259474bd2245::t_6b43778a16ba77 103-104,333-334,374-481
+workbench/workbench-web/src/api/engine-table.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-22,24-46
+workbench/workbench-web/test/kanban-view.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-110
+workbench/workbench-web/src/components/board/BoardLane.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-111
+workbench/workbench-service/test/adapters-launch.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-85
+workbench/workbench-web/test/placeholder.test.ts
+  s_b9259474bd2245::t_cec8f1d39b7224 20
+  s_b9259474bd2245::t_f7b10dd9066df1 9-12,25-26
+docs/plans/2026-08-27-l5-kanban.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-138
+docs/plans/2026-08-27-l5-l3-联调.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-77
+tools/e2e/v01.spec.ts
+  s_b9259474bd2245::t_6b43778a16ba77 4-5
+platform/frontend/nginx.conf
+  s_b9259474bd2245::t_6b43778a16ba77 2,8-11
+workbench/workbench-engine/test/fixtures/full-14.node-table.yml
+  s_b9259474bd2245::t_6b43778a16ba77 1-35
+workbench/workbench-service/src/adapters/common/plan.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-57
+workbench/workbench-service/src/server/routes/engine.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-244
+workbench/workbench-service/test/mcp-engine.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-102
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-152
+docs/plans/2026-08-27-认证迁移-design.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-334
+workbench/workbench-service/src/adapters/codebuddy/profile.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-13
+workbench/workbench-service/src/adapters/common/models.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-14
+workbench/workbench-service/src/installs/errors.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-25
+workbench/workbench-engine/package.json
+  s_b9259474bd2245::t_6b43778a16ba77 11,13-23
+workbench/workbench-web/src/components/board/BoardCard.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-273
+docs/plans/2026-08-27-T4修复独立复审.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-115
+workbench/workbench-service/src/app/platform-access/session-store.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-51
+workbench/workbench-service/src/server/routes/index.ts
+  s_b9259474bd2245::t_5aa6999f8dd550 24-35,38,46,48-53
+workbench/workbench-web/test/event-watch-panel.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-60
+workbench/workbench-service/test/routes-registry.test.ts
+  s_b9259474bd2245::t_912bd77b18235b 3,14-15,17-20,29-39,47,60-69,80,86-87,89,92-97,100,102-103,105-108,110-123,125,161-166,195-211
+workbench/workbench-web/test/kanban-store.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-199
+tools/user-keycloak-migration/README.md
+  s_b9259474bd2245::t_6b43778a16ba77 6-10,48-51
+workbench/workbench-web/src/components/kanban/GateFeedPanel.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-168
+workbench/workbench-engine/src/r2/node-machine.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-183
+workbench/workbench-web/src/fixtures/scenarios.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-232
+tools/playwright.config.ts
+  s_b9259474bd2245::t_6b43778a16ba77 9
+workbench/workbench-service/test/routes-bases.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-61
+workbench/workbench-service/test/platform-client.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-107
+workbench/workbench-service/test/routes-auth.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-65
+workbench/workbench-service/src/adapters/qoder/profile.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-13
+workbench/workbench-service/test/adapters-profiles.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-52
+workbench/workbench-service/test/encrypted-store.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-50
+workbench/workbench-service/test/bases-probe.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-61
+workbench/workbench-service/test/enrollment.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-143
+workbench/workbench-web/scripts/mock-engine-server.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-166
+workbench/workbench-web/src/stores/kanban.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-273
+docs/plans/2026-08-26-功能点分工总表.md
+  s_b9259474bd2245::t_6b43778a16ba77 5-10,14-99,105-114
+workbench/workbench-service/src/app/platform-access/crypto.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-4
+workbench/workbench-engine/src/security/secretgate.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-122
+workbench/workbench-service/src/installs/manifest.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-68
+workbench/workbench-service/test/routes-installs.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-103
+workbench/workbench-service/src/adapters/contract.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-64
+workbench/workbench-service/src/adapters/claude-code/profile.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-13
+workbench/workbench-service/test/routes-enrollment.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-78
+workbench/workbench-service/test/session-store.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-47
+workbench/workbench-service/test/state-store.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 6,8,10-14,17-19,22-34,36-37
+workbench/workbench-service/test/fixtures/packages/dev-lite/manifest.yml
+  s_b9259474bd2245::t_6b43778a16ba77 1-31
+workbench/workbench-web/src/components/kanban/ConnectionBar.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-81
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_b9259474bd2245::t_6b43778a16ba77 9-10,46-51
+workbench/workbench-web/src/stores/derive-board.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-56
+workbench/workbench-web/src/components/kanban/AlertPanel.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-113
+workbench/workbench-service/src/installs/service.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-62
+workbench/workbench-web/test/gate-feed-panel.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-63
+workbench/workbench-service/src/server/routes/bases.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-108
+workbench/workbench-service/src/engine/driver.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-129
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-384
+workbench/workbench-service/src/engine/launcher.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-99
+workbench/workbench-service/src/bases/probe.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-37
+workbench/workbench-service/test/adapters-plan.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-80
+workbench/workbench-service/src/server/routes/config.ts
+  s_b9259474bd2245::t_6b43778a16ba77 2,4-8,17,22-40,58,60-63,66,82-85
+workbench/workbench-engine/test/schema.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-142
+workbench/workbench-service/src/installs/executor/transaction.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-33
+workbench/workbench-service/src/app/platform-access/encrypted-store.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-7,18-20,27-28,31-32,34,37,39,42,45,50,53,62-63,70
+docs/plans/2026-08-26-l3-engine.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-254
+workbench/workbench-engine/src/schema/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-6
+workbench/workbench-engine/src/schema/node-table.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-178
+workbench/workbench-service/src/app/platform-access/heartbeat.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-90
+.gitignore
+  s_b9259474bd2245::t_6b43778a16ba77 33-34
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-355
+docs/plans/2026-08-27-员工安装B系列.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-3204
+workbench/workbench-service/src/adapters/claude-code/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-15
+workbench/workbench-service/test/config.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 7,29,39,78-85,99-104
+workbench/workbench-service/test/engine-stream.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-120
+workbench/workbench-service/test/installs-executor.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-124
+workbench/workbench-service/test/installs-negotiate.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-57
+workbench/workbench-service/test/routes-config.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 11,15-16,55,58,61,69-76,81,84,92-110,123
+workbench/workbench-service/src/server/routes/enrollment.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-21
+workbench/workbench-service/web-dist/index.html
+  s_b9259474bd2245::t_6b43778a16ba77 1-7,11,15,19,23-24,28,32,36-42
+workbench/workbench-engine/test/table-demo.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-113
+workbench/workbench-web/src/components/board/NeedDrawer.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-230
+workbench/workbench-web/src/components/kanban/StageBand.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-227
+workbench/workbench-web/src/components/kanban/TaskSidebar.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-232
+workbench/workbench-service/test/auth-secret.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-44
+workbench/workbench-service/src/server/routes/installs.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-104
+workbench/workbench-web/src/fixtures/mock-event-source.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-141
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-84
+workbench/workbench-service/src/adapters/common/tier-map.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-34
+workbench/workbench-service/test/routes-engine.test.ts
+  s_b9259474bd2245::t_25a800eb464825 51
+  s_b9259474bd2245::t_b9d61fa98fba3f 1-50,52-207
+workbench/workbench-service/test/config-cache.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-44
+workbench/workbench-service/src/installs/spec/parser.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-62
+workbench/workbench-engine/src/schema/events.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-65
+workbench/workbench-service/src/installs/negotiate.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-113
+workbench/workbench-web/src/views/BoardView.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-329
+workbench/workbench-web/src/stores/board.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-63
+workbench/workbench-web/test/engine-stream.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-199
+workbench/workbench-service/src/main.ts
+  s_b9259474bd2245::t_0ae571737e1230 15-17,40-43,65-69,87-91,216-228,230-233,235-242,254-273,287-298,468
+  s_b9259474bd2245::t_77a625704f7807 279-284
+  s_b9259474bd2245::t_5c6155f4ccbd37 11,70-83,328
+workbench/workbench-web/test/router.test.ts
+  s_b9259474bd2245::t_f7b10dd9066df1 49,75,79,87-89
+workbench/workbench-web/test/scenarios.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-181
+workbench/workbench-web/test/dependency-audit.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-54
+workbench/workbench-web/test/emp-band.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-44
+workbench/workbench-service/src/adapters/codebuddy/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-15
+workbench/workbench-web/test/board.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-272
+workbench/workbench-service/src/server/routes/auth.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-18
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_b9259474bd2245::t_6b43778a16ba77 1-34
+workbench/workbench-service/src/installs/executor/actions.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-193
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_ca1ade5d9fc693 4
+  s_b9259474bd2245::t_f34c9ab9968069 185
+workbench/workbench-service/test/access-service.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-250
+workbench/workbench-service/src/installs/spec/types.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-26
+tools/ensure-certs.sh
+  s_b9259474bd2245::t_6b43778a16ba77 1-71
+workbench/workbench-service/src/app/platform-access/service.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-260
+iam/realm/digital-employees-realm.json
+  s_b9259474bd2245::t_6b43778a16ba77 51-52,55-56
+workbench/workbench-service/src/installs/registry/registry.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-75
+workbench/workbench-service/src/app/platform-access/auth-secret.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-33
+workbench/workbench-service/src/server/mcp/engine-mcp.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-114
+workbench/workbench-service/test/installs-manifest.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-58
+tools/up.sh
+  s_b9259474bd2245::t_6b43778a16ba77 20-21,23-24,26-28
+workbench/workbench-service/test/installs-report.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-76
+workbench/workbench-web/test/derive-board.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-130
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-122
+workbench/workbench-engine/assets/flows/demo-flow.node-table.yml
+  s_b9259474bd2245::t_6b43778a16ba77 1-28
+workbench/workbench-service/test/installs-registry.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-63
+workbench/workbench-service/src/server/registry.ts
+  s_b9259474bd2245::t_3ddc746b59cd6e 12-14,16-17,20,31-47,52-61,66-67,71-72,74,82-83,85-86,88-89
+workbench/workbench-engine/test/engine.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-298
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-91
+workbench/workbench-service/src/types-assets.d.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-5
+workbench/workbench-service/src/adapters/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-13
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-453
+workbench/workbench-service/src/app/platform-access/config-cache.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-46
+workbench/workbench-engine/src/engine.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-424
+workbench/workbench-engine/src/r1/ledger.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-461
+tools/compose.yml
+  s_b9259474bd2245::t_6b43778a16ba77 19,25-28,40,42,52,55-56,62,66-67,77-83
+tools/test_external_access.py
+  s_b9259474bd2245::t_6b43778a16ba77 3,39-49,65,72,84-86,88-94,130-131,143-151,164-321
+workbench/workbench-engine/test/secretgate.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-98
+workbench/workbench-service/test/assembly.test.ts
+  s_b9259474bd2245::t_e99412e1e312ce 1-80
+workbench/workbench-service/test/crypto.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 4,6,20,22
+workbench/workbench-service/test/installs-uninstall.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-77
+workbench/workbench-service/test/adapters-models.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-29
+docs/research/多智能体编排调研.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-163
+docs/plans/2026-08-27-认证迁移.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-3613
+tools/sync-keycloak-urls.sh
+  s_b9259474bd2245::t_6b43778a16ba77 8,10,52-61
+docs/plans/2026-08-26-协同编排-design.md
+  s_b9259474bd2245::t_6b43778a16ba77 190,272-273,303-304,354,487
+tools/user-keycloak-migration/import-to-keycloak.py
+  s_b9259474bd2245::t_6b43778a16ba77 26-27,30-31,47-51,84,88,90-133,139,454-457,522-528,532-536,604-636,663-672,710-718,722-726,747-749,853-864
+workbench/workbench-engine/src/r1/paths.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-53
+workbench/workbench-service/src/app/platform-access/enrollment.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-11,14-19,22-23,25-29,31-50,53-63,65-78,80-81,83,86-103,105-106,113-116
+workbench/workbench-service/src/bases/cache.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-22
+workbench/workbench-service/src/config/schema.ts
+  s_b9259474bd2245::t_6b43778a16ba77 15-21,37,40,48-61
+workbench/workbench-service/src/server/routes/session.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-20
+workbench/workbench-service/test/routes-session.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-77
+workbench/workbench-web/src/router/routes/kanban.ts
+  s_b9259474bd2245::t_6b43778a16ba77 3-4,7-10,14-17,20
+workbench/workbench-service/test/installs-spec.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-36
+workbench/workbench-service/package.json
+  s_b9259474bd2245::t_c68590b21f97f4 9-12
+  s_b9259474bd2245::t_88255b81e9c321 16-24,30
+workbench/workbench-engine/test/r1.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-535
+workbench/workbench-service/src/installs/executor/execute.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-130
+workbench/workbench-service/src/engine/stream.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-68
+workbench/workbench-web/test/engine-events.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-241
+workbench/workbench-service/src/server/routes/employees.ts
+  s_b9259474bd2245::t_c0bbe678c89694 123
+workbench/templates/README.md
+  s_b9259474bd2245::t_6b43778a16ba77 59-68
+workbench/workbench-service/src/app/platform-access/oidc.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-101
+workbench/workbench-web/test/engine-api.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-106
+workbench/workbench-web/test/side-nav.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 10-11,15-16,28,37-38,41-42,45-46,73-74,77,80-83,97-98
+workbench/workbench-web/test/stage-band.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-91
+workbench/workbench-engine/src/r3/gate.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-132
+workbench/workbench-service/test/fixtures/packages/dev-lite/skills/tdd-methodology/SKILL.md
+  s_b9259474bd2245::t_6b43778a16ba77 1-8
+platform/backend/app/config.py
+  s_b9259474bd2245::t_6b43778a16ba77 15
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_b9259474bd2245::t_5ccd228aca3749 114-120
+  s_b9259474bd2245::t_e97ebb0df2d98a 121
+  s_b9259474bd2245::t_a803f1382ea696 8,10-22,26,28-31,33-39,41,46-102,104,106,122-127,133-136,138-139
+workbench/workbench-engine/test/engine-acceptance.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-159
+tools/wait-for-http.sh
+  s_b9259474bd2245::t_6b43778a16ba77 6-10
+workbench/workbench-service/src/app/platform-access/machine-token.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-50
+workbench/workbench-web/src/views/KanbanView.vue
+  s_b9259474bd2245::t_6b43778a16ba77 1-406
+workbench/workbench-service/test/fixtures/packages/dev-lite/AGENTS.md
+  s_b9259474bd2245::t_6b43778a16ba77 1,3-4,6,8,10,12,14,16,18,20,22,24
+workbench/workbench-service/src/installs/uninstall/uninstall.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-88
+workbench/workbench-engine/test/r2.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-268
+workbench/workbench-service/test/server.test.ts
+  s_b9259474bd2245::t_5fdec6629c3878 1,8,10,18-22,24-27,43-44,53-63,66,236-373
+  s_b9259474bd2245::t_a85bcad1b5ee13 28
+workbench/workbench-web/test/kanban-feedback-parts.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-2,4,6-11,13-22
+workbench/workbench-service/src/app/platform-access/platform-client.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-6,10,31-34,36-37,40,48,55,58-62,66-69,76-80,85-91,94-95,97,100,110,119,124,128,131-135
+workbench/workbench-service/test/heartbeat.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-146
+workbench/workbench-web/test/task-sidebar.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-82
+workbench/workbench-service/test/machine-token.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-66
+workbench/workbench-web/test/engine-real-events.test.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-78
+workbench/workbench-service/src/app/platform-access/index.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-57
+workbench/workbench-service/src/adapters/common/launch.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-66
+workbench/workbench-service/src/installs/report.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-35
+workbench/workbench-engine/src/r2/state.ts
+  s_b9259474bd2245::t_6b43778a16ba77 1-12
+bun.lock
+  s_b9259474bd2245::t_657e27d33f379b 25-28,39,41-42,44,46-47,51,163-166,171-172,279-284,297-298,305-306,309-312,325-334,349-352,357-358,361-362,365-368,371-372,375-376,379-384,387-394,399-400,403-406,409-414,417-422,425-426,429-434,437-440,447-448,453-454,459,463-466,473-474,477-480,483-486,495-496,499-506,511-512,517-518,529-530,539-540,543-548,553-556,561-566,571-578,587-588,617-618,623-624,631-634,667-668,673-674,677-682,689-690,695-696,707-708
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ac6cf28ad4bc6feb859c06c85c0d77e9adf343ca",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
