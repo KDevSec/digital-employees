@@ -27,8 +27,6 @@ def test_realm_uses_runtime_placeholders_and_no_hardcoded_users() -> None:
 
     assert clients["platform-web"]["redirectUris"] == ["${PLATFORM_PUBLIC_URL}/auth/callback"]
     assert clients["platform-web"]["webOrigins"] == ["${PLATFORM_PUBLIC_URL}"]
-    assert clients["workbench-desktop"]["redirectUris"] == ["${WORKBENCH_PUBLIC_URL}/auth/callback"]
-    assert clients["workbench-desktop"]["webOrigins"] == ["${WORKBENCH_PUBLIC_URL}"]
 
     # Approach B: no demo users with credentials in realm JSON
     people = [user for user in realm["users"] if user.get("credentials")]
@@ -44,7 +42,6 @@ def test_sync_script_updates_post_logout_redirect_and_pkce_attributes() -> None:
     assert "post.logout.redirect.uris" in script
     assert "pkce.code.challenge.method" in script
     assert "update_client_urls platform-web" in script
-    assert 'update_client_urls workbench-desktop' in script
 
 
 def test_logout_redirect_uri_matches_sync_script_for_any_public_host() -> None:
@@ -71,18 +68,13 @@ def test_compose_derives_every_public_url_from_each_selected_host() -> None:
         services = compose_config(public_host)["services"]
         keycloak = services["keycloak"]["environment"]
         platform = services["platform-api"]["environment"]
-        workbench = services["workbench"]["environment"]
 
         assert keycloak["KC_HOSTNAME"] == f"http://{public_host}:18080"
         assert keycloak["PLATFORM_PUBLIC_URL"] == f"http://{public_host}:18000"
-        assert keycloak["WORKBENCH_PUBLIC_URL"] == f"http://{public_host}:19820"
         assert platform["PLATFORM_PLATFORM_BASE_URL"] == f"http://{public_host}:18000"
-        assert platform["PLATFORM_WORKBENCH_BASE_URL"] == f"http://{public_host}:19820"
         assert platform["PLATFORM_OIDC_ISSUER"] == (
             f"http://{public_host}:18080/realms/digital-employees"
         )
-        assert workbench["WORKBENCH_PUBLIC_URL"] == f"http://{public_host}:19820"
-        assert workbench["PLATFORM_PUBLIC_URL"] == f"http://{public_host}:18000"
 
 
 def test_runtime_env_prefers_explicit_host_then_env_file(tmp_path: Path) -> None:

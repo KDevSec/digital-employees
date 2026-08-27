@@ -10,7 +10,6 @@ until curl --fail --silent --show-error "$url" >/dev/null 2>&1; do
     case "$url" in
       *:18080*) svc="keycloak" ;;
       *:18000*) svc="platform-api" ;;
-      *:19820*) svc="workbench" ;;
       *) svc="" ;;
     esac
     if [ -n "$svc" ]; then

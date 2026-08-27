@@ -24,7 +24,6 @@ services:
       KC_DB_PASSWORD: ${DB_PASSWORD}
       KC_HOSTNAME: http://${PUBLIC_HOST:-127.0.0.1}:18080
       PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
       PLATFORM_INTERNAL_URL: http://platform-api:8000
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
@@ -51,7 +50,6 @@ services:
     environment:
       PLATFORM_DATABASE_URL: postgresql+psycopg://platform:${DB_PASSWORD_URL}@postgres:5432/platform
       PLATFORM_PLATFORM_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      PLATFORM_WORKBENCH_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
       PLATFORM_OIDC_ISSUER: http://${PUBLIC_HOST:-127.0.0.1}:18080/realms/digital-employees
       PLATFORM_OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
       PLATFORM_OIDC_CLIENT_ID: platform-web
@@ -71,29 +69,12 @@ services:
         condition: service_started
 
   platform-web:
-    build: ../platform/frontend
-    ports:
-      - "18000:80"
-    depends_on:
-      - platform-api
-
-  workbench:
-    build: ../workbench
-    environment:
-      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
-      PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      PLATFORM_INTERNAL_URL: http://platform-api:8000
-      OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
-      WORKBENCH_STATE_PATH: /app/data/state.enc
-      WORKBENCH_STATE_SECRET: ${WORKBENCH_STATE_SECRET}
-    volumes:
-      - workbench-data:/app/data
-    ports:
-      - "19820:19820"
-    depends_on:
-      - platform-api
+   build: ../platform/frontend
+   ports:
+     - "18000:80"
+   depends_on:
+     - platform-api
 
 volumes:
   postgres-data:
   package-data:
-  workbench-data:
