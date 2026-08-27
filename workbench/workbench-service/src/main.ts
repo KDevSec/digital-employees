@@ -12,6 +12,7 @@ import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'no
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { createPlatformAccess } from './app/platform-access'
 import { brand } from './brand'
 import { loadConfig, writeConfigOverride, writeSample } from './config/load'
 import type { WorkbenchConfig } from './config/schema'
@@ -52,6 +53,11 @@ const logsDir = join(profileDir, 'logs')
 const sentinelsDir = join(runDir, 'sentinels')
 
 let startedAtMs = Date.now()
+
+// ---------- A 系列认证装配（Task 16）：心跳调度器模块级句柄 ----------
+
+/** 心跳后台任务句柄（startRealServer 装配时赋值；优雅退出 serverStop 前先停，详设 §14） */
+let heartbeatScheduler: { stop(): void } | null = null
 
 // ---------- 守护路径运行时（惰性初始化，I-3：急切初始化会使坏 config 连累 stop/status） ----------
 
@@ -178,6 +184,10 @@ function sleep(ms: number): Promise<void> {
 }
 
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
+  // A 系列装配（Task 16，详设 §3.1）：platform-access = 八认证端点 handler 门面 + 心跳调度器
+  const installationId = rt.uid
+  const access = createPlatformAccess({ profileDir, loadConfig, installationId, version: brand.version })
+  heartbeatScheduler = access.scheduler
   const registry = createRegistry()
   registerAllRoutes(registry, {
     version: brand.version,
@@ -190,11 +200,15 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     profileDir,
     loadConfig,
     writeConfigOverride,
+    service: access.service,
   })
-  const app = toHonoApp(registry)
+  const app = toHonoApp(registry, { sessionGuard: (ctx, grade) => access.service.sessionGuard(ctx, grade) })
   startedAtMs = Date.now()
   try {
-    return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    const server = Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    // 详设 §3.1 第 9 步：服务起 → 后台任务起（心跳调度；workbenchId 在才真起，幂等）
+    access.scheduler.ensureRunning()
+    return server
   } catch (err) {
     throw new ExitError(78, `监听 127.0.0.1:${cfg.network.port} 失败（端口被占用？）：${String(err)}`)
   }
@@ -309,6 +323,7 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
       port,
       markCleanStop: () => markCleanStop(runDir),
       serverStop: () => {
+        heartbeatScheduler?.stop()
         server.stop(true)
       },
       clearRunDir: clearDiscoveryFiles,
