@@ -253,6 +253,20 @@ describe('Res/Ctx 契约扩展（认证迁移设计 §4.1）', () => {
     expect(res.headers.get('Location')).toBe('/')
     expect(res.headers.get('content-type')).toBeNull()
   })
+
+  it('畸形 Cookie 头（裸 %）不炸路由：畸形对跳过、合法对仍解析', async () => {
+    let seen: Record<string, string> | undefined
+    const app = buildAppWith((ctx) => { seen = ctx.cookies; return { status: 204 } })
+    const res = await app.request('/probe', { headers: { Cookie: 'bad=50%; good=sid-123' } })
+    expect(res.status).toBe(204)
+    expect(seen).toEqual({ good: 'sid-123' })
+  })
+
+  it('恶意 Host + 畸形 Cookie → 仍 403（S-12 Host 守卫优先级不被 cookie 解析破坏）', async () => {
+    const app = buildAppWith(() => ({ status: 200, json: { ok: true } }))
+    const res = await app.request('/probe', { headers: { Host: 'evil.com', Cookie: 'x=50%' } })
+    expect(res.status).toBe(403)
+  })
 })
 
 describe('鉴权档位（A-08，设计 §4.2）', () => {

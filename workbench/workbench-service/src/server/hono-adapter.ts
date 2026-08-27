@@ -23,14 +23,21 @@ export function toHonoApp(
   return app
 }
 
-/** demo cookies() 迁移：Cookie 头 → 键值对（decodeURIComponent + 双段过滤） */
+/** demo cookies() 迁移：Cookie 头 → 键值对（decodeURIComponent + 双段过滤）。
+ *  容错（fix round 1 裁决）：畸形对（裸 % 解码失败）整对跳过——调用点先于 Host 守卫，
+ *  不容一个坏 cookie 把任意路由炸成 500；畸形会话 cookie → undefined → 匿名语义，正确。 */
 function parseCookies(header: string | undefined): Record<string, string> {
-  return Object.fromEntries(
-    (header ?? '')
-      .split(';')
-      .map((value) => value.trim().split('=').map(decodeURIComponent))
-      .filter((pair) => pair.length === 2),
-  )
+  const pairs: [string, string][] = []
+  for (const raw of (header ?? '').split(';')) {
+    const segments = raw.trim().split('=')
+    if (segments.length !== 2) continue
+    try {
+      pairs.push([decodeURIComponent(segments[0]), decodeURIComponent(segments[1])])
+    } catch {
+      // 畸形百分号编码：跳过该对，不拖垮同头其余 cookie
+    }
+  }
+  return Object.fromEntries(pairs)
 }
 
 function serializeCookie(cookie: ResCookie): string {
