@@ -1,0 +1,112 @@
+docs/design/设计决策记录-2026-08-13.md
+  s_3164dc039eb46c::t_507f3d0d36e057 485-491
+  s_3164dc039eb46c::t_80f135162aacda 356-357
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_3164dc039eb46c::t_b1b5ba3deace54 170
+  s_3164dc039eb46c::t_e8b392bb7d917b 4-7,11,14,29-33,35
+  s_3164dc039eb46c::t_41b1e1a57ccbea 156-162
+workbench/workbench-service/test/adapters-models.test.ts
+  s_3164dc039eb46c::t_daaf7717a3a7e7 25-39
+workbench/workbench-web/src/views/BasesView.vue
+  s_3164dc039eb46c::t_bbf8bc8dfc0b3e 1-455
+workbench/workbench-service/src/bases/tier-config.ts
+  s_3164dc039eb46c::t_8ae5e1ba3415d6 46-48,51-56
+  s_3164dc039eb46c::t_b48bab4f0da318 1-45,49-50,57-67
+workbench/workbench-service/src/main.ts
+  s_3164dc039eb46c::t_67b88604a9c599 273
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_e1d6dd2cc01a37 216
+  s_3164dc039eb46c::t_ed8fcc6e9f9eac 469
+  s_3164dc039eb46c::t_c720a7172c8e78 220-228
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_3164dc039eb46c::t_b9e1ecbf01dfc6 184,197,210
+  s_3164dc039eb46c::t_a191022652a194 92-93
+  s_3164dc039eb46c::t_717f4d4d6889bd 153-176,179,181-183,185-196,198-209,211-218
+  s_3164dc039eb46c::t_5e35ad199e3ac5 177-178,180
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_aae4124d3a6596 7
+workbench/workbench-service/src/adapters/common/models.ts
+  s_3164dc039eb46c::t_1981478f3eb41b 1-2,4,6,11-16
+workbench/workbench-service/test/routes-registry.test.ts
+  s_3164dc039eb46c::t_c485fe8771caae 70,82,90,129
+workbench/workbench-service/test/routes-bases.test.ts
+  s_46f7f3afbb6303::t_e4f73b14fd72d1 23
+  s_3164dc039eb46c::t_2b41a4db1588f7 67
+  s_3164dc039eb46c::t_a7846a63d85a27 62-66,68-109
+workbench/workbench-web/src/components/board/NeedDrawer.vue
+  s_3164dc039eb46c::t_8a923045cf2505 26-31
+  s_3164dc039eb46c::t_111e9076d573f6 100-107
+  s_3164dc039eb46c::t_09c075f8b82112 7,9
+docs/plans/2026-08-26-功能点分工总表.md
+  s_46f7f3afbb6303::t_a45dbe476fa048 51-53
+  s_46f7f3afbb6303::t_1de9f786a4dfce 44-48
+  s_46f7f3afbb6303::t_cd572cd541bcaf 56
+  s_46f7f3afbb6303::t_96f35ae932ada4 5-6
+  s_46f7f3afbb6303::t_e80a99450f3913 111
+  s_46f7f3afbb6303::t_ed663dda86bfb9 49
+  s_46f7f3afbb6303::t_569e4faad485bf 20
+  s_3164dc039eb46c::t_98cb2dde4876ea 106
+  s_3164dc039eb46c::t_bf92dc7ff34e8b 67-68
+workbench/workbench-service/test/adapters-plan.test.ts
+  s_3164dc039eb46c::t_ad94b7c923b7a7 42,49,51-52
+workbench/workbench-web/test/guard-integration.test.ts
+  s_3164dc039eb46c::t_435a18c1ccc0a4 149-151
+workbench/workbench-web/test/bases-view.test.ts
+  s_3164dc039eb46c::t_1a1384a718ebb4 196-197
+  s_3164dc039eb46c::t_fbf5030573bbef 1-195,198-201
+workbench/workbench-service/src/installs/executor/actions.ts
+  s_3164dc039eb46c::t_f39d3d583e565d 136-137,149,151
+workbench/workbench-service/test/server.test.ts
+  s_3164dc039eb46c::t_36149b5208e30a 61
+workbench/workbench-service/test/assembly.test.ts
+  s_3164dc039eb46c::t_36149b5208e30a 45
+workbench/workbench-service/src/server/routes/bases.ts
+  s_3164dc039eb46c::t_114411b5688366 11,16,22-28,37-38
+  s_3164dc039eb46c::t_50412afc44f629 117-138
+workbench/workbench-service/test/routes-engine.test.ts
+  s_3164dc039eb46c::t_36149b5208e30a 48
+workbench/workbench-web/src/router/routes/bases.ts
+  s_3164dc039eb46c::t_13683a47e3ce57 3,6-8,14
+workbench/workbench-web/test/placeholder.test.ts
+  s_3164dc039eb46c::t_56dee3157c9dc0 6,9-12,14-17,19-21
+workbench/workbench-service/src/adapters/common/plan.ts
+  s_3164dc039eb46c::t_b8a6547104158a 53-55,57
+  s_3d694229081e72::t_08bd7a2773c7d2 7-8
+workbench/workbench-service/src/adapters/common/tier-map.ts
+  s_3164dc039eb46c::t_b5ef8c207e1610 8
+  s_3164dc039eb46c::t_621dc1236845ca 24-31
+workbench/workbench-web/src/api/bases.ts
+  s_3164dc039eb46c::t_9ba1e073c5ca80 73-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "79d6b521f4e6c967c23f3f0273dfaa4ab63ae3e2",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
