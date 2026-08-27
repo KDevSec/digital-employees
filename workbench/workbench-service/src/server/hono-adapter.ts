@@ -19,11 +19,19 @@ export function toHonoApp(
 }
 
 async function dispatch(
-  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown> } },
+  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; query: (key: string) => string | undefined; queries: () => Record<string, string[]> } },
   route: Route,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
   // DNS rebinding 攻击必然携带恶意 Host，白名单判据仍是「带 Host 则必须白名单内」。
+  // 查询参数：c.req.queries() 返回 Record<string, string[]>；扁平为首值映射供 handler 用（无 query 时空对象）
+  const queries = c.req.queries()
+  const query: Record<string, string> = {}
+  for (const [k, v] of Object.entries(queries)) {
+    if (Array.isArray(v) && v.length > 0) {
+      query[k] = v[0]!
+    }
+  }
   const ctx: Ctx = {
     method: route.method,
     path: c.req.path,
@@ -31,6 +39,7 @@ async function dispatch(
     // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
     // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
     body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
+    query,
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)

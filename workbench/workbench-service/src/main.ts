@@ -37,6 +37,8 @@ import { registerAllRoutes } from './server/routes'
 import { toHonoApp } from './server/hono-adapter'
 import { createTemplatesProvider } from './templates/provider'
 import { builtinTemplates } from './assets/templates.gen'
+import { createEmployeeStore } from './employees/store'
+import { createEmployeeBuilder } from './employees/builder'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
 // vitest 不支持该导入属性——路由域（routes/）经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
@@ -181,6 +183,24 @@ function sleep(ms: number): Promise<void> {
 
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
+  // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
+  // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
+  // 同一 provider 实例供 templates 域路由 + employees 域 builder 共用（read-only，无状态冲突）
+  const templatesProvider = createTemplatesProvider(
+    builtinTemplates,
+    join(profileDir, 'templates', 'custom'),
+  )
+  // Task 11 B6 employees 域：builder 管线八步（draft → 八步 → 原子落盘）+ store（id 冲突预检/suggestion）
+  // employeesRoot/tmpRoot 落在 profileDir 下（与 config/run/logs 同根）；store 与 builder 共用同一组目录
+  const employeesStore = createEmployeeStore(
+    join(profileDir, 'employees'),
+    join(profileDir, 'tmp'),
+  )
+  const employeesBuilder = createEmployeeBuilder({
+    provider: templatesProvider,
+    store: employeesStore,
+    tmpRoot: join(profileDir, 'tmp'),
+  })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -192,9 +212,10 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     profileDir,
     loadConfig,
     writeConfigOverride,
-    // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
-    // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
-    templates: createTemplatesProvider(builtinTemplates, join(profileDir, 'templates', 'custom')),
+    templates: templatesProvider,
+    // Task 11 B6 employees 域：builder 管线八步 + store（id 冲突预检/suggestion）
+    builder: employeesBuilder,
+    store: employeesStore,
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

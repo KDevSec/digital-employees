@@ -9,6 +9,8 @@ export interface Ctx {
   path: string
   host: string
   body?: unknown
+  /** 查询参数（GET query string——首值映射；adapter 从 c.req.query() 装配）。无 query 时为空对象。 */
+  query?: Record<string, string>
 }
 
 export interface Res {

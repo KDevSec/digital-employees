@@ -17,9 +17,11 @@ import { registerConfigRoutes } from './config'
 import type { ConfigRouteDeps } from './config'
 import { registerTemplatesRoutes } from './templates'
 import type { TemplatesRouteDeps } from './templates'
+import { registerEmployeesRoutes } from './employees'
+import type { EmployeesRouteDeps } from './employees'
 
 /** 全量路由依赖 = 各域依赖之和（main 装配一次给全；域文件各取所需字段） */
-export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & TemplatesRouteDeps
+export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & TemplatesRouteDeps & EmployeesRouteDeps
 
 /** 汇总注册（静态表：一行一域；新增域在此追加一行） */
 export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps: RouteDeps): void {
@@ -27,6 +29,7 @@ export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps
   registerShellRoutes(reg, deps)
   registerConfigRoutes(reg, deps) // I0-5 T8 config 域（设计 D-14：GET/PUT /api/config/platform）
   registerTemplatesRoutes(reg, deps) // Task 7 B2 templates 域（GET /api/templates、GET /api/skills）
+  registerEmployeesRoutes(reg, deps) // Task 11 B6 employees 域（POST /api/employees/generate、GET /api/employees/validate-id）
   assertNoDuplicateRoutes(reg.routes)
 }
 

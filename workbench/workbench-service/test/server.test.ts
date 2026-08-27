@@ -10,8 +10,17 @@ import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
 import { builtinTemplates } from '../src/assets/templates.gen'
 import { createTemplatesProvider } from '../src/templates/provider'
+import { createEmployeeStore } from '../src/employees/store'
+import { createEmployeeBuilder } from '../src/employees/builder'
 
 function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
+  // Task 11 B6 employees 域：占位 store/builder（本文件不触达该域端点，行为断言在 routes-employees.test.ts）
+  const store = createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp')
+  const builder = createEmployeeBuilder({
+    provider: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+    store,
+    tmpRoot: 'D:/data/.devzero/tmp',
+  })
   const registry = createRegistry()
   registerAllRoutes(registry, {
     version: '9.9.9',
@@ -26,6 +35,8 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     writeConfigOverride,
     // Task 7 B2 templates 域：真实 builtin 资产 + 占位 customRoot（本文件不触达该域端点，行为断言在 routes-templates.test.ts）
     templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+    builder,
+    store,
     ...overrides,
   })
   return toHonoApp(registry)
