@@ -1,0 +1,39 @@
+workbench/workbench-service/src/main.ts
+  s_b9259474bd2245::t_fe7e98b2996766 269-271
+workbench/workbench-service/test/routes-installs.test.ts
+  s_b9259474bd2245::t_08cd3d401240e0 3
+  s_b9259474bd2245::t_1310f893ae2abc 33
+  s_b9259474bd2245::t_85c8ad60a479d7 105-187
+workbench/workbench-service/src/server/routes/installs.ts
+  s_b9259474bd2245::t_f1672dce82b856 19,66-67
+  s_b9259474bd2245::t_a4429e0ec63ae3 77,91
+  s_b9259474bd2245::t_fb6c065114de2a 40-41,43-45,52-65
+workbench/workbench-service/src/employees/store.ts
+  s_b9259474bd2245::t_5d2d5d4eb425c2 30-39
+workbench/workbench-service/test/server.test.ts
+  s_b9259474bd2245::t_feaed129279942 60
+workbench/workbench-service/test/assembly.test.ts
+  s_b9259474bd2245::t_9ebdf342736084 43
+docs/plans/2026-08-27-L1员工新建-design.md
+  s_b9259474bd2245::t_6f0816deddf592 86
+workbench/workbench-service/test/routes-registry.test.ts
+  s_b9259474bd2245::t_a0fbc121e6c242 68
+workbench/workbench-service/test/routes-engine.test.ts
+  s_b9259474bd2245::t_f0bac026362d32 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2e554813344926898dc96faaeaa850286213cc5b",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
