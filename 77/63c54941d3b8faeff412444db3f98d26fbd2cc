@@ -1,0 +1,19 @@
+workbench/workbench-service/test/adapters/claude-code/profile.test.ts
+  s_3d694229081e72::t_d969a87211c49f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7763c54941d3b8faeff412444db3f98d26fbd2cc",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "deepseek-v4-flash-ga-260731"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
