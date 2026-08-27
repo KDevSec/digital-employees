@@ -123,7 +123,8 @@ describe('R1 账本 · init 落盘形态（工作区布局 D-045）', () => {
     expect(taskMd).toContain('demo-flow')
     expect(taskMd).toContain('engine_confirm_gate')
 
-    expect(readFileSync(join(workspace, '.mcp.json'), 'utf8')).toBe(MCP_JSON)
+    // 🟡2 合并语义后 .mcp.json 为 pretty JSON（语义等价断言，不再逐字紧凑形态）
+    expect(JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8'))).toEqual(JSON.parse(MCP_JSON))
 
     const snap = yamlLoad(readFileSync(join(dir, 'table.snapshot.yml'), 'utf8')) as NodeTable
     expect(snap.flow).toBe('demo-flow')
@@ -485,5 +486,50 @@ describe('R1 账本 · T4 独立复审修复批（🟡5/🟡3/🟡1/🟡4）', (
     expect(readIndexRaw().tasks[task_id]).toMatchObject({ archived: true, archive_path: dest })
     // 自愈后 read 正常
     expect(ledger.readEvents(task_id)).toHaveLength(2)
+  })
+})
+
+describe('R1 账本 · .mcp.json 合并语义与自愈（🟡2 复审裁决：用户配置不覆盖 + 键丢失自愈）', () => {
+  it('工作区已有用户 .mcp.json → init 合入 devzero-engine 键，用户键零丢失', () => {
+    writeFileSync(join(workspace, '.mcp.json'), JSON.stringify({
+      mcpServers: { github: { type: 'stdio', command: 'npx', args: ['-y', 'server-github'] } },
+    }, null, 2))
+    ledger.init(mkInput(), table)
+    const doc = JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8')) as {
+      mcpServers: Record<string, { type?: string; url?: string; command?: string }>
+    }
+    expect(doc.mcpServers.github).toEqual({ type: 'stdio', command: 'npx', args: ['-y', 'server-github'] }) // 用户键保留
+    expect(doc.mcpServers['devzero-engine']).toEqual({ type: 'http', url: 'http://127.0.0.1:19980/mcp' }) // 我们合入
+  })
+
+  it('用户 .mcp.json 坏 JSON → LedgerError 指引人工处理，不覆盖不吞', () => {
+    writeFileSync(join(workspace, '.mcp.json'), '{ 坏配置')
+    try {
+      ledger.init(mkInput(), table)
+      expect.unreachable()
+    } catch (err) {
+      expect(err).toBeInstanceOf(LedgerError)
+      expect((err as Error).message).toContain('.mcp.json')
+    }
+    expect(readFileSync(join(workspace, '.mcp.json'), 'utf8')).toBe('{ 坏配置') // 原样保留
+  })
+
+  it('键被用户中途删除 → ensureMcpConfig 幂等自愈（init/ensure 都能补回）', async () => {
+    const { task_id } = ledger.init(mkInput(), table)
+    // 用户用底座 CLI 改配置把我们的键删了（只留自己的键）
+    writeFileSync(join(workspace, '.mcp.json'), JSON.stringify({ mcpServers: { userTool: { type: 'stdio', command: 'x' } } }))
+    // spawn 前自愈：ensureMcpConfig 补回（此处直接调导出的 ensure——spawn-runner 消费同一函数）
+    const { ensureMcpConfig } = await import('../src/r1/ledger')
+    ensureMcpConfig(workspace)
+    const doc = JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8')) as {
+      mcpServers: Record<string, unknown>
+    }
+    expect(doc.mcpServers.userTool).toBeDefined() // 用户键仍在
+    expect(doc.mcpServers['devzero-engine']).toBeDefined() // 我们补回
+    // 幂等：再 ensure 不变不重复
+    ensureMcpConfig(workspace)
+    const doc2 = JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8')) as { mcpServers: Record<string, unknown> }
+    expect(Object.keys(doc2.mcpServers)).toHaveLength(2)
+    expect(task_id.startsWith('t-')).toBe(true)
   })
 })

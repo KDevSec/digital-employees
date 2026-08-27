@@ -73,7 +73,6 @@ const HANDOFFS = 'handoffs'
 
 const AGENTS_LINE = '- DevZero 任务上下文见 .devzero/TASK.md（编排引擎工具与当前状态）'
 const GITIGNORE_LINE = '.devzero/'
-const MCP_JSON = '{"mcpServers":{"devzero-engine":{"type":"http","url":"http://127.0.0.1:19980/mcp"}}}'
 
 /** UTC ISO 时间戳（ms 精度，避免同秒碰撞） */
 const nowIso = (): string => new Date().toISOString()
@@ -113,7 +112,38 @@ function renderTaskMd(meta: TaskMeta, state: TaskState): string {
   ].join('\n')
 }
 
-/** 工作区侧落位：TASK.md + AGENTS.md 引用行（幂等追加，不覆盖）+ .mcp.json */
+/**
+ * .mcp.json 合并语义与自愈（🟡2 复审裁决）：文件名是底座生态约定（CB/Qoder/CC 项目级
+ * MCP 标准名——改名底座不加载、L0 人肉会话断），撞车用**键级合并**解决——
+ * 只写自己的命名空间键 mcpServers.devzero-engine，用户键零改动；
+ * 用户/底座 CLI 中途覆盖（重写丢键）→ 每次 spawn 前重调本函数自愈（窗口=一个派发周期）。
+ * 坏 JSON 用户文件 → LedgerError 指引人工处理（不覆盖不吞）。
+ */
+export function ensureMcpConfig(workspace: string): void {
+  const p = join(workspace, '.mcp.json')
+  const DEVZERO_KEY = 'devzero-engine'
+  const OURS = { type: 'http', url: 'http://127.0.0.1:19980/mcp' }
+  if (!existsSync(p)) {
+    writeFileSync(p, `${JSON.stringify({ mcpServers: { [DEVZERO_KEY]: OURS } }, null, 2)}
+`)
+    return
+  }
+  let doc: { mcpServers?: Record<string, unknown> }
+  try {
+    doc = JSON.parse(readFileSync(p, 'utf8')) as { mcpServers?: Record<string, unknown> }
+  } catch (err) {
+    throw new LedgerError(
+      `[ledger] 工作区 .mcp.json 非合法 JSON（疑为用户手写损坏）——不覆盖，请人工修复后重试: ${p}: ${(err as Error).message}`,
+    )
+  }
+  const servers = (doc.mcpServers ??= {})
+  if (JSON.stringify(servers[DEVZERO_KEY]) === JSON.stringify(OURS)) return // 幂等：键在且一致则跳过
+  servers[DEVZERO_KEY] = OURS // 合入我们的键——用户其他键零改动
+  writeFileSync(p, `${JSON.stringify(doc, null, 2)}
+`)
+}
+
+/** 工作区侧落位：TASK.md + AGENTS.md 引用行（幂等追加，不覆盖）+ .mcp.json（合并语义见 ensureMcpConfig） */
 function writeWorkspaceArtifacts(input: CreateTaskInput, meta: TaskMeta, state: TaskState): void {
   const dz = join(input.workspace, '.devzero')
   mkdirSync(dz, { recursive: true }) // workspace 侧目录不存在则建；workspace 已有内容不失败
@@ -126,7 +156,7 @@ function writeWorkspaceArtifacts(input: CreateTaskInput, meta: TaskMeta, state: 
     writeFileSync(agentsPath, prev ? `${prev.endsWith('\n') ? prev : `${prev}\n`}${AGENTS_LINE}\n` : `${AGENTS_LINE}\n`)
   }
 
-  writeFileSync(join(input.workspace, '.mcp.json'), MCP_JSON)
+  ensureMcpConfig(input.workspace)
 
   // .gitignore：账本不随用户 git 入库（设计 §7.1）——无则建、有则检测追加（同 AGENTS.md 模式，幂等）
   const giPath = join(input.workspace, '.gitignore')

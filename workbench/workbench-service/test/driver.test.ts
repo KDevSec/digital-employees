@@ -235,6 +235,21 @@ describe('SpawnRunner · 指令文件与超时', () => {
     })).rejects.toThrow(/spawn 超时/)
   })
 
+  it('🟡2 spawn 前键级自愈：.mcp.json 被用户改写丢键 → 派发后补回且用户键保留', async () => {
+    const { task_id } = engine.createTask({ mode: 'solo', employee: 'dev-engineer', workspace, title: 'T', input: 'x' })
+    // 用户中途用底座 CLI 重写配置（我们的键没了，用户键在）
+    const { writeFileSync: wf } = await import('node:fs')
+    wf(join(workspace, '.mcp.json'), JSON.stringify({ mcpServers: { userTool: { type: 'stdio', command: 'x' } } }))
+    const runner = new SpawnRunner({ launcher: mock, spawnDir: () => join(root, 'spawn') })
+    await runner.spawn({
+      taskId: task_id, workspace, emp: 'dev-engineer', node: 'n-exec',
+      promptBody: 'x', dispatchId: 'd-9', mockDirectives: ['exit:0'],
+    })
+    const doc = JSON.parse(readFileSync(join(workspace, '.mcp.json'), 'utf8')) as { mcpServers: Record<string, unknown> }
+    expect(doc.mcpServers.userTool).toBeDefined()
+    expect(doc.mcpServers['devzero-engine']).toBeDefined()
+  })
+
   it('reviewPromptBody 模板含 handoffs 路径与覆盖范围', () => {
     const body = reviewPromptBody({ workspace, taskId: 't-x', gateId: 'g-sec-code', reviewer: 'sec-code', covers: ['n2-impl'] })
     expect(body).toContain('sec-code')

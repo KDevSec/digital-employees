@@ -7,6 +7,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { ensureMcpConfig } from '@devzero/engine'
 import type { Launcher, LaunchRequest } from './launcher'
 
 export interface SpawnSpec {
@@ -37,6 +38,8 @@ export class SpawnRunner {
   constructor(private opts: SpawnRunnerOptions) {}
 
   async spawn(spec: SpawnSpec): Promise<{ code: number }> {
+    // 键级自愈（🟡2）：用户/底座 CLI 中途改写 .mcp.json 丢 devzero-engine 键 → 每次派发前幂等补回
+    ensureMcpConfig(spec.workspace)
     const dir = (this.opts.spawnDir ?? ((ws: string) => join(ws, '.devzero', 'spawn')))(spec.workspace)
     mkdirSync(dir, { recursive: true })
     const promptFile = join(dir, `${spec.dispatchId}-${randomUUID().slice(0, 8)}.md`)

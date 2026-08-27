@@ -25,6 +25,7 @@ export type { EngineDirs } from './r1/paths'
 export type { EngineEvent } from './schema/events'
 export type { NodeTable, FlowNode, GateSpec, NodeKind } from './schema/node-table'
 export { parseNodeTable } from './schema/node-table'
+export { ensureMcpConfig } from './r1/ledger'
 
 /** 门面错误（表加载失败/非法状态转换请求/归档任务操作等——message 含定位） */
 export class EngineError extends Error {
