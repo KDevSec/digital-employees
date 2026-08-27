@@ -1,0 +1,19 @@
+workbench/workbench-service/test/secretgate.test.ts
+  s_b9259474bd2245::t_95847b8e270e9f 44-45,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fda88ab25c9654e02414a0d8a9bb08c9d85b6157",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
