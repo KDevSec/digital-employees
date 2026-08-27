@@ -1,0 +1,31 @@
+workbench/workbench-web/package.json
+  s_b9259474bd2245::t_2beceddbb9087b 20-21
+workbench/workbench-web/test/e2e/wizard-smoke.spec.ts
+  s_b9259474bd2245::t_35f1d7c6d4c925 22,59-66,90,105
+  s_b9259474bd2245::t_20ca6c3b5c1290 30,32-33
+  s_b9259474bd2245::t_e8732c4f240d42 1-21,23-29,31,34-58,67-74,76,88-89,91-104,106-148,153,160-187
+  s_b9259474bd2245::t_bd0ae7b1834619 152
+  s_b9259474bd2245::t_aa19698f858653 149-151,154-159
+  s_b9259474bd2245::t_0507d473b73955 75,77-87
+workbench/workbench-web/playwright.config.ts
+  s_b9259474bd2245::t_41b9e619072874 1-5,8-30
+  s_b9259474bd2245::t_6dcd5b01ed1a15 6-7
+bun.lock
+  s_b9259474bd2245::t_ee2f544c28a5d2 60,165-166,399-402,517-518
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5145c46676c46438822af2c1a76703c9c0c04e4b",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
