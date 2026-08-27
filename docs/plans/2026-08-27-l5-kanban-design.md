@@ -282,9 +282,46 @@ KanbanView（/kanban）
 | D-kb04 | fixture 模块动态 import 隔离，生产 bundle 不含演出设施 |
 | D-kb05 | 闸位停靠看板辅按钮（通过/驳回）实做 confirmGate；主通道对话式提示文案引导 |
 
+## 13. v0.2 修订（2026-08-27 用户裁决：移除演出 + UI 对齐 1.0 demo 任务看板）
+
+**用户裁决两条**：① 演示是真实的，不做页面内 fixture 演出；② 看板样式参照 1.0 demo 分支（agents-team feat/demo-4stage-flow `ieidev_hud/frontend.py`）的任务看板。
+
+### 13.1 mock 三分法（替代原 D-kb04 的「页面内演出」形态）
+
+| 层 | 处置 |
+|---|---|
+| fixture 演出 UI（FixtureControls / use-kanban-runtime 的 fixture 分支 / 页面内剧本播放） | **删除**——页面数据源唯一：真实 `/api/engine/*` + 原生 EventSource；引擎未通即诚实显示不可达/空态 |
+| mock 测试替身（MockEventSource、剧本生成器 scenarios.ts） | **保留**——纯 vitest 进程资产（41 条测试，剧本自检=引擎线联调契约锚），产品路径不可达 |
+| 本地 mock service（scripts/mock-engine-server.ts，含 state/engine/SSE 全套） | **新增**——开发/视觉调试走网络层（Vite 代理 → 19990 假 SSE），页面代码零分支；演示当天起真 service+引擎，页面不改 |
+
+隔离实证：`bun run build` 后 grep 产物无 `demo-flow`/剧本字样（加入验收锚 K1）。mock 进程不 spawn 底座、不写账本，与真实引擎不同进程不同源。
+
+### 13.2 UI 重做（信息架构对齐 1.0，替代原 §8 的多任务大卡堆叠）
+
+```
+grid: 330px | 1fr，height:100vh（整页工作台式）
+├─ 左列 TaskSidebar：工作区分组（task.workspace 键，可折叠）→ 任务行（状态图标/迷你进度/标题），点击切换详情
+├─ topbar：任务标题 + 状态 tag + ConnectionBar + 「发起任务」按钮（KB-02 入口）
+├─ EmpBand：当前派发员工横条（avatar+名+所在节点+呼吸态；数据=activeDispatches）
+├─ 🧭 任务阶段 StageBand：横向阶段步进横幅（格=表 stage 字段，零硬编码保留）：
+│    每格阶段名+百分比(done 节点/阶段节点数)+进度条；done 绿底 / active 蓝呼吸光晕 / gate_paused amber；
+│    末格 gate 位：通过闸数/总闸数（不给进度条——1.0 语义）
+├─ ⚡ 事件观战 EventWatchPanel：黑底等宽滚动流（六类事件 tail 式追加自动滚底；真 stdout 观战留引擎线/V0.2）
+├─ 🛡 告警卡 AlertPanel：blocked/aborted 常驻 + 闸位停靠置顶（含通过/驳回辅按钮，D-kb05 保留）
+└─ 🔍 评审流水 GateFeedPanel：时间·闸·评审方·verdict·iter·issues 细行（人工 confirm 在场，纪律④）
+```
+
+废弃：StageLane/NodeChip/DispatchCard/TaskBoardCard（泳道+大卡形态）；GatePauseBar 并入 AlertPanel。数据层（消费/归并/store/表快照）全部复用不动。阶段说明卡不做（纯静态文案价值低——用户默认认可）；事件观战数据源=六类事件（B4 裁决：与 demo 类似形态）。
+
+### 13.3 KanbanView 纯真实接线
+
+`use-kanban-runtime.ts` 删除；KanbanView 直接 `createEngineStream(streamUrl())` + `httpEngineApi`（getFlows/getTask/confirmGate）。测试经 `vi.stubGlobal('EventSource'/'fetch')` 注入替身——页面代码零测试分支。
+
 ## 变更记录
 
 | 日期 | 变更 |
 |------|------|
 | 2026-08-27 | v0.1 初版：四层架构（消费/归并/派生/UI）+ fixture 四剧本 + 表单字段面 + 契约歧义六条 + 验收 K1-K8 |
 | 2026-08-27 | 验收回写：T1~T11 全绿（354 测试），K1~K8 逐条勾；走查实捕修复三件（seq 分域去重/emitOpen 顺序/辅按钮接线） |
+| 2026-08-27 | v0.2 修订（用户裁决）：§13 移除页面内演出（mock 三分法）+ UI 重做为 1.0 demo 任务看板形态（工作区树/stageband/empband/事件观战/告警/评审流水） |
+| 2026-08-27 | v0.2 验收回写：347 测试全绿 + TS 干净；浏览器四剧本闭环（happy/gate-pause 含真实 HTTP confirm-gate 放行/abort）；**bundle 隔离实证通过**（grep 无 demo-flow/五阶段演示交付/员工名/mock 字样，仅契约字段名 reflow 与 AbortController 子串）；走查实捕修复：SSE 空闲掐断（首字节+5s 心跳+idleTimeout 255）、mock 强杀半开连接（EventSource 假 live——真实 service 优雅重启无此问题，工程增强记演进）、闸分母补人工闸节点（6/6）、空态发起入口可达 |

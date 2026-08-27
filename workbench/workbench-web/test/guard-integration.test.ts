@@ -147,10 +147,10 @@ describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
     await router.push('/kanban')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/kanban')
-    // L5 看板线（2026-08-27）：kanban 已是真页（KanbanView，事件驱动）——占位文案断言
-    // 改为真页空态证据（副标 + 空态引导，区别于侧栏同名项「任务看板」）
-    expect(text()).toContain('五阶段协同推进、闸位停靠与评审流水')
+    // L5 v0.2：kanban 真页（左树右详情工作台）——空态证据（左列/右区空态 + 发起入口，
+    // 区别于侧栏同名项「任务看板」）
     expect(text()).toContain('暂无任务')
+    expect(text()).toContain('发起任务')
 
     // 已登录 ACTIVE × SPA 内导航回 / → 放行停驻（T9 审查修复：自动分流只在初始导航/登录落地，
     // 手动回接入页意图优先——D-22 顶栏「接入与平台设置」入口对 ACTIVE 用户有效）
