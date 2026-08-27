@@ -9,12 +9,12 @@
       "name": "@devzero/shared-protocol",
       "version": "0.1.0",
       "dependencies": {
+        "js-yaml": "^4",
         "zod": "^3",
       },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/js-yaml": "^4",
-        "js-yaml": "^4",
         "typescript": "^5",
         "vitest": "^2",
       },

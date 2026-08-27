@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { skillFrontmatterSchema, skillEntrySchema } from '../src/skill'
+import { skillFrontmatterSchema, skillEntrySchema, parseSkillFrontmatter } from '../src/skill'
 
 describe('skillFrontmatterSchema', () => {
   it('合法：name+description（10 字+）', () => {
@@ -24,3 +24,36 @@ describe('skillEntrySchema', () => {
     expect(skillEntrySchema.safeParse({ name: 'x', version: '1.0.0', source_type: 'agenthub' }).success).toBe(false)
   })
 })
+
+describe('parseSkillFrontmatter（Task 12 / E-13 抽离）', () => {
+  it('合法：---\\n<yaml>\\n---\\n<body> → { ok: true, value: SkillFrontmatter }', () => {
+    const md = '---\nname: tdd-methodology\ndescription: 测试驱动开发方法论，红绿重构循环。\nversion: 1.2.3\n---\nbody content\n'
+    const r = parseSkillFrontmatter(md)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.value.name).toBe('tdd-methodology')
+      expect(r.value.description).toBe('测试驱动开发方法论，红绿重构循环。')
+      expect(r.value.version).toBe('1.2.3')
+    }
+  })
+
+  it('无 frontmatter 边界（缺首对 ---）→ { ok: false, reason }', () => {
+    const md = 'no frontmatter here\njust body\n'
+    const r = parseSkillFrontmatter(md)
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.reason).toMatch(/边界缺失|---/)
+    }
+  })
+
+  it('坏 yaml（frontmatter 内 yaml 语法错）→ { ok: false, reason }', () => {
+    // yaml 语法错：value 后跟未引用的特殊字符
+    const md = '---\nname: : : broken\ndescription: 描述十个字以上确保过校验。\n---\nbody\n'
+    const r = parseSkillFrontmatter(md)
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.reason).toMatch(/yaml|解析/i)
+    }
+  })
+})
+

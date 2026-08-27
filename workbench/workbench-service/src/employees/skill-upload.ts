@@ -4,14 +4,14 @@
  * uploadSkillZip(zipBytes, fileName, tmpRoot): 解包 → 五种防护 → 物化 → UploadedSkill。
  *
  * 五种防护（按管线顺序）：
- *   1. zip-slip：entry 名含 `..` 段或以 `/` 开头 → SkillZipError
+ *   1. zip-slip：entry 名含 `..` 段、以 `/` 开头或带 Windows 盘符前缀 → SkillZipError
  *   2. GBK 文件名：fflate 出的 entry 名若含 U+FFFD 或高位字符（未标 UTF-8 flag 的 CP437 名），
  *      用 TextDecoder('gbk') 对 Uint8Array.from(name, c => c.charCodeAt(0) & 0xff) 重解码；
- *      解码失败（仍含 U+FFFD）保留原名并在 files 列表如实反映
+ *      解码失败（仍含 U+FFFD）保留原名并在 files 列表如实反映（fallback 路径 console.warn 可观测）
  *   3. 限额：解压后总字节 >50MB 或文件数 >2000 → SkillZipError
  *   4. 布局：根有 SKILL.md → 直接用；否则唯一顶层目录且其下有 SKILL.md → 剥一层；都不满足 → SkillLayoutError
- *   5. frontmatter：SKILL.md 文本按 `---` 分割取 yaml → skillFrontmatterSchema.safeParse；
- *      不过 → SkillLayoutError（带 zod issue 信息）
+ *   5. frontmatter：复用 shared-protocol 的 parseSkillFrontmatter（`---` 分割取 yaml +
+ *      skillFrontmatterSchema.safeParse）；不过 → SkillLayoutError（带 reason 信息）
  *
  * 物化：tmpRoot/skills/<frontmatter.name>/（目录名以 frontmatter name 为准——zip 目录名与 name
  * 不一致时重命名；清空旧内容再写 = 二次上传幂等）；写全部文件（相对 SKILL.md 的路径）。
@@ -20,11 +20,10 @@
  * 目录边界：本模块写域止于注入的 tmpRoot/skills/<name>/，绝不触碰其他目录。
  */
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import yaml from 'js-yaml'
 import { strFromU8, unzipSync } from 'fflate'
-import { skillFrontmatterSchema } from '@devzero/shared-protocol'
+import { parseSkillFrontmatter } from '@devzero/shared-protocol'
 
 /** zip 布局错误（无 SKILL.md / 坏 frontmatter / 多顶层目录） */
 export class SkillLayoutError extends Error {
@@ -83,11 +82,11 @@ export async function uploadSkillZip(
   // 3. 布局判定：根 SKILL.md / 唯一顶层目录剥层
   const { files, skillMdEntry } = resolveLayout(entries)
 
-  // 4. frontmatter 校验
+  // 4. frontmatter 校验（复用 shared-protocol 的 parseSkillFrontmatter）
   const skillMdText = strFromU8(skillMdEntry.data)
   const fm = parseSkillFrontmatter(skillMdText)
   if (!fm.ok) {
-    throw new SkillLayoutError(`SKILL.md frontmatter 校验失败：${fm.error}`)
+    throw new SkillLayoutError(`SKILL.md frontmatter 校验失败：${fm.reason}`)
   }
   const skillName = fm.value.name
   const skillVersion = fm.value.version ?? '0.1.0'
@@ -184,8 +183,15 @@ function maybeDecodeGbk(name: string): string {
     const buf = Uint8Array.from(name, (c) => c.charCodeAt(0) & 0xff)
     const decoded = new TextDecoder('gbk').decode(buf)
     if (!decoded.includes('�')) return decoded
+    // GBK 解码后仍含 U+FFFD（无法识别的字节序列）—— 保留原名并 warning 可观测
+    console.warn(
+      `[skill-upload] GBK 文件名解码后仍含 U+FFFD，保留原名：raw=${JSON.stringify(name)}`,
+    )
   } catch {
-    // TextDecoder('gbk') 不支持（Bun ICU 缺该编码）—— 保留原名
+    // TextDecoder('gbk') 不支持（Bun ICU 缺该编码）—— 保留原名并 warning 可观测
+    console.warn(
+      `[skill-upload] TextDecoder('gbk') 不可用，文件名保留原名：raw=${JSON.stringify(name)}`,
+    )
   }
   return name
 }
@@ -238,77 +244,3 @@ function toLayoutFile(e: ZipEntry): LayoutFile {
   return { path: e.name, data: e.data }
 }
 
-// ---------- frontmatter 校验 ----------
-
-interface FrontmatterOk {
-  ok: true
-  value: {
-    name: string
-    description: string
-    version?: string
-  }
-}
-interface FrontmatterErr {
-  ok: false
-  error: string
-}
-
-/** SKILL.md 文本按 `---` 分割取首段 yaml → skillFrontmatterSchema.safeParse */
-function parseSkillFrontmatter(text: string): FrontmatterOk | FrontmatterErr {
-  // frontmatter 形如：---\n<yaml>\n---\n...  取首对 --- 之间内容
-  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)
-  if (!m) {
-    return { ok: false, error: 'frontmatter 边界缺失（未找到首对 ---）' }
-  }
-  const fmText = m[1]
-  if (!fmText) {
-    return { ok: false, error: 'frontmatter 为空' }
-  }
-  let doc: unknown
-  try {
-    doc = yaml.load(fmText)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return { ok: false, error: `yaml 解析失败：${msg}` }
-  }
-  if (typeof doc !== 'object' || doc === null) {
-    return { ok: false, error: 'frontmatter 顶层非对象' }
-  }
-  const r = skillFrontmatterSchema.safeParse(doc)
-  if (!r.success) {
-    const issues = r.error.issues
-      .map((i) => `${i.path.join('.') || '<root>'}: ${i.message}`)
-      .join('; ')
-    return { ok: false, error: issues }
-  }
-  return { ok: true, value: r.data }
-}
-
-// ---------- 内部辅助（暂留为后续扩展锚） ----------
-
-/** 目录递归读（暂未使用，留作文档扫描等扩展位） */
-function _walkDir(root: string, cb: (abs: string, rel: string) => void): void {
-  let entries: string[] = []
-  try {
-    entries = readdirSync(root)
-  } catch {
-    return
-  }
-  for (const entry of entries) {
-    const abs = join(root, entry)
-    let isDir = false
-    let isFile = false
-    try {
-      const s = statSync(abs)
-      isDir = s.isDirectory()
-      isFile = s.isFile()
-    } catch {
-      continue
-    }
-    if (isDir) {
-      _walkDir(abs, (a, r) => cb(a, `${entry}/${r}`))
-    } else if (isFile) {
-      cb(abs, entry)
-    }
-  }
-}
