@@ -1,0 +1,21 @@
+workbench/workbench-service/test/installs-manifest.test.ts
+  s_3164dc039eb46c::t_de7f9d263b2469 1-58
+workbench/workbench-service/src/installs/manifest.ts
+  s_3164dc039eb46c::t_9f6c86509f170d 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a69124717eac162d3357c6460bdeebedf7121edb",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
