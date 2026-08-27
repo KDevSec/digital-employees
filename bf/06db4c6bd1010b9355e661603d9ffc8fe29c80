@@ -1,0 +1,41 @@
+workbench/workbench-service/test/adapters/common/plan.test.ts
+  s_3d694229081e72::t_54bbc5eab9a20d 1-49
+workbench/workbench-service/test/adapters-profiles.test.ts
+  s_3164dc039eb46c::t_f8e256412e8964 38,40-41,44,49-53
+workbench/workbench-service/src/installs/executor/actions.ts
+  s_3164dc039eb46c::t_5cc4d8e4902dba 135-138,150-154,156-159
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_63e25e70dabb44 57-63
+  s_3164dc039eb46c::t_3b9d3fbf384fc4 27-29
+  s_3164dc039eb46c::t_7d5eff15468816 7
+workbench/workbench-service/src/adapters/qoder/profile.ts
+  s_3164dc039eb46c::t_ed7bebab598558 9,11
+workbench/workbench-service/test/installs-executor.test.ts
+  s_3164dc039eb46c::t_5dd5147c8e547f 87-119
+workbench/workbench-service/src/adapters/claude-code/profile.ts
+  s_3d694229081e72::t_1816d88a42b769 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "bf06db4c6bd1010b9355e661603d9ffc8fe29c80",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "deepseek-v4-flash-ga-260731"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
