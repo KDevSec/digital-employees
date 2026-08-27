@@ -1,0 +1,25 @@
+workbench/workbench-service/test/crypto.test.ts
+  s_d4823793916f9d::t_4e6604fc2d85bc 1-50
+workbench/workbench-service/package.json
+  s_d4823793916f9d::t_85e5f972a14aa6 14-15
+workbench/workbench-service/src/app/platform-access/crypto.ts
+  s_d4823793916f9d::t_a5dfa1054ff93c 1-68
+bun.lock
+  s_d4823793916f9d::t_fa28549f0dd4ad 23,322-323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ebb0dfcf1ff3a55b43add96da545d42c6a7fae68",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
