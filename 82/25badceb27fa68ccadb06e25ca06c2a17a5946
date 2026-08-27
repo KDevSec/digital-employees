@@ -1,0 +1,21 @@
+workbench/workbench-service/test/state-store.test.ts
+  s_d4823793916f9d::t_f302c7ab0ab932 1-39
+workbench/workbench-service/src/app/platform-access/state-store.ts
+  s_d4823793916f9d::t_7c73057a451749 1-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8225badceb27fa68ccadb06e25ca06c2a17a5946",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
