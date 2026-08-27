@@ -1,0 +1,41 @@
+workbench/workbench-service/test/server.test.ts
+  s_d4823793916f9d::t_e5370981f4340d 10,19-22,31-32,44-45,48
+workbench/workbench-service/src/server/routes/enrollment.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 1-21
+workbench/workbench-service/test/routes-auth.test.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 1-65
+workbench/workbench-service/test/assembly.test.ts
+  s_d4823793916f9d::t_30fdbed64d95de 1-67
+workbench/workbench-service/test/routes-registry.test.ts
+  s_d4823793916f9d::t_2b67f127d9bad5 9,22,27-32,40,43,63,80-81,96-100,137,140
+workbench/workbench-service/src/server/routes/auth.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 1-18
+workbench/workbench-service/test/routes-session.test.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 5-6,13-16,25-26,28-29,32-34,36-37,41-42,46,53-54,57-61,64,69-77
+workbench/workbench-service/test/routes-engine.test.ts
+  s_d4823793916f9d::t_30fdbed64d95de 15,34,44-46,48
+workbench/workbench-service/src/main.ts
+  s_d4823793916f9d::t_fd7f52608ac333 15,67-71,210-213,250-257,261-264,379
+workbench/workbench-service/src/server/routes/session.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 2-6,11-13,18-19
+workbench/workbench-service/src/server/routes/index.ts
+  s_d4823793916f9d::t_7410bc76e1e806 21-24,33,40-42
+workbench/workbench-service/test/routes-enrollment.test.ts
+  s_d4823793916f9d::t_e3ccb4f63ae321 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7bd8d17d9bc863740577503091fd9d00748bbef2",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
