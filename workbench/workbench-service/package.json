@@ -9,9 +9,10 @@
     "build": "bash scripts/build.sh"
   },
   "dependencies": {
+    "commander": "^12",
     "hono": "^4",
-    "zod": "^3",
-    "commander": "^12"
+    "yaml": "^2.9.0",
+    "zod": "^3"
   },
   "devDependencies": {
     "typescript": "^5",
