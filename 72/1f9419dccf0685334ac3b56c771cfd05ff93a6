@@ -1,0 +1,23 @@
+workbench/workbench-service/package.json
+  s_b9259474bd2245::t_004c4292087c08 12
+workbench/workbench-web/package.json
+  s_b9259474bd2245::t_cc31aeaa4fa3bf 13
+bun.lock
+  s_b9259474bd2245::t_e10150114bf1fb 35,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "721f9419dccf0685334ac3b56c771cfd05ff93a6",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
