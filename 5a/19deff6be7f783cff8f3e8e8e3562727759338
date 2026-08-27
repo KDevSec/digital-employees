@@ -1,0 +1,44 @@
+workbench/workbench-web/test/wizard-draft.test.ts
+  s_b9259474bd2245::t_ed73e95fad92c0 2,4-12,19-21
+  s_b9259474bd2245::t_21490f8299e0c4 56-210
+workbench/workbench-web/test/create-wizard.test.ts
+  s_b9259474bd2245::t_af699f47f44a97 231-256
+workbench/workbench-web/test/wizard-steps.test.ts
+  s_b9259474bd2245::t_110733c176d324 185-214
+workbench/workbench-web/src/components/wizard/steps/StepAgent.vue
+  s_b9259474bd2245::t_3a35d644d63a3e 26-30,32-35
+workbench/workbench-web/src/components/wizard/steps/StepSkills.vue
+  s_b9259474bd2245::t_640c5e32337059 152-155,346-351
+workbench/workbench-web/src/composables/useWizardDraft.ts
+  s_b9259474bd2245::t_da31ec3d448deb 75-90,124
+workbench/workbench-web/src/views/CreateWizard.vue
+  s_b9259474bd2245::t_f52b2dce092807 2,17,179-188
+workbench/workbench-web/src/components/wizard/steps/StepHooksTools.vue
+  s_e7c6ea726b36a6::t_617153b6430663 42-46,48-52
+workbench/workbench-web/src/stores/wizard.ts
+  s_e7c6ea726b36a6::t_827cb973f10360 34-35,92-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5a19deff6be7f783cff8f3e8e8e3562727759338",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_e7c6ea726b36a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a0dbca3456c6fcf90",
+        "model": "unknown"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
