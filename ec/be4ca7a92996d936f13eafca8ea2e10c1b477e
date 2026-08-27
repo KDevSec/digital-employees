@@ -1,0 +1,40 @@
+workbench/workbench-service/test/fixtures/packages/dev-lite/AGENTS.md
+  s_3164dc039eb46c::t_b3b8a9e42080bb 1-24
+workbench/workbench-service/src/installs/errors.ts
+  s_3164dc039eb46c::t_19584776e8dd63 9,13-14,16-25
+  s_3164dc039eb46c::t_17a0dfed19f3c8 7-8,10-12
+  s_3164dc039eb46c::t_2d719c7220e729 1-6,15
+workbench/workbench-service/src/installs/spec/types.ts
+  s_3164dc039eb46c::t_040c95ef2a91bd 1-26
+workbench/workbench-service/test/fixtures/packages/dev-lite/manifest.yml
+  s_3164dc039eb46c::t_c1ccde458016aa 1-31
+workbench/workbench-service/test/installs-spec.test.ts
+  s_3164dc039eb46c::t_19ccf505d94b6e 1-36
+workbench/workbench-service/test/fixtures/packages/dev-lite/hooks/hooks.json
+  s_3164dc039eb46c::t_b6149815ade351 1-7
+workbench/workbench-service/package.json
+  s_3164dc039eb46c::t_267d77dee1b343 12,14-15
+workbench/workbench-service/test/fixtures/packages/dev-lite/skills/tdd-methodology/SKILL.md
+  s_3164dc039eb46c::t_6e797d179f7593 1-8
+workbench/workbench-service/src/installs/spec/parser.ts
+  s_3164dc039eb46c::t_0872ab31d3e806 1-8,11-15,18-62
+  s_3164dc039eb46c::t_40fa0c95d76165 9-10,16-17
+bun.lock
+  s_3164dc039eb46c::t_ef4b5db188f32c 23,466-467
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ecbe4ca7a92996d936f13eafca8ea2e10c1b477e",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
