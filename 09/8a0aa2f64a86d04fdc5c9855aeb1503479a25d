@@ -1,0 +1,19 @@
+docs/plans/2026-08-27-I2自动驱动真机闭环.md
+  s_3d694229081e72::t_22e943e81d958b 1-310
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "098a0aa2f64a86d04fdc5c9855aeb1503479a25d",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "deepseek-v4-flash-ga-260731"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
