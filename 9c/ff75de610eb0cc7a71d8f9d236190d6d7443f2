@@ -1,0 +1,19 @@
+workbench/shared-protocol/test/live-fixtures.test.ts
+  s_b9259474bd2245::t_abceaf8f876407 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "9cff75de610eb0cc7a71d8f9d236190d6d7443f2",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
