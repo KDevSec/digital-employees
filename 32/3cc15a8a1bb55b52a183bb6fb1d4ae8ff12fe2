@@ -1,0 +1,36 @@
+workbench/workbench-service/src/adapters/codebuddy/index.ts
+  s_3164dc039eb46c::t_9f504a7bc57856 1-13
+workbench/workbench-service/test/installs-executor.test.ts
+  s_3164dc039eb46c::t_9af23ee61835ec 13-18,30
+workbench/workbench-service/src/adapters/qoder/index.ts
+  s_3164dc039eb46c::t_9f504a7bc57856 1-13
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_37137191ff901d 25-26,61
+workbench/workbench-service/src/adapters/common/plan.ts
+  s_3164dc039eb46c::t_b0c5ff33e8d287 1-6,9-57
+  s_3164dc039eb46c::t_7f90d17d14fb12 7-8
+workbench/workbench-service/src/adapters/claude-code/index.ts
+  s_3164dc039eb46c::t_9f504a7bc57856 1-3,9
+workbench/workbench-service/src/installs/executor/execute.ts
+  s_3164dc039eb46c::t_83e80c4932b354 23-24,56
+workbench/workbench-service/src/installs/executor/actions.ts
+  s_3164dc039eb46c::t_173810e57c53f7 7-9,16,19,92-102,113,119-130,132-166
+workbench/workbench-service/test/adapters-plan.test.ts
+  s_3164dc039eb46c::t_f37a7c4a584372 1-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "323cc15a8a1bb55b52a183bb6fb1d4ae8ff12fe2",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
