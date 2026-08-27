@@ -23,7 +23,7 @@ const engineRoot = mkdtempSync(join(tmpdir(), 'registry-engine-'))
 const engine = new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') })
 process.on('exit', () => rmSync(engineRoot, { recursive: true, force: true }))
 
-/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + engine 一项（L3 T6，与 main 装配同形状，值非契约） */
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + engine 一项（L3 T6）+ installs 五项 + bases 三项（I1 L2 安装线）——与 main 装配同形状，值非契约 */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -35,6 +35,14 @@ const deps = {
   loadConfig,
   writeConfigOverride,
   engine,
+  // I1 L2 安装线两域（值非契约——本文件只断言路由表，不触达端点行为）
+  registryFile: 'D:/data/digital-staff/registry.json',
+  staffRoot: 'D:/data/digital-staff',
+  authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
+  probe: () => ({ present: false, version: null }),
+  packageRoots: {},
+  cacheDir: 'D:/data/.devzero/bases',
+  run: async () => ({ code: 127, stdout: '' }),
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -45,13 +53,16 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform、GET /api/state）', () => {
+  it('注册产物 = 期望路由表（I0-5 六端点 + session 1 + engine 12 + I1 L2 安装线 installs 5 / bases 3）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
       ['GET', '/'],
       ['GET', '/api/activity'],
+      ['GET', '/api/bases'],
+      ['GET', '/api/bases/:id/models'],
       ['GET', '/api/config/platform'],
+      ['GET', '/api/deployments'],
       ['GET', '/api/engine/flows'],
       ['GET', '/api/engine/stream'],
       ['GET', '/api/engine/tasks'],
@@ -60,6 +71,10 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/events'],
       ['GET', '/api/state'],
       ['GET', '/healthz'],
+      ['POST', '/api/bases/probe'],
+      ['POST', '/api/deployments/execute'],
+      ['POST', '/api/deployments/plan'],
+      ['POST', '/api/deployments/verify'],
       ['POST', '/api/engine/tasks'],
       ['POST', '/api/engine/tasks/:id/abort'],
       ['POST', '/api/engine/tasks/:id/advance'],
@@ -69,6 +84,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/engine/tasks/:id/dispatch-start'],
       ['POST', '/api/engine/tasks/:id/handoff-write'],
       ['POST', '/api/engine/tasks/:id/record-gate'],
+      ['POST', '/api/uninstall'],
       ['PUT', '/api/config/platform'],
     ])
   })

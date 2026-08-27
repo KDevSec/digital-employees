@@ -12,6 +12,8 @@ import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'no
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import type { BaseId } from './adapters/contract'
+import { readCache as readBaseCache } from './bases/cache'
 import { brand } from './brand'
 import { loadConfig, writeConfigOverride, writeSample } from './config/load'
 import type { WorkbenchConfig } from './config/schema'
@@ -54,6 +56,10 @@ const profileDir = process.env.WORKBENCH_HOME ?? join(homedir(), brand.profileNa
 const runDir = join(profileDir, 'run')
 const logsDir = join(profileDir, 'logs')
 const sentinelsDir = join(runDir, 'sentinels')
+// I1 L2 安装线（设计 §3.1/§3.2）：员工 Deployment 根 ~/digital-staff/（registry.json 台账与各底座 home）
+const staffRoot = join(homedir(), 'digital-staff')
+// I1 L2 安装线（设计 §9）：底座探测缓存目录（profile 内 bases/<base>.json，30min TTL）
+const basesCacheDir = join(profileDir, 'bases')
 
 let startedAtMs = Date.now()
 
@@ -181,6 +187,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** bases 域探测命令执行（CmdRunner 生产实现：`<cmd> --version` 抓 stdout 与退出码，5s 兜底超时）。
+ * Windows CLI 多为 .cmd/.ps1 shim，无 shell 直 spawn 会 ENOENT——shell 包装（探测只读、args 为固定旗标）。 */
+function runBaseVersion(command: string, args: string[]): Promise<{ code: number; stdout: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { shell: process.platform === 'win32' })
+    let stdout = ''
+    const timer = setTimeout(() => child.kill(), 5_000)
+    child.stdout?.on('data', (d) => { stdout += d })
+    child.on('error', () => { clearTimeout(timer); resolve({ code: 127, stdout: '' }) })
+    child.on('close', (code) => { clearTimeout(timer); resolve({ code: code ?? 127, stdout }) })
+  })
+}
+
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
   // 编排域（L3 T6）：EngineDirs 注入（D-045 布局——templatesDir 在 profileDir 侧）；
@@ -203,6 +222,21 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     loadConfig,
     writeConfigOverride,
     engine,
+    // I1 L2 安装线两域（设计 §3/§9/§10）：installs + bases 装配——
+    // 员工包目录 E 系列接管前为空表（execute/plan 对未知员工 404——装配口径非域契约）；
+    // 探测为同步桥（InstallServiceDeps.probe 同步签名）：读 bases 域探测缓存文件，
+    // 实探与回写由 GET /api/bases / POST /api/bases/probe 负责（UI 动线先见底座页再安装）。
+    registryFile: join(staffRoot, 'registry.json'),
+    staffRoot,
+    authSourceDirs: {
+      'claude-code': join(homedir(), '.claude'),
+      codebuddy: '',
+      qoder: join(homedir(), '.qoder'),
+    },
+    probe: (base: BaseId) => readBaseCache(join(basesCacheDir, `${base}.json`)) ?? { present: false, version: null },
+    packageRoots: {},
+    cacheDir: basesCacheDir,
+    run: runBaseVersion,
   })
   // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）
   const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })

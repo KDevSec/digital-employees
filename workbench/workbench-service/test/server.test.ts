@@ -27,6 +27,14 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     loadConfig,
     writeConfigOverride,
     engine: new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') }),
+    // I1 L2 安装线两域：占位值（本文件不触达该两域端点，行为断言在 routes-installs/routes-bases.test.ts）
+    registryFile: 'D:/data/digital-staff/registry.json',
+    staffRoot: 'D:/data/digital-staff',
+    authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
+    probe: () => ({ present: false, version: null }),
+    packageRoots: {},
+    cacheDir: 'D:/data/.devzero/bases',
+    run: async () => ({ code: 127, stdout: '' }),
     ...overrides,
   })
   return toHonoApp(registry)

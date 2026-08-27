@@ -1,0 +1,31 @@
+# fixture 员工包：L2 安装线测试真源（结构对照 workbench/templates/dev-engineer，i0-prereview）
+id: dev-lite
+display: 轻量开发员工
+brief: 测试夹具员工
+avatar: 🧪
+version: 0.1.0
+upp_version: "2.1"
+kind: flow-owner
+org: local
+operator: demo@devzero.local
+requires: {level: L2}
+agent:
+  persona:
+    role: 数字员工·开发岗（夹具）
+    identity: 测试用轻量开发员工，遵循 TDD。
+    principles: [小步迭代]
+    usage_modes: [裸用, +方法论]
+skills:
+  - {name: tdd-methodology, version: 1.0.0, source_type: template}
+hooks:
+  redlines:
+    - {rule_id: no-push-to-main, compiled: true}
+tools: {deny: []}
+commands: commands/
+knowledge: knowledge/
+connectors: []
+custom: {}
+constraints:
+  tier: 编码档
+governance: {level: L3, visibility: team, audit: exceptions-only}
+orchestration: {node_table: orchestration/dev-lite.node-table.yml}

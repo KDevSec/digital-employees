@@ -34,6 +34,11 @@ beforeEach(() => {
     version: '9.9.9', pid: 4321, uid: 'uid-abc', dataDir: root, uptime: () => 1,
     indexHtml: '<html></html>', profileDir: root, loadConfig, writeConfigOverride,
     engine: new Engine({ dataDir: join(root, 'data'), templatesDir: flows }),
+    // I1 L2 安装线两域占位（本文件不触达，行为断言在 routes-installs/routes-bases.test.ts）
+    registryFile: join(root, 'registry.json'), staffRoot: join(root, 'digital-staff'),
+    authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
+    probe: () => ({ present: false, version: null }), packageRoots: {},
+    cacheDir: join(root, 'bases'), run: async () => ({ code: 127, stdout: '' }),
   })
   app = toHonoApp(registry)
 })
