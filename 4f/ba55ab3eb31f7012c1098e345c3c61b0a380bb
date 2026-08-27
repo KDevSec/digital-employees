@@ -1,0 +1,44 @@
+workbench/templates/sec-compliance/AGENTS.md
+  s_b9259474bd2245::t_9896e077f71dd1 21
+workbench/workbench-service/test/employees-renderer.test.ts
+  s_b9259474bd2245::t_1756705bd4747c 149-155,157,159
+workbench/workbench-service/test/templates-provider.test.ts
+  s_b9259474bd2245::t_77c23351b61129 201,204,206,211
+workbench/templates/sec-compliance/skills/secretgate/SKILL.md
+  s_b9259474bd2245::t_93b189cc1aff32 1-78
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_d1cc0386763b8c 154-156
+  s_b9259474bd2245::t_0679a4ce12015d 143
+workbench/templates/sec-compliance/skills/secretgate/scripts/secretgate.mjs
+  s_b9259474bd2245::t_a1e56dad61392a 22,24
+  s_b9259474bd2245::t_1e616162da66c6 1-21,26-37,39-182,184-223,231-233
+  s_b9259474bd2245::t_bfa74bbb529aa1 224-230
+  s_b9259474bd2245::t_90f4e06f6b3a70 23,25,38,183
+workbench/workbench-service/src/employees/renderer.ts
+  s_b9259474bd2245::t_41c51b118339ae 201
+workbench/workbench-service/test/secretgate.test.ts
+  s_b9259474bd2245::t_92bb6a2f384173 56
+  s_b9259474bd2245::t_6fc291fb61bb6a 45-46
+  s_b9259474bd2245::t_02a7cf4b17adce 14
+  s_b9259474bd2245::t_a18018ecc855d6 1-13,15-44,47-55,57-191
+workbench/workbench-service/test/routes-templates.test.ts
+  s_b9259474bd2245::t_37068ea81b8000 73,78
+workbench/templates/sec-compliance/manifest.yml
+  s_b9259474bd2245::t_2247d67ee95c44 29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4fba55ab3eb31f7012c1098e345c3c61b0a380bb",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
