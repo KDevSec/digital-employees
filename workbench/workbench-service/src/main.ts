@@ -12,6 +12,7 @@ import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'no
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { createPlatformAccess } from './app/platform-access'
 import type { BaseId } from './adapters/contract'
 import { readCache as readBaseCache } from './bases/cache'
 import { brand } from './brand'
@@ -62,6 +63,11 @@ const staffRoot = join(homedir(), 'digital-staff')
 const basesCacheDir = join(profileDir, 'bases')
 
 let startedAtMs = Date.now()
+
+// ---------- A 系列认证装配（Task 16）：心跳调度器模块级句柄 ----------
+
+/** 心跳后台任务句柄（startRealServer 装配时赋值；优雅退出 serverStop 前先停，详设 §14） */
+let heartbeatScheduler: { stop(): void } | null = null
 
 // ---------- 守护路径运行时（惰性初始化，I-3：急切初始化会使坏 config 连累 stop/status） ----------
 
@@ -201,6 +207,10 @@ function runBaseVersion(command: string, args: string[]): Promise<{ code: number
 }
 
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
+  // A 系列装配（Task 16，详设 §3.1）：platform-access = 八认证端点 handler 门面 + 心跳调度器
+  const installationId = rt.uid
+  const access = createPlatformAccess({ profileDir, loadConfig, installationId, version: brand.version })
+  heartbeatScheduler = access.scheduler
   const registry = createRegistry()
   // 编排域（L3 T6）：EngineDirs 注入（D-045 布局——templatesDir 在 profileDir 侧）；
   // 首启 ensure demo-flow 表落位（bun --compile 单体内 assets 以 text 内联，不依赖 fs 布局）
@@ -237,12 +247,21 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     packageRoots: {},
     cacheDir: basesCacheDir,
     run: runBaseVersion,
+    // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
+    service: access.service,
   })
-  // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）
-  const app = toHonoApp(registry, { mcpServer: buildEngineMcpServer(engine) })
+  // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）；
+  // MCP 例外口（L3）+ 会话守卫（A 系列 A-08）经同一 opts 并集注入
+  const app = toHonoApp(registry, {
+    mcpServer: buildEngineMcpServer(engine),
+    sessionGuard: (ctx, grade) => access.service.sessionGuard(ctx, grade),
+  })
   startedAtMs = Date.now()
   try {
-    return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    const server = Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    // 详设 §3.1 第 9 步：服务起 → 后台任务起（心跳调度；workbenchId 在才真起，幂等）
+    access.scheduler.ensureRunning()
+    return server
   } catch (err) {
     throw new ExitError(78, `监听 127.0.0.1:${cfg.network.port} 失败（端口被占用？）：${String(err)}`)
   }
@@ -357,6 +376,7 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
       port,
       markCleanStop: () => markCleanStop(runDir),
       serverStop: () => {
+        heartbeatScheduler?.stop()
         server.stop(true)
       },
       clearRunDir: clearDiscoveryFiles,

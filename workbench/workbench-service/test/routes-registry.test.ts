@@ -6,6 +6,7 @@ import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
 import { registerConfigRoutes } from '../src/server/routes/config'
 import { registerSessionRoutes } from '../src/server/routes/session'
+import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { Engine } from '@devzero/engine'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -18,12 +19,17 @@ import { join } from 'node:path'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
-/** 编排域引擎夹具：临时 dataDir/templatesDir（本文件只验路由表结构，不触达 engine 行为——行为断言在 routes-engine.test.ts） */
+/** 编排域引擎夹具（L3 T6）：临时 dataDir/templatesDir（本文件只验路由表结构，不触达 engine 行为——行为断言在 routes-engine.test.ts） */
 const engineRoot = mkdtempSync(join(tmpdir(), 'registry-engine-'))
 const engine = new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') })
 process.on('exit', () => rmSync(engineRoot, { recursive: true, force: true }))
 
-/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + engine 一项（L3 T6）+ installs 五项 + bases 三项（I1 L2 安装线）——与 main 装配同形状，值非契约 */
+/** A 系列认证夹具（Task 15）：真实 temp profile（platform-access 首启落 auth/state.key 等文件） */
+const profileDir = mkdtempSync(join(tmpdir(), 'wb-registry-'))
+const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
+
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + A 系列 platform-access（Task 15 起 service 切片）
+ *  + engine 一项（L3 T6）+ installs 五项 + bases 三项（I1 L2 安装线）——与 main 装配同形状，值非契约 */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -31,9 +37,10 @@ const deps = {
   dataDir: 'D:/data/.devzero',
   uptime: () => 12_345,
   indexHtml: '<html>DevZero</html>',
-  profileDir: 'D:/data/.devzero',
+  profileDir,
   loadConfig,
   writeConfigOverride,
+  service,
   engine,
   // I1 L2 安装线两域（值非契约——本文件只断言路由表，不触达端点行为）
   registryFile: 'D:/data/digital-staff/registry.json',
@@ -53,7 +60,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（I0-5 六端点 + session 1 + engine 12 + I1 L2 安装线 installs 5 / bases 3）', () => {
+  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 3（I1 L2））', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -70,6 +77,8 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/engine/tasks/:id/events'],
       ['GET', '/api/events'],
       ['GET', '/api/state'],
+      ['GET', '/auth/callback'],
+      ['GET', '/auth/login'],
       ['GET', '/healthz'],
       ['POST', '/api/bases/probe'],
       ['POST', '/api/deployments/execute'],
@@ -84,6 +93,11 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/engine/tasks/:id/dispatch-start'],
       ['POST', '/api/engine/tasks/:id/handoff-write'],
       ['POST', '/api/engine/tasks/:id/record-gate'],
+      ['POST', '/api/enroll'],
+      ['POST', '/api/heartbeat'],
+      ['POST', '/api/logout'],
+      ['POST', '/api/progress'],
+      ['POST', '/api/reset'],
       ['POST', '/api/uninstall'],
       ['PUT', '/api/config/platform'],
     ])
@@ -120,10 +134,10 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     expect(table(reg.routes)).toEqual([['GET', '/']])
   })
 
-  it('session 域：仅 GET /api/state（D-049 开发环境桥接，不含其他域端点）', () => {
+  it('session 域：GET /api/state + POST /api/logout（A 系列真实会话端点；D-049 桥接退役，不含其他域端点）', () => {
     const reg = createRegistry()
     registerSessionRoutes(reg, deps)
-    expect(table(reg.routes)).toEqual([['GET', '/api/state']])
+    expect(table(reg.routes)).toEqual([['GET', '/api/state'], ['POST', '/api/logout']])
   })
 
   it('config 域：GET+PUT /api/config/platform（I0-5 T8，不含其他域端点）', () => {

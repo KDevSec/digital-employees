@@ -12,6 +12,7 @@ import { toHonoApp } from '../src/server/hono-adapter'
 import { createRegistry } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
+import { createPlatformAccess } from '../src/app/platform-access'
 import { Engine } from '@devzero/engine'
 import { readFileSync } from 'node:fs'
 
@@ -30,6 +31,7 @@ beforeEach(() => {
   mkdirSync(workspace, { recursive: true })
 
   const registry = createRegistry()
+  const { service } = createPlatformAccess({ profileDir: root, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
   registerAllRoutes(registry, {
     version: '9.9.9', pid: 4321, uid: 'uid-abc', dataDir: root, uptime: () => 1,
     indexHtml: '<html></html>', profileDir: root, loadConfig, writeConfigOverride,
@@ -39,8 +41,11 @@ beforeEach(() => {
     authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
     probe: () => ({ present: false, version: null }), packageRoots: {},
     cacheDir: join(root, 'bases'), run: async () => ({ code: 127, stdout: '' }),
+    // A 系列认证三域（A 线合流后 RouteDeps 必含）：service 切片 + guard 注入
+    //（enrollment 全 session 档，无 guard 时 toHonoApp 装配保险丝即炸——本文件不触达认证端点）
+    service,
   })
-  app = toHonoApp(registry)
+  app = toHonoApp(registry, { sessionGuard: (ctx, grade) => service.sessionGuard(ctx, grade) })
 })
 
 afterEach(() => {
