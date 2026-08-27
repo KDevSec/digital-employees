@@ -1,0 +1,19 @@
+workbench/templates/README.md
+  s_3164dc039eb46c::t_8f2131b5a188c8 58-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6e6a285616e277afa8210f94cf0258abba9942d3",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
