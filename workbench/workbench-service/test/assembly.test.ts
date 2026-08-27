@@ -40,6 +40,7 @@ describe('main 装配形态（startRealServer 同构：全域注册 + guard 注�
       authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
       probe: () => ({ present: false, version: null }),
       packageRoots: {},
+      employeesRoot: join(profileDir, 'employees'), // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
       cacheDir: join(profileDir, 'bases'),
       run: async () => ({ code: 127, stdout: '' }),
       service,

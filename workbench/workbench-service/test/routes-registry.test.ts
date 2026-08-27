@@ -65,6 +65,7 @@ const deps = {
   authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
   probe: () => ({ present: false, version: null }),
   packageRoots: {},
+  employeesRoot: 'D:/data/.devzero/employees', // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
   cacheDir: 'D:/data/.devzero/bases',
   run: async () => ({ code: 127, stdout: '' }),
 }

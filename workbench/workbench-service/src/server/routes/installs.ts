@@ -16,6 +16,7 @@ import { baseProfiles } from '../../adapters/index'
 import { createClaudeCodeAdapter } from '../../adapters/claude-code/index'
 import { createCodebuddyAdapter } from '../../adapters/codebuddy/index'
 import { createQoderAdapter } from '../../adapters/qoder/index'
+import { isSafeEmployeeId } from '../../employees/store'
 import { verifyManifest, manifestPath, type InstallManifest } from '../../installs/manifest'
 import { negotiate } from '../../installs/negotiate'
 import { createDeploymentRegistry } from '../../installs/registry/registry'
@@ -36,12 +37,32 @@ const ADAPTERS: Record<BaseId, () => BaseAdapter> = {
 }
 
 export interface InstallsRouteDeps extends InstallServiceDeps {
-  /** 员工 id → 包根目录（E 系列 employees/ 目录接管前的装配口径） */
+  /** 员工 id → 包根目录（注册期快照——E 系列 employees/ 目录接管前的装配口径）。
+   *  V0.1 注册期快照不感知新建员工（main.ts 启动时扫员工库构造）；运行期回退见 employeesRoot。 */
   packageRoots: Record<string, string>
+  /** 员工库根（运行期回退）：packageRoots 未命中时按 employee_id 实时探查 <employeesRoot>/<id> 目录存在则用它作 root。
+   *  终审 B1 修复——新建员工落库后同会话点「安装到底座」不再 404（错误文案与事实不符）。 */
+  employeesRoot: string
 }
 
 function err(status: number, code: string, message: string): Res {
   return { status, json: { error: { code, message } } }
+}
+
+/**
+ * 解析员工包根：packageRoots 注册期快照未命中时回退实时探查 <employeesRoot>/<id>（终审 B1）。
+ * 路径安全：employee_id 走 isSafeEmployeeId 预检——拒 `..`/分隔符/盘符前缀，防 join 越出 employeesRoot。
+ * 命中回退时缓存回 packageRoots（同会话后续命中免再 stat；deps 是单实例注入，缓存副作用局限同会话）。
+ * 返回 undefined 表示既无快照也无实时命中（含 id 不安全——一律按 EMPLOYEE_NOT_FOUND 404，不暴露判据细节）。
+ */
+function resolvePackageRoot(deps: InstallsRouteDeps, employeeId: string): string | undefined {
+  const cached = deps.packageRoots[employeeId]
+  if (cached) return cached
+  if (!isSafeEmployeeId(employeeId)) return undefined
+  const fallback = join(deps.employeesRoot, employeeId)
+  if (!existsSync(fallback)) return undefined
+  deps.packageRoots[employeeId] = fallback // 缓存回写：同会话后续命中免再 stat
+  return fallback
 }
 
 export function registerInstallsRoutes(reg: RouteRegistry, deps: InstallsRouteDeps): void {
@@ -53,7 +74,7 @@ export function registerInstallsRoutes(reg: RouteRegistry, deps: InstallsRouteDe
   reg.post('/api/deployments/plan', async (ctx: Ctx): Promise<Res> => {
     const parsed = executeSchema.safeParse(ctx.body)
     if (!parsed.success) return err(400, 'INVALID_REQUEST', '请求体不合法')
-    const root = deps.packageRoots[parsed.data.employee_id]
+    const root = resolvePackageRoot(deps, parsed.data.employee_id)
     if (!root) return err(404, 'EMPLOYEE_NOT_FOUND', `员工不存在：${parsed.data.employee_id}`)
     // 干跑：negotiate + plan 纯函数组装（零副作用——设计 §10「预览/冲突决议收集」的 V0.1 形态）
     const spec = await parsePackage(root)
@@ -67,7 +88,7 @@ export function registerInstallsRoutes(reg: RouteRegistry, deps: InstallsRouteDe
   reg.post('/api/deployments/execute', async (ctx: Ctx): Promise<Res> => {
     const parsed = executeSchema.safeParse(ctx.body)
     if (!parsed.success) return err(400, 'INVALID_REQUEST', '请求体不合法')
-    const root = deps.packageRoots[parsed.data.employee_id]
+    const root = resolvePackageRoot(deps, parsed.data.employee_id)
     if (!root) return err(404, 'EMPLOYEE_NOT_FOUND', `员工不存在：${parsed.data.employee_id}`)
     const spec = await parsePackage(root)
     const report = installEmployee(deps, { spec, packageRoot: root, base: parsed.data.base })

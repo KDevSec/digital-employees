@@ -27,7 +27,16 @@ export class EmployeeIdConflictError extends Error {
 
 const RE_DRIVE_LETTER = /^[a-zA-Z]:/
 
-/** 员工 ID 安全校验：单段目录名语义（拒空 / "." / ".." / 含分隔符 / 盘符前缀）——防 targetDir 越出 employeesRoot */
+/** 员工 ID 安全校验谓词（非抛错式）：单段目录名语义（拒空 / "." / ".." / 含分隔符 / 盘符前缀）。
+ *  路由回退 join employeesRoot 前的预检复用——installs 域实时探查员工库时防越界（终审 B1）。 */
+export function isSafeEmployeeId(id: string): boolean {
+  if (id === '' || id === '.' || id === '..') return false
+  if (id.includes('/') || id.includes('\\')) return false
+  if (RE_DRIVE_LETTER.test(id)) return false
+  return true
+}
+
+/** 员工 ID 安全校验（抛错式——store 内部用，错误带具体原因；与 isSafeEmployeeId 同判据） */
 function validateId(id: string): void {
   if (id === '') {
     throw new Error(`员工 ID 不得为空`)

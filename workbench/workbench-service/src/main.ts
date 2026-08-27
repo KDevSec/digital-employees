@@ -266,6 +266,9 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: S
     // L1 合流：员工包根 = 员工库目录自动发现（README「E-12 落地后 packageRoots 自动发现」——
     // installs 域按 employee_id 查包根，扫描 employees/ 构造映射；V0.1 注册期快照，新员工落库后重启刷新）
     packageRoots: listEmployeePackageRoots(),
+    // 终审 B1 修复：packageRoots 注册期快照不感知新建员工——同会话点安装会 404（错误文案与事实不符）。
+    // employeesRoot 注入运行期回退：未命中快照时按 employee_id 实时探查此目录（isSafeEmployeeId 预检防越界）。
+    employeesRoot,
     cacheDir: basesCacheDir,
     run: runBaseVersion,
     // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
