@@ -147,8 +147,6 @@ BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2y$")
 PROBE_CLIENT = "__bcrypt_probe_client__"
 PROBE_USER = "__bcrypt_probe_user__"
 PROBE_PLAIN = "Bcrypt-Probe-2026!"
-FALLBACK_PROBE_PLAIN = "keyhub-local-auth-dummy"
-FALLBACK_PROBE_HASH = "$2a$12$8Q/2o2A0V.b18G2DutV4c.s5zZxH6MECM7tP8mYv6b6Q6x6o9v3vu"
 
 # 注册到 Keycloak user-profile 的自定义组织属性（含可追溯的 agenthub_user_id）。
 CUSTOM_PROFILE_ATTRS = [
@@ -521,11 +519,21 @@ def _cleanup_probe(token):
 
 
 def _probe_bcrypt_admin(token):
-    """admin 模式自检：建临时客户端 + partialImport 探针用户 + password-grant 实登录。"""
+    """admin 模式自检：建临时客户端 + partialImport 探针用户 + password-grant 实登录。
+
+    返回 (ok, msg)：ok=True/False 为通过/失败；ok=None 表示本机缺少 bcrypt 生成工具
+    （python bcrypt 模块与 htpasswd 均不可用），无法生成探针哈希，跳过自检。
+    跳过不影响导入：待导入用户的哈希来自导出文件（agenthub 真实 bcrypt 哈希），
+    不依赖本机哈希生成能力。
+    """
     plain = PROBE_PLAIN
     h = _gen_bcrypt_hash(plain)
     if h is None:
-        plain, h = FALLBACK_PROBE_PLAIN, FALLBACK_PROBE_HASH
+        return None, (
+            "跳过自检：本机缺少 bcrypt 生成工具（python bcrypt 模块或 htpasswd），"
+            "无法生成探针哈希。待导入用户的密码哈希来自导出文件、不受影响；"
+            "建议 pip install bcrypt 后重跑自检，或导入后用真实账号登录验证。"
+        )
     hj = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         # 1) 临时 public 客户端（开启 password grant）
@@ -736,7 +744,9 @@ def main() -> int:
             else:
                 ok, msg = False, "service 模式无法自检（缺 manage-clients）。请用 KC_AUTH_MODE=admin 或 KC_BCRYPT_PROBE=0 跳过。"
             print(f"[自检] {msg}")
-            if not ok:
+            if ok is None:
+                print("[自检] 已跳过（不阻断导入）。")
+            elif not ok:
                 print(
                     "\n中止：Keycloak 无法校验 BCrypt 哈希。可能原因：\n"
                     "  - bcrypt SPI 未加载（确认 iam/providers/bcrypt-password-hash-spi.jar 已挂载并已重启）\n"
