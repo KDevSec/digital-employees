@@ -49,14 +49,16 @@ describe('httpEngineApi（真实 HTTP 实现，fetch 注入断言）', () => {
     expect(res.employees['sec-compliance']).toBe('安全合规审核员')
   })
 
-  it('getFlows：GET /api/engine/flows → 表清单', async () => {
+  it('getFlows：GET /api/engine/flows → 拆包 {ok,flows} 信封取数组（引擎真实响应形状，L5×L3 联调实锤）', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse([{ flow: 'demo-flow', display_name: '五阶段演示交付' }]))
+      .mockResolvedValue(jsonResponse({ ok: true, flows: [{ flow: 'demo-flow', file: 'demo-flow.node-table.yml' }] }))
     vi.stubGlobal('fetch', fetchMock)
     const flows = await httpEngineApi.getFlows()
     expect(fetchMock.mock.calls[0][0]).toBe('/api/engine/flows')
+    expect(Array.isArray(flows)).toBe(true)
     expect(flows[0].flow).toBe('demo-flow')
+    expect(flows.length).toBe(1)
   })
 
   it('confirmGate：POST /api/engine/tasks/:id/confirm-gate 带 node/verdict（人工闸辅通道）', async () => {

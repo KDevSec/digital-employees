@@ -41,7 +41,8 @@ export interface TaskDetail {
 
 export interface FlowSummary {
   flow: string
-  display_name: string
+  /** 引擎清单面现仅返回 file（文件名）；display_name 表内字段未透出——缺省时 UI 以 flow id 兜底显示 */
+  display_name?: string
 }
 
 export interface EngineApi {
@@ -76,7 +77,11 @@ function post<T>(url: string, body: unknown): Promise<T> {
 export const httpEngineApi: EngineApi = {
   createTask: (payload) => post<{ task_id: string }>('/api/engine/tasks', payload),
   getTask: (taskId) => request<TaskDetail>(`/api/engine/tasks/${encodeURIComponent(taskId)}`),
-  getFlows: () => request<FlowSummary[]>('/api/engine/flows'),
+  // 引擎真实响应 = {ok:true, flows:[{flow,file}]}（routes/engine.ts flowsList）——拆信封取数组
+  getFlows: async () => {
+    const res = await request<{ ok: boolean; flows: FlowSummary[] }>('/api/engine/flows')
+    return Array.isArray(res?.flows) ? res.flows : []
+  },
   confirmGate: (taskId, node, verdict, note) =>
     post<{ ok: boolean }>(`/api/engine/tasks/${encodeURIComponent(taskId)}/confirm-gate`, {
       node,
