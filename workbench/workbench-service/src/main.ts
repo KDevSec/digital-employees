@@ -39,6 +39,7 @@ import { createTemplatesProvider } from './templates/provider'
 import { builtinTemplates } from './assets/templates.gen'
 import { createEmployeeStore } from './employees/store'
 import { createEmployeeBuilder } from './employees/builder'
+import { seedBuiltinEmployees } from './employees/seed'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
 // vitest 不支持该导入属性——路由域（routes/）经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
@@ -181,26 +182,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
+function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: ServerDeps): ReturnType<typeof Bun.serve> {
   const registry = createRegistry()
-  // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
-  // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
-  // 同一 provider 实例供 templates 域路由 + employees 域 builder 共用（read-only，无状态冲突）
-  const templatesProvider = createTemplatesProvider(
-    builtinTemplates,
-    join(profileDir, 'templates', 'custom'),
-  )
-  // Task 11 B6 employees 域：builder 管线八步（draft → 八步 → 原子落盘）+ store（id 冲突预检/suggestion）
-  // employeesRoot/tmpRoot 落在 profileDir 下（与 config/run/logs 同根）；store 与 builder 共用同一组目录
-  const employeesStore = createEmployeeStore(
-    join(profileDir, 'employees'),
-    join(profileDir, 'tmp'),
-  )
-  const employeesBuilder = createEmployeeBuilder({
-    provider: templatesProvider,
-    store: employeesStore,
-    tmpRoot: join(profileDir, 'tmp'),
-  })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -212,12 +195,12 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     profileDir,
     loadConfig,
     writeConfigOverride,
-    templates: templatesProvider,
+    templates: serverDeps.templatesProvider,
     // Task 11 B6 employees 域：builder 管线八步 + store（id 冲突预检/suggestion）
-    builder: employeesBuilder,
-    store: employeesStore,
+    builder: serverDeps.employeesBuilder,
+    store: serverDeps.employeesStore,
     // Task 12 C1 skills 域：zip 上传物化 tmpRoot/skills/<name>/（与 builder 同源 tmpRoot）
-    tmpRoot: join(profileDir, 'tmp'),
+    tmpRoot: serverDeps.tmpRoot,
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()
@@ -226,6 +209,41 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
   } catch (err) {
     throw new ExitError(78, `监听 127.0.0.1:${cfg.network.port} 失败（端口被占用？）：${String(err)}`)
   }
+}
+
+/**
+ * 服务端依赖（Task 18 / D2）：模板 provider + 员工库 store/builder + tmpRoot。
+ * 在 daemonEntry 实例化一次，seed 预置物化与 startRealServer 路由注册共用同一组实例。
+ */
+interface ServerDeps {
+  templatesProvider: ReturnType<typeof createTemplatesProvider>
+  employeesStore: ReturnType<typeof createEmployeeStore>
+  employeesBuilder: ReturnType<typeof createEmployeeBuilder>
+  tmpRoot: string
+}
+
+/** 实例化服务端依赖（provider/store/builder 共用同一组 profileDir 派生目录） */
+function createServerDeps(): ServerDeps {
+  // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
+  // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
+  // 同一 provider 实例供 templates 域路由 + employees 域 builder 共用（read-only，无状态冲突）
+  const tmpRoot = join(profileDir, 'tmp')
+  const templatesProvider = createTemplatesProvider(
+    builtinTemplates,
+    join(profileDir, 'templates', 'custom'),
+  )
+  // Task 11 B6 employees 域：builder 管线八步（draft → 八步 → 原子落盘）+ store（id 冲突预检/suggestion）
+  // employeesRoot/tmpRoot 落在 profileDir 下（与 config/run/logs 同根）；store 与 builder 共用同一组目录
+  const employeesStore = createEmployeeStore(
+    join(profileDir, 'employees'),
+    tmpRoot,
+  )
+  const employeesBuilder = createEmployeeBuilder({
+    provider: templatesProvider,
+    store: employeesStore,
+    tmpRoot,
+  })
+  return { templatesProvider, employeesStore, employeesBuilder, tmpRoot }
 }
 
 /** 开浏览器（Windows rundll32；测试/冒烟可用 WORKBENCH_NO_BROWSER=1 抑制） */
@@ -266,14 +284,14 @@ function verifyPortReleased(port: number): Promise<boolean> {
   })
 }
 
-function buildStartupDeps(rt: ServiceRuntime): StartupDeps {
+function buildStartupDeps(rt: ServiceRuntime, serverDeps: ServerDeps): StartupDeps {
   return {
     loadConfig: () => structuredClone(rt.config),
     readReliability: () => readReliability(runDir),
     readServiceHandle: () => readServiceHandle(runDir),
     probeHealth: probeHealthSnapshot,
     clearRunDir: clearRunDirFull,
-    startServer: (cfg) => startRealServer(cfg, rt),
+    startServer: (cfg) => startRealServer(cfg, rt, serverDeps),
     writeServiceHandle: (_server, cfg) =>
       writeServiceHandle(runDir, { pid: process.pid, port: cfg.network.port, uid: rt.uid, version: brand.version }),
     writeReliability: (handle) => writeReliability(runDir, { runId: handle.instanceId }),
@@ -316,7 +334,27 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
   try {
     rt = initServiceRuntime()
     const runtime = rt // const 捕获：闭包内保持非空收窄
-    const startupDeps = buildStartupDeps(runtime)
+
+    // Task 18 / D2 预置物化：首启 7 个 builtin 模板走同一 E-12 管线进员工库（幂等跳过/operator 占位）。
+    // 装配在 startRealServer 前、provider/store/builder 实例化后；seed 失败不阻断服务启动（catch 兜底，warn 落日志）。
+    const serverDeps = createServerDeps()
+    try {
+      const seedResult = await seedBuiltinEmployees(
+        serverDeps.templatesProvider,
+        serverDeps.employeesStore,
+        serverDeps.employeesBuilder,
+      )
+      runtime.logger.log('seed_completed', {
+        seeded: seedResult.seeded.length,
+        skipped: seedResult.skipped.length,
+      })
+    } catch (err) {
+      runtime.logger.log('seed_failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    const startupDeps = buildStartupDeps(runtime, serverDeps)
     if (opts.daemon === true) {
       // 调度器路径（__daemon）永不开浏览器：重复触发守护每分钟拉起时若服务已在跑（任务实例外），
       // 幂等分支会开浏览器——用户每分钟吃一个新标签页（安装实测反馈）。浏览器只属于用户显式动作
