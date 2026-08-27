@@ -55,18 +55,3 @@ connectors 为空时不生成 mcp.json（约定：字段空 = 件不存在）。
 5. sec 三员 manifest 的 `skills: []` 为对账状态（声明-实物一致优先），L1 实施批补齐素材后恢复条目
 6. 新增模板：复制同构目录 + 过 schema + AGENTS 六段式渲染一致；kind 判据 = 能否裸用独立完成全部职责（只能服务评审闸者 = callee，无 orchestration/）
 
-## 物料状态与批次
-
-- 已就位：skill 16 份（15 份 1.0 仓改写 + review-verdict 新写）；superpowers 系 4 份含 `licenses/superpowers-LICENSE`（MIT 溯源）
-- L1 实施批（见 `skills-remaining.md`）：sec 两 zip 解包、secretgate TS 移植（A1 员工形态：脚本扫描 + LLM 定性）、红线拦截脚本本体
-- L1 打磨批：kdev-gen 七件套的 V4x.1 流程词汇语义级清理（当前为机械替换级）
-
-## 关联文档
-
-| 文档 | 用途 |
-|------|------|
-| [员工模板设计](../../docs/plans/2026-08-26-员工模板-design.md) | 决策 T1~T11 与结构规范唯一源 |
-| [shared-protocol v0.2](../../docs/design/详细设计/shared-protocol详细设计-v0.2.md) | manifest/skill schema（I0-4 契约冻结依据） |
-| [skills-remaining.md](skills-remaining.md) | 物料批次台账（实施批/打磨批/修复记录） |
-| [fable 评审记录](../../docs/design/fable评审记录-员工模板-2026-08-27.md) | 第三方评审 17 条与处置附录 |
-| [协同编排设计](../../docs/plans/2026-08-26-协同编排-design.md) | 七员工名单权威（D-044）、node-table 契约、引擎工具语义 |
