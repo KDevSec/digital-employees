@@ -1,0 +1,21 @@
+workbench/workbench-service/src/adapters/claude-code/profile.ts
+  s_3d694229081e72::t_51cf9f648a5666 9
+workbench/workbench-service/src/adapters/claude-code/profile.test.ts
+  s_3d694229081e72::t_9d64f5ca50a6f9 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a8a0e25f9daa651e7599268563c6bae8c945b848",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "deepseek-v4-flash-ga-260731"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
