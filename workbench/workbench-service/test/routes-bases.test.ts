@@ -20,6 +20,7 @@ beforeEach(() => {
     cacheDir: join(scratch, 'bases'),
     run: async () => ({ code: 0, stdout: '2.1.245 (Claude Code)\n' }),
     registryFile: join(scratch, 'registry.json'),
+    tierConfigFile: join(scratch, 'bases', 'tier-config.json'),
   }
 })
 
@@ -57,5 +58,53 @@ describe('bases 域路由（设计 §10；CmdRunner 注入探测）', () => {
     const models = await res.json() as { tier?: string }[]
     expect(models.length).toBeGreaterThan(0)
     expect(models.some((m) => m.tier === '编码档')).toBe(true)
+  })
+
+  it('GET /api/bases/:id/tier-config -> 合并后五档映射（未配置 = 内置默认全档）', async () => {
+    const res = await buildApp().request('/api/bases/qoder/tier-config')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { tiers: Record<string, string>; customized: string[] }
+    expect(Object.keys(body.tiers).sort()).toEqual(['执行档', '探索档', '编码档', '设计档', '评审安全档'])
+    expect(body.tiers['评审安全档']).toBe('Qwen3.8-Max') // D-062 内置默认
+    expect(body.customized).toEqual([])
+  })
+
+  it('PUT /api/bases/:id/tier-config -> 持久化覆盖，GET 与 models 端点均反映配置（D-062）', async () => {
+    const put = await buildApp().request('/api/bases/qoder/tier-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tiers: {
+        评审安全档: 'Qwen3.8-Max', 设计档: 'Qwen3.8-Flash', 探索档: 'Qwen3.8-Max',
+        编码档: 'Qwen3.7-Plus', 执行档: 'Qwen3.8-Flash',
+      } }),
+    })
+    expect(put.status).toBe(200)
+    const body = await put.json() as { tiers: Record<string, string>; customized: string[] }
+    expect(body.tiers['设计档']).toBe('Qwen3.8-Flash')
+    expect(body.customized.sort()).toEqual(['执行档', '设计档'])
+
+    // GET 回读：配置落盘（跨 app 实例读同一文件）
+    const got = await buildApp().request('/api/bases/qoder/tier-config')
+    const gotBody = await got.json() as { tiers: Record<string, string> }
+    expect(gotBody.tiers['设计档']).toBe('Qwen3.8-Flash')
+
+    // models 端点合并配置后展平
+    const models = await buildApp().request('/api/bases/qoder/models')
+    const list = await models.json() as { id: string; tier?: string }[]
+    expect(list.filter((m) => m.tier === '设计档')[0]?.id).toBe('Qwen3.8-Flash')
+  })
+
+  it('PUT /api/bases/:id/tier-config 校验：五档缺一 -> 400', async () => {
+    const res = await buildApp().request('/api/bases/qoder/tier-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tiers: { 评审安全档: 'Qwen3.8-Max', 设计档: 'Qwen3.7-Max', 探索档: 'Qwen3.8-Max', 编码档: 'Qwen3.7-Plus' } }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('GET /api/bases/unknown/tier-config -> 404 BASE_NOT_FOUND', async () => {
+    const res = await buildApp().request('/api/bases/unknown/tier-config')
+    expect(res.status).toBe(404)
   })
 })

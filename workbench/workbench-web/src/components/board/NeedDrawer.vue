@@ -4,8 +4,9 @@
  * 只建草稿不发起（发起 = 拖入待办池）。字段 = CreateTaskModal 子集（mode/流程/
  * 工作区/标题/需求文本/底座），提交 emit add。按钮文案精简（品牌 §4）。
  */
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { FlowSummary } from '../../api/engine-api'
+import { fetchBases, type BaseCard } from '../../api/bases'
 import type { NeedDraft } from '../../stores/board'
 
 const props = defineProps<{
@@ -19,15 +20,14 @@ const emit = defineEmits<{
   add: [need: Omit<NeedDraft, 'id'>]
 }>()
 
-const BASES = [
-  { value: '', label: '跟随终端默认' },
-  { value: 'claude-code', label: 'Claude Code' },
-  { value: 'codebuddy', label: 'CodeBuddy' },
-  { value: 'qoder', label: 'Qoder' },
-]
-
 const form = reactive({ title: '', input: '', flow: '', workspace: '', base: '' })
 const formError = ref<string | null>(null)
+
+/** 底座真实源（D-062，与 CreateTaskModal 同口径：GET /api/bases；空 = 仅「未选择」占位项） */
+const baseCards = ref<BaseCard[]>([])
+onMounted(async () => {
+  baseCards.value = await fetchBases()
+})
 
 watch(
   () => props.open,
@@ -97,8 +97,14 @@ function close(): void {
       </div>
       <div class="field">
         <label>底座</label>
-        <select v-model="form.base">
-          <option v-for="b in BASES" :key="b.value" :value="b.value">{{ b.label }}</option>
+        <select v-model="form.base" data-f="base">
+          <option value="">未选择</option>
+          <option
+            v-for="b in baseCards"
+            :key="b.id"
+            :value="b.id"
+            :disabled="!b.present"
+          >{{ b.present ? `${b.label}（${b.version ?? '未知版本'}）` : `${b.label}（未检测到）` }}</option>
         </select>
       </div>
       <div class="field">

@@ -270,6 +270,7 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: S
     // employeesRoot 注入运行期回退：未命中快照时按 employee_id 实时探查此目录（isSafeEmployeeId 预检防越界）。
     employeesRoot,
     cacheDir: basesCacheDir,
+    tierConfigFile: join(basesCacheDir, 'tier-config.json'), // D-062：模型档位配置（bases 域目录内聚）
     run: runBaseVersion,
     // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
     service: access.service,
