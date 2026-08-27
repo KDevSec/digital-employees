@@ -1,0 +1,29 @@
+workbench/shared-protocol/package.json
+  s_b9259474bd2245::t_3058b8596c0746 8-9
+workbench/workbench-service/src/employees/skill-upload.ts
+  s_b9259474bd2245::t_77feab7c401590 7,10,13-14,23,26
+  s_b9259474bd2245::t_fea633b4d9e2c5 85,89
+  s_b9259474bd2245::t_3e20a4d6b6bae9 186-189,191-194
+workbench/shared-protocol/src/skill.ts
+  s_b9259474bd2245::t_dfef5a6e9c682a 2,40-82
+workbench/shared-protocol/test/skill.test.ts
+  s_b9259474bd2245::t_67eb2c163e894e 2,27-59
+bun.lock
+  s_b9259474bd2245::t_b33cb47000f931 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b5b800421f850697ada99c4bc63993f3957d7d45",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
