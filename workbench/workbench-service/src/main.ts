@@ -35,6 +35,8 @@ import type { HealthSnapshot } from './runtime/instance'
 import { createRegistry } from './server/registry'
 import { registerAllRoutes } from './server/routes'
 import { toHonoApp } from './server/hono-adapter'
+import { createTemplatesProvider } from './templates/provider'
+import { builtinTemplates } from './assets/templates.gen'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
 // vitest 不支持该导入属性——路由域（routes/）经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
@@ -190,6 +192,9 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     profileDir,
     loadConfig,
     writeConfigOverride,
+    // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
+    // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
+    templates: createTemplatesProvider(builtinTemplates, join(profileDir, 'templates', 'custom')),
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

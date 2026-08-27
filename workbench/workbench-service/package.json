@@ -15,11 +15,13 @@
     "@devzero/shared-protocol": "workspace:*",
     "hono": "^4",
     "zod": "^3",
-    "commander": "^12"
+    "commander": "^12",
+    "js-yaml": "^4"
   },
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^2",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4"
   }
 }

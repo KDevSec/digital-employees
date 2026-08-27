@@ -8,6 +8,8 @@ import { createRegistry } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
+import { builtinTemplates } from '../src/assets/templates.gen'
+import { createTemplatesProvider } from '../src/templates/provider'
 
 function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = {}) {
   const registry = createRegistry()
@@ -22,6 +24,8 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     profileDir: 'D:/data/.devzero',
     loadConfig,
     writeConfigOverride,
+    // Task 7 B2 templates 域：真实 builtin 资产 + 占位 customRoot（本文件不触达该域端点，行为断言在 routes-templates.test.ts）
+    templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
     ...overrides,
   })
   return toHonoApp(registry)
