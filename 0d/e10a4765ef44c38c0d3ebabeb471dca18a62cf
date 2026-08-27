@@ -1,0 +1,42 @@
+workbench/workbench-web/src/components/wizard/steps/StepSkills.vue
+  s_50810e6282795c::t_a781bf114b1ed2 252-253,255,259,263-265,272-273,276-277,281-290
+  s_50810e6282795c::t_265402015e55d2 306,310-315
+  s_50810e6282795c::t_52197887d70aa5 123,127
+workbench/workbench-web/src/views/CreateWizard.vue
+  s_50810e6282795c::t_31fd3d40b67434 232,238,241-242,244-245
+  s_50810e6282795c::t_ae3b0788dde59e 254
+  s_50810e6282795c::t_d46434f15ea05e 11
+workbench/workbench-web/test/wizard-store.test.ts
+  s_50810e6282795c::t_fd86e4906e9e91 153,155,158
+  s_50810e6282795c::t_82b94931a77428 112,116-118,120-122
+workbench/workbench-web/test/create-wizard.test.ts
+  s_50810e6282795c::t_6a935f594e64ef 156,159,161,163-167
+workbench/workbench-web/src/components/wizard/steps/StepAgent.vue
+  s_50810e6282795c::t_6c77bb7af3ad89 103-107
+workbench/workbench-web/test/wizard-completion.test.ts
+  s_50810e6282795c::t_b4ede7ed6fdd96 194,204,209
+  s_50810e6282795c::t_306f099fdb0a7b 252,266,281,295
+  s_50810e6282795c::t_1145721b4405e1 299-300
+  s_50810e6282795c::t_5817ea8039358c 222
+  s_50810e6282795c::t_3f9c86afa80605 210
+workbench/workbench-web/src/components/wizard/steps/StepExtensions.vue
+  s_50810e6282795c::t_d1b8befeb7a639 1-149
+workbench/workbench-web/src/stores/wizard.ts
+  s_50810e6282795c::t_96496c4183841e 72-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "0de10a4765ef44c38c0d3ebabeb471dca18a62cf",
+  "prompts": {},
+  "sessions": {
+    "s_50810e6282795c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e021fb8b-2906-4b27-90fe-485a618b86b0",
+        "model": "kimi-k3"
+      },
+      "human_author": null
+    }
+  }
+}
