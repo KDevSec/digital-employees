@@ -6,14 +6,19 @@
  */
 import { Hono } from 'hono'
 import { forbiddenHostResponse, isLocalHost } from './guard'
-import type { Ctx, Res, ResCookie, Route, RouteRegistry } from './registry'
+import type { Ctx, Res, ResCookie, Route, RouteRegistry, SessionGuard } from './registry'
 
 export function toHonoApp(
   registry: RouteRegistry & { routes: Route[] },
+  opts?: { sessionGuard?: SessionGuard },
 ): Hono {
+  // 装配保险丝（A-08）：有 auth 档路由却没注入 guard = main 装配漏接线，构造期显式炸（不等请求期放行事故）
+  if (registry.routes.some((r) => r.auth !== undefined) && !opts?.sessionGuard) {
+    throw new Error('存在 auth 档路由但未注入 sessionGuard——检查 main 装配（A-08）')
+  }
   const app = new Hono()
   for (const route of registry.routes) {
-    app.on(route.method, route.path, (c) => dispatch(c, route))
+    app.on(route.method, route.path, (c) => dispatch(c, route, opts?.sessionGuard))
   }
   return app
 }
@@ -59,6 +64,7 @@ export function resToResponse(res: Res): Response {
 async function dispatch(
   c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; query: () => Record<string, string> } },
   route: Route,
+  guard?: SessionGuard,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
   // DNS rebinding 攻击必然携带恶意 Host，白名单判据仍是「带 Host 则必须白名单内」。
@@ -75,6 +81,11 @@ async function dispatch(
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)
     return new Response(denied.text, { status: denied.status })
+  }
+  // 鉴权档位（A-08，设计 §4.2）：Host 守卫之后、handler 之前；guard 返回 Res 即短路（401/403 走同一条映射路径）
+  if (route.auth !== undefined && guard !== undefined) {
+    const denied = await guard(ctx, route.auth)
+    if (denied !== null) return resToResponse(denied)
   }
   const res = await route.handler(ctx)
   return resToResponse(res)

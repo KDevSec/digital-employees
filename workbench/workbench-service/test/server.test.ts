@@ -254,3 +254,67 @@ describe('Res/Ctx 契约扩展（认证迁移设计 §4.1）', () => {
     expect(res.headers.get('content-type')).toBeNull()
   })
 })
+
+describe('鉴权档位（A-08，设计 §4.2）', () => {
+  it('档位路由 + guard 拒绝 → 短路返回 guard 的 Res（handler 不执行）', async () => {
+    const registry = createRegistry()
+    let handlerReached = false
+    registry.post('/api/business', () => {
+      handlerReached = true
+      return { status: 200, json: { ok: true } }
+    }, { auth: 'session' })
+    const app = toHonoApp(registry, {
+      sessionGuard: async () => ({ status: 401, json: { error: { code: 'PERSON_SESSION_INVALID', message: '请先使用企业账号登录' } } }),
+    })
+    const res = await app.request('/api/business', { method: 'POST' })
+    expect(res.status).toBe(401)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('PERSON_SESSION_INVALID')
+    expect(handlerReached).toBe(false)
+  })
+
+  it('guard 放行（null）→ handler 执行，grade 透传（session-active 档）', async () => {
+    const registry = createRegistry()
+    const grades: string[] = []
+    registry.post('/api/business', () => ({ status: 200, json: { ok: true } }), { auth: 'session-active' })
+    const app = toHonoApp(registry, {
+      sessionGuard: async (_ctx, grade) => {
+        grades.push(grade)
+        return null
+      },
+    })
+    const res = await app.request('/api/business', { method: 'POST' })
+    expect(res.status).toBe(200)
+    expect(grades).toEqual(['session-active'])
+  })
+
+  it('Host 守卫仍先于鉴权（S-12 不松动）：恶意 Host → 403 且 guard 不执行', async () => {
+    const registry = createRegistry()
+    registry.post('/api/business', () => ({ status: 200, json: {} }), { auth: 'session' })
+    let guardRan = false
+    const app = toHonoApp(registry, {
+      sessionGuard: async () => {
+        guardRan = true
+        return null
+      },
+    })
+    const res = await app.request('/api/business', { method: 'POST', headers: { Host: 'evil.com' } })
+    expect(res.status).toBe(403)
+    expect(guardRan).toBe(false)
+  })
+
+  it('装配保险丝：有 auth 档路由但未注入 guard → toHonoApp 构造期抛错', () => {
+    const registry = createRegistry()
+    registry.post('/api/business', () => ({ status: 200, json: {} }), { auth: 'session' })
+    expect(() => toHonoApp(registry)).toThrow(/sessionGuard/)
+  })
+
+  it('无档位路由不受 guard 影响（/healthz、auth 端点等不设防）', async () => {
+    const registry = createRegistry()
+    registry.get('/healthz', () => ({ status: 200, json: { ok: true } }))
+    const app = toHonoApp(registry, {
+      sessionGuard: async () => ({ status: 401, json: { error: { code: 'X', message: 'x' } } }),
+    })
+    const res = await app.request('/healthz')
+    expect(res.status).toBe(200)
+  })
+})

@@ -102,3 +102,13 @@ describe('Res/Ctx 契约类型扩展（认证迁移设计 §4.1）', () => {
     expect(res.redirect).toBe('/x')
   })
 })
+
+describe('鉴权档位声明（A-08，设计 §4.2）', () => {
+  it('routes 记录 auth 档位（Route.auth 字段）', () => {
+    const registry = createRegistry()
+    registry.post('/api/x', () => ({ status: 200, json: {} }), { auth: 'session' })
+    registry.get('/api/y', () => ({ status: 200, json: {} }))
+    expect(registry.routes.find((r) => r.path === '/api/x')?.auth).toBe('session')
+    expect(registry.routes.find((r) => r.path === '/api/y')?.auth).toBeUndefined()
+  })
+})
