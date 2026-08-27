@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import StepBar from '../components/wizard/StepBar.vue'
 import TplGrid from '../components/wizard/TplGrid.vue'
+import StepAgent from '../components/wizard/steps/StepAgent.vue'
+import StepCommandsFlow from '../components/wizard/steps/StepCommandsFlow.vue'
+import StepConnectors from '../components/wizard/steps/StepConnectors.vue'
+import StepHooksTools from '../components/wizard/steps/StepHooksTools.vue'
+import StepKnowledge from '../components/wizard/steps/StepKnowledge.vue'
+import StepSkills from '../components/wizard/steps/StepSkills.vue'
+import { clearDraft, restoreDraft, saveDraft } from '../composables/useWizardDraft'
+import type { TemplateMeta } from '../api/templates'
 import { useWizardStore } from '../stores/wizard'
 
 /**
- * 员工创建向导页（L1 员工新建线 Task 13 骨架）：
+ * 员工创建向导页（L1 员工新建线 Task 13 骨架 + Task 14 七步表单接入 + 草稿恢复）：
  * - page-head：← 返回按钮（→ /employees）+ h1「员工创建」+ 副标；
- * - layout-2col：左栏「1 · 选择角色模板」section-title + TplGrid + 「2 · 配置向导」card
+ * - layout-2col：左栏「1 · 选择角色模板」+ TplGrid + 「2 · 配置向导」card
  *   （StepBar + 当前步骤组件区 + 底部 上一步/下一步 按钮）；
  * - 右栏 sticky 预览面板占位（「产出物预览」——Task 15 实做）。
  *
- * 步骤组件区：本任务先空壳（按 currentStep 显示提示文案）；Task 14 接入七个 Step 组件按 currentStep 切换。
+ * 七步组件区（Task 14）：按 store.currentStep 切换 Step 组件——
+ *   1 模板（左栏 TplGrid 已选）/ 2 Agent / 3 Skills / 4 HooksTools /
+ *   5 CommandsFlow / 6 Knowledge / 7 Connectors。
+ *
+ * 草稿（Task 14）：watch draft deep → 防抖 1s 落 localStorage；onMounted 检测草稿 → 「检测到未完成草稿，恢复？」
+ * 确认条（恢复/丢弃两按钮）；恢复时 local skill 项标 needsReupload:true。
  *
  * 禁词红线（Global Constraint）：UI 文案全程不得出现「底座」「安装」「AgentHub」。
- * 「上传到 AgentHub」按钮不实现（原型有该按钮，本任务按禁词红线删去）。
  */
 
 const store = useWizardStore()
@@ -32,28 +44,6 @@ const wizardSubtitle = computed(() => {
   return tpl ? `— 基于「${tpl.display}」模板` : ''
 })
 
-/** 当前步骤提示文案（Task 14 接入实际组件前的占位） */
-const stepHint = computed(() => {
-  switch (store.currentStep) {
-    case 1:
-      return '请在上方选择角色模板，然后点「下一步」开始配置。'
-    case 2:
-      return 'Step 2：Agent 定义（Task 14 实做）'
-    case 3:
-      return 'Step 3：Skills 能力配置（Task 14 实做）'
-    case 4:
-      return 'Step 4：Hooks 与 Tools 约束（Task 14 实做）'
-    case 5:
-      return 'Step 5：Commands 与流程（Task 14 实做）'
-    case 6:
-      return 'Step 6：Knowledge（Task 14 实做）'
-    case 7:
-      return 'Step 7：Connectors MCP（Task 14 实做）'
-    default:
-      return ''
-  }
-})
-
 /** 步级必填校验提示（step2 空 display/id 时显示） */
 const stepValidationError = computed(() => {
   if (store.currentStep === 2) {
@@ -63,11 +53,27 @@ const stepValidationError = computed(() => {
   return ''
 })
 
+/** 草稿恢复提示 */
+const draftPrompt = ref(false)
+const restoredDraft = ref<ReturnType<typeof restoreDraft>>(null)
+
+/** 草稿保存防抖 timer */
+const saveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+
+/** 监听 draft deep → 防抖 1s 落 localStorage */
+watch(
+  () => store.draft,
+  (newDraft) => {
+    saveDraft(newDraft, saveTimer)
+  },
+  { deep: true },
+)
+
 function goBack(): void {
   void router.push('/employees')
 }
 
-function onSelectTemplate(meta: import('../api/templates').TemplateMeta | null): void {
+function onSelectTemplate(meta: TemplateMeta | null): void {
   store.selectTemplate(meta)
 }
 
@@ -83,8 +89,29 @@ function onPrev(): void {
   store.prev()
 }
 
-onMounted(() => {
-  void store.loadMeta()
+/** 恢复草稿 */
+function onRestoreDraft(): void {
+  if (!restoredDraft.value) return
+  store.draft = { ...store.draft, ...restoredDraft.value }
+  draftPrompt.value = false
+  restoredDraft.value = null
+}
+
+/** 丢弃草稿 */
+function onDiscardDraft(): void {
+  clearDraft()
+  draftPrompt.value = false
+  restoredDraft.value = null
+}
+
+onMounted(async () => {
+  await store.loadMeta()
+  // 检测草稿
+  const draft = restoreDraft()
+  if (draft) {
+    restoredDraft.value = draft
+    draftPrompt.value = true
+  }
 })
 </script>
 
@@ -100,6 +127,15 @@ onMounted(() => {
       </div>
     </header>
 
+    <!-- 草稿恢复提示条 -->
+    <div v-if="draftPrompt" class="draft-banner">
+      <span>检测到未完成草稿，是否恢复？</span>
+      <div class="draft-actions">
+        <button class="btn btn-primary btn-sm" type="button" @click="onRestoreDraft">恢复</button>
+        <button class="btn btn-ghost btn-sm" type="button" @click="onDiscardDraft">丢弃</button>
+      </div>
+    </div>
+
     <div class="layout-2col">
       <div>
         <div class="section-title">1 · 选择角色模板</div>
@@ -110,7 +146,27 @@ onMounted(() => {
           <StepBar :current-step="store.currentStep" @goto="onGoto" />
 
           <div class="step-area">
-            <p class="step-hint">{{ stepHint }}</p>
+            <!-- Step 1 模板：左栏 TplGrid 已涵盖，此处提示文案 -->
+            <p v-if="store.currentStep === 1" class="step-hint">请在上方选择角色模板，然后点「下一步」开始配置。</p>
+
+            <!-- Step 2 Agent 定义 -->
+            <StepAgent v-else-if="store.currentStep === 2" />
+
+            <!-- Step 3 Skills -->
+            <StepSkills v-else-if="store.currentStep === 3" />
+
+            <!-- Step 4 Hooks 与 Tools -->
+            <StepHooksTools v-else-if="store.currentStep === 4" />
+
+            <!-- Step 5 Commands 与流程 -->
+            <StepCommandsFlow v-else-if="store.currentStep === 5" />
+
+            <!-- Step 6 Knowledge -->
+            <StepKnowledge v-else-if="store.currentStep === 6" />
+
+            <!-- Step 7 Connectors -->
+            <StepConnectors v-else-if="store.currentStep === 7" />
+
             <p v-if="stepValidationError" class="step-error">{{ stepValidationError }}</p>
           </div>
 
@@ -162,7 +218,7 @@ h1 {
   font-size: 13px;
 }
 
-/* 原型 .back-btn：返回按钮 */
+/* 原型 .back-btn */
 .back-btn {
   width: 32px;
   height: 32px;
@@ -183,7 +239,27 @@ h1 {
   color: var(--blue-700);
 }
 
-/* 原型 .layout-2col：1fr + 340px */
+/* 草稿恢复提示条 */
+.draft-banner {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-200);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--blue-800);
+}
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 原型 .layout-2col */
 .layout-2col {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -191,7 +267,7 @@ h1 {
   align-items: start;
 }
 
-/* 原型 .section-title：蓝竖条 + 15px 600 */
+/* 原型 .section-title */
 .section-title {
   font-size: 15px;
   font-weight: 600;
@@ -219,7 +295,7 @@ h1 {
   font-weight: 400;
 }
 
-/* 原型 .card：白卡 */
+/* 原型 .card */
 .card {
   background: #fff;
   border: 1px solid var(--g200);
@@ -231,7 +307,7 @@ h1 {
   padding: 22px;
 }
 
-/* 步骤组件区：Task 14 接入实际组件前的占位 */
+/* 步骤组件区 */
 .step-area {
   min-height: 120px;
   padding: 12px 0;
@@ -246,10 +322,9 @@ h1 {
 .step-error {
   color: var(--red);
   font-size: 12.5px;
-  margin: 0;
+  margin: 8px 0 0;
 }
 
-/* 底部按钮区 */
 .wizard-foot {
   display: flex;
   gap: 10px;
@@ -275,6 +350,12 @@ h1 {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-sm {
+  padding: 5px 11px;
+  font-size: 12px;
+  border-radius: 7px;
 }
 
 .btn-primary {

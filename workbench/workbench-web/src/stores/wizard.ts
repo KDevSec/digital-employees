@@ -123,6 +123,10 @@ export const useWizardStore = defineStore('wizard', {
     /**
      * 选中模板：预填 draft（Custom 零预填）+ skills 默认勾选模板自带。
      * meta=null → Custom：draft 重置为空（保留 visibility/audit 默认值）。
+     *
+     * idTouched 处置：选中模板时 id 来自模板，置 idTouched=true 锁定，避免 StepAgent 的
+     * slug 联动 watch 在 display 变化时覆盖模板默认 id（场景：step2 已挂载时点左栏换模板）；
+     * Custom 重置时 idTouched=false，让 slug 联动从空态起步跟随 display。
      */
     selectTemplate(meta: TemplateMeta | null): void {
       if (meta === null) {
@@ -133,13 +137,14 @@ export const useWizardStore = defineStore('wizard', {
         this.draft = { ...emptyDraft(), ...keep }
         return
       }
-      // 重置 draft 但保留模板可得字段 + 模板自带 skills 默认勾选
+      // 重置 draft 但保留模板可得字段 + 模板自带 skills 默认勾选 + idTouched=true 锁定模板 id
       const base = emptyDraft()
       this.draft = {
         ...base,
         selectedTemplateId: meta.id,
         display: meta.display,
         id: meta.id,
+        idTouched: true,
         avatar: meta.avatar,
         kind: meta.kind,
         level: meta.level,
