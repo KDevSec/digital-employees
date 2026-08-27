@@ -1,0 +1,21 @@
+workbench/workbench-service/src/installs/uninstall/uninstall.ts
+  s_3164dc039eb46c::t_5039e50cc8dc68 1-88
+workbench/workbench-service/test/installs-uninstall.test.ts
+  s_3164dc039eb46c::t_713f82e7ab30d7 1-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "3fa870da8ee8abb2c8a26f8990bb7f6a367010c7",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
