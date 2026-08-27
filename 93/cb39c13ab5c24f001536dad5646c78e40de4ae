@@ -1,0 +1,92 @@
+docs/plans/2026-08-26-员工模板-design.md
+  s_0cf83e7997645f::t_9eb9927f1e6fa2 1-195
+workbench/templates/reviewer-expert/manifest.yml
+  s_0cf83e7997645f::t_53d00660ce3f79 1-47
+workbench/templates/sec-design/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/reviewer-expert/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/sec-compliance/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-27
+workbench/templates/reviewer-expert/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-27
+workbench/templates/sys-engineer/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/reviewer-expert/AGENTS.md
+  s_0cf83e7997645f::t_e2dbffefbd943d 1-45
+workbench/templates/dev-engineer/AGENTS.md
+  s_0cf83e7997645f::t_a3c183023be9e2 1-55
+workbench/templates/sec-compliance/AGENTS.md
+  s_0cf83e7997645f::t_87974b244776b2 1-44
+workbench/templates/sec-code/manifest.yml
+  s_0cf83e7997645f::t_3c82e9ed1f4344 1-47
+workbench/templates/req-clarifier/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/reviewer-expert/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/sec-design/manifest.yml
+  s_0cf83e7997645f::t_171de8630c821f 1-47
+workbench/templates/sec-design/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/sec-code/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/dev-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_33fac4c85dc103 1-27
+workbench/templates/sec-code/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/sys-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-17
+workbench/templates/sec-compliance/manifest.yml
+  s_0cf83e7997645f::t_d70727827db9c3 1-47
+workbench/templates/dev-engineer/orchestration/dev-engineer.node-table.yml
+  s_0cf83e7997645f::t_d6a4cdc1beae55 11
+  s_0cf83e7997645f::t_6a7fa7a4112ce4 1-10,12-21
+workbench/templates/req-clarifier/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-17
+workbench/templates/dev-engineer/knowledge/README.md
+  s_0cf83e7997645f::t_d4635ad6860715 1-4
+workbench/templates/dev-engineer/commands/README.md
+  s_0cf83e7997645f::t_b032f11a2af1a1 1-4
+workbench/templates/sec-compliance/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/dev-engineer/manifest.yml
+  s_0cf83e7997645f::t_25dd9f62431761 1-64
+workbench/templates/sys-engineer/AGENTS.md
+  s_0cf83e7997645f::t_22d1ba7f50734b 1-51
+workbench/templates/sec-code/AGENTS.md
+  s_0cf83e7997645f::t_f230a0a6c1e296 1-45
+workbench/templates/req-clarifier/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/sec-design/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-27
+workbench/templates/sys-engineer/commands/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+workbench/templates/req-clarifier/manifest.yml
+  s_0cf83e7997645f::t_1503aae4b20670 1-51
+workbench/templates/sec-code/hooks/hooks.json
+  s_0cf83e7997645f::t_47dd09c4c6cb60 1-27
+workbench/templates/sys-engineer/manifest.yml
+  s_0cf83e7997645f::t_a020b600e3a74a 1-50
+workbench/templates/req-clarifier/AGENTS.md
+  s_0cf83e7997645f::t_99328d635169c5 1-51
+workbench/templates/sec-design/AGENTS.md
+  s_0cf83e7997645f::t_71ca0c12c98170 1-44
+workbench/templates/sec-compliance/knowledge/README.md
+  s_0cf83e7997645f::t_cd00f97b5b9ff2 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "93cb39c13ab5c24f001536dad5646c78e40de4ae",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

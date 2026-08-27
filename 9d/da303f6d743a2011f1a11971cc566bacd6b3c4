@@ -1,0 +1,83 @@
+workbench/workbench-service/test/access-service.test.ts
+  s_d4823793916f9d::t_9f38c54646724e 1-250
+workbench/workbench-service/test/routes-registry.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 3,138-154
+workbench/workbench-service/test/crypto.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-50
+workbench/workbench-service/src/app/platform-access/enrollment.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-116
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_d4823793916f9d::t_7af1cd8932945d 10,13-21,26,28-31,33,36,41,46,52-102,106,117,119,121-122,128-131,133-134
+workbench/workbench-service/src/app/platform-access/heartbeat.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-90
+workbench/workbench-service/src/app/platform-access/machine-token.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-50
+workbench/workbench-service/test/enrollment.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-143
+docs/plans/2026-08-27-认证迁移.md
+  s_d4823793916f9d::t_b1e72baf32c01c 1-3595
+workbench/workbench-service/src/app/platform-access/index.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-57
+workbench/workbench-service/test/oidc.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-150
+workbench/workbench-service/src/app/platform-access/crypto.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-68
+workbench/workbench-service/src/app/platform-access/session-store.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-51
+workbench/workbench-service/test/session-store.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-47
+workbench/workbench-service/src/app/platform-access/oidc.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-101
+workbench/workbench-service/src/server/registry.ts
+  s_d4823793916f9d::t_a5bb4a5c2d82aa 12,14,16-17,28-42,47-56,61-62,66-67,69,77-78,80-81,83-84
+workbench/workbench-service/test/config-cache.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-44
+workbench/workbench-service/package.json
+  s_d4823793916f9d::t_dd25fdb1a67914 18-19
+workbench/workbench-service/test/machine-token.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-66
+workbench/workbench-service/test/heartbeat.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-137
+workbench/workbench-service/src/app/platform-access/platform-client.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-138
+workbench/workbench-service/src/app/platform-access/service.ts
+  s_d4823793916f9d::t_9f38c54646724e 1-260
+workbench/workbench-service/src/app/platform-access/state-store.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-57
+workbench/workbench-service/test/encrypted-store.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-50
+workbench/workbench-service/test/server.test.ts
+  s_d4823793916f9d::t_38a0a833ba80a5 8,211-348
+docs/plans/2026-08-27-认证迁移-design.md
+  s_d4823793916f9d::t_b1e72baf32c01c 1-334
+workbench/workbench-service/test/state-store.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-39
+workbench/workbench-service/src/app/platform-access/config-cache.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-46
+workbench/workbench-service/src/app/platform-access/auth-secret.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-33
+workbench/workbench-service/src/app/platform-access/encrypted-store.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-72
+workbench/workbench-service/test/platform-client.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-107
+workbench/workbench-service/test/auth-secret.test.ts
+  s_d4823793916f9d::t_b1e72baf32c01c 1-44
+bun.lock
+  s_d4823793916f9d::t_b9b4d0978931e3 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9dda303f6d743a2011f1a11971cc566bacd6b3c4",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+workbench/workbench-service/test/engine-stream.test.ts
+  s_ae9313906bcd90::t_1da5b8b6ed96f0 42,52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "6e6248043f759c97edda1b8645d6fb31009b2d30",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

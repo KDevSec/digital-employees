@@ -1,0 +1,21 @@
+workbench/workbench-service/test/session-store.test.ts
+  s_d4823793916f9d::t_873b31df39be48 1-47
+workbench/workbench-service/src/app/platform-access/session-store.ts
+  s_d4823793916f9d::t_71c86a77b0c6e2 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0b41d9534c06eec3e583f08814653ca874856705",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

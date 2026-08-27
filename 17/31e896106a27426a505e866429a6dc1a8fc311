@@ -1,0 +1,37 @@
+workbench/workbench-service/src/config/schema.ts
+  s_46f7f3afbb6303::t_37603e3a8a8fcf 15-21,37,40,48-61
+workbench/workbench-service/test/routes-config.test.ts
+  s_46f7f3afbb6303::t_2f006fd3d5fada 11,15-16,55,58,61,69-76,81,84,92-110,123
+workbench/workbench-service/test/config.test.ts
+  s_46f7f3afbb6303::t_498024e31bd639 7,29,39,78-85,99-103
+  s_46f7f3afbb6303::t_4d3b888c4c2a01 104
+workbench/workbench-service/src/server/routes/index.ts
+  s_46f7f3afbb6303::t_48cc8a89096c6e 6-7,19-20,23,30
+workbench/workbench-service/test/routes-session.test.ts
+  s_46f7f3afbb6303::t_e16f08757a6ab7 1-79
+workbench/workbench-service/test/routes-registry.test.ts
+  s_46f7f3afbb6303::t_3f093db31f69ee 8,38,46
+  s_46f7f3afbb6303::t_9f5da935f52af8 83-88
+workbench/workbench-service/src/server/routes/config.ts
+  s_46f7f3afbb6303::t_ed480f003f6a0b 2,4-8,17,22-40,58,60-63,66,82-85
+workbench/workbench-service/src/server/routes/session.ts
+  s_46f7f3afbb6303::t_9159f8d8ce5afb 1-58
+docs/design/设计决策记录-2026-08-13.md
+  s_46f7f3afbb6303::t_c21d5318b8bca3 370-376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1731e896106a27426a505e866429a6dc1a8fc311",
+  "prompts": {},
+  "sessions": {
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

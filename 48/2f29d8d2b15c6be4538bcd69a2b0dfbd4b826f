@@ -1,0 +1,24 @@
+workbench/workbench-service/test/access-service.test.ts
+  s_d4823793916f9d::t_8ced8e62d23b27 1-146,148,150-250
+  s_d4823793916f9d::t_54fa7c3ae7bae3 147,149
+workbench/workbench-service/src/app/platform-access/index.ts
+  s_d4823793916f9d::t_6c586ab12e0625 1-57
+workbench/workbench-service/src/app/platform-access/service.ts
+  s_d4823793916f9d::t_4aeac33cff9a9d 1-260
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "482f29d8d2b15c6be4538bcd69a2b0dfbd4b826f",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

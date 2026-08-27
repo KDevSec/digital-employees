@@ -1,0 +1,123 @@
+workbench/workbench-service/src/server/routes/index.ts
+  s_ae9313906bcd90::t_9bf7b7f3c25d19 21-22
+  s_ae9313906bcd90::t_6caf082e9b2908 25
+  s_ae9313906bcd90::t_2813f08a81013c 33
+docs/design/设计决策记录-2026-08-13.md
+  s_ae9313906bcd90::t_6caf082e9b2908 417,443
+  s_ae9313906bcd90::t_550be5ebf742e6 426-442
+  s_ae9313906bcd90::t_de48bd7220c0c2 418-425
+.gitignore
+  s_aad8def6d411b5::t_60c4d3cecf0ac5 33
+bun.lock
+  s_ae9313906bcd90::t_42fcd7f877c790 11-14,25-27,138-141,146-147,250-255,260-261,268-269,276-277,280-283,296-305,320-323,328-329,332-333,336-339,342-343,346-347,350-355,358-365,368-369,372-375,378-383,386-391,394-395,398-403,406-409,416-417,422-423,428-429,432-435,442-443,446-449,452-455,464-465,468-475,480-481,486-487,498-499,504-505,508-513,518-521,526-531,536-543,552-553,582-583,588-589,596-599,632-633,640-641,648-649,654-655,664-665
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_ae9313906bcd90::t_55e97a839e5505 1-84
+docs/plans/2026-08-26-l3-engine.md
+  s_ae9313906bcd90::t_4a496061b04245 1-254
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_3e282769deedac 190,272-273
+docs/plans/2026-08-27-T4修复独立复审.md
+  s_ae9313906bcd90::t_b962245c5a2fab 1-115
+workbench/workbench-engine/assets/flows/demo-flow.node-table.yml
+  s_ae9313906bcd90::t_58b41803077a0c 1-28
+workbench/workbench-engine/package.json
+  s_ae9313906bcd90::t_052007e53b9507 11,13-23
+workbench/workbench-engine/src/engine.ts
+  s_ae9313906bcd90::t_a1a500f4f07a78 1-422
+workbench/workbench-engine/src/r1/ledger.ts
+  s_ae9313906bcd90::t_ac757992336dba 1-454
+workbench/workbench-engine/src/r1/paths.ts
+  s_ae9313906bcd90::t_77f85281d2164d 1-53
+workbench/workbench-engine/src/r2/node-machine.ts
+  s_ae9313906bcd90::t_aac66b19a992a5 1-184
+workbench/workbench-engine/src/r2/state.ts
+  s_ae9313906bcd90::t_7893f4229f2e9b 1-12
+workbench/workbench-engine/src/r3/gate.ts
+  s_ae9313906bcd90::t_ba3ce62db025f4 1-132
+workbench/workbench-engine/src/schema/events.ts
+  s_ae9313906bcd90::t_d7d0c92dff80a8 1-65
+workbench/workbench-engine/src/schema/index.ts
+  s_ae9313906bcd90::t_4440df098e284a 1-6
+workbench/workbench-engine/src/schema/node-table.ts
+  s_ae9313906bcd90::t_cb301dd0450382 1-178
+workbench/workbench-engine/src/security/secretgate.ts
+  s_ae9313906bcd90::t_d582988dc58bbb 1-122
+workbench/workbench-engine/test/engine-acceptance.test.ts
+  s_ae9313906bcd90::t_d3a5ab6185df48 1-156
+workbench/workbench-engine/test/engine.test.ts
+  s_ae9313906bcd90::t_f94949f09bdc3e 1-286
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_ae9313906bcd90::t_ec165007ba1810 1-34
+workbench/workbench-engine/test/fixtures/full-14.node-table.yml
+  s_ae9313906bcd90::t_a1d3a18f6ac3a8 1-35
+workbench/workbench-engine/test/r1.test.ts
+  s_ae9313906bcd90::t_5001ec24f7fd29 1-535
+workbench/workbench-engine/test/r2.test.ts
+  s_ae9313906bcd90::t_f993127bad18bb 1-268
+workbench/workbench-engine/test/r3.test.ts
+  s_ae9313906bcd90::t_6e0693e90ff134 1-297
+workbench/workbench-engine/test/schema.test.ts
+  s_ae9313906bcd90::t_88c529f72588dc 1-142
+workbench/workbench-engine/test/secretgate.test.ts
+  s_ae9313906bcd90::t_4c242c6f5903ed 1-98
+workbench/workbench-engine/test/table-demo.test.ts
+  s_ae9313906bcd90::t_282397f71aa4c3 1-113
+workbench/workbench-service/package.json
+  s_ae9313906bcd90::t_19454f4531e804 14-17
+workbench/workbench-service/src/engine/driver.ts
+  s_ae9313906bcd90::t_b45ae8c84368cc 1-129
+workbench/workbench-service/src/engine/launcher.ts
+  s_ae9313906bcd90::t_0ae8743a525613 1-99
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_ae9313906bcd90::t_5e03dfd4633ff9 1-91
+workbench/workbench-service/src/engine/stream.ts
+  s_ae9313906bcd90::t_0fc69c72566cc5 1-68
+workbench/workbench-service/src/main.ts
+  s_ae9313906bcd90::t_0884fc579f5c03 37-40,186-193,205,207-208
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_ae9313906bcd90::t_4e7dd9e5eb1fe3 8,11-18,22,25-31,38-42,44,56-59,69-74
+workbench/workbench-service/src/server/mcp/engine-mcp.ts
+  s_ae9313906bcd90::t_0bc88fa1f16e97 1-114
+workbench/workbench-service/src/server/registry.ts
+  s_ae9313906bcd90::t_bed6f53af094db 12-15,24-25
+workbench/workbench-service/src/server/routes/engine.ts
+  s_ae9313906bcd90::t_1be4783bc6dc0f 1-234
+workbench/workbench-service/src/types-assets.d.ts
+  s_ae9313906bcd90::t_f06de992ce720f 1-5
+workbench/workbench-service/test/driver.test.ts
+  s_ae9313906bcd90::t_17760a7fa2aae9 1-259
+workbench/workbench-service/test/engine-stream.test.ts
+  s_ae9313906bcd90::t_ead2e9a30ffcb4 1-120
+workbench/workbench-service/test/mcp-engine.test.ts
+  s_ae9313906bcd90::t_3c0ea3dc297512 1-102
+workbench/workbench-service/test/routes-engine.test.ts
+  s_ae9313906bcd90::t_1b24cc6a240224 1-157
+workbench/workbench-service/test/routes-registry.test.ts
+  s_ae9313906bcd90::t_d6c562cc31e8ff 10-13,21-26,37,55-59,63-71
+workbench/workbench-service/test/server.test.ts
+  s_ae9313906bcd90::t_414c9c4742cee8 1,11-14,29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1261db6fb5a82331ae19fc6ffcbfdc8eedeb1298",
+  "prompts": {},
+  "sessions": {
+    "s_aad8def6d411b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd8f1c29-7d2d-4a04-915b-6aaffb51947f",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    },
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": null
+    }
+  }
+}

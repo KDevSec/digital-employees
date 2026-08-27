@@ -1,0 +1,412 @@
+workbench/workbench-web/src/views/KanbanView.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-387
+workbench/templates/sec-design/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-46
+docs/plans/2026-08-27-l5-kanban.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-138
+docs/design/设计预审记录-2026-08-25.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-284
+workbench/templates/dev-engineer/skills/secure-coding/references/02-security-features.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-365
+workbench/templates/dev-engineer/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-64
+workbench/workbench-web/test/kanban-integration.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-83
+tools/user-keycloak-migration/import-to-keycloak.py
+  s_3164dc039eb46c::t_a9488310ec38c0 2-33,37-38,44-106,114,118,121-127,129-160,163-164,166-181,184-187,190,194,223,255,258-263,265-297,299-524,528,532,536-537,541,545,547,550-553,555-561,564,567-569,571,573-575,578-586,588-589,591-597,599-605,608,612-647,649-651,653-677,679-682,684-738
+workbench/templates/dev-engineer/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-55
+workbench/templates/reviewer-expert/skills/review-verdict/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-60
+workbench/workbench-engine/src/r2/node-machine.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-184
+workbench/templates/req-clarifier/skills/brainstorming/licenses/superpowers-LICENSE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-202
+workbench/workbench-engine/test/engine.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-286
+workbench/templates/req-clarifier/skills/kdev-gen-split/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-52
+iam/realm/digital-employees-realm.json
+  s_3164dc039eb46c::t_a9488310ec38c0 2
+.gitignore
+  s_3164dc039eb46c::t_a9488310ec38c0 33
+workbench/templates/req-clarifier/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-51
+workbench/workbench-web/src/fixtures/mock-event-source.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-141
+workbench/workbench-web/test/kanban-feedback-parts.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-24
+workbench/workbench-engine/test/r3.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-297
+workbench/workbench-service/test/routes-session.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-79
+workbench/workbench-web/src/fixtures/demo-flow.table.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-58
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-84
+workbench/templates/dev-engineer/skills/secure-coding/references/08-environment.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-91
+workbench/workbench-engine/src/schema/node-table.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-178
+workbench/templates/sys-engineer/skills/kdev-gen-overview/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-52
+workbench/workbench-engine/test/engine-acceptance.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-159
+workbench/workbench-web/src/fixtures/scenarios.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-231
+iam/providers-src/bcrypt-spi/build.sh
+  s_3164dc039eb46c::t_a9488310ec38c0 1-25
+workbench/workbench-engine/src/engine.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-422
+workbench/templates/sec-code/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/workbench-engine/test/schema.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-142
+workbench/workbench-service/src/server/routes/session.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-58
+workbench/workbench-service/test/config.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 7,29,39,78-85,99-104
+workbench/workbench-web/test/alert-panel.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-79
+iam/providers-src/bcrypt-spi/src/main/resources/META-INF/services/org.keycloak.credential.hash.PasswordHashProviderFactory
+  s_3164dc039eb46c::t_a9488310ec38c0 1
+workbench/templates/dev-engineer/skills/secure-coding/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-95
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_3164dc039eb46c::t_a9488310ec38c0 1-34
+workbench/workbench-web/test/task-sidebar.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-82
+workbench/workbench-engine/test/secretgate.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-98
+workbench/templates/dev-engineer/skills/frontend-design/LICENSE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-202
+workbench/templates/req-clarifier/skills/kdev-gen-storymap/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-44
+workbench/templates/req-clarifier/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/sys-engineer/skills/kdev-gen-design/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-53
+workbench/templates/req-clarifier/skills/sr-authoring/references/SR-Create-SPEC.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-712
+workbench/workbench-web/test/gate-feed-panel.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-63
+workbench/workbench-service/src/engine/stream.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-68
+workbench/templates/dev-engineer/orchestration/dev-engineer.node-table.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-23
+workbench/templates/req-clarifier/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-17
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-384
+workbench/workbench-web/src/stores/kanban.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-246
+workbench/templates/reviewer-expert/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-47
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-150
+workbench/workbench-web/test/event-watch-panel.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-60
+workbench/workbench-web/src/components/kanban/GateFeedPanel.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-168
+workbench/templates/dev-engineer/skills/verification-before-completion/licenses/superpowers-LICENSE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-202
+workbench/templates/dev-engineer/skills/tdd-methodology/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-374
+workbench/templates/reviewer-expert/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-27
+workbench/workbench-engine/src/r2/state.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-12
+workbench/workbench-engine/src/schema/events.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-65
+workbench/workbench-service/test/routes-engine.test.ts
+  s_3164dc039eb46c::t_4bf64796e669a7 37-41
+  s_3164dc039eb46c::t_a9488310ec38c0 1-36,42-162
+workbench/workbench-web/test/engine-events.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-233
+workbench/workbench-web/test/kanban-view.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-110
+workbench/workbench-engine/src/r3/gate.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-132
+workbench/workbench-web/src/stores/derive-board.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-56
+workbench/workbench-web/src/router/routes/kanban.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 3,6-9,15
+docs/plans/2026-08-26-功能点分工总表.md
+  s_3164dc039eb46c::t_a9488310ec38c0 5-10,14-77,81-86,89-90,92-94,96,106-109
+workbench/workbench-web/src/api/engine-events.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-206
+tools/compose.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 18,38
+workbench/templates/dev-engineer/skills/secure-coding/references/07-code-quality.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-28
+workbench/templates/sec-compliance/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-334
+tools/user-keycloak-migration/export-agenthub-users.py
+  s_3164dc039eb46c::t_a9488310ec38c0 1-158
+workbench/templates/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-57
+workbench/templates/sec-code/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-46
+workbench/workbench-service/src/server/routes/config.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 2,4-8,17,22-40,58,60-63,66,82-85
+workbench/workbench-web/src/components/kanban/AlertPanel.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-113
+workbench/workbench-web/test/derive-board.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-130
+workbench/templates/sec-code/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-27
+workbench/templates/sec-design/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/workbench-web/test/emp-band.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-44
+workbench/workbench-web/test/engine-stream.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-199
+workbench/templates/sys-engineer/skills/kdev-gen-toplevel/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-54
+workbench/workbench-web/src/components/kanban/TaskSidebar.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-232
+docs/plans/2026-08-27-夜班交接.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-32
+workbench/templates/dev-engineer/skills/writing-plans/plan-document-reviewer-prompt.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-49
+workbench/templates/dev-engineer/skills/tdd-methodology/licenses/superpowers-LICENSE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-202
+workbench/workbench-service/src/main.ts
+  s_3164dc039eb46c::t_d5a9a14d6ad3d4 224
+  s_3164dc039eb46c::t_a9488310ec38c0 39-42,205-212,241-242
+workbench/workbench-service/test/server.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1,11-14
+  s_3164dc039eb46c::t_65b360336b9443 29
+workbench/workbench-web/src/components/kanban/EmpBand.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-131
+workbench/workbench-web/test/engine-api.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-78
+workbench/workbench-web/test/scenarios.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-181
+docs/design/详细设计/shared-protocol详细设计-v0.2.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-237
+workbench/templates/sys-engineer/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-17
+workbench/workbench-engine/package.json
+  s_3164dc039eb46c::t_a9488310ec38c0 11,13-23
+tools/user-keycloak-migration/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-51
+workbench/workbench-web/test/placeholder.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 11-14,44-45,48-49
+workbench/workbench-web/test/guard-integration.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 106-107,118,150-153
+workbench/templates/reviewer-expert/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/workbench-engine/test/fixtures/full-14.node-table.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-35
+workbench/workbench-service/package.json
+  s_3164dc039eb46c::t_a9488310ec38c0 14-18
+workbench/workbench-web/src/components/kanban/ConnectionBar.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-81
+workbench/templates/dev-engineer/skills/secure-coding/references/06-error-handling.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-38
+workbench/workbench-web/scripts/mock-engine-server.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-166
+workbench/workbench-engine/src/schema/index.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-6
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 8,11-18,22,25-31,38-42,44,56-59,69-74
+workbench/templates/skills-remaining.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-35
+workbench/templates/req-clarifier/skills/sr-authoring/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-55
+workbench/workbench-web/src/api/engine-table.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-45
+workbench/templates/sys-engineer/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/sec-compliance/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-27
+workbench/workbench-service/web-dist/index.html
+  s_3164dc039eb46c::t_a9488310ec38c0 1-7,11,15,19,23-24,28,32,36-42
+workbench/templates/sec-compliance/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-48
+workbench/templates/sec-design/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-44
+workbench/templates/dev-engineer/skills/frontend-design/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-55
+workbench/templates/sys-engineer/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-51
+workbench/workbench-engine/src/r1/paths.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-53
+workbench/workbench-service/test/routes-registry.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 8,10-13,21-25,66-70,72,78-86,123-128
+  s_3164dc039eb46c::t_cd3c1b421b0b65 56
+  s_3164dc039eb46c::t_c77ab81e10c8f4 37
+  s_3164dc039eb46c::t_07a95c0ab5eb89 26
+workbench/workbench-engine/src/security/secretgate.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-122
+workbench/templates/req-clarifier/skills/brainstorming/spec-document-reviewer-prompt.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-49
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-91
+workbench/workbench-service/src/types-assets.d.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-5
+workbench/workbench-service/test/routes-config.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 11,15-16,55,58,61,69-76,81,84,92-110,123
+workbench/workbench-web/src/components/kanban/StageBand.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-222
+workbench/templates/dev-engineer/skills/secure-coding/references/05-time-and-state.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-32
+workbench/templates/dev-engineer/skills/verification-before-completion/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-142
+workbench/workbench-web/test/kanban-store.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-169
+workbench/templates/sec-code/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-45
+workbench/templates/dev-engineer/skills/secure-coding/references/01-input-validation.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-268
+workbench/workbench-service/src/engine/launcher.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-99
+workbench/workbench-service/test/driver.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-259
+workbench/templates/sec-compliance/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+iam/providers-src/bcrypt-spi/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-22
+workbench/workbench-service/src/server/routes/index.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 6-7,19-22,36-37
+  s_3164dc039eb46c::t_8def15c304587c 29
+workbench/templates/sys-engineer/skills/kdev-gen-plan/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-51
+tools/configure-mirrors.sh
+  s_3164dc039eb46c::t_a9488310ec38c0 25,83-104
+docs/plans/2026-08-26-l3-engine.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-254
+iam/providers-src/bcrypt-spi/src/main/java/org/digitalemployees/kc/bcrypt/BcryptPasswordHashProviderFactory.java
+  s_3164dc039eb46c::t_a9488310ec38c0 1-42
+workbench/workbench-web/test/dependency-audit.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-54
+docs/plans/2026-08-26-员工模板-design.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-203
+workbench/templates/sec-compliance/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-46
+workbench/workbench-service/src/server/routes/engine.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-234
+workbench/workbench-web/test/stage-band.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-66
+workbench/templates/dev-engineer/skills/secure-coding/references/04-api-misuse.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-76
+workbench/workbench-engine/src/r1/ledger.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-454
+workbench/templates/req-clarifier/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/workbench-service/src/server/mcp/engine-mcp.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-114
+workbench/templates/dev-engineer/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-27
+workbench/templates/req-clarifier/skills/brainstorming/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-142
+workbench/templates/sec-code/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/workbench-service/test/mcp-engine.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-102
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_3164dc039eb46c::t_a9488310ec38c0 1-121
+workbench/workbench-service/src/config/schema.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 15-21,37,40,48-61
+workbench/workbench-service/test/engine-stream.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-120
+workbench/templates/dev-engineer/skills/writing-plans/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-169
+docs/design/fable评审记录-员工模板-2026-08-27.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-92
+workbench/templates/req-clarifier/skills/ar-authoring/references/AR需求撰写规范模板-v4.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-372
+workbench/templates/sys-engineer/manifest.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-50
+docs/design/设计决策记录-2026-08-13.md
+  s_3164dc039eb46c::t_9961ceb1a03071 103,333,375-447,453,455
+docs/plans/2026-08-26-协同编排-design.md
+  s_3164dc039eb46c::t_a9488310ec38c0 190,272-273
+workbench/templates/sec-design/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/req-clarifier/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-51
+workbench/workbench-engine/assets/flows/demo-flow.node-table.yml
+  s_3164dc039eb46c::t_a9488310ec38c0 1-28
+docs/plans/2026-08-27-T4修复独立复审.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-115
+docs/design/1.0demo员工创建对照与对齐建议-2026-08-26.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-124
+docs/archive/design/shared-protocol详细设计-v0.1.md
+  s_3164dc039eb46c::t_a9488310ec38c0 7
+workbench/templates/dev-engineer/skills/secure-coding/references/03-encapsulation.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-125
+workbench/templates/req-clarifier/skills/ar-authoring/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-57
+workbench/templates/reviewer-expert/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/sec-design/hooks/hooks.json
+  s_3164dc039eb46c::t_a9488310ec38c0 1-27
+workbench/workbench-engine/test/table-demo.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-113
+docs/research/多智能体编排调研.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-163
+workbench/workbench-service/src/engine/driver.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-129
+tools/user-keycloak-migration/export-agenthub.py
+  s_3164dc039eb46c::t_a9488310ec38c0 1-220
+workbench/workbench-web/src/api/engine-api.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-86
+iam/providers-src/bcrypt-spi/src/main/java/org/digitalemployees/kc/bcrypt/BcryptPasswordHashProvider.java
+  s_3164dc039eb46c::t_a9488310ec38c0 1-72,74,76
+workbench/templates/reviewer-expert/AGENTS.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-45
+workbench/templates/sys-engineer/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/dev-engineer/skills/frontend-design/NOTICE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-40
+workbench/templates/sys-engineer/skills/kdev-gen-proto/SKILL.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-49
+workbench/workbench-web/src/api/engine-stream.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-116
+workbench/templates/dev-engineer/skills/tdd-methodology/testing-anti-patterns.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-299
+docs/design/E-11七员工模板素材缺口盘点-2026-08-26.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-84
+workbench/workbench-engine/test/r1.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-535
+workbench/templates/dev-engineer/skills/writing-plans/licenses/superpowers-LICENSE
+  s_3164dc039eb46c::t_a9488310ec38c0 1-202
+workbench/workbench-service/src/server/registry.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 12-15,24-25
+workbench/templates/dev-engineer/commands/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+workbench/templates/dev-engineer/knowledge/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-4
+docs/README.md
+  s_3164dc039eb46c::t_a9488310ec38c0 34
+workbench/workbench-engine/test/r2.test.ts
+  s_3164dc039eb46c::t_a9488310ec38c0 1-268
+docs/design/预审与demo对照-编排设计合并后状态刷新-2026-08-26.md
+  s_3164dc039eb46c::t_a9488310ec38c0 1-159
+bun.lock
+  s_3164dc039eb46c::t_ce263d2c9aae8e 11-14,25-27,139-142,147-148,251-256,261-262,269-270,277-278,281-284,297-306,321-324,329-330,333-334,337-340,343-344,347-348,351-356,359-366,369-370,373-376,379-384,387-392,395-396,399-404,407-410,417-418,423-424,429-430,433-436,443-444,447-450,453-456,465-466,469-476,481-482,487-488,499-500,505-506,509-514,519-522,527-532,537-544,553-554,583-584,589-590,597-600,633-634,643-644,651-652,657-658,667-668
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_2d59c611ae7fec 10,18,177,399,404,406,419,425,451
+docs/plans/2026-08-27-员工安装B系列.md
+  s_3164dc039eb46c::t_d1c2738b0382b9 7,632,776,1734,1789
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "f6bb5e74a64ec2429514ecb89bbf6a7c15b14237",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

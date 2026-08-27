@@ -1,0 +1,66 @@
+workbench/workbench-web/src/stores/kanban.ts
+  s_43abe8ab21de8c::t_365edbfe938a4b 149
+workbench/workbench-web/src/stores/board.ts
+  s_43abe8ab21de8c::t_dce9eba4742f96 1-63
+workbench/workbench-web/src/views/KanbanView.vue
+  s_43abe8ab21de8c::t_a29f44405074f4 328-334
+  s_43abe8ab21de8c::t_1369538987ac15 49-57
+  s_43abe8ab21de8c::t_fbecd540c9c0e4 160
+workbench/workbench-web/src/components/nav/SideNav.vue
+  s_43abe8ab21de8c::t_c8d871a8dd0e71 9-10,46-51
+workbench/workbench-web/test/board.test.ts
+  s_43abe8ab21de8c::t_fe0e5b268f2064 1-3,5-14,16-25,36-78,80-98,100-106,110-111,113-164,168-265,267-272
+  s_43abe8ab21de8c::t_08c6c38df564bc 4
+  s_43abe8ab21de8c::t_e908ec65e9b76d 99,107-109,112
+  s_43abe8ab21de8c::t_040a3d1df67119 165-167,266
+  s_43abe8ab21de8c::t_07c4ba11107ab9 15,79
+  s_43abe8ab21de8c::t_96c35340d8f307 26-34
+  s_43abe8ab21de8c::t_5ce008cc938b08 35
+workbench/workbench-web/src/components/board/BoardLane.vue
+  s_43abe8ab21de8c::t_c99da0d4c6b69b 1-111
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_43abe8ab21de8c::t_9a91bcf07c4aa0 33
+workbench/workbench-web/test/scenarios.test.ts
+  s_43abe8ab21de8c::t_24c3300a1b2e33 111,113
+  s_43abe8ab21de8c::t_2c804e10f44857 171,174
+workbench/workbench-web/src/components/board/NeedDrawer.vue
+  s_43abe8ab21de8c::t_a33c4c9bdccfba 44
+  s_43abe8ab21de8c::t_aa0434512bd987 1-43,45-73,113,115-230
+  s_43abe8ab21de8c::t_cb51723af5e840 74-112,114
+workbench/workbench-web/test/kanban-store.test.ts
+  s_43abe8ab21de8c::t_799ecbfb207d81 49-61
+workbench/workbench-web/src/views/BoardView.vue
+  s_43abe8ab21de8c::t_e243186a4760e1 1-128,132-329
+  s_43abe8ab21de8c::t_9bdaa9fb750f62 129-131
+workbench/workbench-web/src/components/board/BoardCard.vue
+  s_43abe8ab21de8c::t_13e2c1149afc80 1-273
+workbench/workbench-web/test/router.test.ts
+  s_43abe8ab21de8c::t_0767b1cc7e6391 74,78,86-88
+  s_43abe8ab21de8c::t_bd895e85c309c6 45,48
+workbench/workbench-web/test/side-nav.test.ts
+  s_43abe8ab21de8c::t_f77e4fc3b43328 10-11,15-16,37-38,41-42,45-46,73-74,77,80-83
+  s_43abe8ab21de8c::t_6e011638b476d5 28,97-98
+workbench/workbench-web/src/router/routes/kanban.ts
+  s_43abe8ab21de8c::t_4fc3c0ff9d4c0d 3,9-10,14-17
+workbench/workbench-web/src/api/engine-events.ts
+  s_43abe8ab21de8c::t_f0b3caa38586b3 64-66,79-80
+workbench/workbench-web/src/fixtures/scenarios.ts
+  s_43abe8ab21de8c::t_77ed2a2c268674 97-99,115,156,160,162,168,174,176,179,222
+  s_43abe8ab21de8c::t_e6bc270c837ff0 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9d3ca48ac7022268d14b7180d50fbee70e2653db",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

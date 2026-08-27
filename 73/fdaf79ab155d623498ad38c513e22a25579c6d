@@ -1,0 +1,21 @@
+workbench/workbench-service/src/installs/negotiate.ts
+  s_3164dc039eb46c::t_792788deb7a3c0 1-113
+workbench/workbench-service/test/installs-negotiate.test.ts
+  s_3164dc039eb46c::t_259dc788cec549 1-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "73fdaf79ab155d623498ad38c513e22a25579c6d",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

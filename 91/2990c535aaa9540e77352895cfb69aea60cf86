@@ -1,0 +1,23 @@
+workbench/workbench-service/test/employees-store.test.ts
+  s_b9259474bd2245::t_d163d1f2c9e8f5 116-194
+workbench/workbench-service/src/employees/store.ts
+  s_b9259474bd2245::t_f5f6addaf2312a 91,93,101,107-108
+  s_b9259474bd2245::t_d81cce53fe893f 8-10,12
+  s_b9259474bd2245::t_25ccf4d864e03f 30-45,63,77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "912990c535aaa9540e77352895cfb69aea60cf86",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+workbench/workbench-service/src/installs/executor/execute.ts
+  s_3164dc039eb46c::t_ec6b1755c0b1cc 1-128
+workbench/workbench-service/test/installs-executor.test.ts
+  s_3164dc039eb46c::t_72d0f17b76fb3c 1-102
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_9eb12425031d1c 19-26
+workbench/workbench-service/src/adapters/claude-code/index.ts
+  s_3164dc039eb46c::t_70e7c323ca6f7a 1-32
+workbench/workbench-service/src/installs/executor/actions.ts
+  s_3164dc039eb46c::t_6532426b8b5d1d 1-147
+workbench/workbench-service/src/installs/executor/transaction.ts
+  s_3164dc039eb46c::t_180567423b495e 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ca7a624d8ccf9c7f90a9e6b6ad36c7e9b8fb1e83",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

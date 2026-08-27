@@ -1,0 +1,23 @@
+workbench/workbench-service/test/installs-registry.test.ts
+  s_3164dc039eb46c::t_0bb8af20603db1 1-63
+workbench/workbench-service/src/installs/registry/registry.ts
+  s_3164dc039eb46c::t_e7387e5707442f 1-75
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_9ef25f86e3da08 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c5c5dde2b82eea55a4f0a0112bfb651af7941fb9",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

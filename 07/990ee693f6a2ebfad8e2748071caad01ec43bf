@@ -1,0 +1,37 @@
+workbench/workbench-service/src/employees/hooks-compiler.ts
+  s_b9259474bd2245::t_2a6b9d3e4a130b 1-126
+workbench/workbench-service/src/assets/templates.gen.ts
+  s_b9259474bd2245::t_07af227e64378b 7,34,48,54,59,64,70
+workbench/templates/dev-engineer/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10,20
+workbench/templates/req-clarifier/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10
+workbench/templates/sec-code/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10,16,20
+workbench/templates/reviewer-expert/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10,20
+workbench/workbench-service/test/hooks-compiler.test.ts
+  s_b9259474bd2245::t_ff22eb59eeb5b8 1-316
+workbench/templates/sec-design/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10,16,20
+workbench/templates/sys-engineer/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10
+workbench/templates/sec-compliance/hooks/hooks.json
+  s_b9259474bd2245::t_17ee8d7b88f18e 10,16,20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "07990ee693f6a2ebfad8e2748071caad01ec43bf",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

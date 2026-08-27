@@ -1,0 +1,19 @@
+workbench/workbench-service/web-dist/index.html
+  s_46f7f3afbb6303::t_3b5be43e7252f2 11,15,19,23-24,28,32,36-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7b756c899baa9c1fc3b6279f1e5447337f668c85",
+  "prompts": {},
+  "sessions": {
+    "s_46f7f3afbb6303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "790d49d6-083c-47ba-a850-16ee153978fc",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

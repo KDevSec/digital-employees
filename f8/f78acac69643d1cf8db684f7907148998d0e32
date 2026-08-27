@@ -1,0 +1,181 @@
+docs/archive/design/shared-protocol详细设计-v0.1.md
+  s_0cf83e7997645f::t_0fafbaf772e964 7
+workbench/templates/sec-compliance/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-48
+workbench/templates/dev-engineer/skills/secure-coding/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-95
+workbench/templates/sys-engineer/skills/kdev-gen-design/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-53
+workbench/templates/dev-engineer/skills/writing-plans/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-202
+docs/design/预审与demo对照-编排设计合并后状态刷新-2026-08-26.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-159
+workbench/templates/req-clarifier/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-51
+workbench/templates/reviewer-expert/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-47
+workbench/templates/sys-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-17
+docs/design/fable评审记录-员工模板-2026-08-27.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-92
+workbench/templates/req-clarifier/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/writing-plans/plan-document-reviewer-prompt.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-49
+docs/plans/2026-08-26-员工模板-design.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-203
+workbench/templates/dev-engineer/skills/frontend-design/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-55
+workbench/templates/req-clarifier/skills/kdev-gen-split/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-52
+workbench/templates/reviewer-expert/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-64
+workbench/templates/req-clarifier/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/secure-coding/references/07-code-quality.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-28
+docs/plans/2026-08-27-夜班交接.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-32
+workbench/templates/req-clarifier/skills/sr-authoring/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-55
+workbench/templates/reviewer-expert/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-27
+workbench/templates/req-clarifier/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-17
+workbench/templates/sec-code/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/sec-design/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-27
+workbench/templates/sec-design/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/sys-engineer/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-51
+workbench/templates/req-clarifier/skills/sr-authoring/references/SR-Create-SPEC.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-712
+workbench/templates/dev-engineer/orchestration/dev-engineer.node-table.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-23
+workbench/templates/sys-engineer/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-50
+workbench/templates/dev-engineer/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-55
+workbench/templates/sys-engineer/skills/kdev-gen-toplevel/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-54
+workbench/templates/sec-compliance/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/req-clarifier/skills/ar-authoring/references/AR需求撰写规范模板-v4.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-372
+workbench/templates/dev-engineer/skills/verification-before-completion/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-142
+workbench/templates/dev-engineer/skills/tdd-methodology/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-374
+workbench/templates/dev-engineer/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/secure-coding/references/06-error-handling.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-38
+workbench/templates/sec-code/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-45
+workbench/templates/sec-design/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-46
+workbench/templates/sys-engineer/skills/kdev-gen-overview/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-52
+workbench/templates/sys-engineer/skills/kdev-gen-plan/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-51
+docs/design/设计预审记录-2026-08-25.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-284
+workbench/templates/sys-engineer/skills/kdev-gen-proto/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-49
+workbench/templates/dev-engineer/skills/writing-plans/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-169
+docs/design/E-11七员工模板素材缺口盘点-2026-08-26.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-84
+workbench/templates/req-clarifier/skills/brainstorming/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-202
+workbench/templates/dev-engineer/skills/tdd-methodology/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-202
+workbench/templates/dev-engineer/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/secure-coding/references/08-environment.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-91
+workbench/templates/dev-engineer/skills/secure-coding/references/01-input-validation.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-268
+workbench/templates/dev-engineer/skills/secure-coding/references/05-time-and-state.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-32
+workbench/templates/req-clarifier/skills/ar-authoring/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-57
+workbench/templates/reviewer-expert/skills/review-verdict/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-60
+workbench/templates/sec-code/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-27
+workbench/templates/reviewer-expert/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-45
+workbench/templates/req-clarifier/skills/brainstorming/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-142
+workbench/templates/dev-engineer/skills/secure-coding/references/03-encapsulation.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-125
+workbench/templates/sys-engineer/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/secure-coding/references/02-security-features.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-365
+workbench/templates/req-clarifier/skills/brainstorming/spec-document-reviewer-prompt.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-49
+workbench/templates/sys-engineer/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/reviewer-expert/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/sec-compliance/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-46
+workbench/templates/req-clarifier/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-51
+workbench/templates/dev-engineer/skills/frontend-design/LICENSE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-202
+workbench/templates/dev-engineer/skills/frontend-design/NOTICE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-40
+workbench/templates/dev-engineer/skills/secure-coding/references/04-api-misuse.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-76
+workbench/templates/req-clarifier/skills/kdev-gen-storymap/SKILL.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-44
+workbench/templates/sec-code/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/dev-engineer/skills/tdd-methodology/testing-anti-patterns.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-299
+workbench/templates/sec-compliance/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-27
+workbench/templates/sec-compliance/knowledge/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+workbench/templates/skills-remaining.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-35
+docs/design/1.0demo员工创建对照与对齐建议-2026-08-26.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-124
+workbench/templates/sec-design/AGENTS.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-44
+docs/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 34
+workbench/templates/dev-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_0fafbaf772e964 1-27
+workbench/templates/dev-engineer/skills/verification-before-completion/licenses/superpowers-LICENSE
+  s_0cf83e7997645f::t_0fafbaf772e964 1-202
+workbench/templates/sec-code/manifest.yml
+  s_0cf83e7997645f::t_0fafbaf772e964 1-46
+workbench/templates/sec-design/commands/README.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-4
+docs/design/详细设计/shared-protocol详细设计-v0.2.md
+  s_0cf83e7997645f::t_0fafbaf772e964 1-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "f8f78acac69643d1cf8db684f7907148998d0e32",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

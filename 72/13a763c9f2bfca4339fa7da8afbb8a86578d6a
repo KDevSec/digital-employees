@@ -1,0 +1,19 @@
+workbench/workbench-web/test/guard-integration.test.ts
+  s_85d3c34d21f4df::t_b89b207e24acd0 148-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7213a763c9f2bfca4339fa7da8afbb8a86578d6a",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+workbench/workbench-web/src/api/engine-stream.ts
+  s_85d3c34d21f4df::t_c857a83a5049ce 92-96
+  s_85d3c34d21f4df::t_bee3839ef8698c 63-65
+workbench/workbench-web/scripts/mock-state-server.ts
+  s_85d3c34d21f4df::t_99990bc3f7f635 8
+  s_85d3c34d21f4df::t_70af678c8285b4 1-7,9-29
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_4919e8513cf9cc 290
+  s_85d3c34d21f4df::t_5ec6685620a2b1 262-273
+workbench/workbench-web/src/fixtures/kanban-fixture-service.ts
+  s_85d3c34d21f4df::t_057e6f5e264f89 126,128,132,134
+  s_85d3c34d21f4df::t_d14121c470ec5b 127,129-131,133
+workbench/workbench-web/test/engine-stream.test.ts
+  s_85d3c34d21f4df::t_d0f422c1d95f2f 148-175
+  s_85d3c34d21f4df::t_b33f99cc4c8e9c 176
+workbench/workbench-web/src/views/KanbanView.vue
+  s_85d3c34d21f4df::t_f20e953b3c9d13 130-131
+  s_85d3c34d21f4df::t_5f0a1b853da6d8 57-73
+docs/plans/2026-08-27-l5-kanban.md
+  s_85d3c34d21f4df::t_8b3b1460dbcee1 15,20-34
+  s_85d3c34d21f4df::t_f0452b48a9881a 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "46a303e63fbd95c7af796d04738c1725577c8346",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

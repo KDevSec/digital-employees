@@ -1,0 +1,23 @@
+docs/plans/2026-08-27-员工安装B系列.md
+  s_3164dc039eb46c::t_60e054ecddeda9 1213-1883
+  s_3164dc039eb46c::t_9026566f5a561a 1884-2422,3204
+  s_3164dc039eb46c::t_36a291ee8e94f2 2423-3085,3088-3203
+  s_3164dc039eb46c::t_41458841dc24cd 3086-3087
+  s_3164dc039eb46c::t_58eb9207ec21b9 1-1212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "7f7e7c74bd7be3bf651a784eca4838d52e3a1ca5",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

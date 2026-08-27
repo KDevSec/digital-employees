@@ -1,0 +1,28 @@
+workbench/workbench-engine/src/r1/ledger.ts
+  s_ae9313906bcd90::t_69deec189ef9d8 1-239,245-290
+  s_ae9313906bcd90::t_caf854a9c98ffc 240-244
+workbench/workbench-engine/src/r1/paths.ts
+  s_ae9313906bcd90::t_6ecd6569475c99 1-33
+workbench/workbench-engine/test/r1.test.ts
+  s_ae9313906bcd90::t_fe1d178aa3e09a 1-288
+workbench/workbench-engine/package.json
+  s_ae9313906bcd90::t_ab35869ef9f8cb 16
+bun.lock
+  s_ae9313906bcd90::t_e90e9771d006c5 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "28233524f2be36ec72339267ab1e83f90021445c",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

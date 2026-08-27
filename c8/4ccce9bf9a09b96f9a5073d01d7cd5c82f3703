@@ -1,0 +1,22 @@
+workbench/workbench-service/test/machine-token.test.ts
+  s_d4823793916f9d::t_9327078bda5e9c 1-43,46-66
+  s_d4823793916f9d::t_c897581bfc63f0 44-45
+workbench/workbench-service/src/app/platform-access/machine-token.ts
+  s_d4823793916f9d::t_f2f1a0214f7da0 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c84ccce9bf9a09b96f9a5073d01d7cd5c82f3703",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

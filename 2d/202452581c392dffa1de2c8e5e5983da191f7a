@@ -1,0 +1,64 @@
+workbench/templates/sec-compliance/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/sec-compliance/manifest.yml
+  s_0cf83e7997645f::t_7b69f836b1361d 46
+  s_0cf83e7997645f::t_f2689e04a8ce40 31,43
+  s_0cf83e7997645f::t_0bda0548ee5837 2
+workbench/templates/skills-remaining.md
+  s_0cf83e7997645f::t_f2689e04a8ce40 21
+docs/plans/2026-08-26-员工模板-design.md
+  s_0cf83e7997645f::t_f2689e04a8ce40 7,37-38,185,188
+workbench/templates/req-clarifier/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/reviewer-expert/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/reviewer-expert/manifest.yml
+  s_0cf83e7997645f::t_f2689e04a8ce40 32,44
+  s_0cf83e7997645f::t_7b69f836b1361d 47
+  s_0cf83e7997645f::t_cd15a58ce76327 2
+workbench/templates/dev-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/dev-engineer/manifest.yml
+  s_0cf83e7997645f::t_f2689e04a8ce40 56,59
+  s_0cf83e7997645f::t_9e3087cff9b27e 2,40
+workbench/templates/sec-code/manifest.yml
+  s_0cf83e7997645f::t_f2689e04a8ce40 31,43
+  s_0cf83e7997645f::t_7b69f836b1361d 46
+  s_0cf83e7997645f::t_11acf3a1bc02d6 2
+workbench/templates/sec-design/manifest.yml
+  s_0cf83e7997645f::t_f2689e04a8ce40 31,43
+  s_0cf83e7997645f::t_7b69f836b1361d 46
+  s_0cf83e7997645f::t_f6e5a922645249 2
+workbench/templates/sec-code/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/req-clarifier/manifest.yml
+  s_0cf83e7997645f::t_7b69f836b1361d 51
+  s_0cf83e7997645f::t_f2689e04a8ce40 37,48
+  s_0cf83e7997645f::t_b135c15e5ade61 2
+workbench/templates/sec-compliance/AGENTS.md
+  s_0cf83e7997645f::t_f2689e04a8ce40 34,38-41
+workbench/templates/sec-design/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/sys-engineer/hooks/hooks.json
+  s_0cf83e7997645f::t_f2689e04a8ce40 2
+workbench/templates/sys-engineer/manifest.yml
+  s_0cf83e7997645f::t_f2689e04a8ce40 36,47
+  s_0cf83e7997645f::t_7b69f836b1361d 50
+  s_0cf83e7997645f::t_85b4ef0e056870 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2d202452581c392dffa1de2c8e5e5983da191f7a",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

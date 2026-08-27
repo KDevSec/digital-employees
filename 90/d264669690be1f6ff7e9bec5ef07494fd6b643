@@ -1,0 +1,21 @@
+workbench/workbench-service/test/employees-renderer.test.ts
+  s_b9259474bd2245::t_9a7339c484e6d1 1-159
+workbench/workbench-service/src/employees/renderer.ts
+  s_b9259474bd2245::t_6f85e83f6d5758 1-311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "90d264669690be1f6ff7e9bec5ef07494fd6b643",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

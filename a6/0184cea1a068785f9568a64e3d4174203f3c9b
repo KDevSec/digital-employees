@@ -1,0 +1,19 @@
+docs/plans/2026-08-27-L1员工新建-plan.md
+  s_b9259474bd2245::t_c4eb272de92528 40,185,277,334,350,408,453,473,489,505,519,543,567,581,601,615,636,648,661,681,696,707
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a60184cea1a068785f9568a64e3d4174203f3c9b",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

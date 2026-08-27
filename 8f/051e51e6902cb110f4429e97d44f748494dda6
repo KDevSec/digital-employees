@@ -1,0 +1,29 @@
+workbench/workbench-service/src/adapters/qoder/profile.ts
+  s_3164dc039eb46c::t_1e293865eb511d 1-13
+workbench/workbench-service/test/adapters-profiles.test.ts
+  s_3164dc039eb46c::t_6d5ebb1f6dab8b 1-52
+workbench/workbench-service/src/adapters/contract.ts
+  s_3164dc039eb46c::t_8a7e047a1fdbc3 1-2,6-55
+workbench/workbench-service/src/adapters/codebuddy/profile.ts
+  s_3164dc039eb46c::t_dea38b8b8225eb 1-13
+workbench/workbench-service/src/adapters/claude-code/profile.ts
+  s_3164dc039eb46c::t_f2dc9ea213afcc 1-13
+workbench/workbench-service/src/adapters/index.ts
+  s_3164dc039eb46c::t_6fa03a6b8a6da1 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8f051e51e6902cb110f4429e97d44f748494dda6",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

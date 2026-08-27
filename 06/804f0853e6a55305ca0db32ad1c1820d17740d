@@ -1,0 +1,21 @@
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_c52d216c38386c 1-287
+docs/plans/2026-08-27-l5-kanban.md
+  s_85d3c34d21f4df::t_924eb4c6fb1b77 1-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "06804f0853e6a55305ca0db32ad1c1820d17740d",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

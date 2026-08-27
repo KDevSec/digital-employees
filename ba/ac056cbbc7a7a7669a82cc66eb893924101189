@@ -1,0 +1,29 @@
+workbench/shared-protocol/src/errors.ts
+  s_b9259474bd2245::t_3772b8a2de9307 33
+  s_b9259474bd2245::t_25ad67750e07de 1-32,34-38
+workbench/shared-protocol/src/index.ts
+  s_b9259474bd2245::t_2e9d5f914b6a77 5-6
+workbench/shared-protocol/test/derive.test.ts
+  s_b9259474bd2245::t_b9c82150ec95c2 45-52
+  s_b9259474bd2245::t_8161f550417e56 1-44,53-123
+workbench/shared-protocol/src/derive.ts
+  s_b9259474bd2245::t_d9b403c801b4e5 1-66
+workbench/shared-protocol/test/errors.test.ts
+  s_b9259474bd2245::t_a90ed63d12a9c8 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "baac056cbbc7a7a7669a82cc66eb893924101189",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

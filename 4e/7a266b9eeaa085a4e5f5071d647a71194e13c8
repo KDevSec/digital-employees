@@ -1,0 +1,20 @@
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_233fb729840f6a 452-453
+  s_3164dc039eb46c::t_109ec3f2c9beb3 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4e7a266b9eeaa085a4e5f5071d647a71194e13c8",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

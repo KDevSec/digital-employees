@@ -1,0 +1,36 @@
+workbench/workbench-service/src/server/routes/index.ts
+  s_3164dc039eb46c::t_847f59e7b9ed1d 18-21,24,31-32
+workbench/workbench-service/test/server.test.ts
+  s_3164dc039eb46c::t_26f4cf6274a0db 25-32
+workbench/workbench-service/test/routes-bases.test.ts
+  s_3164dc039eb46c::t_6546d95530ca30 1-61
+workbench/workbench-service/src/main.ts
+  s_3164dc039eb46c::t_19ae526e383a84 15-16
+  s_3164dc039eb46c::t_8aeee198e0bbe6 186-198,212-226
+  s_3164dc039eb46c::t_2d0b66f09cab90 55-58
+workbench/workbench-service/src/server/routes/installs.ts
+  s_3164dc039eb46c::t_65bba5de8e96e9 1-104
+workbench/workbench-service/test/routes-registry.test.ts
+  s_3164dc039eb46c::t_61fa3822979647 45,51-52,54,57-61
+  s_3164dc039eb46c::t_3e0ff2611307cd 16,27-34
+workbench/workbench-service/src/server/routes/bases.ts
+  s_3164dc039eb46c::t_bd887bf94f598c 1-108
+workbench/workbench-service/test/routes-installs.test.ts
+  s_3164dc039eb46c::t_1245d9f51e72a9 1-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e7f6ca87d84baa4ad3f5235c822a7efccab70cf9",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

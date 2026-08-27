@@ -1,0 +1,74 @@
+workbench/workbench-web/test/stage-band.test.ts
+  s_85d3c34d21f4df::t_d49b9ea240b9da 1-4,6-32,36-41,43-44,47-48,52-66
+  s_85d3c34d21f4df::t_a2bb99d04425cb 33-35,42
+  s_85d3c34d21f4df::t_6f3875b972fc2e 45-46,49-51
+  s_85d3c34d21f4df::t_b01be24edc66a9 5
+workbench/workbench-web/test/event-watch-panel.test.ts
+  s_85d3c34d21f4df::t_216c067ce24284 1-15,22,24,26-35,37,41,43-51,53-60
+  s_85d3c34d21f4df::t_085aa7d26adab1 16-21,23,25,36,38-40,42,52
+workbench/workbench-web/src/components/kanban/EmpBand.vue
+  s_85d3c34d21f4df::t_2040b4674f4975 1-131
+workbench/workbench-web/test/kanban-integration.test.ts
+  s_85d3c34d21f4df::t_aa069d41223fbe 4
+  s_85d3c34d21f4df::t_80c269d68f4430 5,8-9,12-14,17-59,64,68,70-73,75-80
+workbench/workbench-web/src/views/KanbanView.vue
+  s_85d3c34d21f4df::t_bf3c42e6aa0877 30,32-33,35
+  s_85d3c34d21f4df::t_bbe2f0274cc4eb 3-7,10-12,15-20,26-27,29,40-41,44-98,102,105,108,110,116,122-129,133-134,136,140-143,154-171,173-186,190-192,194-195,201-210,212-220,222-230,232,236,239-273,276,278-282,285-290,316-326,330,334-361,365-367,381-386
+  s_85d3c34d21f4df::t_a716c4c8fa6cb5 137-139,144-151,153
+workbench/workbench-web/test/alert-panel.test.ts
+  s_85d3c34d21f4df::t_f5dcca34271081 1-79
+workbench/workbench-web/src/components/kanban/GateFeedPanel.vue
+  s_85d3c34d21f4df::t_5a8ec31c4ad79d 1-168
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_023aae2e926172 285-319
+  s_85d3c34d21f4df::t_df6350cc9418f9 326
+  s_85d3c34d21f4df::t_2315ec26aada9a 327
+workbench/workbench-web/scripts/mock-engine-server.ts
+  s_85d3c34d21f4df::t_3b8eb3b93f11d6 68-70
+  s_85d3c34d21f4df::t_0b591acc1321fb 33-40
+  s_85d3c34d21f4df::t_0cab1eacbc4207 94-95,99-100
+  s_85d3c34d21f4df::t_2e7f04859f1f0b 1-32,41-67,71-82,85-88,90-93,96,98,101-121,123-160
+  s_85d3c34d21f4df::t_dec3ed56de27c1 83-84,89,97
+  s_85d3c34d21f4df::t_a243ae29a33c21 122
+workbench/workbench-web/src/components/kanban/AlertPanel.vue
+  s_85d3c34d21f4df::t_d4ce3ee9022722 1-113
+workbench/workbench-web/src/components/kanban/StageBand.vue
+  s_85d3c34d21f4df::t_532823e858a9af 1-44,47-48,52-222
+  s_85d3c34d21f4df::t_baa7f613d7e7fc 45-46,49-51
+workbench/workbench-web/test/gate-feed-panel.test.ts
+  s_85d3c34d21f4df::t_0c055406ed877a 1-63
+workbench/workbench-web/test/guard-integration.test.ts
+  s_85d3c34d21f4df::t_75cf4411af4240 150-151,153
+workbench/workbench-web/test/task-sidebar.test.ts
+  s_85d3c34d21f4df::t_39a1efbdb94f61 1-40,42-49,51-82
+  s_85d3c34d21f4df::t_602fc67573f5a6 41,50
+workbench/workbench-web/src/components/kanban/TaskSidebar.vue
+  s_85d3c34d21f4df::t_68ad7ad49478b7 1-232
+workbench/workbench-web/src/components/kanban/EventWatchPanel.vue
+  s_85d3c34d21f4df::t_2fd5f552fb5d22 1-6,8-13,15,18-43,53-55,57-121
+  s_85d3c34d21f4df::t_684c8222297aab 7,14,16-17,44-52,56
+workbench/workbench-web/test/kanban-view.test.ts
+  s_85d3c34d21f4df::t_cdcf62e0a66d0d 4,7-8,11-13,16-35,40,44-46,48,50-54,57,60,62-73,76-80,82,86,89,91-108
+  s_85d3c34d21f4df::t_37a71c6481b578 83-85,87-88,90
+workbench/workbench-web/test/kanban-feedback-parts.test.ts
+  s_85d3c34d21f4df::t_587e712901db3c 7-10
+workbench/workbench-web/test/emp-band.test.ts
+  s_85d3c34d21f4df::t_0a00d802dd54fb 20-27,31
+  s_85d3c34d21f4df::t_f5e2ce3fecd94b 1-19,28-30,32-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d307a2828f3655d7f1424b84f300b57443e8c178",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

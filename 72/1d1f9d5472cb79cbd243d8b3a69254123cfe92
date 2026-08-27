@@ -1,0 +1,32 @@
+workbench/shared-protocol/tsconfig.json
+  s_b9259474bd2245::t_fe609babca4d8c 1-16
+workbench/shared-protocol/src/index.ts
+  s_b9259474bd2245::t_4e8a0bdbc8f0a2 1
+workbench/shared-protocol/src/manifest.ts
+  s_b9259474bd2245::t_1c6b332cc75ba9 1-74
+workbench/shared-protocol/vitest.config.ts
+  s_b9259474bd2245::t_5d1da4d2670f75 1-7
+workbench/shared-protocol/package.json
+  s_b9259474bd2245::t_04e72fc1c97929 1-8,10
+  s_b9259474bd2245::t_5ee9416cbf5d86 9
+workbench/shared-protocol/test/manifest.test.ts
+  s_b9259474bd2245::t_68b5acc9d35619 1-24
+bun.lock
+  s_b9259474bd2245::t_e54de427ac5972 8-21,95-96,211-212,259-260,345-346
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "721d1f9d5472cb79cbd243d8b3a69254123cfe92",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

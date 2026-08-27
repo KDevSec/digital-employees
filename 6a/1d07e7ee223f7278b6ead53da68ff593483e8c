@@ -1,0 +1,23 @@
+workbench/workbench-service/src/bases/probe.ts
+  s_3164dc039eb46c::t_a73fcf10fff608 1-37
+workbench/workbench-service/test/bases-probe.test.ts
+  s_3164dc039eb46c::t_fdc091b68080ab 1-61
+workbench/workbench-service/src/bases/cache.ts
+  s_3164dc039eb46c::t_0447268370cc1c 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "6a1d07e7ee223f7278b6ead53da68ff593483e8c",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

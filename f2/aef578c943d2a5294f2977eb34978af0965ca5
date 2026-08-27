@@ -1,0 +1,27 @@
+workbench/workbench-service/test/server.test.ts
+  s_d4823793916f9d::t_b3c6d5659a7ed4 198-256
+  s_d4823793916f9d::t_3db479661c5594 8
+workbench/workbench-service/src/server/registry.ts
+  s_d4823793916f9d::t_e3f8a4a326fcdc 12-25,34-37
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_d4823793916f9d::t_8a08d007028074 9,21-58,60,72-73,80
+workbench/workbench-service/test/routes-registry.test.ts
+  s_d4823793916f9d::t_ca5f23c4834579 3
+  s_d4823793916f9d::t_5b8e2d8417e29b 98-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "f2aef578c943d2a5294f2977eb34978af0965ca5",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

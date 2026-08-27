@@ -1,0 +1,23 @@
+workbench/workbench-engine/test/r3.test.ts
+  s_ae9313906bcd90::t_cbe0931e584c1c 171-176
+  s_ae9313906bcd90::t_8eb5d986a13988 1-170,177-287,289,291,296-297
+  s_ae9313906bcd90::t_de8c45305b9015 288,290,292-295
+workbench/workbench-engine/src/r3/gate.ts
+  s_ae9313906bcd90::t_d17c90db890632 1-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "961e5fd7c810f47b7ba95b8312119077e17f4e61",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

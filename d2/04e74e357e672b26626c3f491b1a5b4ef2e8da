@@ -1,0 +1,29 @@
+workbench/workbench-web/src/stores/kanban.ts
+  s_43abe8ab21de8c::t_4153c040365a92 127-128
+workbench/workbench-web/test/engine-events.test.ts
+  s_43abe8ab21de8c::t_567a902d8e1b8e 130-138,140-141
+workbench/workbench-web/src/api/engine-events.ts
+  s_43abe8ab21de8c::t_a518e672f84114 122,125,129
+  s_43abe8ab21de8c::t_16d241d9680456 166-167,176-177
+  s_43abe8ab21de8c::t_2afabcd60186c4 19-21,37-38,43,49
+  s_43abe8ab21de8c::t_8e154c1de3bc70 105
+workbench/workbench-web/test/engine-real-events.test.ts
+  s_43abe8ab21de8c::t_87c5bc76151455 16
+  s_43abe8ab21de8c::t_2c45bf1936ca6c 1-15,17-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d204e74e357e672b26626c3f491b1a5b4ef2e8da",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

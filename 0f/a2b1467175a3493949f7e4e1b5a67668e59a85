@@ -1,0 +1,31 @@
+workbench/workbench-web/test/derive-board.test.ts
+  s_85d3c34d21f4df::t_4552e8cdb583cc 1-130
+workbench/workbench-web/src/stores/kanban.ts
+  s_85d3c34d21f4df::t_fec4a2f29b6f4f 1-225
+workbench/workbench-web/src/api/engine-table.ts
+  s_85d3c34d21f4df::t_3a12f5022becdd 1-45
+workbench/workbench-web/src/stores/derive-board.ts
+  s_85d3c34d21f4df::t_753ab059ccd033 1-56
+workbench/workbench-web/test/kanban-store.test.ts
+  s_85d3c34d21f4df::t_941efad8fa796c 136,138-139,141-142,149
+  s_85d3c34d21f4df::t_2e7a0a75d1c576 37,42-46
+  s_85d3c34d21f4df::t_e94c923920146b 1-36,38-41,47-135,137,140,143-148,150-168
+workbench/workbench-web/src/fixtures/demo-flow.table.ts
+  s_85d3c34d21f4df::t_b6c0c478b7e760 3-4,8,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0fa2b1467175a3493949f7e4e1b5a67668e59a85",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

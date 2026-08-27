@@ -1,0 +1,24 @@
+docs/plans/2026-08-27-员工安装B系列.md
+  s_3164dc039eb46c::t_158509580f509e 7,632,776,1734,1789
+docs/design/设计决策记录-2026-08-13.md
+  s_3164dc039eb46c::t_158509580f509e 103,333,382
+  s_3164dc039eb46c::t_d2f659732bd18d 380
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_158509580f509e 10,18,177,397,402,404,417,423,449
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "20fc5b4d8bfc0ad058702a2e5145b30c93862050",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

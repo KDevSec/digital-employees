@@ -1,0 +1,44 @@
+workbench/workbench-web/test/stage-band.test.ts
+  s_43abe8ab21de8c::t_610b1945bb63e3 2-3,6
+  s_43abe8ab21de8c::t_93cff24909fde7 56-78
+workbench/workbench-web/src/stores/kanban.ts
+  s_43abe8ab21de8c::t_0de3f809e3f042 217-218,220-221,226-243
+  s_43abe8ab21de8c::t_2648e287711e31 15,244
+workbench/workbench-engine/test/engine.test.ts
+  s_43abe8ab21de8c::t_ec3194fb1498a8 269-280
+workbench/workbench-engine/src/engine.ts
+  s_43abe8ab21de8c::t_91e453865c1ebf 371-375,377
+workbench/workbench-web/src/views/KanbanView.vue
+  s_43abe8ab21de8c::t_2d713e49151f8a 37-38
+workbench/workbench-engine/src/r1/ledger.ts
+  s_43abe8ab21de8c::t_0da6cd6d59ae1e 345-346
+  s_43abe8ab21de8c::t_1a9df7a9763b83 55-57,347-348
+workbench/workbench-web/src/components/kanban/StageBand.vue
+  s_43abe8ab21de8c::t_e4078b0908bf59 46-47,53-58
+workbench/workbench-service/test/routes-registry.test.ts
+  s_43abe8ab21de8c::t_206a7359b90906 71
+workbench/workbench-web/test/kanban-integration.test.ts
+  s_43abe8ab21de8c::t_96378d357ef5fe 83-126
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_43abe8ab21de8c::t_e5fcb0e7e59c36 32-33
+workbench/workbench-web/src/api/engine-api.ts
+  s_43abe8ab21de8c::t_4ea6694d79d6ad 123-139
+  s_43abe8ab21de8c::t_d97891e189ff59 7
+  s_43abe8ab21de8c::t_5a8104765b1562 62-67,73-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "400cdd4a78774e6145e12b724b7f4921065510c6",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

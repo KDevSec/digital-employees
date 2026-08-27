@@ -1,0 +1,32 @@
+workbench/workbench-service/test/driver.test.ts
+  s_ae9313906bcd90::t_b99ab3b75f5951 238-252
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_ae9313906bcd90::t_8495aef4399cd8 1-34
+workbench/workbench-engine/src/engine.ts
+  s_ae9313906bcd90::t_8495aef4399cd8 28
+workbench/workbench-service/src/engine/spawn-runner.ts
+  s_ae9313906bcd90::t_b99ab3b75f5951 10,41-42
+workbench/workbench-engine/test/r1.test.ts
+  s_ae9313906bcd90::t_89f821ec1f8d4f 126-127
+  s_ae9313906bcd90::t_036d119437a2bb 491-535
+workbench/workbench-engine/src/r1/ledger.ts
+  s_ae9313906bcd90::t_aee289cfce51aa 115-146,159
+docs/plans/2026-08-26-l3-engine-execution.md
+  s_ae9313906bcd90::t_4a1e60a9465ada 5,79-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "95dfcbc579f300547d3cc3c7288815560f8008f8",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": null
+    }
+  }
+}

@@ -1,0 +1,29 @@
+workbench/workbench-web/src/fixtures/mock-event-source.ts
+  s_85d3c34d21f4df::t_79a187f46e3bf5 1-14,16-117,119-128
+  s_85d3c34d21f4df::t_a779e6c9cbc1a5 15
+  s_85d3c34d21f4df::t_c8f1ae86afd866 118
+workbench/workbench-web/src/api/engine-stream.ts
+  s_85d3c34d21f4df::t_13cd05a4787c6b 1-17,20-23,25-65,67-68,70-86,88-101,103-111
+  s_85d3c34d21f4df::t_899bc37b261302 66,69,87,102
+  s_85d3c34d21f4df::t_7df77d55d2b517 18-19,24
+workbench/workbench-web/test/engine-stream.test.ts
+  s_85d3c34d21f4df::t_396b191c58cd79 59-61
+  s_85d3c34d21f4df::t_c410e40bd4c4ff 1-19,21-23,25,28,31-58,62-170
+  s_85d3c34d21f4df::t_fb6a3a88330c78 20,24,26-27,29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "31ede9d92700866d4988440ee373c9a6c06e239c",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

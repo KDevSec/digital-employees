@@ -1,0 +1,21 @@
+docs/plans/2026-08-27-认证迁移-design.md
+  s_d4823793916f9d::t_2decac8115bf18 9
+docs/plans/2026-08-27-认证迁移.md
+  s_d4823793916f9d::t_25fa39adfd3e13 3601
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fb28097044104b3ecb82f93df146948c092af582",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

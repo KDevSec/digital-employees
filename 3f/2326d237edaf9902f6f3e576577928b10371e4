@@ -1,0 +1,48 @@
+workbench/workbench-service/src/server/routes/index.ts
+  s_ae9313906bcd90::t_2813f08a81013c 18-19,22,29
+workbench/workbench-service/test/routes-registry.test.ts
+  s_ae9313906bcd90::t_950ea071740f51 60-68
+  s_ae9313906bcd90::t_775833a41db6af 9-12,20-25,36,54-57
+workbench/workbench-service/test/routes-engine.test.ts
+  s_ae9313906bcd90::t_d241c2f9577495 1-157
+workbench/workbench-service/src/server/hono-adapter.ts
+  s_ae9313906bcd90::t_1fdf59a0e3b7a4 21-25,27,39-40
+workbench/workbench-service/src/main.ts
+  s_ae9313906bcd90::t_2813f08a81013c 37-39,185-192,204
+workbench/workbench-service/src/server/routes/engine.ts
+  s_ae9313906bcd90::t_4c9fdf20835cbb 1-222
+workbench/workbench-engine/src/engine.ts
+  s_ae9313906bcd90::t_2eec58d8096a66 305-323
+  s_ae9313906bcd90::t_f2b003677fb3b9 9
+workbench/workbench-engine/package.json
+  s_ae9313906bcd90::t_4d35406721ccce 18-23
+workbench/workbench-service/src/types-assets.d.ts
+  s_ae9313906bcd90::t_4d35406721ccce 1-5
+workbench/workbench-service/test/server.test.ts
+  s_ae9313906bcd90::t_ffda15339c2947 11-14,29
+  s_ae9313906bcd90::t_3ef70a54e1c3c9 1
+workbench/workbench-service/src/server/registry.ts
+  s_ae9313906bcd90::t_d1bff31f43a176 12-13
+workbench/workbench-service/package.json
+  s_ae9313906bcd90::t_2813f08a81013c 14-15
+workbench/workbench-engine/test/fixtures/demo-run-events.jsonl
+  s_ae9313906bcd90::t_f2b003677fb3b9 1-34
+bun.lock
+  s_ae9313906bcd90::t_876b4c8e512a15 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "3f2326d237edaf9902f6f3e576577928b10371e4",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

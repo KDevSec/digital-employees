@@ -1,0 +1,32 @@
+workbench/workbench-service/src/adapters/codebuddy/index.ts
+  s_3164dc039eb46c::t_c53a1ff181e0df 5
+  s_3164dc039eb46c::t_d0031d41e54255 13
+workbench/workbench-service/src/adapters/claude-code/index.ts
+  s_3164dc039eb46c::t_8c673cc68c9552 13
+  s_3164dc039eb46c::t_43fcb4d5b9a81e 5
+workbench/workbench-service/src/adapters/qoder/index.ts
+  s_3164dc039eb46c::t_86ab79d3819eaf 5
+  s_3164dc039eb46c::t_a962b0ce1fd38c 13
+workbench/workbench-service/src/adapters/common/models.ts
+  s_3164dc039eb46c::t_454947ee4ec4bb 1-14
+workbench/workbench-service/src/adapters/common/tier-map.ts
+  s_3164dc039eb46c::t_357b747c9b7037 1-34
+workbench/workbench-service/test/adapters-models.test.ts
+  s_3164dc039eb46c::t_fe726b452f09d6 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "bdb5e681a7e9da77d152343219ed27a248706abc",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

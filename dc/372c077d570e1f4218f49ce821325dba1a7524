@@ -1,0 +1,27 @@
+workbench/workbench-service/src/adapters/claude-code/index.ts
+  s_3164dc039eb46c::t_c8b72ca1fa7ae3 4,11
+workbench/workbench-service/src/adapters/codebuddy/index.ts
+  s_3164dc039eb46c::t_76c23b94a11d92 4,11
+workbench/workbench-service/src/adapters/common/launch.ts
+  s_3164dc039eb46c::t_deafc6caeb624e 1-66
+workbench/workbench-service/src/adapters/qoder/index.ts
+  s_3164dc039eb46c::t_48fcc2057c4443 4,11
+workbench/workbench-service/test/adapters-launch.test.ts
+  s_3164dc039eb46c::t_04aee35d4955e0 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "dc372c077d570e1f4218f49ce821325dba1a7524",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

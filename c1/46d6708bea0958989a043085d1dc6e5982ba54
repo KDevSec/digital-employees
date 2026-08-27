@@ -1,0 +1,22 @@
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_85d3c34d21f4df::t_da4831eb2b90d0 275,277,279-284
+  s_85d3c34d21f4df::t_6466af0e5d5ac5 11
+docs/design/设计决策记录-2026-08-13.md
+  s_85d3c34d21f4df::t_1b42ccff961727 370-411
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c146d6708bea0958989a043085d1dc6e5982ba54",
+  "prompts": {},
+  "sessions": {
+    "s_85d3c34d21f4df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681aa397-9466-4347-a671-aeb44952398a",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

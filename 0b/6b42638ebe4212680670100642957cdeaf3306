@@ -1,0 +1,21 @@
+docs/design/设计决策记录-2026-08-13.md
+  s_ae9313906bcd90::t_550be5ebf742e6 370-396
+docs/plans/2026-08-26-协同编排-design.md
+  s_ae9313906bcd90::t_edafb6e82576f3 272-273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0b6b42638ebe4212680670100642957cdeaf3306",
+  "prompts": {},
+  "sessions": {
+    "s_ae9313906bcd90": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "14713ff5-5dad-4d0f-ad58-19c26756de90",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

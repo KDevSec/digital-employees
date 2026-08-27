@@ -1,0 +1,27 @@
+workbench/workbench-service/test/adapters-launch.test.ts
+  s_3164dc039eb46c::t_2c205e2b920c51 70-84
+docs/design/详细设计/员工安装与底座适配详细设计-v0.2.md
+  s_3164dc039eb46c::t_0660cd350c37e2 452
+  s_3164dc039eb46c::t_22fcdab38bcc9d 83
+  s_3164dc039eb46c::t_0964cd0157ab26 281
+  s_3164dc039eb46c::t_4644657cafff10 382
+  s_3164dc039eb46c::t_fe3fe374a8e7c8 350
+workbench/workbench-service/test/installs-executor.test.ts
+  s_3164dc039eb46c::t_0a7c7ed31d9269 108-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "4eb60716a784b8f57568432ca22330a4494e78c9",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

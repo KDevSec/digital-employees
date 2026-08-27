@@ -1,0 +1,19 @@
+docs/design/详细设计/shared-protocol详细设计-v0.2.md
+  s_0cf83e7997645f::t_c1dc1c1f356beb 1-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "8e47f5f99754b8194b29d3915737be46f5e0526f",
+  "prompts": {},
+  "sessions": {
+    "s_0cf83e7997645f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f1ca53d-9f2d-4ec8-b43b-9220dd71dff4",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}

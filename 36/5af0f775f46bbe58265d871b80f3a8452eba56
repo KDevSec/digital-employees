@@ -1,0 +1,47 @@
+tools/e2e/v01.spec.ts
+  s_d4823793916f9d::t_ce2bed79cf6f8f 4-5
+iam/realm/digital-employees-realm.json
+  s_d4823793916f9d::t_ce2bed79cf6f8f 51-52,55-56
+tools/sync-keycloak-urls.sh
+  s_d4823793916f9d::t_ce2bed79cf6f8f 8,53-62
+tools/test_external_access.py
+  s_d4823793916f9d::t_ce2bed79cf6f8f 3,39-49,65,72,84-86,88-94,130-131,143-151,164-321
+platform/frontend/nginx.conf
+  s_d4823793916f9d::t_ce2bed79cf6f8f 2,8-11
+tools/wait-for-http.sh
+  s_d4823793916f9d::t_ce2bed79cf6f8f 6-10
+tools/user-keycloak-migration/README.md
+  s_d4823793916f9d::t_ce2bed79cf6f8f 6-10,48-51
+platform/backend/entrypoint.sh
+  s_d4823793916f9d::t_ce2bed79cf6f8f 9
+platform/backend/app/config.py
+  s_d4823793916f9d::t_ce2bed79cf6f8f 15
+tools/ensure-certs.sh
+  s_d4823793916f9d::t_ce2bed79cf6f8f 1-71
+tools/playwright.config.ts
+  s_d4823793916f9d::t_ce2bed79cf6f8f 9
+tools/compose.yml
+  s_d4823793916f9d::t_ce2bed79cf6f8f 19,25-28,40,42,52,55-56,62,66-67,78-79,81
+.gitignore
+  s_d4823793916f9d::t_ce2bed79cf6f8f 34
+tools/up.sh
+  s_d4823793916f9d::t_ce2bed79cf6f8f 20-21,23-24,26-28
+tools/user-keycloak-migration/import-to-keycloak.py
+  s_d4823793916f9d::t_ce2bed79cf6f8f 26-27,30-31,47-51,84,88,90-133,139,454-457,522-528,532-536,604-636,663-672,710-718,722-726,747-749,853-864
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "365af0f775f46bbe58265d871b80f3a8452eba56",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
