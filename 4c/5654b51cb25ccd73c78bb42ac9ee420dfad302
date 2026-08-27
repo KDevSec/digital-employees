@@ -1,0 +1,28 @@
+docs/plans/2026-08-27-l5-kanban-design.md
+  s_43abe8ab21de8c::t_95cefb1124f697 345
+  s_43abe8ab21de8c::t_44096afc48997d 293-294
+  s_43abe8ab21de8c::t_9fec2f120c5fe3 247,249,251-256,258-266
+docs/plans/2026-08-26-协同编排-design.md
+  s_43abe8ab21de8c::t_796040fa3ededc 354
+  s_43abe8ab21de8c::t_d44d7736caf33d 303-304
+  s_43abe8ab21de8c::t_6f7bbeae4bc952 487
+docs/design/设计决策记录-2026-08-13.md
+  s_43abe8ab21de8c::t_e1f2ea467f39e1 464-481
+  s_43abe8ab21de8c::t_21e59e072c147f 461-463
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4c5654b51cb25ccd73c78bb42ac9ee420dfad302",
+  "prompts": {},
+  "sessions": {
+    "s_43abe8ab21de8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "177d153a-1f1b-4b42-adf6-7c194c5ec051",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
