@@ -4,7 +4,7 @@ import type { EmployeeSpec } from '../installs/spec/types'
 export type BaseId = 'claude-code' | 'codebuddy' | 'qoder'
 export type AnchorKind = 'config-domain' | 'project-file' | 'launcher-flag'
 
-export type PlacementAction = 'copy' | 'convert' | 'merge' | 'symlink'
+export type PlacementAction = 'copy' | 'convert' | 'merge' | 'symlink' | 'skip'
 
 export interface Placement {
   /** 包内相对路径（'AGENTS.md' | 'skills/<slug>' | 'hooks/hooks.json' | 凭证源等） */
@@ -24,6 +24,9 @@ export interface PlacementPlan {
   spec: EmployeeSpec
   /** auth 凭证源目录（各底座全局配置目录；__auth__/<f> 虚拟源物化取源用，缺省=不置备凭证） */
   authSourceDir?: string
+  /** env-token 认证形态判定键（profile.auth.envTokenKeys 透传）--
+   *  executor 物化时凭证源缺失且任一键在 env 中 -> 零置备降级（环境继承，设计 §5.1 auth 分档） */
+  authEnvTokenKeys?: string[]
   placements: Placement[]
 }
 
@@ -51,7 +54,13 @@ export interface BaseProfile {
   skills_dir: string
   version_min: string; version_tested: string
   provides: string[]
-  auth: { kind: 'symlink' | 'copy' | 'none'; files: string[] }
+  auth: {
+    kind: 'symlink' | 'copy' | 'none'
+    files: string[]
+    /** env token 认证形态判定键（M2 实测：本机 CC 无凭证文件，认证走 ANTHROPIC_AUTH_TOKEN env）--
+     *  物化时凭证源缺失且任一键在 env 中 = env-token 形态，降级零置备环境继承（设计 §5.1 auth 分档） */
+    envTokenKeys?: string[]
+  }
   /** ⏳ 标注项均为 M2 联调首日实测收口（设计 §12 真机清单 5） */
   launch: { configEnv?: string; configFlag?: string }
 }

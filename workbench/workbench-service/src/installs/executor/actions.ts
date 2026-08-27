@@ -132,7 +132,10 @@ function mcpPatch(spec: EmployeeSpec): Record<string, unknown> {
   return { mcpServers }
 }
 
-/** __auth__/<f> 虚拟源物化：凭证源 = plan.authSourceDir/<f>（各底座全局配置目录）；缺失 = 一等错误可恢复 */
+/** __auth__/<f> 虚拟源物化：凭证源 = plan.authSourceDir/<f>（各底座全局配置目录）。
+ *  env-token 分档（设计 §5.1，M2 实测）：凭证源缺失但 profile 声明的 env token 键在环境中
+ *  （本机 CC 形态：ANTHROPIC_AUTH_TOKEN+ANTHROPIC_BASE_URL，无凭证文件）-> 零置备降级 skip（环境继承）；
+ *  双缺（无文件且无 env token）= 一等错误可恢复。 */
 function authPlacement(plan: PlacementPlan, placement: Placement, dstAbs: string): ActionOutcome {
   const file = placement.source.slice('__auth__/'.length)
   const missing = (): InstallError => new InstallError({
@@ -144,9 +147,16 @@ function authPlacement(plan: PlacementPlan, placement: Placement, dstAbs: string
     recoverable: true,
     hint: '请先在该底座 CLI 登录后重试安装',
   })
-  if (!plan.authSourceDir) throw missing()
+  const envTokenPresent = plan.authEnvTokenKeys?.some((k) => process.env[k])
+  if (!plan.authSourceDir) {
+    if (envTokenPresent) return { target: placement.target, action: 'skip' }
+    throw missing()
+  }
   const srcAbs = join(plan.authSourceDir, file)
-  if (!existsSync(srcAbs)) throw missing()
+  if (!existsSync(srcAbs)) {
+    if (envTokenPresent) return { target: placement.target, action: 'skip' }
+    throw missing()
+  }
   return symlinkPlacement(placement, dstAbs, srcAbs)
 }
 

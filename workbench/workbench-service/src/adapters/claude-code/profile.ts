@@ -8,6 +8,6 @@ export const profile: BaseProfile = {
   skills_dir: 'skills',
   version_min: '2.1.226', version_tested: '2.1.226',
   provides: ['agent-def', 'fs-access', 'skill-def', 'bash-exec', 'slash-command', 'subagent-dispatch'],
-  auth: { kind: 'symlink', files: ['.credentials.json'] },
+  auth: { kind: 'symlink', files: ['.credentials.json'], envTokenKeys: ['ANTHROPIC_AUTH_TOKEN'] },
   launch: { configEnv: 'CLAUDE_CONFIG_DIR' },
 }
