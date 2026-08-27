@@ -15,15 +15,21 @@ import { registerShellRoutes } from './shell'
 import type { ShellRouteDeps } from './shell'
 import { registerConfigRoutes } from './config'
 import type { ConfigRouteDeps } from './config'
+import { registerInstallsRoutes } from './installs'
+import type { InstallsRouteDeps } from './installs'
+import { registerBasesRoutes } from './bases'
+import type { BasesRouteDeps } from './bases'
 
 /** 全量路由依赖 = 各域依赖之和（main 装配一次给全；域文件各取所需字段） */
-export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps
+export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & InstallsRouteDeps & BasesRouteDeps
 
 /** 汇总注册（静态表：一行一域；新增域在此追加一行） */
 export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps: RouteDeps): void {
   registerInfraRoutes(reg, deps)
   registerShellRoutes(reg, deps)
   registerConfigRoutes(reg, deps) // I0-5 T8 config 域（设计 D-14：GET/PUT /api/config/platform）
+  registerInstallsRoutes(reg, deps) // I1 L2 安装线（设计 §10：deployments 列表/干跑/执行/漂移 + uninstall）
+  registerBasesRoutes(reg, deps) // I1 L2 安装线（设计 §10：底座卡片/手动探测/模型清单）
   assertNoDuplicateRoutes(reg.routes)
 }
 

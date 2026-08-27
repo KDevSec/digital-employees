@@ -13,7 +13,7 @@ import { loadConfig, writeConfigOverride } from '../src/config/load'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
-/** 域注册依赖：infra 五项 + shell 一项 + config 三项（I0-5 T8，与 main 装配同形状，值非契约） */
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项（I0-5 T8）+ installs 五项 + bases 三项（I1 L2 安装线）——与 main 装配同形状，值非契约 */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -24,6 +24,14 @@ const deps = {
   profileDir: 'D:/data/.devzero',
   loadConfig,
   writeConfigOverride,
+  // I1 L2 安装线两域（值非契约——本文件只断言路由表，不触达端点行为）
+  registryFile: 'D:/data/digital-staff/registry.json',
+  staffRoot: 'D:/data/digital-staff',
+  authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
+  probe: () => ({ present: false, version: null }),
+  packageRoots: {},
+  cacheDir: 'D:/data/.devzero/bases',
+  run: async () => ({ code: 127, stdout: '' }),
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -34,15 +42,23 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（GET /、GET /healthz、GET /api/events、GET /api/activity、GET+PUT /api/config/platform）', () => {
+  it('注册产物 = 期望路由表（I0-5 六端点 + I1 L2 安装线 installs 五端点 / bases 三端点）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
       ['GET', '/'],
       ['GET', '/api/activity'],
+      ['GET', '/api/bases'],
+      ['GET', '/api/bases/:id/models'],
       ['GET', '/api/config/platform'],
+      ['GET', '/api/deployments'],
       ['GET', '/api/events'],
       ['GET', '/healthz'],
+      ['POST', '/api/bases/probe'],
+      ['POST', '/api/deployments/execute'],
+      ['POST', '/api/deployments/plan'],
+      ['POST', '/api/deployments/verify'],
+      ['POST', '/api/uninstall'],
       ['PUT', '/api/config/platform'],
     ])
   })
