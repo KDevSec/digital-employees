@@ -11,9 +11,9 @@
 | `req-clarifier/` | 需求澄清师 | 🧑‍🏫 | flow-owner | L1 | 5 份（brainstorming/sr/ar/kdev-gen-storymap/split） |
 | `sys-engineer/` | 系统工程师 | 🧑‍🔬 | flow-owner | L1 | 5 份（kdev-gen-toplevel 等） |
 | `reviewer-expert/` | 评审专家 | ⚖️ | **callee** | L1 | 1 份（review-verdict，新写） |
-| `sec-compliance/` | 安全合规审核员 | 🕵️ | flow-owner | L1 | L1 实施批补（secretgate TS 移植） |
-| `sec-design/` | 安全设计审核员 | 🧙 | flow-owner | L1 | L1 实施批补（sec-scan-design zip） |
-| `sec-code/` | 代码安全审核员 | 🦾 | flow-owner | L1 | L1 实施批补（sec-scan-code zip） |
+| `sec-compliance/` | 安全合规审核员 | 🕵️ | flow-owner | L1 | 1 份（secretgate：TS 移植正则规则引擎，A1 零 token 扫描 + LLM 定性分工） |
+| `sec-design/` | 安全设计审核员 | 🧙 | flow-owner | L1 | 1 份（sec-scan-design：12 模块 133 条规则，纯 LLM 语义 skill） |
+| `sec-code/` | 代码安全审核员 | 🦾 | flow-owner | L1 | 1 份（sec-scan-code：Python 扫描引擎 + OWASP Top 10:2025；`.venv` 经 install 脚本装员工 home 不进包） |
 
 另有 `skills-remaining.md`（物料批次台账）。Custom 白纸 = 无目录零预填。
 
@@ -25,6 +25,7 @@
 ├── AGENTS.md             # 六段式默认渲染产物（唯一身份/指令源）
 ├── skills/<skill>/       # skill 素材（SKILL.md + 副文件；快照拷贝源）
 ├── hooks/hooks.json      # 红线声明编译产物（勿手改）
+├── hooks/redlines/       # 红线脚本本体（run-hook.cmd + 6 规则 .py，×7 模板同构自带）
 ├── commands/  knowledge/ # ⑤⑥ 预留空目录（V0.1）
 └── orchestration/        # 仅 dev-engineer：个人 SOP 表（8 节点 TDD 循环）
 ```
@@ -52,6 +53,6 @@ connectors 为空时不生成 mcp.json（约定：字段空 = 件不存在）。
 2. **三方互证**：manifest ↔ AGENTS.md ↔ hooks.json 保持一致——改 persona 要同步 AGENTS，改红线要重新编译 hooks.json（hooks.json 是产物，勿手改）
 3. **tier 与红线分配已定格**（T10 裁决 2026-08-27）；token 配额与治理默认值为演示默认值（Q-T4 余项留口子，向导可改）
 4. 个人表 `reviewer: self` = 驻留员工自评闸（不 spawn）——个人表专属语义，团队表 reviewer 必须是员工 id
-5. sec 三员 manifest 的 `skills: []` 为对账状态（声明-实物一致优先），L1 实施批补齐素材后恢复条目
+5. sec 三员 manifest 的 `skills` 条目已恢复（L1 实施批补齐素材销账——sec-compliance=secretgate / sec-design=sec-scan-design / sec-code=sec-scan-code，详见 skills-remaining.md 台账）；声明-实物一致由 manifest 同构自带校验
 6. 新增模板：复制同构目录 + 过 schema + AGENTS 六段式渲染一致；kind 判据 = 能否裸用独立完成全部职责（只能服务评审闸者 = callee，无 orchestration/）
 
