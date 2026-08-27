@@ -48,6 +48,22 @@ export interface ValidateIdResult {
   suggestion?: string
 }
 
+/** 花名册卡片字段（GET /api/employees items 元素，与 service EmployeeCard 同形） */
+export interface EmployeeCard {
+  id: string
+  display: string
+  brief: string
+  avatar: string
+  kind: string
+  version: string
+}
+
+/** GET /api/employees 响应：花名册扫描派生（items + invalid 透传） */
+export interface EmployeesListResult {
+  items: EmployeeCard[]
+  invalid: string[]
+}
+
 /** saveAsTemplate 成功响应（与 service 模板元信息同形） */
 export interface SaveTemplateResult {
   id: string
@@ -108,6 +124,25 @@ export async function validateId(id: string): Promise<ValidateIdResult> {
     return data
   } catch {
     return { available: true }
+  }
+}
+
+/**
+ * fetchEmployees：GET /api/employees → { items: EmployeeCard[], invalid: string[] }。
+ * 花名册扫描派生视图（service store.list 驱动）；失败归一空列表（调用方按空态渲染）。
+ */
+export async function fetchEmployees(): Promise<EmployeesListResult> {
+  try {
+    const res = await fetch('/api/employees')
+    if (!res.ok) return { items: [], invalid: [] }
+    const data = (await res.json()) as EmployeesListResult
+    if (!data || !Array.isArray(data.items)) return { items: [], invalid: [] }
+    return {
+      items: data.items,
+      invalid: Array.isArray(data.invalid) ? data.invalid : [],
+    }
+  } catch {
+    return { items: [], invalid: [] }
   }
 }
 

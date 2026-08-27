@@ -126,15 +126,19 @@ describe('守卫集成：未登录可达面收敛到接入页（D-7）', () => {
 })
 
 describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
-  it('认证后：三域逐页放行且渲染对应占位说明文案；侧栏在场', async () => {
-    stubFetch({ '/api/state': () => jsonResponse(authenticatedState) })
+  it('认证后：三域逐页放行且渲染对应说明文案；侧栏在场', async () => {
+    // /api/employees：EmployeesView onMounted 调用，返回空列表 → 空态文案「从模板快速创建你的数字员工」
+    stubFetch({
+      '/api/state': () => jsonResponse(authenticatedState),
+      '/api/employees': () => jsonResponse({ items: [], invalid: [] }),
+    })
     const { router, text } = await mountApp()
     // ACTIVE fixture 下首导航（初始 '/'）已被 D-21 自动跳到 /employees（详见下方 D-21 组用例）
     await router.push('/employees')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/employees')
-    // 标题「我的员工」与侧栏项同名，占位说明文案才是 Placeholder 页面渲染的证据
-    expect(text()).toContain('员工列表即将上线')
+    // EmployeesView 空态文案才是真视图渲染的证据（标题「我的员工」与侧栏项同名不足以区分）
+    expect(text()).toContain('从模板快速创建你的数字员工')
     expect(text()).toContain('我的群组与对话') // Layout 侧栏在场（含置灰项）
 
     await router.push('/bases')
@@ -158,11 +162,14 @@ describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
 
 describe('守卫集成：登录动线自动跳转（D-21：已登录 ACTIVE × / → /employees）', () => {
   it('ACTIVE：首导航落 /（OIDC 回调场景，初始导航）即分流 /employees；SPA 内导航回 / 放行停驻（T9 审查修复）', async () => {
-    stubFetch({ '/api/state': () => jsonResponse(authenticatedState) })
+    stubFetch({
+      '/api/state': () => jsonResponse(authenticatedState),
+      '/api/employees': () => jsonResponse({ items: [], invalid: [] }),
+    })
     const { router, text } = await mountApp()
     // 回调落 '/' 的时序（D-21 注）：守卫首次导航已拉 state，直接按状态分流——初始 '/' 不停留
     expect(router.currentRoute.value.path).toBe('/employees')
-    expect(text()).toContain('员工列表即将上线')
+    expect(text()).toContain('从模板快速创建你的数字员工')
 
     await router.push('/bases') // 先去别的业务页
     await flushPromises()
@@ -176,7 +183,10 @@ describe('守卫集成：登录动线自动跳转（D-21：已登录 ACTIVE × /
   })
 
   it('PENDING_REVIEW：push(\'/\') 停 /（接入页盯审批，不自动跳）', async () => {
-    stubFetch({ '/api/state': () => jsonResponse(pendingReviewState) })
+    stubFetch({
+      '/api/state': () => jsonResponse(pendingReviewState),
+      '/api/employees': () => jsonResponse({ items: [], invalid: [] }),
+    })
     const { router, text } = await mountApp()
     expect(router.currentRoute.value.path).toBe('/') // 非 ACTIVE 首导航停接入页
     await router.push('/employees')
@@ -192,7 +202,10 @@ describe('守卫集成：登录动线自动跳转（D-21：已登录 ACTIVE × /
 
 describe('守卫集成：/api/state 只拉一次（D-7 启动拉一次）', () => {
   it('首次导航拉取后，后续多次导航不再重复 fetch（session store loaded 门闩）', async () => {
-    const stub = stubFetch({ '/api/state': () => jsonResponse(authenticatedState) })
+    const stub = stubFetch({
+      '/api/state': () => jsonResponse(authenticatedState),
+      '/api/employees': () => jsonResponse({ items: [], invalid: [] }),
+    })
     const { router } = await mountApp()
     expect(stub.calls('/api/state', 'GET')).toBe(1) // 初始导航已拉一次
     await router.push('/employees')
