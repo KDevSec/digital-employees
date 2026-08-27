@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "gen:templates": "bun run scripts/gen-templates-assets.ts",
+    "pretest": "bun run gen:templates",
+    "prebuild": "bun run gen:templates",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "bash scripts/build.sh"
