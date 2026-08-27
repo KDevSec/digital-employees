@@ -216,6 +216,8 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     // Task 11 B6 employees 域：builder 管线八步 + store（id 冲突预检/suggestion）
     builder: employeesBuilder,
     store: employeesStore,
+    // Task 12 C1 skills 域：zip 上传物化 tmpRoot/skills/<name>/（与 builder 同源 tmpRoot）
+    tmpRoot: join(profileDir, 'tmp'),
   })
   const app = toHonoApp(registry)
   startedAtMs = Date.now()

@@ -37,6 +37,8 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
     builder,
     store,
+    // Task 12 C1 skills 域：tmpRoot 与 builder 同源（本文件不触达该域端点，行为断言在 routes-skills.test.ts）
+    tmpRoot: 'D:/data/.devzero/tmp',
     ...overrides,
   })
   return toHonoApp(registry)

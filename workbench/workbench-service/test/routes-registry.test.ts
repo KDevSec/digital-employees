@@ -38,6 +38,8 @@ const deps = {
     store: createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp'),
     tmpRoot: 'D:/data/.devzero/tmp',
   }),
+  // Task 12 C1 skills 域：zip 上传物化（tmpRoot 与 builder 同源）
+  tmpRoot: 'D:/data/.devzero/tmp',
 }
 
 /** 路由表投影：[method, path] 集合比较（注册顺序非契约——排序消除顺序敏感） */
@@ -48,7 +50,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（含 Task 11 B6 employees 域两条）', () => {
+  it('注册产物 = 期望路由表（含 Task 11 B6 employees + Task 12 C1 skills 域）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -61,6 +63,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/templates'],
       ['GET', '/healthz'],
       ['POST', '/api/employees/generate'],
+      ['POST', '/api/skills/upload'],
       ['PUT', '/api/config/platform'],
     ])
   })

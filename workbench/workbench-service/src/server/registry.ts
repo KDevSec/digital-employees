@@ -11,6 +11,17 @@ export interface Ctx {
   body?: unknown
   /** 查询参数（GET query string——首值映射；adapter 从 c.req.query() 装配）。无 query 时为空对象。 */
   query?: Record<string, string>
+  /**
+   * 请求头（首值映射，键小写；adapter 从 c.req.raw.headers 装配相关头）。
+   * Task 12 / E-13 起 skills 域 multipart 上传需读 content-type 重构 FormData。
+   * JSON/GET 路径行为不变——只在非 GET 且 content-type 非 application/json 时由 adapter 装载。
+   */
+  headers?: Record<string, string>
+  /**
+   * 原始请求体字节（content-type 非 application/json 的非 GET 请求时由 adapter 装载）。
+   * skills 域 multipart/form-data 上传走此通道；JSON 路径仍走 body 字段，行为不变。
+   */
+  bodyRaw?: ArrayBuffer
 }
 
 export interface Res {

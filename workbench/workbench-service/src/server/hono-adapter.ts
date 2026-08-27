@@ -19,7 +19,7 @@ export function toHonoApp(
 }
 
 async function dispatch(
-  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; query: (key: string) => string | undefined; queries: () => Record<string, string[]> } },
+  c: { req: { path: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; query: (key: string) => string | undefined; queries: () => Record<string, string[]>; raw: { headers: Headers; arrayBuffer(): Promise<ArrayBuffer> } } },
   route: Route,
 ): Promise<Response> {
   // 无 Host 头的请求（Hono 测试助手 app.request、极简客户端）按直连回环放行：
@@ -32,14 +32,32 @@ async function dispatch(
       query[k] = v[0]!
     }
   }
+  // Task 12 / E-13：非 GET 且 content-type 非 application/json 时走 bodyRaw 通道（multipart/二进制等）。
+  // GET 不读 body（SSE 长连接安全）；JSON 路径行为不变（body 字段，失败归一 undefined）。
+  // 仅在此分支装载 headers（首值映射，键小写）——multipart 域需 content-type 重构 FormData。
+  const ct = c.req.header('Content-Type') ?? ''
+  const isJson = ct.toLowerCase().includes('application/json')
+  const isNonGet = route.method !== 'GET'
+  let body: unknown
+  let bodyRaw: ArrayBuffer | undefined
+  let headers: Record<string, string> | undefined
+  if (isNonGet && !isJson) {
+    bodyRaw = await c.req.raw.arrayBuffer().catch(() => undefined)
+    headers = {}
+    for (const [k, v] of c.req.raw.headers.entries()) {
+      if (v !== undefined && v !== '') headers[k.toLowerCase()] = v
+    }
+  } else if (isNonGet) {
+    body = await c.req.json().catch(() => undefined)
+  }
   const ctx: Ctx = {
     method: route.method,
     path: c.req.path,
     host: c.req.header('Host') ?? '127.0.0.1',
-    // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
-    // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
-    body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
+    body,
     query,
+    headers,
+    bodyRaw,
   }
   if (!isLocalHost(ctx.host)) {
     const denied = forbiddenHostResponse(ctx.host)

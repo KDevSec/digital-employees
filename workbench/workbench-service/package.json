@@ -13,10 +13,11 @@
   },
   "dependencies": {
     "@devzero/shared-protocol": "workspace:*",
-    "hono": "^4",
-    "zod": "^3",
     "commander": "^12",
-    "js-yaml": "^4"
+    "fflate": "^0.8.3",
+    "hono": "^4",
+    "js-yaml": "^4",
+    "zod": "^3"
   },
   "devDependencies": {
     "typescript": "^5",
