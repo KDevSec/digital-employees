@@ -236,7 +236,8 @@ export default {
     syncFromIAM: 'Sync from IAM',
     syncing: 'Syncing...',
     syncFailed: 'Sync failed',
-    syncDone: 'Sync complete: {orgs} org nodes synchronized',
+    syncDone: 'Sync complete: {principals} principals, {orgs} org nodes synchronized',
+    syncDisabled: '({disabled} accounts removed in IAM, auto-disabled)',
     detail: {
       title: 'User Detail',
       userId: 'User ID',

@@ -6,11 +6,17 @@ from app.models import IamDepartment, IamDomain, IamOrgClosure, IamOrgNode, IamT
 
 
 async def reconcile_organization_snapshot(iam_admin, session: Session) -> int:
-    """Sync Keycloak groups into IamOrgNode rows and rebuild closure tables."""
+    """Sync Keycloak groups into IamOrgNode rows and rebuild closure tables.
+
+    Groups deleted in Keycloak are soft-deleted (status=DISABLED), never hard-deleted:
+    principals and role grants reference org node ids and audit trails must survive.
+    """
     rows = flatten_keycloak_groups(await iam_admin.list_groups())
     domains: set[str] = set()
+    active_ids: set[str] = set()
     for raw in rows:
         domains.add(raw["domain_id"])
+        active_ids.add(raw["id"])
         node = session.get(IamOrgNode, raw["id"])
         if node is None:
             node = IamOrgNode(**raw)
@@ -20,6 +26,9 @@ async def reconcile_organization_snapshot(iam_admin, session: Session) -> int:
                 if field != "id":
                     setattr(node, field, value)
     session.flush()
+    for node in session.scalars(select(IamOrgNode).where(IamOrgNode.domain_id.in_(domains))).all():
+        if node.id not in active_ids and node.status == "ACTIVE":
+            node.status = "DISABLED"
     _mirror_org_nodes(session, rows)
     for domain_id in domains:
         rebuild_domain_closure(session, domain_id)
@@ -61,6 +70,19 @@ def _mirror_org_nodes(session: Session, rows: list[dict]) -> None:
                 existing.department_id = department_id
                 existing.name = name
                 existing.status = status
+    # Soft-delete mirrored departments/teams whose groups vanished from Keycloak.
+    domain_ids = {raw["domain_id"] for raw in rows}
+    department_ids = {raw["id"] for raw in rows if raw.get("org_type") == "DEPARTMENT"}
+    team_ids = {raw["id"] for raw in rows if raw.get("org_type") == "TEAM"}
+    for dept in session.scalars(select(IamDepartment).where(IamDepartment.domain_id.in_(domain_ids))).all():
+        if dept.id not in department_ids and dept.status == "ACTIVE":
+            dept.status = "DISABLED"
+    domain_dept_ids = set(
+        session.scalars(select(IamDepartment.id).where(IamDepartment.domain_id.in_(domain_ids))).all()
+    )
+    for team in session.scalars(select(IamTeam).where(IamTeam.department_id.in_(domain_dept_ids))).all():
+        if team.id not in team_ids and team.status == "ACTIVE":
+            team.status = "DISABLED"
     session.flush()
 
 

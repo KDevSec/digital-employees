@@ -1,8 +1,7 @@
 from datetime import datetime
-import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import exists, false, func, or_, select, true
 from sqlalchemy.orm import Session
@@ -512,13 +511,16 @@ async def audit_events(
     )
 
 
-@router.post("/api/v1/iam/sync", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/api/v1/iam/sync")
 async def iam_sync(
     request: Request,
     identity: AuthenticatedPrincipal = Depends(get_current_principal),
     session: Session = Depends(get_session),
 ) -> dict:
     require_permission(identity, "role.manage")
+    # Run synchronously (bypassing the TTL cache) so the UI gets the real reconciliation
+    # counts back; ~700 users with batched group membership fetch completes in seconds.
+    result = await request.app.state.oidc.sync_directory(session, force=True)
     record_audit(
         session,
         request,
@@ -530,8 +532,10 @@ async def iam_sync(
         target_id=None,
         domain_id=identity.principal.domain_id,
         department_id=identity.principal.department_id,
-        summary="IAM directory sync triggered",
+        summary=(
+            f"IAM directory sync: {result['principals_synced']} principals "
+            f"({result['principals_disabled']} soft-disabled), {result['org_nodes_synced']} org nodes"
+        ),
     )
     session.commit()
-    asyncio.create_task(request.app.state.oidc.run_background_sync_once(request.app.state.settings))
-    return {"status": "SYNCING"}
+    return {"status": "SYNCED", **result}

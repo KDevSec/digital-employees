@@ -82,7 +82,7 @@ class OidcClient:
         self._discovery: dict | None = None
         self._jwks: dict | None = None
         self._directory_sync_at: float = 0.0
-        self._directory_sync_count: int = 0
+        self._directory_sync_result: dict | None = None
         self._directory_sync_lock = asyncio.Lock()
         self._logout_jtis: dict[str, float] = {}
 
@@ -208,19 +208,22 @@ class OidcClient:
         for key in [k for k, exp in self._logout_jtis.items() if exp <= now]:
             self._logout_jtis.pop(key, None)
 
-    async def sync_directory(self, session: Session) -> int:
+    async def sync_directory(self, session: Session, *, force: bool = False) -> dict:
+        """Synchronize the IAM directory. Returns counts of synced/disabled principals
+        and org nodes. Cached for directory_sync_ttl_seconds; force=True bypasses the
+        cache (manual "sync now" button)."""
         ttl = self.settings.directory_sync_ttl_seconds
         now = time.monotonic()
-        if ttl > 0 and self._directory_sync_at and (now - self._directory_sync_at) < ttl:
-            return self._directory_sync_count
+        if not force and ttl > 0 and self._directory_sync_at and (now - self._directory_sync_at) < ttl:
+            return self._directory_sync_result or {}
         async with self._directory_sync_lock:
             # Re-check inside the lock to avoid redundant syncs from concurrent requests.
-            if ttl > 0 and self._directory_sync_at and (time.monotonic() - self._directory_sync_at) < ttl:
-                return self._directory_sync_count
-            count = await self._sync_directory(session)
+            if not force and ttl > 0 and self._directory_sync_at and (time.monotonic() - self._directory_sync_at) < ttl:
+                return self._directory_sync_result or {}
+            result = await self._sync_directory(session)
             self._directory_sync_at = time.monotonic()
-            self._directory_sync_count = count
-            return count
+            self._directory_sync_result = result
+            return result
 
     async def run_background_sync_once(self, settings: Settings) -> None:
         """Trigger one directory sync in the background; never raises."""
@@ -229,8 +232,8 @@ class OidcClient:
         try:
             session_factory = get_session_factory(settings.database_url)
             with session_factory() as session:
-                count = await self.sync_directory(session)
-            logger.info("background directory sync done", extra={"sync_count": count})
+                result = await self.sync_directory(session)
+            logger.info("background directory sync done: %s", result)
         except Exception:
             logger.exception("background directory sync failed")
 
@@ -241,11 +244,12 @@ class OidcClient:
             await self.run_background_sync_once(settings)
             await asyncio.sleep(ttl)
 
-    async def _sync_directory(self, session: Session) -> int:
+    async def _sync_directory(self, session: Session) -> dict:
         # Sync the Keycloak group tree first so user org membership can be resolved
         # against IamOrgNode. Users belong to orgs via group membership, not attributes.
+        org_nodes_synced = 0
         if self.iam_admin is not None:
-            await reconcile_organization_snapshot(self.iam_admin, session)
+            org_nodes_synced = await reconcile_organization_snapshot(self.iam_admin, session)
             group_to_org = {
                 n.keycloak_group_id: n.id
                 for n in session.scalars(
@@ -270,26 +274,38 @@ class OidcClient:
             issuer = self.settings.oidc_discovery_issuer
             realm_name = self.settings.oidc_issuer.rstrip("/").rsplit("/", 1)[-1]
             admin_root = issuer.split("/realms/", 1)[0]
-            users_response = await client.get(
-                f"{admin_root}/admin/realms/{realm_name}/users",
-                params={"max": 1000, "briefRepresentation": "false"},
-                headers={"Authorization": f"Bearer {token}"},
-            )
-        if users_response.status_code != 200:
-            raise ApiError(503, "IAM_SYNC_UNAVAILABLE", "IAM directory synchronization is unavailable")
-        raw_users = [
-            u for u in users_response.json()
-            if not str(u.get("username", "")).startswith("service-account-")
-        ]
+            # Paginate the full user listing: a truncated listing would make the
+            # deletion reconciliation below disable users who still exist in IAM.
+            page_size = 1000
+            raw_users: list[dict] = []
+            first = 0
+            while True:
+                users_response = await client.get(
+                    f"{admin_root}/admin/realms/{realm_name}/users",
+                    params={"first": first, "max": page_size, "briefRepresentation": "false"},
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                if users_response.status_code != 200:
+                    raise ApiError(503, "IAM_SYNC_UNAVAILABLE", "IAM directory synchronization is unavailable")
+                page = users_response.json()
+                raw_users.extend(
+                    u for u in page if not str(u.get("username", "")).startswith("service-account-")
+                )
+                if len(page) < page_size:
+                    break
+                first += page_size
         # Fetch all group memberships concurrently (bounded) instead of N sequential requests.
         memberships_by_user: dict[str, list[dict]] = {}
         if self.iam_admin is not None:
             user_ids = [u["id"] for u in raw_users if u.get("id")]
             memberships_by_user = await self.iam_admin.list_user_groups_batch(user_ids)
         count = 0
+        synced_keycloak_ids: set[str] = set()
         for raw_user in raw_users:
             username = str(raw_user.get("username", ""))
             attributes = raw_user.get("attributes") or {}
+            if raw_user.get("id"):
+                synced_keycloak_ids.add(str(raw_user["id"]))
 
             def attribute(name: str):
                 value = attributes.get(name)
@@ -332,8 +348,32 @@ class OidcClient:
             principal = self.sync_principal(session, claims, self.settings)
             principal.status = "ACTIVE" if raw_user.get("enabled", False) else "DISABLED"
             count += 1
+        # Reconcile deletions: users removed in Keycloak simply disappear from the
+        # listing. Soft-disable their principals rather than hard-deleting — role
+        # assignments, enrollment requests, package ownership and audit events all
+        # reference principal ids and must remain intact. Re-created users get fresh
+        # Keycloak ids and sync back as new principals.
+        principals_disabled = 0
+        for principal in session.scalars(
+            select(IamPrincipal).where(
+                IamPrincipal.issuer == self.settings.oidc_issuer,
+                IamPrincipal.status == "ACTIVE",
+            )
+        ).all():
+            if principal.keycloak_user_id and principal.keycloak_user_id not in synced_keycloak_ids:
+                principal.status = "DISABLED"
+                principal.synced_at = utc_now()
+                principals_disabled += 1
+                logger.info(
+                    "principal soft-disabled: missing from IAM listing",
+                    extra={"principal_id": principal.id, "username": principal.username},
+                )
         session.commit()
-        return count
+        return {
+            "principals_synced": count,
+            "principals_disabled": principals_disabled,
+            "org_nodes_synced": org_nodes_synced,
+        }
 
     def _derive_org_from_groups(
         self, session: Session, memberships: list[dict], group_to_org: dict[str, str]
