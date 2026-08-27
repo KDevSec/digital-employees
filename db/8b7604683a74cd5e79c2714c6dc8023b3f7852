@@ -1,0 +1,22 @@
+workbench/workbench-service/test/installs-report.test.ts
+  s_3d694229081e72::t_ee33bbba539d71 76-96
+  s_3d694229081e72::t_364d569c15a02c 11
+workbench/workbench-service/src/installs/service.ts
+  s_3d694229081e72::t_4a80326e51dfc8 56-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "db8b7604683a74cd5e79c2714c6dc8023b3f7852",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
