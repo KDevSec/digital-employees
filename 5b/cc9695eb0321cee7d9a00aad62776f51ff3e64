@@ -1,0 +1,21 @@
+docs/design/概要设计/员工市场分发包契约-v0.1.md
+  s_3164dc039eb46c::t_32499db5e6d35c 1-104
+docs/README.md
+  s_3164dc039eb46c::t_1c5444da643d6d 30-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5bcc9695eb0321cee7d9a00aad62776f51ff3e64",
+  "prompts": {},
+  "sessions": {
+    "s_3164dc039eb46c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9bf442f5-9b65-4342-87c6-cfdbdf3867b6",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
