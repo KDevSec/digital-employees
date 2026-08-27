@@ -1,9 +1,9 @@
-/** Claude Code adapter（S4 V1/V6 实证链；plan 落位 = common/plan 共享骨架，差异全在 profile） */
+/** Qoder adapter（config-domain 主路径 D-L2-01；project-file 回退档改档案值即可，零代码） */
 import type { BaseAdapter } from '../contract'
 import { buildPlan } from '../common/plan'
 import { profile } from './profile'
 
-export function createClaudeCodeAdapter(): BaseAdapter {
+export function createQoderAdapter(): BaseAdapter {
   return {
     profile,
     plan(spec, opts) { return buildPlan(profile, spec, opts) },

@@ -10,7 +10,12 @@ import type { ExecuteInput } from '../src/installs/executor/execute'
 
 let scratch: string
 
-beforeEach(() => { scratch = mkdtempSync(join(tmpdir(), 'wb-exec-')) })
+beforeEach(() => {
+  scratch = mkdtempSync(join(tmpdir(), 'wb-exec-'))
+  // auth 凭证源（CC adapter 重构后 plan 含 __auth__/.credentials.json 虚拟源落位——成功链前置）
+  mkdirSync(join(scratch, 'user-cc'), { recursive: true })
+  writeFileSync(join(scratch, 'user-cc', '.credentials.json'), '{}', 'utf8')
+})
 
 const PROBE = { present: true, version: '2.1.245' }
 
@@ -22,6 +27,7 @@ function makeInput(over: Partial<ExecuteInput> = {}): ExecuteInput {
     registryFile: join(scratch, 'registry.json'),
     home: join(scratch, 'digital-staff', 'claude-code', 'dev-lite'),
     baseVersion: '2.1.245', probe: PROBE,
+    authSourceDir: join(scratch, 'user-cc'),
     ...over,
   }
 }

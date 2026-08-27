@@ -22,6 +22,8 @@ export interface PlacementPlan {
   employeeId: string
   /** 计划源 spec（convert 溯源注释 / 虚拟源物化取 connectors——Task 6 消费） */
   spec: EmployeeSpec
+  /** auth 凭证源目录（各底座全局配置目录；__auth__/<f> 虚拟源物化取源用，缺省=不置备凭证） */
+  authSourceDir?: string
   placements: Placement[]
 }
 
@@ -56,7 +58,7 @@ export interface BaseProfile {
 
 export interface BaseAdapter {
   readonly profile: BaseProfile
-  plan(spec: EmployeeSpec, opts: { home: string }): PlacementPlan
+  plan(spec: EmployeeSpec, opts: { home: string; authSourceDir?: string }): PlacementPlan
   launch(input: LaunchInput): Promise<LaunchSpec>
   listModels(): Promise<ModelInfo[]>
 }

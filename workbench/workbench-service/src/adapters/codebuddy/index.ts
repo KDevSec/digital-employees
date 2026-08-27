@@ -1,9 +1,9 @@
-/** Claude Code adapter（S4 V1/V6 实证链；plan 落位 = common/plan 共享骨架，差异全在 profile） */
+/** CodeBuddy adapter（CC 同构预期；身份面 429 待复验——设计 §5.1 ⏳ / M2 清单 3） */
 import type { BaseAdapter } from '../contract'
 import { buildPlan } from '../common/plan'
 import { profile } from './profile'
 
-export function createClaudeCodeAdapter(): BaseAdapter {
+export function createCodebuddyAdapter(): BaseAdapter {
   return {
     profile,
     plan(spec, opts) { return buildPlan(profile, spec, opts) },

@@ -4,15 +4,19 @@
  *   copy 目标可为目录（skills 包体）→ 递归拷贝；
  * - merge：写前备份 → 程序化深合并（禁文本拼接）→ 本员工条目附 _devzero 标记；
  *   写后回读校验——自己写出的不合法 JSON 必须当场炸（底座容忍坏 JSON 静默半生效）；
- * - symlink：无特权 fallback 只读拷贝（P-12 软链优于拷贝，Windows 兼容降级）。
+ * - symlink：无特权 fallback 只读拷贝（P-12 软链优于拷贝，Windows 兼容降级）；
+ * - 虚拟源（source 以 __ 开头，plan 骨架产出）：__mcp__ 从 spec.connectors 内存物化 merge 补丁、
+ *   __auth__/<f> 从 plan.authSourceDir 取源——源缺失抛 INSTALL_AUTH_SOURCE_MISSING（一等错误）。
  */
 import {
   copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync,
   rmSync, statSync, symlinkSync, unlinkSync, writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { convertInstructions } from '../../adapters/common/plan'
 import type { Placement, PlacementAction, PlacementPlan } from '../../adapters/contract'
 import { InstallError } from '../errors'
+import type { EmployeeSpec } from '../spec/types'
 
 export interface ActionOutcome {
   target: string                     // home 相对路径
@@ -84,8 +88,18 @@ function sameHookMatcher(a: unknown, b: unknown): boolean {
 }
 
 export function runPlacement(plan: PlacementPlan, placement: Placement, packageRoot: string): ActionOutcome {
-  const srcAbs = join(packageRoot, placement.source)
   const dstAbs = join(plan.home, placement.target)
+
+  // 虚拟源物化（Task 6；设计 §5）：不落包内文件——
+  // __mcp__ 从 plan.spec.connectors 内存生成 merge 补丁；__auth__/<f> 从 plan.authSourceDir 取源。
+  if (placement.source === '__mcp__') {
+    return mergePlacement(plan, placement, dstAbs, mcpPatch(plan.spec))
+  }
+  if (placement.source.startsWith('__auth__/')) {
+    return authPlacement(plan, placement, dstAbs)
+  }
+
+  const srcAbs = join(packageRoot, placement.source)
   if (!existsSync(srcAbs)) {
     throw new InstallError({ code: 'INSTALL_SOURCE_MISSING', message: `包内源缺失：${placement.source}`, phase: 'execute', recoverable: false, hint: '员工包不完整，重新构建包' })
   }
@@ -96,23 +110,60 @@ export function runPlacement(plan: PlacementPlan, placement: Placement, packageR
     }
     let content: string | Buffer = readFileSync(srcAbs)
     if (placement.action === 'convert') {
-      content = compileIdentity(content.toString(), plan)
+      content = convertInstructions(content.toString(), plan.spec)
     }
     atomicWrite(dstAbs, content)
     return { target: placement.target, action: placement.action }
   }
   if (placement.action === 'merge') {
-    const patch = JSON.parse(readFileSync(srcAbs, 'utf8'))
-    const base = existsSync(dstAbs) ? JSON.parse(readFileSync(dstAbs, 'utf8')) : {}
-    const backupPath = `${placement.target}.bak-${Date.now()}`
-    if (existsSync(dstAbs)) copyFileSync(dstAbs, join(plan.home, backupPath))
-    const merged = deepMergeJson(base, patch, { key: '_devzero', value: plan.employeeId })
-    atomicWrite(dstAbs, JSON.stringify(merged, null, 2))
-    // 写后回读校验（S1 条款 2：底座容忍坏 JSON 静默半生效——自己写的不合法必须当场炸）
-    JSON.parse(readFileSync(dstAbs, 'utf8'))
-    return { target: placement.target, action: 'merge', backupPath }
+    return mergePlacement(plan, placement, dstAbs, JSON.parse(readFileSync(srcAbs, 'utf8')))
   }
-  // symlink（auth 凭证置备；无特权 fallback 只读拷贝）
+  return symlinkPlacement(placement, dstAbs, srcAbs)
+}
+
+/** __mcp__ 虚拟源物化：spec.connectors → { mcpServers } merge 补丁（内存生成，无临时文件） */
+function mcpPatch(spec: EmployeeSpec): Record<string, unknown> {
+  const mcpServers: Record<string, unknown> = {}
+  for (const conn of spec.connectors) {
+    mcpServers[conn.name] = conn.type === 'http'
+      ? { type: 'http', url: conn.url }
+      : { command: conn.command, args: conn.args, env: conn.env }
+  }
+  return { mcpServers }
+}
+
+/** __auth__/<f> 虚拟源物化：凭证源 = plan.authSourceDir/<f>（各底座全局配置目录）；缺失 = 一等错误可恢复 */
+function authPlacement(plan: PlacementPlan, placement: Placement, dstAbs: string): ActionOutcome {
+  const file = placement.source.slice('__auth__/'.length)
+  const missing = (): InstallError => new InstallError({
+    code: 'INSTALL_AUTH_SOURCE_MISSING',
+    message: plan.authSourceDir
+      ? `底座凭证源文件缺失：${join(plan.authSourceDir, file)}`
+      : `底座凭证源目录未提供（authSourceDir 缺失），无法置备：${file}`,
+    phase: 'execute',
+    recoverable: true,
+    hint: '请先在该底座 CLI 登录后重试安装',
+  })
+  if (!plan.authSourceDir) throw missing()
+  const srcAbs = join(plan.authSourceDir, file)
+  if (!existsSync(srcAbs)) throw missing()
+  return symlinkPlacement(placement, dstAbs, srcAbs)
+}
+
+/** merge 落位（hooks/settings/.mcp.json 共用）：备份 → 深合并带 _devzero 标记 → 原子写 → 回读校验 */
+function mergePlacement(plan: PlacementPlan, placement: Placement, dstAbs: string, patch: unknown): ActionOutcome {
+  const base = existsSync(dstAbs) ? JSON.parse(readFileSync(dstAbs, 'utf8')) : {}
+  const backupPath = `${placement.target}.bak-${Date.now()}`
+  if (existsSync(dstAbs)) copyFileSync(dstAbs, join(plan.home, backupPath))
+  const merged = deepMergeJson(base, patch, { key: '_devzero', value: plan.employeeId })
+  atomicWrite(dstAbs, JSON.stringify(merged, null, 2))
+  // 写后回读校验（S1 条款 2：底座容忍坏 JSON 静默半生效——自己写的不合法必须当场炸）
+  JSON.parse(readFileSync(dstAbs, 'utf8'))
+  return { target: placement.target, action: 'merge', backupPath }
+}
+
+/** symlink 落位（auth 凭证置备；无特权 fallback 只读拷贝——P-12 软链优于拷贝，Windows 兼容降级） */
+function symlinkPlacement(placement: Placement, dstAbs: string, srcAbs: string): ActionOutcome {
   try {
     if (existsSync(dstAbs)) unlinkSync(dstAbs)
     mkdirSync(dirname(dstAbs), { recursive: true })
@@ -122,11 +173,6 @@ export function runPlacement(plan: PlacementPlan, placement: Placement, packageR
     copyFileSync(srcAbs, dstAbs)
     return { target: placement.target, action: 'symlink' }
   }
-}
-
-/** 身份编译：AGENTS.md 原文 + 溯源注释首行（设计 §5.2；转换钩子位 adapters transforms 可扩展） */
-function compileIdentity(source: string, plan: PlacementPlan): string {
-  return `<!-- generated by devzero from ${plan.spec.id}@${plan.spec.version}/AGENTS.md; do not edit by hand -->\n${source}`
 }
 
 export function undoPlacement(home: string, outcome: ActionOutcome): void {

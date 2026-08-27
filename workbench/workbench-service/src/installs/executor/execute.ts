@@ -20,6 +20,8 @@ export interface ExecuteInput {
   spec: EmployeeSpec; adapter: BaseAdapter; packageRoot: string
   registry: DeploymentRegistry; registryFile: string
   home: string; baseVersion: string; probe: ProbeResult
+  /** auth 凭证源目录（各底座全局配置目录；__auth__ 虚拟源物化取源，缺省=不置备凭证） */
+  authSourceDir?: string
 }
 
 export interface ExecuteOutput {
@@ -51,7 +53,7 @@ export function executeInstall(input: ExecuteInput): ExecuteOutput {
     }
   }
 
-  const plan = adapter.plan(spec, { home })
+  const plan = adapter.plan(spec, { home, authSourceDir: input.authSourceDir })
 
   // 崩溃残留自愈前置（设计 §6.4 双消费方之二）：同目标 broken 先重置
   mkdirSync(join(home, 'config'), { recursive: true })
