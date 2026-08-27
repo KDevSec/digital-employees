@@ -16,7 +16,14 @@ export interface Placement {
   checksum?: string
 }
 
-export interface PlacementPlan { base: BaseId; home: string; placements: Placement[] }
+export interface PlacementPlan {
+  base: BaseId; home: string
+  /** 本计划所属员工（merge 条目 _devzero 标记值 / 回滚归属判定） */
+  employeeId: string
+  /** 计划源 spec（convert 溯源注释 / 虚拟源物化取 connectors——Task 6 消费） */
+  spec: EmployeeSpec
+  placements: Placement[]
+}
 
 export interface LaunchInput {
   deployment: { base: BaseId; home: string; employee_id: string }
