@@ -1,0 +1,36 @@
+workbench/workbench-web/src/views/CreateWizard.vue
+  s_b9259474bd2245::t_f0df5b1ea4d526 1-318
+workbench/workbench-web/src/components/wizard/TplGrid.vue
+  s_b9259474bd2245::t_17551ae2fe6146 1-238
+workbench/workbench-web/src/api/templates.ts
+  s_b9259474bd2245::t_56e806ce26e4f7 1-85
+workbench/workbench-web/src/router/routes/employees.ts
+  s_b9259474bd2245::t_280421bd935bb2 3,10-13,21-24
+  s_b9259474bd2245::t_914a8d385b5253 25
+workbench/workbench-web/test/create-wizard.test.ts
+  s_b9259474bd2245::t_5195a8de7442a0 1-230
+workbench/workbench-web/src/components/wizard/StepBar.vue
+  s_b9259474bd2245::t_5b3d63f428e19e 1-120
+workbench/workbench-web/src/stores/wizard.ts
+  s_b9259474bd2245::t_85482cc6e54a14 1-180
+workbench/workbench-web/test/wizard-store.test.ts
+  s_b9259474bd2245::t_21d214d298a266 1-166
+workbench/workbench-web/test/router.test.ts
+  s_b9259474bd2245::t_aec7d9208e1d61 45-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e066faa777fdcb07985bdb91e40696a6c0576cff",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
