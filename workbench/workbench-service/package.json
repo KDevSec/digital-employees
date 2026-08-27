@@ -4,25 +4,29 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gen:templates": "bun run scripts/gen-templates-assets.ts",
-    "pretest": "bun run gen:templates",
-    "prebuild": "bun run gen:templates",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "bash scripts/build.sh"
+    "build": "bash scripts/build.sh",
+    "gen:templates": "bun run scripts/gen-templates-assets.ts",
+    "pretest": "bun run gen:templates",
+    "prebuild": "bun run gen:templates"
   },
   "dependencies": {
-    "@devzero/shared-protocol": "workspace:*",
-    "commander": "^12",
-    "fflate": "^0.8.3",
     "hono": "^4",
-    "js-yaml": "^4",
-    "zod": "^3"
+    "yaml": "^2.9.0",
+    "zod": "^3",
+    "commander": "^12",
+    "@devzero/engine": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@hono/mcp": "^0.3.2",
+    "jose": "^6",
+    "fflate": "^0.8",
+    "@devzero/shared-protocol": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^2",
     "@types/bun": "latest",
-    "@types/js-yaml": "^4"
+    "@playwright/test": "^1"
   }
 }

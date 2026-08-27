@@ -8,10 +8,13 @@
  * kill 前做 healthz 身份校验（防误杀）、确认端口释放后自行完成善后簿记，见 stopCommand。
  */
 import { spawn } from 'node:child_process'
-import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { createPlatformAccess } from './app/platform-access'
+import type { BaseId } from './adapters/contract'
+import { readCache as readBaseCache } from './bases/cache'
 import { brand } from './brand'
 import { loadConfig, writeConfigOverride, writeSample } from './config/load'
 import type { WorkbenchConfig } from './config/schema'
@@ -34,6 +37,10 @@ import { TAKEOVER_MIN_CONSECUTIVE_FAILS } from './runtime/instance'
 import type { HealthSnapshot } from './runtime/instance'
 import { createRegistry } from './server/registry'
 import { registerAllRoutes } from './server/routes'
+// L3 T6 编排域装配：引擎实例 + 模板目录 ensure（demo 表首启落位）
+import { Engine } from '@devzero/engine'
+import { buildEngineMcpServer } from './server/mcp/engine-mcp'
+import demoFlowYaml from '../../workbench-engine/assets/flows/demo-flow.node-table.yml' with { type: 'text' }
 import { toHonoApp } from './server/hono-adapter'
 import { createTemplatesProvider } from './templates/provider'
 import { builtinTemplates } from './assets/templates.gen'
@@ -55,8 +62,32 @@ const profileDir = process.env.WORKBENCH_HOME ?? join(homedir(), brand.profileNa
 const runDir = join(profileDir, 'run')
 const logsDir = join(profileDir, 'logs')
 const sentinelsDir = join(runDir, 'sentinels')
+// I1 L2 安装线（设计 §3.1/§3.2）：员工 Deployment 根 ~/digital-staff/（registry.json 台账与各底座 home）
+const staffRoot = join(homedir(), 'digital-staff')
+// I1 L2 安装线（设计 §9）：底座探测缓存目录（profile 内 bases/<base>.json，30min TTL）
+const basesCacheDir = join(profileDir, 'bases')
+
+// L1 员工新建线（Task 11/18）：员工库根（~/.devzero/employees/——canonical EmployeeSpec 真源，L2 installs 域消费）
+const employeesRoot = join(profileDir, 'employees')
+
+/** 员工包根映射（L1 合流）：installs 域 packageRoots 自动发现——扫员工库目录构造 { employee_id: 包根 }。
+ *  V0.1 注册期快照（新员工落库/删除后重启服务刷新）；目录不存在/非目录返回空表。 */
+function listEmployeePackageRoots(): Record<string, string> {
+  if (!existsSync(employeesRoot) || !statSync(employeesRoot).isDirectory()) return {}
+  const roots: Record<string, string> = {}
+  for (const id of readdirSync(employeesRoot)) {
+    const p = join(employeesRoot, id)
+    if (statSync(p).isDirectory()) roots[id] = p
+  }
+  return roots
+}
 
 let startedAtMs = Date.now()
+
+// ---------- A 系列认证装配（Task 16）：心跳调度器模块级句柄 ----------
+
+/** 心跳后台任务句柄（startRealServer 装配时赋值；优雅退出 serverStop 前先停，详设 §14） */
+let heartbeatScheduler: { stop(): void } | null = null
 
 // ---------- 守护路径运行时（惰性初始化，I-3：急切初始化会使坏 config 连累 stop/status） ----------
 
@@ -182,8 +213,33 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** bases 域探测命令执行（CmdRunner 生产实现：`<cmd> --version` 抓 stdout 与退出码，5s 兜底超时）。
+ * Windows CLI 多为 .cmd/.ps1 shim，无 shell 直 spawn 会 ENOENT——shell 包装（探测只读、args 为固定旗标）。 */
+function runBaseVersion(command: string, args: string[]): Promise<{ code: number; stdout: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, { shell: process.platform === 'win32' })
+    let stdout = ''
+    const timer = setTimeout(() => child.kill(), 5_000)
+    child.stdout?.on('data', (d) => { stdout += d })
+    child.on('error', () => { clearTimeout(timer); resolve({ code: 127, stdout: '' }) })
+    child.on('close', (code) => { clearTimeout(timer); resolve({ code: code ?? 127, stdout }) })
+  })
+}
+
 function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: ServerDeps): ReturnType<typeof Bun.serve> {
+  // A 系列装配（Task 16，详设 §3.1）：platform-access = 八认证端点 handler 门面 + 心跳调度器
+  const installationId = rt.uid
+  const access = createPlatformAccess({ profileDir, loadConfig, installationId, version: brand.version })
+  heartbeatScheduler = access.scheduler
   const registry = createRegistry()
+  // 编排域（L3 T6）：EngineDirs 注入（D-045 布局——templatesDir 在 profileDir 侧）；
+  // 首启 ensure demo-flow 表落位（bun --compile 单体内 assets 以 text 内联，不依赖 fs 布局）
+  const flowsDir = join(profileDir, 'templates', 'flows')
+  if (!existsSync(join(flowsDir, 'demo-flow.node-table.yml'))) {
+    mkdirSync(flowsDir, { recursive: true })
+    writeFileSync(join(flowsDir, 'demo-flow.node-table.yml'), demoFlowYaml as unknown as string)
+  }
+  const engine = new Engine({ dataDir: profileDir, templatesDir: flowsDir })
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -195,17 +251,51 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: S
     profileDir,
     loadConfig,
     writeConfigOverride,
+    engine,
+    // I1 L2 安装线两域（设计 §3/§9/§10）：installs + bases 装配——
+    // 探测为同步桥（InstallServiceDeps.probe 同步签名）：读 bases 域探测缓存文件，
+    // 实探与回写由 GET /api/bases / POST /api/bases/probe 负责（UI 动线先见底座页再安装）。
+    registryFile: join(staffRoot, 'registry.json'),
+    staffRoot,
+    authSourceDirs: {
+      'claude-code': join(homedir(), '.claude'),
+      codebuddy: '',
+      qoder: join(homedir(), '.qoder'),
+    },
+    probe: (base: BaseId) => readBaseCache(join(basesCacheDir, `${base}.json`)) ?? { present: false, version: null },
+    // L1 合流：员工包根 = 员工库目录自动发现（README「E-12 落地后 packageRoots 自动发现」——
+    // installs 域按 employee_id 查包根，扫描 employees/ 构造映射；V0.1 注册期快照，新员工落库后重启刷新）
+    packageRoots: listEmployeePackageRoots(),
+    cacheDir: basesCacheDir,
+    run: runBaseVersion,
+    // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
+    service: access.service,
+    // L1 员工域四项（Task 7/11/12 + Task 18 seed）：templates/employees/skills 三域 + 预置物化共用实例
     templates: serverDeps.templatesProvider,
-    // Task 11 B6 employees 域：builder 管线八步 + store（id 冲突预检/suggestion）
     builder: serverDeps.employeesBuilder,
     store: serverDeps.employeesStore,
-    // Task 12 C1 skills 域：zip 上传物化 tmpRoot/skills/<name>/（与 builder 同源 tmpRoot）
     tmpRoot: serverDeps.tmpRoot,
   })
-  const app = toHonoApp(registry)
+  // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）；
+  // MCP 例外口（L3）+ 会话守卫（A 系列 A-08）经同一 opts 并集注入
+  const app = toHonoApp(registry, {
+    mcpServer: buildEngineMcpServer(engine),
+    sessionGuard: (ctx, grade) => access.service.sessionGuard(ctx, grade),
+  })
   startedAtMs = Date.now()
   try {
-    return Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    const server = Bun.serve({
+      port: cfg.network.port,
+      hostname: '127.0.0.1',
+      fetch: app.fetch,
+      // SSE 长连接（/api/engine/stream）空闲保活上限：Bun 默认 10s 会在首个 15s 心跳前掐死
+      // 空闲流（L5×L3 联调实锤：EventSource 经代理收 500 → 连接态「已断开」）；255 为 Bun 上限，
+      // 心跳 15s 每次写入重置计时，长连接不受影响（mock 侧同款修法，见 scripts/mock-engine-server.ts）
+      idleTimeout: 255,
+    })
+    // 详设 §3.1 第 9 步：服务起 → 后台任务起（心跳调度；workbenchId 在才真起，幂等）
+    access.scheduler.ensureRunning()
+    return server
   } catch (err) {
     throw new ExitError(78, `监听 127.0.0.1:${cfg.network.port} 失败（端口被占用？）：${String(err)}`)
   }
@@ -235,7 +325,7 @@ function createServerDeps(): ServerDeps {
   // Task 11 B6 employees 域：builder 管线八步（draft → 八步 → 原子落盘）+ store（id 冲突预检/suggestion）
   // employeesRoot/tmpRoot 落在 profileDir 下（与 config/run/logs 同根）；store 与 builder 共用同一组目录
   const employeesStore = createEmployeeStore(
-    join(profileDir, 'employees'),
+    employeesRoot,
     tmpRoot,
   )
   const employeesBuilder = createEmployeeBuilder({
@@ -375,6 +465,7 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
       port,
       markCleanStop: () => markCleanStop(runDir),
       serverStop: () => {
+        heartbeatScheduler?.stop()
         server.stop(true)
       },
       clearRunDir: clearDiscoveryFiles,

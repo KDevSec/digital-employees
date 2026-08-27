@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://platform:platform@postgres:5432/platform"
     package_storage_path: Path = Path("/var/lib/platform/packages")
     platform_base_url: str = "http://localhost:18000"
-    workbench_base_url: str = "http://localhost:19820"
+    workbench_base_url: str = "http://localhost:19980"
     oidc_issuer: str = "http://localhost:18080/realms/digital-employees"
     oidc_internal_issuer: str | None = None
     oidc_client_id: str = "platform-web"

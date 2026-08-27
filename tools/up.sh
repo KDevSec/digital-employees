@@ -17,12 +17,12 @@ if ! docker info >/dev/null 2>&1; then
   echo "Docker daemon started successfully."
 fi
 
+"$tools_dir/ensure-certs.sh"
+
 "$root/tools/compose.sh" up -d --build
-"$root/tools/wait-for-http.sh" http://localhost:18080/realms/digital-employees/.well-known/openid-configuration 180
-"$root/tools/wait-for-http.sh" http://localhost:18000/health/live 120
-"$root/tools/wait-for-http.sh" http://localhost:19820/health/live 120
+"$root/tools/wait-for-http.sh" https://localhost:18080/realms/digital-employees/.well-known/openid-configuration 180
+"$root/tools/wait-for-http.sh" https://localhost:18000/health/live 120
 "$root/tools/sync-keycloak-urls.sh"
-"$root/tools/wait-for-http.sh" http://localhost:18000/health/live 60
-echo "Management platform: http://$PUBLIC_HOST:18000"
-echo "Keycloak: http://$PUBLIC_HOST:18080"
-echo "Workbench: http://$PUBLIC_HOST:19820"
+"$root/tools/wait-for-http.sh" https://localhost:18000/health/live 60
+echo "Management platform: https://$PUBLIC_HOST:18000"
+echo "Keycloak: https://$PUBLIC_HOST:18080"

@@ -56,3 +56,13 @@ connectors 为空时不生成 mcp.json（约定：字段空 = 件不存在）。
 5. sec 三员 manifest 的 `skills` 条目已恢复（L1 实施批补齐素材销账——sec-compliance=secretgate / sec-design=sec-scan-design / sec-code=sec-scan-code，详见 skills-remaining.md 台账）；声明-实物一致由 manifest 同构自带校验
 6. 新增模板：复制同构目录 + 过 schema + AGENTS 六段式渲染一致；kind 判据 = 能否裸用独立完成全部职责（只能服务评审闸者 = callee，无 orchestration/）
 
+## 新增内置员工：端到端合入路径（三段清单，2026-08-27 补——L2 安装线视角）
+
+新增一位内置员工只动两处代码库资产 + 一处配置，**安装侧零代码改动**：
+
+1. **造模板**（本目录，照修改纪律 6）：复制同构目录 → manifest 八类 + AGENTS 六段式（kind 分派协同纪律段）→ skills 素材齐 → hooks 编译产物 → 过 schema 校验与三方互证。
+2. **进编排表**（`workbench/workbench-engine/assets/flows/demo-flow.node-table.yml`，L3 管辖）：加节点或改 `emp:` 字段——配置直驱（D-045），改表零代码生效、在跑任务用表快照不受影响。
+3. **安装运行（零改动）**：安装线 adapter 契约员工无关（`adapt(spec, host)` 只消费 EmployeeSpec——id/skills/requires/tier/connectors），新员工 = 新的员工包，registry 台账/安装执行器/卸载/launch/底座探测全自动支持。E-12 物化管线（L1 实现中）落地后，员工包目录自动发现（packageRoots 接线），无需在安装线登记任何白名单。
+
+> 即：合入冲突面集中在①②（模板物料与编排表，分属 L1/L3），③由三层模型结构性保证。
+

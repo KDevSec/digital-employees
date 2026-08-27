@@ -16,15 +16,16 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.2
-    command: ["start-dev", "--import-realm"]
+    command: ["start", "--import-realm"]
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${DB_PASSWORD}
-      KC_HOSTNAME: http://${PUBLIC_HOST:-127.0.0.1}:18080
-      PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
+      KC_HOSTNAME: https://${PUBLIC_HOST:-127.0.0.1}:18080
+      PLATFORM_PUBLIC_URL: https://${PUBLIC_HOST:-127.0.0.1}:18000
+      KC_HTTPS_CERTIFICATE_FILE: /opt/keycloak/conf/certs/server.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/keycloak/conf/certs/server.key
       PLATFORM_INTERNAL_URL: http://platform-api:8000
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
@@ -36,8 +37,9 @@ services:
     volumes:
       - ../iam/realm:/opt/keycloak/data/import:ro
       - ../iam/providers:/opt/keycloak/providers
+      - ./certs:/opt/keycloak/conf/certs:ro
     ports:
-      - "18080:8080"
+      - "18080:8443"
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,21 +49,22 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1024M
     environment:
       PLATFORM_DATABASE_URL: postgresql+psycopg://platform:${DB_PASSWORD_URL}@postgres:5432/platform
-      PLATFORM_PLATFORM_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      PLATFORM_WORKBENCH_BASE_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
-      PLATFORM_OIDC_ISSUER: http://${PUBLIC_HOST:-127.0.0.1}:18080/realms/digital-employees
+      PLATFORM_PLATFORM_BASE_URL: https://${PUBLIC_HOST:-127.0.0.1}:18000
+      PLATFORM_OIDC_ISSUER: https://${PUBLIC_HOST:-127.0.0.1}:18080/realms/digital-employees
       PLATFORM_OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
       PLATFORM_OIDC_CLIENT_ID: platform-web
       PLATFORM_OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       PLATFORM_IAM_SYNC_CLIENT_ID: platform-iam-sync
       PLATFORM_IAM_SYNC_CLIENT_SECRET: ${IAM_SYNC_CLIENT_SECRET}
-      PLATFORM_OIDC_ADMIN_URL: http://${PUBLIC_HOST:-127.0.0.1}:18080
+      PLATFORM_OIDC_ADMIN_URL: https://${PUBLIC_HOST:-127.0.0.1}:18080
       PLATFORM_OIDC_REALM: digital-employees
       PLATFORM_SESSION_SECRET: ${SESSION_SECRET}
       PLATFORM_MACHINE_SIGNING_SECRET: ${MACHINE_SIGNING_SECRET}
+      PLATFORM_DB_POOL_SIZE: "10"
+      PLATFORM_DB_MAX_OVERFLOW: "5"
     volumes:
       - package-data:/var/lib/platform/packages
     depends_on:
@@ -71,29 +74,14 @@ services:
         condition: service_started
 
   platform-web:
-    build: ../platform/frontend
-    ports:
-      - "18000:80"
-    depends_on:
-      - platform-api
-
-  workbench:
-    build: ../workbench
-    environment:
-      WORKBENCH_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:19820
-      PLATFORM_PUBLIC_URL: http://${PUBLIC_HOST:-127.0.0.1}:18000
-      PLATFORM_INTERNAL_URL: http://platform-api:8000
-      OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/digital-employees
-      WORKBENCH_STATE_PATH: /app/data/state.enc
-      WORKBENCH_STATE_SECRET: ${WORKBENCH_STATE_SECRET}
-    volumes:
-      - workbench-data:/app/data
-    ports:
-      - "19820:19820"
-    depends_on:
-      - platform-api
+   build: ../platform/frontend
+   volumes:
+     - ./certs:/etc/nginx/certs:ro
+   ports:
+     - "18000:443"
+   depends_on:
+     - platform-api
 
 volumes:
   postgres-data:
   package-data:
-  workbench-data:

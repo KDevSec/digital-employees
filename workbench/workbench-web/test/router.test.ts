@@ -46,7 +46,7 @@ describe('web 路由分域汇总（access + employees/bases/kanban 四域，一�
     // L1 Task 13：employees 域追加 `employees/new` → CreateWizard；与 `employees` 同为相对路径子记录
     expect(employeesRoutes.map((r) => r.path)).toEqual(['employees', 'employees/new'])
     expect(basesRoutes.map((r) => r.path)).toEqual(['bases'])
-    expect(kanbanRoutes.map((r) => r.path)).toEqual(['kanban'])
+    expect(kanbanRoutes.map((r) => r.path)).toEqual(['kanban/board', 'kanban'])
   })
 
   it('router 实例路由表 = access 域记录 + Layout 父记录（三域子记录按引用挂入 children）', () => {
@@ -72,11 +72,11 @@ describe('web 路由分域汇总（access + employees/bases/kanban 四域，一�
     expect(resolved.matched[0]?.components?.default).toBe(componentOf(accessRoutes[0]))
   })
 
-  it('resolve 三业务域路径：matched 链 = [Layout 父记录, 对应占位子记录]（D-5 嵌套，跨域共享 Layout）', () => {
+  it('resolve 三业务域路径：matched 链 = [Layout 父记录, 对应占位子记录]（D-5 嵌套，跨域共享 Layout；kanban/board 泳道全景同构）', () => {
     const cases: Array<[path: string, record: RouteRecordRaw]> = [
       ['/employees', employeesRoutes[0]],
       ['/bases', basesRoutes[0]],
-      ['/kanban', kanbanRoutes[0]],
+      ['/kanban', kanbanRoutes[1]], // T4：kanbanRoutes[0] = /kanban/board（泳道全景），[1] = /kanban（详情）
     ]
     for (const [path, record] of cases) {
       const resolved = router.resolve(path)
@@ -84,5 +84,8 @@ describe('web 路由分域汇总（access + employees/bases/kanban 四域，一�
       expect(resolved.matched[0]?.components?.default).toBe(Layout)
       expect(resolved.matched[1]?.components?.default).toBe(componentOf(record))
     }
+    const board = router.resolve('/kanban/board')
+    expect(board.matched.map((m) => m.path)).toEqual(['/', '/kanban/board'])
+    expect(board.matched[1]?.components?.default).toBe(componentOf(kanbanRoutes[0]))
   })
 })

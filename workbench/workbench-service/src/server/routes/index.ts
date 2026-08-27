@@ -21,9 +21,21 @@ import { registerEmployeesRoutes } from './employees'
 import type { EmployeesRouteDeps } from './employees'
 import { registerSkillsRoutes } from './skills'
 import type { SkillsRouteDeps } from './skills'
+import { registerSessionRoutes } from './session'
+import type { SessionRouteDeps } from './session'
+import { registerAuthRoutes } from './auth'
+import type { AuthRouteDeps } from './auth'
+import { registerEnrollmentRoutes } from './enrollment'
+import type { EnrollmentRouteDeps } from './enrollment'
+import { registerEngineRoutes } from './engine'
+import type { EngineRouteDeps } from './engine'
+import { registerInstallsRoutes } from './installs'
+import type { InstallsRouteDeps } from './installs'
+import { registerBasesRoutes } from './bases'
+import type { BasesRouteDeps } from './bases'
 
 /** 全量路由依赖 = 各域依赖之和（main 装配一次给全；域文件各取所需字段） */
-export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & TemplatesRouteDeps & EmployeesRouteDeps & SkillsRouteDeps
+export type RouteDeps = InfraRouteDeps & ShellRouteDeps & ConfigRouteDeps & TemplatesRouteDeps & EmployeesRouteDeps & SkillsRouteDeps & SessionRouteDeps & AuthRouteDeps & EnrollmentRouteDeps & EngineRouteDeps & InstallsRouteDeps & BasesRouteDeps
 
 /** 汇总注册（静态表：一行一域；新增域在此追加一行） */
 export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps: RouteDeps): void {
@@ -31,8 +43,14 @@ export function registerAllRoutes(reg: RouteRegistry & { routes: Route[] }, deps
   registerShellRoutes(reg, deps)
   registerConfigRoutes(reg, deps) // I0-5 T8 config 域（设计 D-14：GET/PUT /api/config/platform）
   registerTemplatesRoutes(reg, deps) // Task 7 B2 templates 域（GET /api/templates、GET /api/skills）
-  registerEmployeesRoutes(reg, deps) // Task 11 B6 employees 域（POST /api/employees/generate、GET /api/employees/validate-id）
+  registerEmployeesRoutes(reg, deps) // Task 11 B6 employees 域（POST /api/employees/generate、GET /api/employees/validate-id + GET /api/employees）
   registerSkillsRoutes(reg, deps) // Task 12 C1 skills 域（POST /api/skills/upload）
+  registerSessionRoutes(reg, deps) // A 系列 session 域（GET /api/state + POST /api/logout；D-049 桥接退役）
+  registerAuthRoutes(reg, deps) // A 系列 auth 域（GET /auth/login + GET /auth/callback，无档位）
+  registerEnrollmentRoutes(reg, deps) // A 系列 enrollment 域（POST /api/enroll|progress|reset|heartbeat，全 session 档）
+  registerEngineRoutes(reg, deps) // L3 T6 编排域（设计 §9.3：任务生命周期+引擎写面）
+  registerInstallsRoutes(reg, deps) // I1 L2 安装线（设计 §10：deployments 列表/干跑/执行/漂移 + uninstall）
+  registerBasesRoutes(reg, deps) // I1 L2 安装线（设计 §10：底座卡片/手动探测/模型清单）
   assertNoDuplicateRoutes(reg.routes)
 }
 

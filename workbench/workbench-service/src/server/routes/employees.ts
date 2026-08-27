@@ -120,7 +120,7 @@ export function employeesGenerateHandler(deps: EmployeesRouteDeps) {
 /** GET /api/employees/validate-id —— id 可用性 + 建议（不可用时 suggestion = `<id>-2` 起递增） */
 export function employeesValidateIdHandler(deps: EmployeesRouteDeps) {
   return (ctx: Ctx): Res => {
-    const id = ctx.query?.id
+    const id = ctx.query?.get('id') ?? undefined
     if (!id) {
       return { status: 400, json: { code: 'BAD_REQUEST', message: 'query 缺 id 参数' } }
     }

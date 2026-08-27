@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ZodError } from 'zod'
 import { brand } from '../src/brand'
-import { defaultConfig } from '../src/config/schema'
+import { defaultConfig, isDevEnvironment } from '../src/config/schema'
 import { loadConfig, writeConfigOverride, writeSample } from '../src/config/load'
 
 let dir: string
@@ -26,7 +26,7 @@ describe('loadConfig', () => {
   it('无文件 → 全默认', () => {
     expect(loadConfig(dir)).toEqual({
       network: { port: 19980 },
-      platform: { baseUrl: 'http://127.0.0.1:18000' }, // I0-5 T8（D-13）：platform 键入默认形状
+      platform: { baseUrl: '' }, // D-049（2026-08-27）：默认未配置平台 = 开发环境（原 T8 默认 http://127.0.0.1:18000 废止）
     })
   })
 
@@ -36,7 +36,7 @@ describe('loadConfig', () => {
     expect(cfg.network.port).toBe(1234)
     expect(cfg).toEqual({
       network: { port: 1234 },
-      platform: { baseUrl: 'http://127.0.0.1:18000' }, // 未写的键走默认（只写覆盖项语义不变）
+      platform: { baseUrl: '' }, // 未写的键走默认（只写覆盖项语义不变；D-049 默认空 = 开发环境）
     })
   })
 
@@ -75,9 +75,14 @@ describe('loadConfig', () => {
   })
 })
 
-describe('platform.baseUrl（I0-5 T8，设计 D-13：平台地址存 config.json 覆盖键）', () => {
-  it('无文件 → 默认 http://127.0.0.1:18000（与 demo 平台一致）', () => {
-    expect(loadConfig(dir).platform.baseUrl).toBe('http://127.0.0.1:18000')
+describe('platform.baseUrl（I0-5 T8 + D-049：平台地址存 config.json 覆盖键；未配置 = 开发环境）', () => {
+  it('无文件 → 默认空串 = 开发环境（D-049：原 T8 默认 http://127.0.0.1:18000 废止，未配置即开发语义）', () => {
+    expect(loadConfig(dir).platform.baseUrl).toBe('')
+  })
+
+  it('baseUrl 显式空串 → 合法（清除配置回开发环境的落盘形态；D-049）', () => {
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ platform: { baseUrl: '' } }), 'utf8')
+    expect(loadConfig(dir).platform.baseUrl).toBe('')
   })
 
   it('只写 platform.baseUrl 覆盖项 → 生效且其余默认（只写覆盖项语义不变）', () => {
@@ -90,6 +95,12 @@ describe('platform.baseUrl（I0-5 T8，设计 D-13：平台地址存 config.json
   it('非 http(s) scheme（ftp://）→ 抛 ZodError（z.string().url() 收任意 scheme，限 http(s) 由 refine 收口；PUT 与加载同一判据，schema 单源）', () => {
     writeFileSync(join(dir, 'config.json'), JSON.stringify({ platform: { baseUrl: 'ftp://example.com' } }), 'utf8')
     expect(() => loadConfig(dir)).toThrow(ZodError)
+  })
+
+  it('isDevEnvironment：baseUrl 空 = true / 已配置 = false（D-049 单一判据，config/session 两域共用）', () => {
+    expect(isDevEnvironment(loadConfig(dir))).toBe(true)
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ platform: { baseUrl: 'http://192.168.1.5:18000' } }), 'utf8')
+    expect(isDevEnvironment(loadConfig(dir))).toBe(false)
   })
 })
 

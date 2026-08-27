@@ -1,18 +1,22 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-import Placeholder from '../../views/Placeholder.vue'
+import BoardView from '../../views/BoardView.vue'
+import KanbanView from '../../views/KanbanView.vue'
 
 /**
- * kanban 域路由（I0-5 T3，设计 D-6）：「任务看板」占位页。
- * D-036 解隐口径：任务看板原属 F-02「V0.1 隐藏」范围，2026-08-25 用户裁决随协同编排拉进当前版本
- * （编排引擎 TS 重写 + 任务看板 + 内置 team 协同编排执行），故入口解隐为占位路由；
- * L5 任务看板线落地（SSE 消费 + 看板 UI）前为占位页。workflow 编排入口仍不渲染（留 L2，同 D-036）。
+ * kanban 域路由（I0-5 T3 占位 → L5 看板线 2026-08-27 填充为真实页面）：
+ * 任务看板 = KB-01（SSE 实时看板）+ KB-02（发起任务表单）落地页。
+ * T4（L5×L3 联调）补泳道全景层：/kanban/board = 五列泳道任务列表（1.0 协同编排
+ * 形态——需求池拖拽发起），点卡进 /kanban?task=<id> 任务详情——两层互补（全景/单任务推进）。
  * 子记录相对路径：挂 router/index.ts 的 Layout 父记录 children 下（D-5 登录态业务页统一布局）。
  */
 export const kanbanRoutes: RouteRecordRaw[] = [
   {
+    path: 'kanban/board',
+    component: BoardView,
+  },
+  {
     path: 'kanban',
-    component: Placeholder,
-    props: { title: '任务看板', description: '任务看板即将上线（L5 看板线落地前为占位页）' },
+    component: KanbanView,
   },
 ]
