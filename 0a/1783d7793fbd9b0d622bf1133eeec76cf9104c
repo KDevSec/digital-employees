@@ -1,0 +1,21 @@
+workbench/workbench-service/test/encrypted-store.test.ts
+  s_d4823793916f9d::t_76ca04ef574b35 1-50
+workbench/workbench-service/src/app/platform-access/encrypted-store.ts
+  s_d4823793916f9d::t_dade9a27e2ce91 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "0a1783d7793fbd9b0d622bf1133eeec76cf9104c",
+  "prompts": {},
+  "sessions": {
+    "s_d4823793916f9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e704ccd-c416-41e8-a63b-380c22888343",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
