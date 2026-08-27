@@ -15,23 +15,24 @@
  *   }
  *
  * 命令格式（W3 规范锚）：`"${DEVZERO_HOOKS_ROOT}/redlines/run-hook.cmd" <rule_id>.py`
- * matcher 映射：
+ * matcher 映射（spec §5.2 权威）：
  *   no-push-to-main     → Bash
  *   no-devzero-state    → Write|Edit|MultiEdit|Bash
- *   no-external-request → Bash
+ *   no-external-request → Bash|WebFetch
  *   no-production-access→ Bash
  *   no-db-schema        → Write|Edit|MultiEdit
  *   high-risk-via-gate  → 无 matcher（人工闸语义，compiled=true 也不产出 PreToolUse）
  *
- * tools.deny 每项独立条目 matcher=该工具名；命令用合成 rule_id `deny-<tool>` 走同一 W3 命令格式。
+ * tools.deny 每项独立条目 matcher=该工具名；命令统一引用通用脚本 `deny-tool.py`
+ * （D3 统一落 `deny-tool.py`——读 stdin JSON 的 tool_name 判定）。
  */
 import type { Manifest } from '@devzero/shared-protocol'
 
-/** 规则 rule_id → matcher 映射（W3 规范锚）。high-risk-via-gate 不在表内（人工闸语义，不产出）。 */
+/** 规则 rule_id → matcher 映射（spec §5.2 权威）。high-risk-via-gate 不在表内（人工闸语义，不产出）。 */
 const RULE_MATCHERS: Record<string, string> = {
   'no-push-to-main': 'Bash',
   'no-devzero-state': 'Write|Edit|MultiEdit|Bash',
-  'no-external-request': 'Bash',
+  'no-external-request': 'Bash|WebFetch',
   'no-production-access': 'Bash',
   'no-db-schema': 'Write|Edit|MultiEdit',
 }
@@ -98,13 +99,14 @@ export function compileHooks(manifest: Manifest): string | null {
   }
 
   for (const tool of deny) {
-    // tools.deny 每项独立条目 matcher=该工具名；命令用合成 rule_id `deny-<tool>` 走同一 W3 命令格式
+    // tools.deny 每项独立条目 matcher=该工具名；命令统一引用通用脚本 deny-tool.py
+    // （D3 统一落 deny-tool.py——读 stdin JSON 的 tool_name 判定）
     preToolUse.push({
       matcher: tool,
       hooks: [
         {
           type: 'command',
-          command: buildCommand(`deny-${tool}`),
+          command: buildCommand('deny-tool'),
           timeout: TIMEOUT,
         },
       ],

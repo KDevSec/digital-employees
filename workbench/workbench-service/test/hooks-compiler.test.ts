@@ -159,7 +159,7 @@ describe('compileHooks — ④ 命令格式（W3 polyglot）', () => {
     expect(cmd).toContain('no-push-to-main')
   })
 
-  it('deny 命令含 run-hook.cmd 与 .py 后缀', () => {
+  it('deny 命令含 run-hook.cmd 与 .py 后缀（统一 deny-tool.py）', () => {
     const manifest = parse({
       tools: { deny: ['WebFetch'] },
     })
@@ -168,6 +168,20 @@ describe('compileHooks — ④ 命令格式（W3 polyglot）', () => {
     const cmd = parsed.hooks.PreToolUse[0].hooks[0].command
     expect(cmd).toContain('run-hook.cmd')
     expect(cmd).toContain('.py')
+    expect(cmd).toContain('deny-tool.py')
+  })
+
+  it('deny 多工具均引用同一 deny-tool.py（matcher 区分）', () => {
+    const manifest = parse({
+      tools: { deny: ['WebFetch', 'TodoWrite'] },
+    })
+    const output = compileHooks(manifest)!
+    const parsed = JSON.parse(output)
+    expect(parsed.hooks.PreToolUse[0].hooks[0].command).toBe(parsed.hooks.PreToolUse[1].hooks[0].command)
+    expect(parsed.hooks.PreToolUse[0].hooks[0].command).toContain('deny-tool.py')
+    // matcher 仍区分
+    expect(parsed.hooks.PreToolUse[0].matcher).toBe('WebFetch')
+    expect(parsed.hooks.PreToolUse[1].matcher).toBe('TodoWrite')
   })
 
   it('命令 timeout=5', () => {
@@ -226,11 +240,11 @@ describe('compileHooks — matcher 映射（W3 规范锚）', () => {
     expect(JSON.parse(compileHooks(manifest)!).hooks.PreToolUse[0].matcher).toBe('Write|Edit|MultiEdit|Bash')
   })
 
-  it('no-external-request → Bash', () => {
+  it('no-external-request → Bash|WebFetch（spec §5.2）', () => {
     const manifest = parse({
       hooks: { redlines: [{ rule_id: 'no-external-request', compiled: true }] },
     })
-    expect(JSON.parse(compileHooks(manifest)!).hooks.PreToolUse[0].matcher).toBe('Bash')
+    expect(JSON.parse(compileHooks(manifest)!).hooks.PreToolUse[0].matcher).toBe('Bash|WebFetch')
   })
 
   it('no-production-access → Bash', () => {
