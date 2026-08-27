@@ -32,6 +32,7 @@
       "name": "@devzero/service",
       "version": "0.0.1",
       "dependencies": {
+        "@devzero/shared-protocol": "workspace:*",
         "commander": "^12",
         "hono": "^4",
         "zod": "^3",
@@ -46,6 +47,7 @@
       "name": "@devzero/web",
       "version": "0.0.1",
       "dependencies": {
+        "@devzero/shared-protocol": "workspace:*",
         "pinia": "^2",
         "vue": "^3",
         "vue-router": "^4",
