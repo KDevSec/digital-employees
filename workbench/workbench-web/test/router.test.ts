@@ -42,8 +42,9 @@ describe('web 路由分域汇总（access + employees/bases/kanban 四域，一�
     expect(accessRoutes.map((r) => r.path)).toContain('/')
   })
 
-  it('三业务域各导出一条子路由记录（相对路径，挂 Layout 父记录 children 下）', () => {
-    expect(employeesRoutes.map((r) => r.path)).toEqual(['employees'])
+  it('三业务域各导出子路由记录（相对路径，挂 Layout 父记录 children 下）', () => {
+    // L1 Task 13：employees 域追加 `employees/new` → CreateWizard；与 `employees` 同为相对路径子记录
+    expect(employeesRoutes.map((r) => r.path)).toEqual(['employees', 'employees/new'])
     expect(basesRoutes.map((r) => r.path)).toEqual(['bases'])
     expect(kanbanRoutes.map((r) => r.path)).toEqual(['kanban'])
   })
