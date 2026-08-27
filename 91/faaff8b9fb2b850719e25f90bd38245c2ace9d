@@ -1,0 +1,19 @@
+docs/plans/2026-08-27-L1员工新建-plan.md
+  s_b9259474bd2245::t_73be9e6b7f99c8 1-726
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "91faaff8b9fb2b850719e25f90bd38245c2ace9d",
+  "prompts": {},
+  "sessions": {
+    "s_b9259474bd2245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab7c3c95-4714-4a47-9558-841b754b7730",
+        "model": "glm-5.3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
