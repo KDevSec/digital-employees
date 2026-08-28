@@ -11,7 +11,8 @@
  * → adapter.launch({deployment:{base,home,employee_id}, workdir, prompt, permission, model, effort}) → spawn。
  */
 import { spawn } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { createDeploymentRegistry } from '../installs/registry/registry'
 import { createClaudeCodeAdapter } from '../adapters/claude-code/index'
@@ -65,16 +66,24 @@ export class RealClaudeLauncher implements Launcher {
       // M2 实锤 Windows .CMD 垫片：spawn 直调 claude 会 ENOENT——claude 是 .cmd shim，需 shell:true 包装
       // args 数组元素 shell:true 时会经 cmd 解析（shell quoting），含特殊字符的单 arg 需引号——
       // 我们的 args 只含旗标+值，无多行 prompt（stdin 走），旗标无空格无需特殊处理。
+      // 诊断：spawn 内部状态写 workdir/.devzero/launcher.log（I2 T9 真机调试）
+      const diagFile = join(spec.cwd, '.devzero', 'launcher.log')
+      const diag = (msg: string): void => {
+        try { mkdirSync(dirname(diagFile), { recursive: true }); appendFileSync(diagFile, `${new Date().toISOString()} ${msg}\n`, 'utf8') } catch { /* 无关紧要 */ }
+      }
+      diag(`spawn cmd=${command} args=${args.length} items cwd=${spec.cwd}`)
       const child = spawn(command, args, {
         cwd: spec.cwd,
         env: { ...process.env, ...spec.env },   // service env 为秘钥来源（M2 认证零置备）
         shell: process.platform === 'win32',
         stdio: ['pipe', 'inherit', 'inherit'],
       })
+      diag(`spawned pid=${child.pid} stdin.writable=${child.stdin?.writable ?? 'n/a'}`)
       let finished = false
       const killer = setTimeout(() => {
         if (finished) return
         finished = true
+        diag(`timeout ${timeoutMs}ms killed pid=${child.pid}`)
         killTree(child.pid, () => reject(new Error(`超时（${timeoutMs}ms）：${command} 未退出（Windows TerminateProcess 语义）`)))
       }, timeoutMs)
 
@@ -82,20 +91,24 @@ export class RealClaudeLauncher implements Launcher {
         if (finished) return
         finished = true
         clearTimeout(killer)
+        diag(`error: ${err.message}`)
         reject(err)
       })
       child.on('close', (code) => {
         if (finished) return
         finished = true
         clearTimeout(killer)
+        diag(`closed code=${code}`)
         resolve({ code: code ?? 1 })
       })
 
       if (spec.stdin !== undefined && child.stdin) {
         child.stdin.write(spec.stdin)
         child.stdin.end()
+        diag(`stdin written ${spec.stdin.length} bytes + end`)
       } else if (child.stdin) {
         child.stdin.end()
+        diag('stdin end (no content)')
       }
     })
   }

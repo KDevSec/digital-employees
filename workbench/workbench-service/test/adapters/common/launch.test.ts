@@ -41,14 +41,35 @@ describe('buildLaunchSpec prompt 走 stdin（M2 实锤 Windows .CMD 垫片多行
     expect(spec.promptFile).toContain(workdir)
   })
 
-  it('permission/model/effort 旗标遵循 -p - 之后顺序不受 stdin 影响', async () => {
+  it('permission=bypassPermissions → --dangerously-skip-permissions（真机 headless 需 bypass MCP server approval；permission-mode 只 bypass tool prompt）', async () => {
     const workdir = mkdtempSync(join(tmpdir(), 'wb-launch-'))
     const spec = await buildLaunchSpec(profile, {
       deployment: { base: 'claude-code', home: '/tmp/home', employee_id: 'e1' },
       workdir, prompt: 'x',
-      permission: 'bypass', model: 'opus', effort: 'high',
+      permission: 'bypassPermissions', model: 'opus', effort: 'high',
     })
-    expect(spec.args).toEqual(expect.arrayContaining(['-p', '-', '--permission-mode', 'bypass', '--model', 'opus', '--effort', 'high']))
+    expect(spec.args).toEqual(expect.arrayContaining(['-p', '-', '--dangerously-skip-permissions', '--model', 'opus', '--effort', 'high']))
+    expect(spec.args).not.toContain('--permission-mode')
     expect(spec.stdin).toBe('x')
+  })
+
+  it('permission=bypass 同义映射为 --dangerously-skip-permissions（SpawnRunner 现传 bypass）', async () => {
+    const workdir = mkdtempSync(join(tmpdir(), 'wb-launch-'))
+    const spec = await buildLaunchSpec(profile, {
+      deployment: { base: 'claude-code', home: '/tmp/home', employee_id: 'e1' },
+      workdir, prompt: 'x', permission: 'bypass',
+    })
+    expect(spec.args).toContain('--dangerously-skip-permissions')
+    expect(spec.args).not.toContain('--permission-mode')
+  })
+
+  it('其他 permission 值改为 --permission-mode 透传（不触发 dangerous flag）', async () => {
+    const workdir = mkdtempSync(join(tmpdir(), 'wb-launch-'))
+    const spec = await buildLaunchSpec(profile, {
+      deployment: { base: 'claude-code', home: '/tmp/home', employee_id: 'e1' },
+      workdir, prompt: 'x', permission: 'acceptEdits',
+    })
+    expect(spec.args).toEqual(expect.arrayContaining(['--permission-mode', 'acceptEdits']))
+    expect(spec.args).not.toContain('--dangerously-skip-permissions')
   })
 })

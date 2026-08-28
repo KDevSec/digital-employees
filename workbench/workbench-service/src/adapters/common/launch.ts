@@ -26,7 +26,15 @@ export async function buildLaunchSpec(profile: BaseProfile, input: LaunchInput):
   }
 
   args.push('-p', '-')   // stdin 占位（M2：args 数组走 .CMD 垫片多行截断——prompt 全文只走 stdin）
-  if (input.permission) args.push('--permission-mode', input.permission)
+  // M2/I2 实机发现：真机 headless spawn 需要 --dangerously-skip-permissions 才能 bypass
+  // MCP server approval（看板 devzero-engine 注册才能立刻可用），--permission-mode bypassPermissions
+  // 只能 bypass tool-level permission prompts——MCP server connect 仍需人工 approve，headless 起不来。
+  // 员工会话在工作台驱动下完全非交互，故 I2 一律走 --dangerously-skip-permissions。
+  if (input.permission === 'bypassPermissions' || input.permission === 'bypass') {
+    args.push('--dangerously-skip-permissions')
+  } else if (input.permission) {
+    args.push('--permission-mode', input.permission)
+  }
   if (input.model) args.push('--model', input.model)
   if (input.effort) args.push('--effort', input.effort)   // ⏳ 支持面 M2 清单 5 收口（B-Q9）
 

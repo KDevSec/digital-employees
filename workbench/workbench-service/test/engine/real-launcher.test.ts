@@ -175,7 +175,8 @@ describe('RealClaudeLauncher（I2 T4——消费 L2 LaunchSpec 真机 spawn）',
     expect(res.code).toBe(0)
     const envLog = JSON.parse(readFileSync(join(scratch, 'env.log'), 'utf8'))
     const argv: string[] = envLog.argv
-    expect(argv.join(' ')).toContain('--permission-mode')
+    expect(argv.join(' ')).toContain('--dangerously-skip-permissions')   // bypassPermissions 映射
+    expect(argv.join(' ')).not.toContain('--permission-mode')
     expect(argv.join(' ')).toContain('--model')
     expect(argv.join(' ')).toContain('--effort')
   })
