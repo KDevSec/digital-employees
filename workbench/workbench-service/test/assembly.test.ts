@@ -42,6 +42,7 @@ describe('main 装配形态（startRealServer 同构：全域注册 + guard 注�
       packageRoots: {},
       employeesRoot: join(profileDir, 'employees'), // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
       cacheDir: join(profileDir, 'bases'),
+      tierConfigFile: join(profileDir, 'bases', 'tier-config.json'),
       run: async () => ({ code: 127, stdout: '' }),
       service,
       // L1 员工域三域占位（RouteDeps 必含；本测试不触达，行为断言在 routes-templates/-employees/-skills.test.ts）

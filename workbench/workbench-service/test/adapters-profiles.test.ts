@@ -35,13 +35,20 @@ describe('三底座档案（设计 §5.1；TS 常量——bun --compile 单体�
     expect(baseProfiles['codebuddy'].command).toBe('codebuddy')
   })
 
-  it('auth 置备分档：CC=软链一件 / qoder=拷贝三件套 / CB=none（429 待复验）', () => {
+  it('auth 置备分档：CC=软链一件（env-token 降级）/ qoder=拷贝两件（P-6\' 1.1.32）/ CB=none（429 待复验）', () => {
     expect(baseProfiles['claude-code'].auth).toMatchObject({ kind: 'symlink', files: ['.credentials.json'] })
+    // M2 实测：本机 CC 为 env token 形态（无 .credentials.json）--缺失时按 envTokenKeys 降级零置备（§5.1 auth 分档）
+    expect(baseProfiles['claude-code'].auth.envTokenKeys).toEqual(['ANTHROPIC_AUTH_TOKEN'])
     expect(baseProfiles['qoder'].auth).toMatchObject({
       kind: 'copy',
-      files: expect.arrayContaining(['installation_id', 'state.json', '.auth']),
+      files: ['installation_id', '.auth'], // P-6' 1.1.32 复验：两件即恢复登录态（state.json 1.1.29+ 域内已无）
     })
     expect(baseProfiles['codebuddy'].auth).toMatchObject({ kind: 'none', files: [] })
+  })
+
+  it('版本基线：qoder version_tested 1.1.32（M2 实测）/ version_min 维持 1.1.26 宽下限', () => {
+    expect(baseProfiles['qoder'].version_tested).toBe('1.1.32')
+    expect(baseProfiles['qoder'].version_min).toBe('1.1.26')
   })
 
   it('launch 配置注入：CC/CB 走 env，qoder 走 --config-dir 旗标（⏳ M2 实测核）', () => {

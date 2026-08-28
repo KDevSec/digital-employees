@@ -53,8 +53,10 @@ export function installEmployee(deps: InstallServiceDeps, input: { spec: Employe
   if (out.error) {
     report.error = { code: out.error.code, message: out.error.message, phase: out.error.phase, recoverable: out.error.recoverable, hint: out.error.hint }
   }
-  // placements 回填：从 adapter 的 plan 重取（execute 不外泄 plan——plan 是纯函数，重算无副作用）
-  const plan = adapter.plan(input.spec, { home })
+  // placements 回填：与 executeInstall 内部 plan 同入参（含 authSourceDir）——视图与执行一致，
+  // 否则 env-token 降级（plan.ts 依据 authSourceDir 判定跳过）会因重算走另一条路，
+  // 导致「看到的落位 ≠ 实际干的活」（I2 P0d 评审发现）。
+  const plan = adapter.plan(input.spec, { home, authSourceDir: deps.authSourceDirs[input.base] })
   report.placements = plan.placements.map((p) => ({ source: p.source, target: p.target, action: p.action, conflict: null }))
 
   if (out.result !== 'failed') writeReport(home, report)   // failed（negotiate blocked）不建 home，报告仅返回不落盘

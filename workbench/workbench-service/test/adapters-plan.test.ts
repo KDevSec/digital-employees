@@ -39,15 +39,17 @@ describe('三底座 plan()（设计 §5 落位；config-domain 主路径）', ()
     expect(ps.find((p) => p.action === 'convert')?.target).toBe('config/AGENTS.md')
   })
 
-  it('auth 置备进计划：CC 软链 .credentials.json；CB 无；qoder 拷三件套', async () => {
+  it('auth 置备进计划：CC 软链 .credentials.json；CB 无；qoder 拷两件（P-6\' 1.1.32 实测）', async () => {
     const cc = (await placementsOf(createClaudeCodeAdapter())()).find((p) => p.action === 'symlink')
     expect(cc?.target).toBe('config/.credentials.json')
     const cb = await placementsOf(createCodebuddyAdapter())()
     expect(cb.some((p) => p.action === 'symlink')).toBe(false)
     const qo = (await placementsOf(createQoderAdapter())()).filter((p) => p.action === 'symlink')
     expect(qo.map((p) => p.target)).toEqual(
-      expect.arrayContaining(['config/installation_id', 'config/state.json', 'config/.auth']),
+      expect.arrayContaining(['config/installation_id', 'config/.auth']),
     )
+    // P-6' 1.1.29+ 域内已无 state.json——文件清单精简为两件后再回潮即红
+    expect(qo.map((p) => p.target)).not.toContain('config/state.json')
   })
 
   it('connectors 非空 → config/.mcp.json merge 进计划（设计 §4.5；⏳ 域内位置 M2 实测核）', async () => {

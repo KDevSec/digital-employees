@@ -8,7 +8,7 @@ import { fixturePackageDir, parsePackage } from '../src/installs/spec/parser'
 import { installEmployee } from '../src/installs/service'
 import { listReports } from '../src/installs/report'
 
-let deps: { registryFile: string; staffRoot: string; authSourceDirs: Record<string, string> }
+let deps: { registryFile: string; staffRoot: string; authSourceDirs: Record<BaseId, string> }
 
 beforeEach(() => {
   const scratch = mkdtempSync(join(tmpdir(), 'wb-svc-'))
@@ -72,5 +72,26 @@ describe('installEmployee 服务编排（设计 §4.1 adapt 语义 + §7 报告�
     installEmployee({ ...deps, probe }, { spec, packageRoot: fixturePackageDir(), base: 'codebuddy' })  // unchanged 也留报告
     const home = join(deps.staffRoot, 'codebuddy', 'dev-lite')
     expect(listReports(home).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('env-token 认证降级时，报告 placements 视图 = 执行 placements（不再含 __auth__ 落位）', async () => {
+    // 场景：CC 机器，.credentials.json 缺失（空 auth 源）+ env 有 ANTHROPIC_AUTH_TOKEN → 执行 plan 不发 auth 落位
+    // Bug 现状：service.ts 用 {home}（无 authSourceDir）重算 plan 填报告——走另一条路，视图/执行脱钩；
+    // 本测试强制视图 = 执行（同一调用入参）。
+    const emptyAuthDir = join(deps.staffRoot, 'empty-auth')
+    mkdirSync(emptyAuthDir, { recursive: true })   // 无 .credentials.json
+    process.env.ANTHROPIC_AUTH_TOKEN = 'wb-test-token'
+    try {
+      const report = installEmployee(
+        { ...deps, authSourceDirs: { ...deps.authSourceDirs, 'claude-code': emptyAuthDir }, probe },
+        { spec: await parsePackage(fixturePackageDir()), packageRoot: fixturePackageDir(), base: 'claude-code' },
+      )
+      expect(report.result).toBe('success')
+      // 视图必须反映执行：跳过了 __auth__ symlink 落位（env-token 降级生效）
+      expect(report.placements.some((p) => p.target === 'config/.credentials.json')).toBe(false)
+      expect(report.placements.some((p) => p.target === 'config/CLAUDE.md')).toBe(true)
+    } finally {
+      delete process.env.ANTHROPIC_AUTH_TOKEN
+    }
   })
 })

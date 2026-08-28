@@ -45,7 +45,7 @@ beforeEach(() => {
     authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
     probe: () => ({ present: false, version: null }), packageRoots: {},
     employeesRoot: join(root, 'employees'), // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
-    cacheDir: join(root, 'bases'), run: async () => ({ code: 127, stdout: '' }),
+    cacheDir: join(root, 'bases'), tierConfigFile: join(root, 'bases', 'tier-config.json'), run: async () => ({ code: 127, stdout: '' }),
     // A 系列认证三域（A 线合流后 RouteDeps 必含）：service 切片 + guard 注入
     //（enrollment 全 session 档，无 guard 时 toHonoApp 装配保险丝即炸——本文件不触达认证端点）
     service,
