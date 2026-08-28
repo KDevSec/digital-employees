@@ -62,10 +62,13 @@ export class RealClaudeLauncher implements Launcher {
     const timeoutMs = this.opts.timeoutMs ?? 10 * 60_000
 
     return await new Promise((resolve, reject) => {
+      // M2 实锤 Windows .CMD 垫片：spawn 直调 claude 会 ENOENT——claude 是 .cmd shim，需 shell:true 包装
+      // args 数组元素 shell:true 时会经 cmd 解析（shell quoting），含特殊字符的单 arg 需引号——
+      // 我们的 args 只含旗标+值，无多行 prompt（stdin 走），旗标无空格无需特殊处理。
       const child = spawn(command, args, {
         cwd: spec.cwd,
         env: { ...process.env, ...spec.env },   // service env 为秘钥来源（M2 认证零置备）
-        shell: false,
+        shell: process.platform === 'win32',
         stdio: ['pipe', 'inherit', 'inherit'],
       })
       let finished = false

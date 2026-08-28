@@ -46,6 +46,7 @@ function writeFakeClaude(opts: { echoArgv?: boolean; sleepMs?: number } = {}): v
   const js = `
 const fs = require('node:fs')
 const sleepMs = ${opts.sleepMs ?? 0}
+const stdinLogFile = ${JSON.stringify(join(scratch, 'stdin.log'))}
 const chunks = []
 process.stdin.on('data', (d) => chunks.push(d))
 process.stdin.on('end', () => {
@@ -132,6 +133,34 @@ describe('RealClaudeLauncher（I2 T4——消费 L2 LaunchSpec 真机 spawn）',
       workdir, promptFile, permission: 'bypassPermissions',
     })).rejects.toThrow(/超时|timeout/i)
   }, 10_000)
+
+  if (process.platform === 'win32') {
+    it('Windows .cmd 垫片可 spawn（M2 实锤坑：spawn shell:false 时 .cmd ENOENT，I2 必修）', async () => {
+      // 用真 .cmd shim 替身（不替 node.exe）——要求 shell:true 才起得来
+      writeFakeClaude()
+      const shim = join(scratch, 'claude.cmd')
+      // 在 `%*` 前加 `--`，让 node 把 -p 等留给 script.argv（防 node 自带 flag 拦截）
+      writeFileSync(shim, `@echo off\r\nnode "${fakeClaudeJs}" -- %*\r\n`, 'utf8')
+
+      const launcher = new RealClaudeLauncher({
+        registryFile,
+        commandOverride: shim,
+        timeoutMs: 5000,
+      })
+      const promptFile = join(workdir, 'shim-test.md')
+      writeFileSync(promptFile, '垫片测试多行\nprompt', 'utf8')
+      const res = await launcher.launch({
+        deploymentHint: { emp: 'sec-compliance', base: 'claude-code' },
+        workdir, promptFile, permission: 'bypassPermissions',
+      })
+      expect(res.code).toBe(0)
+      const stdinLog = join(scratch, 'stdin.log')
+      if (!existsSync(stdinLog)) {
+        throw new Error(`stdin.log 未生成（shim 未跑通 cwd=${workdir}）`)
+      }
+      expect(readFileSync(stdinLog, 'utf8')).toBe('垫片测试多行\nprompt')
+    }, 15_000)
+  }
 
   it('permission / model / effort 透传到 args 旗标（四层解析透传执行）', async () => {
     writeFakeClaude()
