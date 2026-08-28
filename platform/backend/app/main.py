@@ -11,6 +11,7 @@ from app.config import Settings, get_settings
 from app.database import get_session_factory
 from app.errors import install_error_handlers
 from app.logging_config import setup_logging, trace_id_var
+from app.version import platform_version
 from app.auth.oidc import OidcClient
 from app.api.auth import router as auth_router
 from app.api.enrollment import router as enrollment_router
@@ -117,7 +118,7 @@ def create_app(settings: Settings | None = None, audit_session_factory=None) -> 
 
     @app.get("/health/live")
     async def live() -> dict[str, str]:
-        return {"status": "ok"}
+        return {"status": "ok", "version": platform_version()}
 
     app.include_router(auth_router)
     app.include_router(core_router)

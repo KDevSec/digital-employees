@@ -1,0 +1,38 @@
+# 宪法文件1：OWASP 年度漏洞规则
+# 编码时必须加载（精简版注入，详细版按需读取）
+# OWASP Top 10 (2025)
+version: "2025"
+rules:
+  - rule_id: A01-BROKEN-ACCESS-CONTROL
+    severity: CRITICAL
+    brief: 权限控制失效：未授权访问、越权操作、SSRF（2025新增SSRF归入A01）
+  - rule_id: A02-SECURITY-MISCONFIGURATION
+    severity: HIGH
+    brief: 安全配置错误：默认密码、调试模式、CORS通配、不必要功能
+  - rule_id: A03-SUPPLY-CHAIN-FAILURES
+    severity: HIGH
+    brief: 供应链失败：已知CVE依赖、过时库、不安全CI/CD、未验证组件
+  - rule_id: A04-CRYPTOGRAPHIC-FAILURES
+    severity: HIGH
+    brief: 加密失败：弱算法、明文传输、密钥硬编码、不安全随机数
+  - rule_id: A05-INJECTION
+    severity: CRITICAL
+    brief: 注入攻击：SQL/命令/模板/LDAP/NoSQL注入
+  - rule_id: A06-INSECURE-DESIGN
+    severity: HIGH
+    brief: 不安全设计：缺少限流、业务逻辑缺陷、信任边界违反
+  - rule_id: A07-IDENTIFICATION-AND-AUTHENTICATION-FAILURES
+    severity: CRITICAL
+    brief: 认证失败：弱密码策略、会话管理缺陷、缺MFA
+  - rule_id: A08-SOFTWARE-AND-DATA-INTEGRITY-FAILURES
+    severity: HIGH
+    brief: 完整性失败：不安全反序列化、CI/CD管道未保护、未签名更新
+  - rule_id: A09-SECURITY-LOGGING-AND-MONITORING-FAILURES
+    severity: MEDIUM
+    brief: 日志监控失败：未记录安全事件、未告警、日志注入
+  - rule_id: A10-MISHANDLING-OF-EXCEPTIONAL-CONDITIONS
+    severity: HIGH
+    brief: 异常处理不当：空catch、过宽异常捕获、未处理边界条件、错误信息泄露
+  - rule_id: SUPPLY-CHAIN-ATTACKS
+    severity: CRITICAL
+    brief: 供应链攻击：隐藏网络请求、反向Shell、加密劫持、时间炸弹

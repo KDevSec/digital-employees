@@ -36,11 +36,11 @@ describe('fetchBases（GET /api/bases）', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/bases', expect.objectContaining({ signal: expect.anything() }))
   })
 
-  it('非 2xx / 网络异常 → null', async () => {
+  it('非 2xx / 网络异常 → 空数组', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, { ok: false, status: 500 })))
-    await expect(fetchBases()).resolves.toBeNull()
+    await expect(fetchBases()).resolves.toEqual([])
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('down') }))
-    await expect(fetchBases()).resolves.toBeNull()
+    await expect(fetchBases()).resolves.toEqual([])
   })
 })
 

@@ -1,0 +1,26 @@
+rule_id: A10-MISHANDLING-OF-EXCEPTIONAL-CONDITIONS
+name: Mishandling of Exceptional Conditions
+owasp: A10
+severity: HIGH
+priority: constitutional
+description: |
+  NEW in OWASP 2025. Applications that do not properly handle exceptional
+  conditions can be exploited. This includes empty exception handlers that
+  swallow errors, overly broad exception catching that masks security issues,
+  unhandled edge cases in business logic, and errors that expose sensitive
+  information. Unlike A09 (which focuses on logging), A10 focuses on the
+  *handling* of errors — what the code does (or fails to do) when something
+  goes wrong.
+categories:
+  - id: empty-catch
+    name: Empty Catch Block
+    description: Exception caught but silently swallowed with no action
+  - id: broad-exception
+    name: Overly Broad Exception Catch
+    description: Catching base Exception class masking specific security failures
+  - id: unhandled-edge-case
+    name: Unhandled Edge Case
+    description: Missing validation for null, zero, negative, or boundary values
+  - id: error-information-leak
+    name: Error Information Leak
+    description: Stack trace or internal details exposed in error response

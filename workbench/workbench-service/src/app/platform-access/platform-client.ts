@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto'
 import type { JWK } from 'jose'
 
 import { createPrivateKeyAssertion, createProofJwt } from './crypto'
+import type { TerminalMetadata } from './terminal-metadata'
 
 export interface WorkbenchConfiguration {
   platform_base_url: string
@@ -31,13 +32,24 @@ export class PlatformError extends Error {
 export interface PlatformClientDeps {
   getBaseUrl: () => string
   version: string
+  collectMetadata?: () => TerminalMetadata
+  /** 022：内网自签证书试点——true 时对 https 请求按请求关闭证书校验（与全局 env 双保险） */
+  getInsecureTls?: () => boolean
 }
 
 export class PlatformClient {
   constructor(private readonly deps: PlatformClientDeps) {}
 
+  /** 平台基地址：去尾部斜杠，避免拼出 `//.well-known/...` 双斜杠（022）。 */
+  private baseUrl(): string {
+    return this.deps.getBaseUrl().replace(/\/+$/, '')
+  }
+
   async request<T>(url: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(url, init)
+    const insecure = this.deps.getInsecureTls?.() ?? false
+    const requestInit = { ...init } as RequestInit & { tls?: { rejectUnauthorized: boolean } }
+    if (insecure && url.startsWith('https:')) requestInit.tls = { rejectUnauthorized: false }
+    const response = await fetch(url, requestInit)
     if (!response.ok) {
       let code = `HTTP_${response.status}`
       let message = response.statusText
@@ -52,23 +64,27 @@ export class PlatformClient {
   }
 
   async discover(): Promise<WorkbenchConfiguration> {
-    return this.request(`${this.deps.getBaseUrl()}/.well-known/workbench-configuration`)
+    return this.request(`${this.baseUrl()}/.well-known/workbench-configuration`)
   }
 
   async submitEnrollment(
     input: { installationId: string; publicJwk: JWK },
     accessToken: string,
   ): Promise<{ id: string; status: string }> {
-    return this.request(`${this.deps.getBaseUrl()}/api/v1/workbench-enrollments`, {
+    // 024：终端名称优先取主机名，缺省回退「终端 <安装ID前8位>」
+    const metadata = this.deps.collectMetadata?.()
+    const displayName = metadata?.hostname?.trim() || `终端 ${input.installationId.slice(0, 8)}`
+    return this.request(`${this.baseUrl()}/api/v1/workbench-enrollments`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         installation_id: input.installationId,
         public_key: input.publicJwk,
-        display_name: `终端 ${input.installationId.slice(0, 8)}`,
+        display_name: displayName,
         workbench_version: this.deps.version,
         os: process.platform,
         arch: process.arch,
+        metadata,
       }),
     })
   }
@@ -77,7 +93,7 @@ export class PlatformClient {
     id: string,
     accessToken: string,
   ): Promise<{ status: string; workbench_instance_id?: string; review_reason?: string }> {
-    return this.request(`${this.deps.getBaseUrl()}/api/v1/workbench-enrollments/${id}`, {
+    return this.request(`${this.baseUrl()}/api/v1/workbench-enrollments/${id}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
   }
@@ -86,7 +102,7 @@ export class PlatformClient {
     input: { enrollmentId: string; privateJwk: JWK; installationId: string },
     accessToken: string,
   ): Promise<string> {
-    const base = this.deps.getBaseUrl()
+    const base = this.baseUrl()
     const challenge = await this.request<{ challenge_id: string; nonce: string }>(
       `${base}/api/v1/workbench-enrollments/${input.enrollmentId}/challenge`,
       { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } },
@@ -125,13 +141,14 @@ export class PlatformClient {
   }
 
   async heartbeat(workbenchId: string, machineToken: string): Promise<{ received_at: string }> {
-    return this.request(`${this.deps.getBaseUrl()}/api/v1/workbenches/${workbenchId}/heartbeat`, {
+    return this.request(`${this.baseUrl()}/api/v1/workbenches/${workbenchId}/heartbeat`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${machineToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event_id: randomUUID(),
         reported_at: new Date().toISOString(),
         workbench_version: this.deps.version,
+        metadata: this.deps.collectMetadata?.(),
       }),
     })
   }

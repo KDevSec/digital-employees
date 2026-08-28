@@ -1,8 +1,27 @@
 // @vitest-environment jsdom
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMemoryHistory, createRouter } from 'vue-router'
 
 import AccessView from '../src/views/AccessView.vue'
+
+/**
+ * 023：AccessView 审批通过后 router.push('/employees')，测试需挂真实 memory router
+ * （useRouter() 无注入时返回 undefined，ACTIVE 翻转会抛错）。
+ */
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<div />' } },
+      { path: '/employees', name: 'employees', component: { template: '<div />' } },
+    ],
+  })
+}
+
+function mountView() {
+  return mount(AccessView, { global: { plugins: [createTestRouter()] } })
+}
 
 /**
  * AccessView（I0-5 T2 立项：demo ui.ts 页面骨架的 Vue 化组装；T9 增 D-19/D-20 双形态）：
@@ -78,18 +97,17 @@ describe('AccessView 挂载与渲染', () => {
       '/api/state': () => jsonResponse(unauthenticatedState),
       '/healthz': () => jsonResponse(HEALTHY),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     const text = wrapper.text()
     expect(stub.calls('/api/state', 'GET')).toBe(1)
     // 登录卡品牌区（D-19：登录卡自带品牌——头部条在该形态下移除，页面更纯粹）
     expect(text).toContain('研发零处数字员工终端')
-    expect(text).toContain('研发零处数字员工终端')
-    expect(text).toContain('使用企业账号登录以继续')
     expect(text).toContain('登录')
-    // 卡底服务状态行：健康轮询数据（badge 摘要 + 版本行）进卡底小字
-    expect(text).toContain('运行中')
-    expect(text).toContain('v0.1.0')
+    // 024 极简：引导语/服务状态/版本等说明性内容不渲染
+    expect(text).not.toContain('使用企业账号登录以继续')
+    expect(text).not.toContain('运行中')
+    expect(text).not.toContain('v0.1.0')
     // 登录卡形态不渲染头部条/状态卡（未登录不露接入状态明细）
     expect(wrapper.find('.head').exists()).toBe(false)
     expect(text).not.toContain('终端接入状态')
@@ -105,7 +123,7 @@ describe('AccessView 挂载与渲染', () => {
       '/api/state': () => new Error('network down'),
       '/healthz': () => new Error('network down'),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     const text = wrapper.text()
     expect(text).toContain('服务不可达')
@@ -114,8 +132,6 @@ describe('AccessView 挂载与渲染', () => {
     expect(text).toContain('研发零处数字员工终端')
     expect(text).toContain('登录')
     expect(text).not.toContain('inst-001')
-    // 卡底服务状态行同步显示服务不可用（红点态）
-    expect(text).toContain('服务不可用')
     wrapper.unmount()
   })
 
@@ -125,28 +141,21 @@ describe('AccessView 挂载与渲染', () => {
       '/healthz': () => jsonResponse(HEALTHY),
       '/api/config/platform': () => jsonResponse({ baseUrl: 'http://192.168.1.5:18000' }),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     const text = wrapper.text()
-    // 头部条（品牌 + 健康徽章）保留（D-20：布局骨架沿用）
-    expect(wrapper.find('.head').exists()).toBe(true)
-    expect(text).toContain('运行中')
-    expect(text).toContain('v0.1.0')
-    // hero 一行：h1 + sub 一句（eyebrow 已删）
-    expect(text).toContain('终端接入状态')
-    expect(text).not.toContain('Local execution plane')
-    // 状态卡主位（AccessStatusCard 状态行 + AccessActions 按钮）
-    expect(text).toContain('inst-001')
-    expect(text).toContain('wb-7')
-    expect(text).toContain('已激活')
-    expect(text).toContain('发送终端心跳')
+    // 024 极简等待卡：仅审批相关字样 + 必要操作；不暴露任何终端标识/元数据/平台配置
+    expect(text).toContain('接入申请审批中')
+    expect(text).toContain('等待管理员审批')
     expect(text).toContain('退出登录')
-    // 平台配置卡次位（T8 卡从 hero 侧挂迁入 grid 次位）
-    expect(text).toContain('平台连接')
-    expect(text).toContain('http://192.168.1.5:18000')
-    // 安全边界卡已删（D-20：demo 时代开发者展示物，用户裁决不需要）
-    expect(text).not.toContain('安全边界')
-    expect(text).not.toContain('Keycloak OIDC + PKCE')
+    expect(wrapper.find('.head').exists()).toBe(false)
+    expect(text).not.toContain('终端接入状态')
+    expect(text).not.toContain('inst-001')
+    expect(text).not.toContain('wb-7')
+    expect(text).not.toContain('已激活')
+    expect(text).not.toContain('发送终端心跳')
+    expect(text).not.toContain('平台连接')
+    expect(text).not.toContain('http://192.168.1.5:18000')
     wrapper.unmount()
   })
 })
@@ -163,7 +172,7 @@ describe('AccessView 登录卡（D-19）：平台设置折叠区与整页登录�
       '/healthz': () => jsonResponse(HEALTHY),
       '/api/config/platform': () => jsonResponse({ baseUrl: 'http://192.168.1.5:18000' }),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.text()).not.toContain('平台连接') // 默认收起
 
@@ -191,7 +200,7 @@ describe('AccessView 登录卡（D-19）：平台设置折叠区与整页登录�
         '/api/state': () => jsonResponse(unauthenticatedState),
         '/healthz': () => jsonResponse(HEALTHY),
       })
-      const wrapper = mount(AccessView)
+      const wrapper = mountView()
       await flushPromises()
       const button = wrapper.findAll('button').find((candidate) => candidate.text() === '登录')
       expect(button, '登录卡主按钮应存在').toBeTruthy()
@@ -217,7 +226,7 @@ describe('AccessView 审批进度轮询（demo L31：authenticated 且 PENDING_R
       '/healthz': () => jsonResponse(HEALTHY),
     })
     vi.useFakeTimers()
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await vi.advanceTimersByTimeAsync(0)
     expect(stub.calls('/api/state', 'GET')).toBe(1)
     expect(stub.calls('/api/progress', 'POST')).toBe(0)
@@ -242,12 +251,11 @@ describe('AccessView 审批进度轮询（demo L31：authenticated 且 PENDING_R
       '/healthz': () => jsonResponse(HEALTHY),
     })
     vi.useFakeTimers()
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await vi.advanceTimersByTimeAsync(0)
     await vi.advanceTimersByTimeAsync(5000)
     expect(stub.calls('/api/progress', 'POST')).toBe(1)
-    expect(wrapper.text()).toContain('已激活') // 状态卡已翻到 ACTIVE
-
+    // 024：ACTIVE 不落地展示（无状态卡），023 跳转逻辑接管 → 自动进工作台
     await vi.advanceTimersByTimeAsync(15000)
     expect(stub.calls('/api/progress', 'POST')).toBe(1) // 轮询已停
     wrapper.unmount()
@@ -260,7 +268,7 @@ describe('AccessView 审批进度轮询（demo L31：authenticated 且 PENDING_R
       '/healthz': () => jsonResponse(HEALTHY),
     })
     vi.useFakeTimers()
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await vi.advanceTimersByTimeAsync(0)
     await vi.advanceTimersByTimeAsync(5000)
     expect(stub.calls('/api/progress', 'POST')).toBe(1)
@@ -276,38 +284,11 @@ describe('AccessView 审批进度轮询（demo L31：authenticated 且 PENDING_R
       '/healthz': () => jsonResponse(HEALTHY),
     })
     vi.useFakeTimers()
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await vi.advanceTimersByTimeAsync(0)
     await vi.advanceTimersByTimeAsync(10000)
     expect(stub.calls('/api/progress', 'POST')).toBe(0)
     wrapper.unmount()
-  })
-})
-
-describe('AccessView 服务健康徽章轮询（Home.vue 退役，2s 轮询 + onUnmounted 清理）', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.useRealTimers()
-  })
-
-  it('每 2s 刷新 healthz；unmount 后停止', async () => {
-    const stub = stubFetch({
-      '/api/state': () => jsonResponse(unauthenticatedState),
-      '/healthz': () => jsonResponse(HEALTHY),
-    })
-    vi.useFakeTimers()
-    const wrapper = mount(AccessView)
-    await vi.advanceTimersByTimeAsync(0)
-    expect(stub.calls('/healthz', 'GET')).toBe(1)
-
-    await vi.advanceTimersByTimeAsync(2000)
-    expect(stub.calls('/healthz', 'GET')).toBe(2)
-    await vi.advanceTimersByTimeAsync(2000)
-    expect(stub.calls('/healthz', 'GET')).toBe(3)
-
-    wrapper.unmount()
-    await vi.advanceTimersByTimeAsync(6000)
-    expect(stub.calls('/healthz', 'GET')).toBe(3)
   })
 })
 
@@ -329,7 +310,7 @@ describe('AccessView 动作处理（AccessActions emit → api 动作 → messag
       '/api/enroll': () => jsonResponse({ error: { code: 'PLATFORM_DOWN', message: '平台连接失败' } }, { ok: false, status: 502, statusText: 'Bad Gateway' }),
       '/healthz': () => jsonResponse(HEALTHY),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     await clickButton(wrapper, '重新提交接入申请')
     await flushPromises()
@@ -349,14 +330,127 @@ describe('AccessView 动作处理（AccessActions emit → api 动作 → messag
       '/api/enroll': () => jsonResponse({ status: 'PENDING_REVIEW' }),
       '/healthz': () => jsonResponse(HEALTHY),
     })
-    const wrapper = mount(AccessView)
+    const wrapper = mountView()
     await flushPromises()
     expect(wrapper.text()).not.toContain('待审批')
     await clickButton(wrapper, '重新提交接入申请')
     await flushPromises()
     const text = wrapper.text()
     expect(text).toContain('操作成功')
-    expect(text).toContain('待审批')
+    expect(text).toContain('接入申请审批中') // 024：等待卡标题取代状态卡徽章
     wrapper.unmount()
+  })
+})
+
+describe('AccessView 023：审批通过自动跳转工作台（D4）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  it('轮询刷新从 PENDING_REVIEW 翻到 ACTIVE → router.push(/employees)（SPA 内自动跳转）', async () => {
+    let stateCalls = 0
+    stubFetch({
+      '/api/state': () => {
+        stateCalls += 1
+        return jsonResponse(stateCalls === 1 ? pendingReviewState : activeState)
+      },
+      '/api/progress': () => jsonResponse({ status: 'ACTIVE' }),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    vi.useFakeTimers()
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div />' } },
+        { path: '/employees', name: 'employees', component: { template: '<div />' } },
+      ],
+    })
+    const wrapper = mount(AccessView, { global: { plugins: [router] } })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(router.currentRoute.value.path).toBe('/')
+
+    await vi.advanceTimersByTimeAsync(5000) // progress tick → refresh 拿到 ACTIVE
+    expect(router.currentRoute.value.path).toBe('/employees') // 自动跳转工作台
+    wrapper.unmount()
+  })
+
+  it('首次加载即 ACTIVE → 同样跳转 /employees（冷启动之外的补齐路径）', async () => {
+    stubFetch({
+      '/api/state': () => jsonResponse(activeState),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div />' } },
+        { path: '/employees', name: 'employees', component: { template: '<div />' } },
+      ],
+    })
+    const wrapper = mount(AccessView, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/employees')
+    wrapper.unmount()
+  })
+})
+
+describe('AccessView 023：退出登录结束 Keycloak SSO（D3）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.useRealTimers()
+  })
+
+  async function clickLogout(wrapper: ReturnType<typeof mount>): Promise<void> {
+    const button = wrapper.findAll('button').find((candidate) => candidate.text() === '退出登录')
+    expect(button, '退出登录按钮应存在').toBeTruthy()
+    await button!.trigger('click')
+  }
+
+  it('服务端返回 oidc_logout_url → 整页跳转 end_session（下次登录需重新输入账号密码）', async () => {
+    const logoutUrl = 'https://kc.example/realms/demo/protocol/openid-connect/logout?id_token_hint=abc'
+    stubFetch({
+      '/api/state': () => jsonResponse(activeState),
+      '/api/logout': () => jsonResponse({ status: 'logged_out', oidc_logout_url: logoutUrl }),
+      '/healthz': () => jsonResponse(HEALTHY),
+      '/api/config/platform': () => jsonResponse({ baseUrl: 'http://192.168.1.5:18000' }),
+    })
+    const original = Object.getOwnPropertyDescriptor(window, 'location')
+    Object.defineProperty(window, 'location', { configurable: true, writable: true, value: { href: 'http://localhost:3000/access', port: '3000' } })
+    try {
+      const wrapper = mountView()
+      await flushPromises()
+      await clickLogout(wrapper)
+      await flushPromises()
+      expect(window.location.href).toBe(logoutUrl)
+      wrapper.unmount()
+    } finally {
+      if (original) Object.defineProperty(window, 'location', original)
+    }
+  })
+
+  it('服务端未返回 oidc_logout_url（发现失败降级）→ 不整页跳转，刷新本地态', async () => {
+    let stateCalls = 0
+    stubFetch({
+      '/api/state': () => {
+        stateCalls += 1
+        return jsonResponse(stateCalls === 1 ? activeState : unauthenticatedState)
+      },
+      '/api/logout': () => jsonResponse({ status: 'logged_out' }),
+      '/healthz': () => jsonResponse(HEALTHY),
+    })
+    const original = Object.getOwnPropertyDescriptor(window, 'location')
+    Object.defineProperty(window, 'location', { configurable: true, writable: true, value: { href: 'http://localhost:3000/access', port: '3000' } })
+    try {
+      const wrapper = mountView()
+      await flushPromises()
+      await clickLogout(wrapper)
+      await flushPromises()
+      expect(window.location.href).toBe('http://localhost:3000/access') // 未被改写
+      expect(stateCalls).toBeGreaterThanOrEqual(2) // 降级走 refresh，本地态翻未登录
+      expect(wrapper.text()).toContain('登录')
+      wrapper.unmount()
+    } finally {
+      if (original) Object.defineProperty(window, 'location', original)
+    }
   })
 })

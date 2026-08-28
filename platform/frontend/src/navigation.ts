@@ -16,10 +16,11 @@ export interface NavigationTree {
 
 const NAV_GROUPS = (t: (key: string) => string): NavigationGroup[] => [
   {
-    label: t('nav.group.digitalEmployees'),
+    label: t('nav.group.terminalManagement'),
     items: [
-      { label: t('nav.workbenches'), path: '/app/workbenches', permission: 'workbench.read' },
-      { label: t('nav.enrollments'), path: '/app/enrollments', permission: 'workbench.enrollment.review' },
+      { label: t('nav.myTerminal'), path: '/app/terminals/me', permission: 'workbench.read' },
+      { label: t('nav.teamTerminals'), path: '/app/terminals/team', permission: 'workbench.team.read' },
+      { label: t('nav.terminalEnrollments'), path: '/app/terminals/enrollments', permission: 'workbench.enrollment.review' },
     ],
   },
   {

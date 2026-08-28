@@ -15,6 +15,7 @@
  */
 import { z } from 'zod'
 import { httpBaseUrl, isDevPlatformBaseUrl } from '../../config/schema'
+import { applyTlsPolicy } from '../../config/tls-policy'
 import type { WorkbenchConfig } from '../../config/schema'
 import type { ConfigOverrides } from '../../config/load'
 import type { Ctx, Res, RouteRegistry } from '../registry'
@@ -36,6 +37,8 @@ const platformPutSchema = z
         })
       }
     }),
+    // 022：内网自签证书试点开关；缺省时不改动既有值（PUT 仅覆盖传入键）。
+    insecureTls: z.boolean().optional(),
   })
   .strict()
 
@@ -58,8 +61,15 @@ export interface ConfigRouteDeps {
 /** GET /api/config/platform —— 当前平台地址 + 开发环境标志（D-13/D-14/D-049）。 */
 export function platformConfigGetHandler(deps: ConfigRouteDeps) {
   return (_ctx: Ctx): Res => {
-    const baseUrl = deps.loadConfig(deps.profileDir).platform.baseUrl
-    return { status: 200, json: { baseUrl, devEnvironment: isDevPlatformBaseUrl(baseUrl) } }
+    const cfg = deps.loadConfig(deps.profileDir)
+    return {
+      status: 200,
+      json: {
+        baseUrl: cfg.platform.baseUrl,
+        insecureTls: cfg.platform.insecureTls,
+        devEnvironment: isDevPlatformBaseUrl(cfg.platform.baseUrl),
+      },
+    }
   }
 }
 
@@ -78,10 +88,19 @@ export function platformConfigPutHandler(deps: ConfigRouteDeps) {
         },
       }
     }
-    deps.writeConfigOverride(deps.profileDir, { platform: { baseUrl: parsed.data.baseUrl } })
+    const platformOverride: { baseUrl?: string; insecureTls?: boolean } = { baseUrl: parsed.data.baseUrl }
+    if (typeof parsed.data.insecureTls === 'boolean') platformOverride.insecureTls = parsed.data.insecureTls
+    deps.writeConfigOverride(deps.profileDir, { platform: platformOverride })
+    // 022：配置变更后立即同步进程级 TLS 策略（运行时可逆生效）。
+    applyTlsPolicy(deps.loadConfig(deps.profileDir))
+    const cfg = deps.loadConfig(deps.profileDir)
     return {
       status: 200,
-      json: { baseUrl: parsed.data.baseUrl, devEnvironment: isDevPlatformBaseUrl(parsed.data.baseUrl) },
+      json: {
+        baseUrl: cfg.platform.baseUrl,
+        insecureTls: cfg.platform.insecureTls,
+        devEnvironment: isDevPlatformBaseUrl(cfg.platform.baseUrl),
+      },
     }
   }
 }

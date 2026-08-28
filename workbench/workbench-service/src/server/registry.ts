@@ -11,10 +11,15 @@ export interface Ctx {
   body?: unknown
   /** 查询串解析（L3 T6 起 engine 域 events?after_seq= 消费；A 系列 /auth/callback 消费 code/state；缺省空——既有域不受影响） */
   query?: URLSearchParams
-  /** 请求头小写键快照（L3 T7 起 SSE 消费 last-event-id；缺省空——既有域不受影响） */
+  /** 请求头小写键快照（L3 T7 起 SSE 消费 last-event-id；A 系列 /auth/callback 亦消费；缺省空——既有域不受影响） */
   headers?: Record<string, string>
   /** Cookie 解析（A 系列 A-02/A-07 会话读取）；adapter 单点解析 Cookie 头（demo cookies() 语义迁移） */
   cookies?: Record<string, string>
+  /**
+   * 原始请求体字节（content-type 非 application/json 的非 GET 请求时由 adapter 装载）。
+   * L1 Task 12 / E-13：skills 域 multipart/form-data 上传走此通道；JSON 路径仍走 body 字段，行为不变。
+   */
+  bodyRaw?: ArrayBuffer
 }
 
 export interface Res {

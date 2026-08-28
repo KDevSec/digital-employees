@@ -5,6 +5,12 @@ import { registerAllRoutes } from '../src/server/routes'
 import { registerInfraRoutes } from '../src/server/routes/infra'
 import { registerShellRoutes } from '../src/server/routes/shell'
 import { registerConfigRoutes } from '../src/server/routes/config'
+import { registerTemplatesRoutes } from '../src/server/routes/templates'
+import { registerEmployeesRoutes } from '../src/server/routes/employees'
+import { createTemplatesProvider } from '../src/templates/provider'
+import { createEmployeeStore } from '../src/employees/store'
+import { createEmployeeBuilder } from '../src/employees/builder'
+import { builtinTemplates } from '../src/assets/templates.gen'
 import { registerSessionRoutes } from '../src/server/routes/session'
 import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
@@ -19,6 +25,7 @@ import { join } from 'node:path'
  * 注册产物 method+path 唯一——I1 并行线撞路由即在此炸，不留给请求期。
  */
 
+/** 域注册依赖：infra 五项 + shell 一项 + config 三项 + templates 一项 + employees 两项（与 main 装配同形状，值非契约） */
 /** 编排域引擎夹具（L3 T6）：临时 dataDir/templatesDir（本文件只验路由表结构，不触达 engine 行为——行为断言在 routes-engine.test.ts） */
 const engineRoot = mkdtempSync(join(tmpdir(), 'registry-engine-'))
 const engine = new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') })
@@ -40,6 +47,16 @@ const deps = {
   profileDir,
   loadConfig,
   writeConfigOverride,
+  templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+  // Task 11 B6 employees 域：builder + store（与 main 装配同形状，路径非契约）
+  store: createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp'),
+  builder: createEmployeeBuilder({
+    provider: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+    store: createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp'),
+    tmpRoot: 'D:/data/.devzero/tmp',
+  }),
+  // Task 12 C1 skills 域：zip 上传物化（tmpRoot 与 builder 同源）
+  tmpRoot: 'D:/data/.devzero/tmp',
   service,
   engine,
   // I1 L2 安装线两域（值非契约——本文件只断言路由表，不触达端点行为）
@@ -48,7 +65,9 @@ const deps = {
   authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
   probe: () => ({ present: false, version: null }),
   packageRoots: {},
+  employeesRoot: 'D:/data/.devzero/employees', // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
   cacheDir: 'D:/data/.devzero/bases',
+  tierConfigFile: 'D:/data/.devzero/bases/tier-config.json', // D-062 档位配置（值非契约）
   run: async () => ({ code: 127, stdout: '' }),
 }
 
@@ -60,7 +79,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 6（D-bb01 + 档位表））', () => {
+  it('注册产物 = 期望路由表（含 bases：models/install/tiers/tier-config + L1 templates/employees/skills）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -68,9 +87,12 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/activity'],
       ['GET', '/api/bases'],
       ['GET', '/api/bases/:id/models'],
+      ['GET', '/api/bases/:id/tier-config'],
       ['GET', '/api/bases/:id/tiers'],
       ['GET', '/api/config/platform'],
       ['GET', '/api/deployments'],
+      ['GET', '/api/employees'],
+      ['GET', '/api/employees/validate-id'],
       ['GET', '/api/engine/flows'],
       ['GET', '/api/engine/stream'],
       ['GET', '/api/engine/tasks'],
@@ -78,7 +100,9 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/engine/tasks/:id/events'],
       ['GET', '/api/engine/tasks/:id/table'],
       ['GET', '/api/events'],
+      ['GET', '/api/skills'],
       ['GET', '/api/state'],
+      ['GET', '/api/templates'],
       ['GET', '/auth/callback'],
       ['GET', '/auth/login'],
       ['GET', '/healthz'],
@@ -87,6 +111,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/deployments/execute'],
       ['POST', '/api/deployments/plan'],
       ['POST', '/api/deployments/verify'],
+      ['POST', '/api/employees/generate'],
       ['POST', '/api/engine/tasks'],
       ['POST', '/api/engine/tasks/:id/abort'],
       ['POST', '/api/engine/tasks/:id/advance'],
@@ -101,7 +126,9 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/logout'],
       ['POST', '/api/progress'],
       ['POST', '/api/reset'],
+      ['POST', '/api/skills/upload'],
       ['POST', '/api/uninstall'],
+      ['PUT', '/api/bases/:id/tier-config'],
       ['PUT', '/api/bases/:id/tiers'],
       ['PUT', '/api/config/platform'],
     ])
@@ -150,6 +177,25 @@ describe('分域注册（各域只注册自己的端点，域间无交叉）', (
     expect(table(reg.routes)).toEqual([
       ['GET', '/api/config/platform'],
       ['PUT', '/api/config/platform'],
+    ])
+  })
+
+  it('templates 域：GET /api/templates + GET /api/skills（Task 7 B2，不含其他域端点）', () => {
+    const reg = createRegistry()
+    registerTemplatesRoutes(reg, deps)
+    expect(table(reg.routes)).toEqual([
+      ['GET', '/api/skills'],
+      ['GET', '/api/templates'],
+    ])
+  })
+
+  it('employees 域：POST /api/employees/generate + GET /api/employees/validate-id + GET /api/employees（Task 11 B6 + Task 17 花名册，不含其他域端点）', () => {
+    const reg = createRegistry()
+    registerEmployeesRoutes(reg, deps)
+    expect(table(reg.routes)).toEqual([
+      ['GET', '/api/employees'],
+      ['GET', '/api/employees/validate-id'],
+      ['POST', '/api/employees/generate'],
     ])
   })
 })

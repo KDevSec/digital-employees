@@ -1,0 +1,23 @@
+rule_id: A03-SUPPLY-CHAIN-FAILURES
+name: Supply Chain Failures
+owasp: A03
+severity: HIGH
+priority: constitutional
+description: |
+  Previously "Vulnerable and Outdated Components" (A06:2021). Expanded in 2025
+  to cover the full software supply chain: using components with known
+  vulnerabilities, outdated dependencies, insecure CI/CD pipelines, and
+  unverified third-party code. Renamed to emphasize supply chain risks.
+categories:
+  - id: known-vulnerability
+    name: Known Vulnerability
+    description: Using components with known security vulnerabilities
+  - id: outdated-dependency
+    name: Outdated Dependency
+    description: Using outdated or unmaintained dependencies
+  - id: insecure-pipeline
+    name: Insecure CI/CD Pipeline
+    description: Build or deployment pipeline without integrity verification
+  - id: unverified-dependency
+    name: Unverified Dependency
+    description: Dependencies without integrity or signature verification

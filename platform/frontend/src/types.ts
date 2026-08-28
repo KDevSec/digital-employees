@@ -182,3 +182,33 @@ export interface PrincipalDetail {
   }
   authorizations: PrincipalAuthorizations
 }
+
+export interface TerminalRosterRow {
+  kind: 'roster'
+  id: string | null
+  enrollment_id?: string | null
+  principal_id: string
+  owner_principal_id: string
+  owner_display_name: string
+  username?: string
+  email?: string | null
+  org_path: string
+  org_path_nodes?: Array<{ id: string; name: string; org_type: string }>
+  department_id?: string | null
+  team_id?: string | null
+  install_status: 'ONLINE' | 'OFFLINE' | 'PENDING' | 'REJECTED' | 'NOT_INSTALLED'
+  connection_status?: string
+  status: string
+  display_name?: string | null
+  installation_id?: string | null
+  reported_version?: string | null
+  reported_os?: string | null
+  reported_arch?: string | null
+  hostname?: string | null
+  ip_address?: string | null
+  mac_address?: string | null
+  first_heartbeat_at?: string | null
+  last_heartbeat_at?: string | null
+  created_at?: string | null
+  review_reason?: string | null
+}

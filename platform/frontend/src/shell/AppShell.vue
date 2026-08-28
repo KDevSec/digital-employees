@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { navigationForPermissions } from '../navigation'
+import { fetchPlatformVersion } from '../version'
 import { useSessionStore } from '../stores/session'
 
 const { t } = useI18n()
 const session = useSessionStore()
 const tree = computed(() => navigationForPermissions(session.permissions, t))
+const platformVersion = ref<string | null>(null)
+onMounted(async () => {
+  platformVersion.value = await fetchPlatformVersion()
+})
 
 const roleNames = computed(() => {
   const roles = session.me?.roles ?? []
@@ -34,7 +39,10 @@ const roleNames = computed(() => {
           <RouterLink v-for="item in group.items" :key="item.path" :to="item.path">{{ item.label }}</RouterLink>
         </div>
       </nav>
-      <div class="environment"><span class="status-dot"></span>{{ t('app.environment') }}</div>
+      <div class="sidebar-foot">
+        <div class="environment"><span class="status-dot"></span>{{ t('app.environment') }}</div>
+        <div v-if="platformVersion" class="platform-version">v{{ platformVersion }}</div>
+      </div>
     </aside>
     <section class="app-main">
       <header class="topbar">
@@ -50,4 +58,9 @@ const roleNames = computed(() => {
 .nav-group { margin-top: 14px; }
 .nav-group-label { margin: 0 0 4px; padding: 0 12px; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
 .nav-group :deep(a) { display: block; }
+</style>
+
+<style scoped>
+.sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.platform-version { font-size: 11px; color: rgba(255, 255, 255, .45); padding: 0 12px; }
 </style>

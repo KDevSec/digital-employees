@@ -1,0 +1,10 @@
+{
+  "name": "@devzero/shared-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
+  "dependencies": { "zod": "^3", "js-yaml": "^4" },
+  "devDependencies": { "typescript": "^5", "vitest": "^2", "@types/js-yaml": "^4", "@types/bun": "latest" }
+}

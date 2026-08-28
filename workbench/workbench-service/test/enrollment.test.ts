@@ -141,3 +141,48 @@ describe('EnrollmentService（demo server.ts 编排迁移）', () => {
     expect(after.publicJwk).toEqual(state.publicJwk)
   })
 })
+
+describe('EnrollmentService 显式重申（023 force）', () => {
+  async function setup(overrides: Record<string, ReturnType<typeof vi.fn>> = {}) {
+    const dir = await mkdtemp(join(tmpdir(), 'wb-enrollment-force-'))
+    const stateStore = new WorkbenchStateStore(join(dir, 'state.enc'), SECRET)
+    const platform = platformStub(overrides)
+    const service = new EnrollmentService({
+      stateStore,
+      platform: platform as never,
+      machineTokens: new MachineTokenManager(),
+      installationId: 'install-1111',
+    })
+    return { stateStore, platform, service }
+  }
+
+  it('force=true 时即使已有 PENDING 申请也直接重新 POST（跳过拉取现有）', async () => {
+    const submit = vi.fn(async () => ({ id: 'enr-2', status: 'PENDING_REVIEW' }))
+    const { stateStore, platform, service } = await setup({ submitEnrollment: submit })
+    const state = await stateStore.loadOrCreate()
+    state.enrollmentId = 'enr-1'
+    state.status = 'PENDING_REVIEW'
+    await stateStore.save(state)
+
+    const result = await service.submitEnrollmentIfNeeded(PERSON, state, true)
+
+    expect(platform.enrollment).not.toHaveBeenCalled()
+    expect(submit).toHaveBeenCalledTimes(1)
+    expect(result?.id).toBe('enr-2')
+    expect((await stateStore.loadOrCreate()).enrollmentId).toBe('enr-2')
+  })
+
+  it('force=false（默认）时 PENDING 走拉取现有，不重新提交', async () => {
+    const submit = vi.fn(async () => ({ id: 'enr-2', status: 'PENDING_REVIEW' }))
+    const { stateStore, platform, service } = await setup({ submitEnrollment: submit })
+    const state = await stateStore.loadOrCreate()
+    state.enrollmentId = 'enr-1'
+    state.status = 'PENDING_REVIEW'
+    await stateStore.save(state)
+
+    await service.submitEnrollmentIfNeeded(PERSON, state)
+
+    expect(platform.enrollment).toHaveBeenCalledTimes(1)
+    expect(submit).not.toHaveBeenCalled()
+  })
+})

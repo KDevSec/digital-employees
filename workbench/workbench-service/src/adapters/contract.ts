@@ -39,8 +39,10 @@ export interface LaunchInput {
 
 export interface LaunchSpec {
   command: string; args: string[]; env: Record<string, string>; cwd: string
-  /** prompt 文件中转产物（观测/审计；args 中同时带全文——spawn args 数组不经 shell 无截断坑） */
+  /** prompt 文件中转产物（观测/审计） */
   promptFile?: string
+  /** prompt 全文走 stdin（M2：args 数组经 .CMD 垫片多行截断）；消费方写 spawn input */
+  stdin?: string
 }
 
 export interface ModelInfo { id: string; label: string; tier?: string }
@@ -52,7 +54,13 @@ export interface BaseProfile {
   skills_dir: string
   version_min: string; version_tested: string
   provides: string[]
-  auth: { kind: 'symlink' | 'copy' | 'none'; files: string[] }
+  auth: {
+    kind: 'symlink' | 'copy' | 'none'
+    files: string[]
+    /** env token 认证形态判定键（M2 实测：本机 CC 无凭证文件，认证走 ANTHROPIC_AUTH_TOKEN env）--
+     *  物化时凭证源缺失且任一键在 env 中 = env-token 形态，降级零置备环境继承（设计 §5.1 auth 分档） */
+    envTokenKeys?: string[]
+  }
   /** ⏳ 标注项均为 M2 联调首日实测收口（设计 §12 真机清单 5） */
   launch: { configEnv?: string; configFlag?: string }
 }

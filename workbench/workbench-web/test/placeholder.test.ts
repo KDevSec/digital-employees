@@ -1,32 +1,16 @@
 // @vitest-environment jsdom
-import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import type { RouteRecordRaw } from 'vue-router'
 
-import Placeholder from '../src/views/Placeholder.vue'
-import { employeesRoutes } from '../src/router/routes/employees'
+import { basesRoutes } from '../src/router/routes/bases'
+import BasesView from '../src/views/BasesView.vue'
 
 /**
- * Placeholder 参数化占位页（I0-5 T3，D-6）：占位域路由以 props 传标题/说明文案。
- * L5 看板线已换真页；D-bb01 底座页已换 BasesView。仅剩 employees 域占位（待 L1/L4）。
+ * bases 域真页接线路由（Placeholder 三域全部退役）。
+ * 域替换史：employees -> L1 EmployeesView；kanban -> L5 KanbanView；bases -> BasesView。
+ * 不 mount BasesView：本 worktree 的 jsdom + undici 无法撑起该页，页面行为在 bases-view.test.ts 按纯函数缝测。
  */
-
-interface PlaceholderProps {
-  title: string
-  description?: string
-}
-
-function placeholderProps(record: RouteRecordRaw): PlaceholderProps {
-  expect(typeof record.props, '占位路由应以 props 对象传标题/说明文案').toBe('object')
-  return record.props as PlaceholderProps
-}
-
-describe('Placeholder 占位页（employees 域仍占位）', () => {
-  it('employees 域：渲染「我的员工」标题与「员工列表即将上线」说明', () => {
-    const props = placeholderProps(employeesRoutes[0])
-    const wrapper = mount(Placeholder, { props })
-    expect(props.title).toBe('我的员工')
-    expect(wrapper.text()).toContain(props.title)
-    expect(wrapper.text()).toContain(props.description ?? '')
+describe('bases 域：路由挂 BasesView 真页（Placeholder 全退役）', () => {
+  it('路由 component = BasesView', () => {
+    expect(basesRoutes[0].component).toBe(BasesView)
   })
 })

@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   enrollAction,
   fetchAccessState,
-  heartbeatAction,
   logoutAction,
   parseStateJson,
   progressAction,
@@ -216,15 +215,13 @@ describe('动作端点集中调用（全 POST，按 demo server.ts 实证；G-2 
 
   const actions: Record<string, () => Promise<ActionResult>> = {
     enrollAction,
-    heartbeatAction,
-    resetAction,
+      resetAction,
     logoutAction,
     progressAction,
   }
 
   it.each([
     ['enrollAction', '/api/enroll'],
-    ['heartbeatAction', '/api/heartbeat'],
     ['resetAction', '/api/reset'],
     ['logoutAction', '/api/logout'],
     ['progressAction', '/api/progress'],
@@ -251,6 +248,6 @@ describe('动作端点集中调用（全 POST，按 demo server.ts 实证；G-2 
     vi.stubGlobal('fetch', vi.fn(async () => {
       throw new Error('fetch failed')
     }))
-    await expect(heartbeatAction()).resolves.toEqual({ ok: false, message: 'fetch failed' })
+    await expect(resetAction()).resolves.toEqual({ ok: false, message: 'fetch failed' })
   })
 })

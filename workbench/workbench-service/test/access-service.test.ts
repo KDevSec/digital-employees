@@ -248,3 +248,59 @@ describe('PlatformAccessService——生产语义', () => {
     expect((res.json as { error: { code: string } }).error.code).toBe('WORKBENCH_ERROR')
   })
 })
+
+describe('PlatformAccessService——RP 登出（023）', () => {
+  it('logout 清本地会话并返回 Keycloak end_session URL（含 id_token_hint）', async () => {
+    const profileDir = tempProfile('http://p:18000')
+    const { privateKey, publicKey } = await generateKeyPair('ES256', { extractable: true })
+    const privateJwk = await exportJWK(privateKey)
+    const publicJwk = await exportJWK(publicKey)
+    const END_SESSION = 'http://p:18000/oauth2/logout'
+
+    const service = serviceFor(profileDir)
+    let currentNonce = ''
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url === 'http://p:18000/.well-known/workbench-configuration') return new Response(JSON.stringify(CONFIG), { status: 200 })
+      if (url.endsWith('/.well-known/openid-configuration')) {
+        return new Response(JSON.stringify({
+          issuer: CONFIG.oidc_issuer,
+          authorization_endpoint: 'http://p:18000/oauth2/auth',
+          token_endpoint: 'http://p:18000/oauth2/token',
+          jwks_uri: 'http://p:18000/oauth2/certs',
+          end_session_endpoint: END_SESSION,
+        }), { status: 200 })
+      }
+      if (url === 'http://p:18000/oauth2/certs') return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200 })
+      if (url === 'http://p:18000/oauth2/token') {
+        const idToken = await new SignJWT({ nonce: currentNonce, email: 'u@example.com' })
+          .setProtectedHeader({ alg: 'ES256' }).setIssuer(CONFIG.oidc_issuer)
+          .setAudience(CONFIG.oidc_client_id).setIssuedAt().setExpirationTime('5m')
+          .sign(await importJWK(privateJwk, 'ES256'))
+        return new Response(JSON.stringify({ access_token: 'person-token', id_token: idToken, expires_in: 300 }), { status: 200 })
+      }
+      if (url === 'http://p:18000/api/v1/workbench-enrollments') {
+        return new Response(JSON.stringify({ id: 'enr-1', status: 'PENDING_REVIEW' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({}), { status: 200 })
+    }) as unknown as typeof fetch)
+
+    const loginRes = await service.login(HOST_CTX)
+    const params = new URL(loginRes.redirect ?? '').searchParams
+    currentNonce = params.get('nonce') ?? ''
+    const cb = await service.callback({ ...HOST_CTX, path: '/auth/callback', query: new URLSearchParams({ code: 'c', state: params.get('state') ?? '' }) })
+    const sid = cb.cookies?.[0]?.value ?? ''
+
+    const out = await service.logout({ ...HOST_CTX, method: 'POST', path: '/api/logout', cookies: { workbench_session: sid } })
+    expect(out.status).toBe(200)
+    const json = out.json as { status: string; oidc_logout_url?: string }
+    expect(json.status).toBe('logged_out')
+    expect(json.oidc_logout_url).toBeTruthy()
+    expect(json.oidc_logout_url ?? '').toContain(END_SESSION)
+    expect(json.oidc_logout_url ?? '').toContain('id_token_hint=')
+    expect(json.oidc_logout_url ?? '').toContain(encodeURIComponent('http://127.0.0.1:19990/'))
+    // 会话已清：guard 不再认可
+    const guard = await service.sessionGuard({ ...HOST_CTX, path: '/api/state', cookies: { workbench_session: sid } }, 'session')
+    expect(guard?.status).toBe(401)
+  })
+})

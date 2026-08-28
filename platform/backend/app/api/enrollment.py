@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import jwt
 from fastapi import APIRouter, Depends, Form, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import false, or_, select, true
+from sqlalchemy import false, func, or_, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -49,6 +49,40 @@ def aware(value: datetime) -> datetime:
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
+class TerminalMetadata(BaseModel):
+    hostname: str | None = Field(default=None, max_length=255)
+    mac_address: str | None = Field(default=None, max_length=32)
+
+
+def client_public_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first[:64]
+    if request.client and request.client.host:
+        return request.client.host[:64]
+    return None
+
+
+def apply_terminal_metadata(target, meta: TerminalMetadata | None, public_ip: str | None) -> None:
+    if meta is not None:
+        target.hostname = meta.hostname
+        if meta.mac_address:
+            target.mac_addresses = [meta.mac_address]
+    if public_ip:
+        target.public_ip = public_ip
+
+
+def terminal_metadata_dict(item) -> dict:
+    macs = getattr(item, "mac_addresses", None) or []
+    return {
+        "hostname": getattr(item, "hostname", None),
+        "mac_address": macs[0] if macs else None,
+        "ip_address": getattr(item, "public_ip", None),
+    }
+
+
 class EnrollmentCreate(BaseModel):
     installation_id: UUID
     public_key: dict[str, str]
@@ -56,6 +90,7 @@ class EnrollmentCreate(BaseModel):
     workbench_version: str = Field(min_length=1, max_length=50)
     os: str = Field(min_length=1, max_length=30)
     arch: str = Field(min_length=1, max_length=30)
+    metadata: TerminalMetadata | None = None
 
 
 class RejectBody(BaseModel):
@@ -70,6 +105,7 @@ class HeartbeatBody(BaseModel):
     event_id: str = Field(min_length=1, max_length=100)
     reported_at: datetime
     workbench_version: str = Field(min_length=1, max_length=50)
+    metadata: TerminalMetadata | None = None
 
 
 class RevokeBody(BaseModel):
@@ -94,6 +130,7 @@ def enrollment_json(item: EnrollmentRequest, session: Session) -> dict:
         "workbench_version": item.version,
         "os": item.os,
         "arch": item.arch,
+        **terminal_metadata_dict(item),
         "status": item.status,
         "reviewer_id": item.reviewer_id,
         "review_reason": item.review_reason,
@@ -131,6 +168,7 @@ def workbench_json(item: WorkbenchInstance, session: Session, offline_seconds: i
         "reported_version": item.reported_version,
         "reported_os": item.reported_os,
         "reported_arch": item.reported_arch,
+        **terminal_metadata_dict(item),
         "first_heartbeat_at": item.first_heartbeat_at,
         "last_heartbeat_at": item.last_heartbeat_at,
         "created_at": item.created_at,
@@ -162,6 +200,7 @@ def enrollment_as_workbench_json(item: EnrollmentRequest, session: Session) -> d
         "reported_version": item.version,
         "reported_os": item.os,
         "reported_arch": item.arch,
+        **terminal_metadata_dict(item),
         "first_heartbeat_at": None,
         "last_heartbeat_at": None,
         "created_at": item.created_at,
@@ -173,6 +212,32 @@ def may_access_enrollment(session: Session, identity: AuthenticatedPrincipal, it
     if item.owner_principal_id == identity.principal.id:
         return True
     return can_review_scoped(session, identity, item.owner_primary_org_id)
+
+
+
+def supersede_enrollment(
+    session: Session,
+    request: Request,
+    old: EnrollmentRequest,
+    principal: IamPrincipal,
+) -> None:
+    """作废旧接入申请（023）：置 CANCELLED 并改写 thumbprint 以释放身份唯一键，供同身份重新申请。"""
+    old.status = "CANCELLED"
+    old.review_reason = (old.review_reason or "") + " [superseded by a resubmission]"
+    old.public_key_thumbprint = f"superseded:{old.id}:{old.public_key_thumbprint}"[:100]
+    record_audit(
+        session,
+        request,
+        event_type="ENROLLMENT_SUPERSEDED",
+        category="OPERATION",
+        actor_type="PERSON",
+        actor_id=principal.id,
+        target_type="ENROLLMENT_REQUEST",
+        target_id=old.id,
+        domain_id=old.domain_id_snapshot,
+        department_id=old.department_id_snapshot,
+        summary="Previous enrollment superseded by a resubmission",
+    )
 
 
 @router.post("/api/v1/workbench-enrollments", status_code=status.HTTP_201_CREATED)
@@ -197,8 +262,22 @@ async def create_enrollment(
             EnrollmentRequest.public_key_thumbprint == thumbprint,
         )
     )
-    if existing:
-        return enrollment_json(existing, session)
+    if existing is not None:
+        active_instance = session.scalar(
+            select(WorkbenchInstance).where(
+                WorkbenchInstance.owner_principal_id == identity.principal.id,
+                WorkbenchInstance.status == "ACTIVE",
+            )
+        )
+        if active_instance is not None:
+            logger.info(
+                "enrollment submission returned existing (active terminal present)",
+                extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "enrollment_id": existing.id},
+            )
+            return enrollment_json(existing, session)
+        # 无 ACTIVE 终端：旧申请作废（023），释放唯一键后用当前身份重新快照建 PENDING，
+        # 覆盖「被拒绝后重申」与「组织变动后重申，新管理员需可见」两类场景。
+        supersede_enrollment(session, request, existing, identity.principal)
     item = EnrollmentRequest(
         id=str(uuid4()),
         owner_principal_id=identity.principal.id,
@@ -216,6 +295,7 @@ async def create_enrollment(
         status="PENDING_REVIEW",
         expires_at=utc_now() + timedelta(hours=request.app.state.settings.enrollment_ttl_hours),
     )
+    apply_terminal_metadata(item, body.metadata, client_public_ip(request))
     session.add(item)
     record_audit(
         session,
@@ -456,6 +536,9 @@ async def complete_enrollment(
         reported_version=item.version,
         reported_os=item.os,
         reported_arch=item.arch,
+        hostname=item.hostname,
+        mac_addresses=item.mac_addresses,
+        public_ip=client_public_ip(request),
     )
     credential = MachineCredential(
         id=credential_id,
@@ -591,6 +674,7 @@ async def heartbeat(
         item.last_heartbeat_at = received_at
         item.last_heartbeat_event_id = body.event_id
         item.reported_version = body.workbench_version
+        apply_terminal_metadata(item, body.metadata, client_public_ip(request))
     if first:
         item.first_heartbeat_at = received_at
         record_audit(
@@ -774,3 +858,169 @@ async def revoke_workbench(
     session.commit()
     logger.info("workbench revoked", extra={"trace_id": request.state.trace_id, "actor_id": identity.principal.id, "workbench_id": item.id})
     return workbench_json(item, session, request.app.state.settings.heartbeat_offline_seconds)
+
+
+def roster_install_status(
+    instance: WorkbenchInstance | None,
+    enrollment: EnrollmentRequest | None,
+    offline_seconds: int,
+    now: datetime,
+) -> str:
+    if instance is not None and instance.status == "ACTIVE":
+        online = (
+            instance.last_heartbeat_at is not None
+            and now - aware(instance.last_heartbeat_at) <= timedelta(seconds=offline_seconds)
+        )
+        return "ONLINE" if online else "OFFLINE"
+    if enrollment is not None:
+        if enrollment.status in ("PENDING_REVIEW", "APPROVED"):
+            return "PENDING"
+        if enrollment.status == "REJECTED":
+            return "REJECTED"
+    return "NOT_INSTALLED"
+
+
+def roster_row(
+    principal: IamPrincipal,
+    instance: WorkbenchInstance | None,
+    enrollment: EnrollmentRequest | None,
+    session: Session,
+    offline_seconds: int,
+) -> dict:
+    now = utc_now()
+    owner_name, org_path_str, org_nodes = owner_org_context(session, principal)
+    status = roster_install_status(instance, enrollment, offline_seconds, now)
+    meta_source = instance if instance is not None else enrollment
+    row = {
+        "kind": "roster",
+        "id": instance.id if instance is not None else (enrollment.id if enrollment is not None else None),
+        "enrollment_id": enrollment.id if enrollment is not None else None,
+        "principal_id": principal.id,
+        "owner_principal_id": principal.id,
+        "owner_display_name": owner_name,
+        "username": principal.username,
+        "email": principal.email,
+        "org_path": org_path_str,
+        "org_path_nodes": org_nodes,
+        "department_id": principal.department_id,
+        "team_id": principal.team_id,
+        "install_status": status,
+        "connection_status": status,
+        "status": status,
+        "display_name": (
+            instance.display_name if instance is not None
+            else (enrollment.display_name if enrollment is not None else None)
+        ),
+        "installation_id": (
+            instance.installation_id if instance is not None
+            else (enrollment.installation_id if enrollment is not None else None)
+        ),
+        "reported_version": (
+            instance.reported_version if instance is not None
+            else (enrollment.version if enrollment is not None else None)
+        ),
+        "reported_os": (
+            instance.reported_os if instance is not None
+            else (enrollment.os if enrollment is not None else None)
+        ),
+        "reported_arch": (
+            instance.reported_arch if instance is not None
+            else (enrollment.arch if enrollment is not None else None)
+        ),
+        "first_heartbeat_at": instance.first_heartbeat_at if instance is not None else None,
+        "last_heartbeat_at": instance.last_heartbeat_at if instance is not None else None,
+        "created_at": (
+            instance.created_at if instance is not None
+            else (enrollment.created_at if enrollment is not None else None)
+        ),
+        "review_reason": enrollment.review_reason if enrollment is not None else None,
+    }
+    if meta_source is not None:
+        row.update(terminal_metadata_dict(meta_source))
+    else:
+        row.update({"hostname": None, "mac_address": None, "ip_address": None})
+    return row
+
+
+@router.get("/api/v1/terminal-roster")
+async def terminal_roster(
+    request: Request,
+    scope: str = Query(default="me", pattern="^(me|team)$"),
+    q: str = Query(default="", max_length=100),
+    org_id: str | None = Query(default=None, max_length=64),
+    offset: int = Query(default=0, ge=0, le=10000),
+    limit: int = Query(default=20, ge=1, le=100),
+    identity: AuthenticatedPrincipal = Depends(get_current_principal),
+    session: Session = Depends(get_session),
+) -> PaginatedResponse:
+    require_permission(identity, "workbench.read")
+    if scope == "team":
+        require_permission(identity, "workbench.team.read")
+
+    people = select(IamPrincipal).where(IamPrincipal.status == "ACTIVE")
+    if scope == "me":
+        people = people.where(IamPrincipal.id == identity.principal.id)
+    else:
+        visible = visible_org_ids(session, identity, "workbench.team.read")
+        if visible is not None:
+            if not visible:
+                return PaginatedResponse(items=[], total=0, offset=offset, limit=limit)
+            people = people.where(IamPrincipal.primary_org_id.in_(visible))
+        elif not has_global_permission(identity, "workbench.team.read"):
+            people = people.where(IamPrincipal.domain_id == identity.principal.domain_id)
+
+    keyword = q.strip()
+    if keyword:
+        like = f"%{keyword}%"
+        matching_org_ids = (
+            select(IamOrgClosure.descendant_id)
+            .join(IamOrgNode, IamOrgNode.id == IamOrgClosure.ancestor_id)
+            .where(IamOrgNode.name.ilike(like))
+        )
+        people = people.where(
+            or_(
+                IamPrincipal.username.ilike(like),
+                IamPrincipal.display_name.ilike(like),
+                IamPrincipal.primary_org_id.in_(matching_org_ids),
+            )
+        )
+    selected_org_ids = scoped_descendant_org_ids(session, {org_id}) if org_id else None
+    if selected_org_ids:
+        people = people.where(IamPrincipal.primary_org_id.in_(selected_org_ids))
+
+    total = session.scalar(select(func.count()).select_from(people.subquery()))
+    principals = session.scalars(
+        people.order_by(IamPrincipal.display_name, IamPrincipal.username).offset(offset).limit(limit)
+    ).all()
+    principal_ids = [principal.id for principal in principals]
+
+    instances: dict[str, WorkbenchInstance] = {}
+    enrollments: dict[str, EnrollmentRequest] = {}
+    if principal_ids:
+        for inst in session.scalars(
+            select(WorkbenchInstance).where(
+                WorkbenchInstance.owner_principal_id.in_(principal_ids),
+                WorkbenchInstance.status == "ACTIVE",
+            )
+        ).all():
+            current = instances.get(inst.owner_principal_id)
+            inst_key = inst.last_heartbeat_at or inst.created_at
+            cur_key = (current.last_heartbeat_at or current.created_at) if current else None
+            if current is None or (inst_key and (cur_key is None or inst_key > cur_key)):
+                instances[inst.owner_principal_id] = inst
+        for enr in session.scalars(
+            select(EnrollmentRequest).where(
+                EnrollmentRequest.owner_principal_id.in_(principal_ids),
+                EnrollmentRequest.status.in_(["PENDING_REVIEW", "APPROVED", "REJECTED"]),
+            )
+        ).all():
+            current = enrollments.get(enr.owner_principal_id)
+            if current is None or enr.created_at > current.created_at:
+                enrollments[enr.owner_principal_id] = enr
+
+    offline_seconds = request.app.state.settings.heartbeat_offline_seconds
+    items = [
+        roster_row(principal, instances.get(principal.id), enrollments.get(principal.id), session, offline_seconds)
+        for principal in principals
+    ]
+    return PaginatedResponse(items=items, total=total or 0, offset=offset, limit=limit)

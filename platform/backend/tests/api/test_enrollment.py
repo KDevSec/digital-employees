@@ -8,7 +8,7 @@ from app.models import EnrollmentRequest
 from sqlalchemy import UniqueConstraint, func, select
 
 
-async def test_duplicate_enrollment_returns_original_request(
+async def test_duplicate_enrollment_supersedes_pending_and_creates_new(
     client: AsyncClient,
     employee_headers: dict[str, str],
     db_factory,
@@ -28,9 +28,15 @@ async def test_duplicate_enrollment_returns_original_request(
 
     assert first.status_code == 201
     assert second.status_code == 201
-    assert second.json()["id"] == first.json()["id"]
+    # 023/D1: 无 ACTIVE 终端实例时，重复提交作废旧申请并新建 PENDING_REVIEW。
+    assert second.json()["id"] != first.json()["id"]
+    assert second.json()["status"] == "PENDING_REVIEW"
     with db_factory() as session:
-        assert session.scalar(select(func.count()).select_from(EnrollmentRequest)) == 1
+        records = session.scalars(select(EnrollmentRequest)).all()
+        assert len(records) == 2
+        old = session.get(EnrollmentRequest, first.json()["id"])
+        assert old.status == "CANCELLED"
+        assert len([r for r in records if r.status == "PENDING_REVIEW"]) == 1
 
 
 def test_enrollment_identity_is_protected_by_database_unique_constraint() -> None:
@@ -132,6 +138,26 @@ async def test_real_key_enrollment_heartbeat_and_revocation(
     )
     assert heartbeat.status_code == 200, heartbeat.text
     assert heartbeat.json()["connection_status"] == "ONLINE"
+
+    # 024：心跳随报精简元数据（主机名/主MAC），平台刷新并以观测 IP 为单值 IP
+    heartbeat2 = await client.post(
+        f"/api/v1/workbenches/{workbench_id}/heartbeat",
+        headers=machine_headers,
+        json={
+            "event_id": str(uuid.uuid4()),
+            "reported_at": now.isoformat(),
+            "workbench_version": "2.0.0",
+            "metadata": {"hostname": "renamed-host", "mac_address": "de:ad:be:ef:00:02"},
+        },
+    )
+    assert heartbeat2.status_code == 200, heartbeat2.text
+    roster = await client.get("/api/v1/terminal-roster?scope=me", headers=employee_headers)
+    assert roster.status_code == 200
+    mine = roster.json()["items"][0]
+    assert mine["hostname"] == "renamed-host"
+    assert mine["mac_address"] == "de:ad:be:ef:00:02"
+    assert mine["reported_version"] == "2.0.0"
+    assert mine["ip_address"]  # 平台观测值（测试传输层为 testclient 占位）
 
     own = await client.get("/api/v1/workbenches", headers=employee_headers)
     assert own.status_code == 200

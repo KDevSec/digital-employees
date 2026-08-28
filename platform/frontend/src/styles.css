@@ -113,3 +113,23 @@ td small { color: var(--muted); }
   .app-main { margin-left: 0; }
   .workspace { padding: 20px 12px 50px; }
 }
+
+/* Terminal management (021) */
+.button.warning { color: #9a5a07; border-color: #f0d6a8; background: #fff2d8; }
+.button.ghost { border-color: transparent; background: transparent; }
+.badge.muted { background: #eef0f2; color: #6b7280; }
+.muted-text { color: #9aa4a2; }
+tr.clickable { cursor: pointer; }
+.page-actions { display: flex; align-items: center; gap: 10px; }
+.empty-state { padding: 40px; text-align: center; }
+.empty-state h2 { margin-bottom: 8px; }
+.drawer-overlay { position: fixed; inset: 0; background: rgba(15, 23, 22, 0.35); display: flex; justify-content: flex-end; z-index: 60; }
+.drawer { width: min(480px, 92vw); height: 100%; background: #fff; box-shadow: -12px 0 32px rgba(15, 23, 22, 0.18); display: flex; flex-direction: column; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.drawer-head h2 { margin: 0; font-size: 18px; }
+.drawer-body { padding: 18px 22px; overflow-y: auto; }
+.drawer-section { margin-bottom: 22px; }
+.drawer-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #5b6b67; margin: 0 0 10px; }
+.drawer-section dl { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; margin: 0; }
+.drawer-section dt { color: #7a8582; font-size: 13px; }
+.drawer-section dd { margin: 0; word-break: break-word; }

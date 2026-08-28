@@ -14,6 +14,7 @@ describe('navigationForPermissions', () => {
     const tree = navigationForPermissions(
       [
         'workbench.read',
+        'workbench.team.read',
         'workbench.enrollment.review',
         'audit.read',
         'package.manage',
@@ -26,8 +27,9 @@ describe('navigationForPermissions', () => {
 
     expect(flatPaths(tree)).toEqual([
       '/app/overview',
-      '/app/workbenches',
-      '/app/enrollments',
+      '/app/terminals/me',
+      '/app/terminals/team',
+      '/app/terminals/enrollments',
       '/app/packages',
       '/app/audit',
       '/app/system-logs',
@@ -40,6 +42,6 @@ describe('navigationForPermissions', () => {
   it('shows only overview and own workbenches to an employee', () => {
     expect(
       flatPaths(navigationForPermissions(['workbench.read', 'workbench.enroll'], t)),
-    ).toEqual(['/app/overview', '/app/workbenches', '/app/feedback'])
+    ).toEqual(['/app/overview', '/app/terminals/me', '/app/feedback'])
   })
 })

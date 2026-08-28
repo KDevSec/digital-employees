@@ -25,8 +25,11 @@ export class EnrollmentService {
   async submitEnrollmentIfNeeded(
     person: PersonCredential,
     state: WorkbenchState,
+    force = false,
   ): Promise<{ id: string; status: string } | undefined> {
-    if (state.enrollmentId && !['REJECTED', 'ERROR'].includes(state.status)) {
+    // 023：force=true（用户显式「提交/重新提交」）跳过「拉取现有」，直接重新 POST——
+    // 后端会作废旧申请并按当前身份（含最新组织）重建 PENDING，供新管理员可见审批。
+    if (!force && state.enrollmentId && !['REJECTED', 'ERROR'].includes(state.status)) {
       try {
         const existing = await this.deps.platform.enrollment(state.enrollmentId, person.accessToken)
         // 修复（验收阻塞，2026-08-26）：申请表终态 COMPLETED ≠ 实例未激活——已换得 workbenchId

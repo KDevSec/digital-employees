@@ -1,20 +1,20 @@
 /**
  * bases 域路由（设计 §10；探测 CmdRunner 注入——生产装配 main.ts 包装 spawn，测试桩）。
- * - 在场探测走 30min TTL 缓存（~/.devzero/bases/<base>.json，Task 11）；手动刷新端点旁路缓存强探测；
- * - POST /api/bases/probe：带 {base} → 单结果对象；空 body 合法（缺省 = 三底座全刷数组）；
- * - GET /api/bases/:id/models：registry 是静态表无参数路由——path 声明用 :id 占位字面量，
- *   handler 内 ctx.path 切段取底座 id（/api/bases/<id>/models 的倒数第二段）；
+ * - GET /api/bases/:id/models：CLI 真列表（未登录 403 / 失败 502）；
  * - GET/PUT /api/bases/:id/tiers：底座全局五档（空串 = 跟随 CLI 默认）；
- * - POST /api/bases/:id/install：登记名单 npm -g，同步+日志，成功后再 probe（D-bb01）。
+ * - GET/PUT /api/bases/:id/tier-config：D-062 内置默认 + 用户覆盖（任务发起消费）；
+ * - POST /api/bases/:id/install：登记名单 npm -g，同步+日志，成功后再 probe。
  */
 import { join } from 'node:path'
 import { z } from 'zod'
 import { listModelsFor } from '../../adapters/common/models'
+import { TIER_ORDER, type TierName } from '../../adapters/common/tier-map'
 import type { BaseId } from '../../adapters/contract'
 import { baseProfiles } from '../../adapters/index'
 import { readCache as readBaseCache, writeCache as writeBaseCache } from '../../bases/cache'
 import { NPM_INSTALL_TIMEOUT_MS, REGISTERED_NPM } from '../../bases/npm-packages'
 import { assertVersion, probeBase, type CmdRunner } from '../../bases/probe'
+import { resolveTierConfig, saveTierConfig } from '../../bases/tier-config'
 import { readTierMap, writeTierMap } from '../../bases/tier-map-store'
 import { createDeploymentRegistry } from '../../installs/registry/registry'
 import type { Res, RouteRegistry } from '../registry'
@@ -30,30 +30,32 @@ const tierMapSchema = z
     执行档: z.string(),
   })
   .strict()
+/** PUT tier-config：五档齐全且值非空（D-062） */
+const tierConfigSchema = z.object({
+  tiers: z.record(z.string()).refine(
+    (t) => TIER_ORDER.every((k) => typeof t[k] === 'string' && t[k].length > 0),
+    { message: '五档映射必须齐全且值非空' },
+  ),
+}).strict()
 
 export interface BasesRouteDeps {
-  /** 探测缓存目录（~/.devzero/bases/；文件名 <base>.json） */
   cacheDir: string
-  /** 命令执行注入（生产 = spawn 包装；测试 = 桩） */
   run: CmdRunner
-  /** Deployment 台账文件（卡片 employees_count / last_install_at 数据源） */
   registryFile: string
+  tierConfigFile: string
 }
 
-/** 底座卡片（GET /api/bases 响应元素，设计 §10） */
 interface BaseCard {
   id: BaseId
   label: string
   present: boolean
   version: string | null
   version_tested: string
-  /** 在场时的版本区间断言结论；不在场为 null（无从断言） */
   supported: boolean | null
   employees_count: number
   last_install_at: string | null
 }
 
-/** 探测结果卡片（POST /api/bases/probe：单底座为对象、缺省全刷为数组） */
 interface ProbeCard {
   base: BaseId
   present: boolean
@@ -62,7 +64,6 @@ interface ProbeCard {
   supported: boolean
 }
 
-/** 在场性（缓存优先；force=true 旁路缓存强探测并回写——手动刷新语义） */
 async function presenceOf(base: BaseId, deps: BasesRouteDeps, force: boolean) {
   const cacheFile = join(deps.cacheDir, `${base}.json`)
   if (!force) {
@@ -76,6 +77,11 @@ async function presenceOf(base: BaseId, deps: BasesRouteDeps, force: boolean) {
 
 function err(status: number, code: string, message: string): Res {
   return { status, json: { error: { code, message } } }
+}
+
+function baseIdFromPath(path: string): BaseId | null {
+  const id = path.split('/').slice(-2, -1)[0] as BaseId
+  return id in baseProfiles ? id : null
 }
 
 export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): void {
@@ -100,10 +106,10 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
   })
 
   reg.post('/api/bases/probe', async (ctx): Promise<Res> => {
-    const parsed = probeSchema.safeParse(ctx.body ?? {}) // 空 body 合法（缺省 = 全刷）
+    const parsed = probeSchema.safeParse(ctx.body ?? {})
     if (!parsed.success) return err(400, 'INVALID_REQUEST', '请求体不合法')
     const toCard = async (base: BaseId): Promise<ProbeCard> => {
-      const p = await presenceOf(base, deps, true) // 手动刷新：缓存旁路
+      const p = await presenceOf(base, deps, true)
       return { base, ...p, supported: assertVersion(baseProfiles[base], p).ok }
     }
     if (parsed.data.base) return { status: 200, json: await toCard(parsed.data.base) }
@@ -113,9 +119,8 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
   })
 
   reg.get('/api/bases/:id/models', async (ctx): Promise<Res> => {
-    // 静态表哲学（无参数路由）：path 声明用 :id 占位，handler 内 ctx.path 切段取底座 id（倒数第二段）
-    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
-    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
     const result = await listModelsFor(id, deps.run)
     if (!result.ok) {
       const status = result.code === 'NOT_LOGGED_IN' ? 403 : 502
@@ -125,8 +130,8 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
   })
 
   reg.post('/api/bases/:id/install', async (ctx): Promise<Res> => {
-    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
-    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
     const pkg = REGISTERED_NPM[id]
     if (!pkg) return err(404, 'INSTALL_NOT_REGISTERED', `底座未登记安装：${id}`)
     const npm = await deps.run('npm', ['install', '-g', pkg], { timeoutMs: NPM_INSTALL_TIMEOUT_MS })
@@ -142,16 +147,35 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
   })
 
   reg.get('/api/bases/:id/tiers', async (ctx): Promise<Res> => {
-    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
-    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
     return { status: 200, json: readTierMap(deps.cacheDir, id) }
   })
 
   reg.put('/api/bases/:id/tiers', async (ctx): Promise<Res> => {
-    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
-    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
     const parsed = tierMapSchema.safeParse(ctx.body ?? {})
     if (!parsed.success) return err(400, 'INVALID_REQUEST', '请求体不合法')
     return { status: 200, json: writeTierMap(deps.cacheDir, id, parsed.data) }
+  })
+
+  reg.get('/api/bases/:id/tier-config', async (ctx): Promise<Res> => {
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
+    try {
+      return { status: 200, json: resolveTierConfig(deps.tierConfigFile, id) }
+    } catch (e) {
+      return err(500, 'TIER_CONFIG_INVALID', e instanceof Error ? e.message : String(e))
+    }
+  })
+
+  reg.put('/api/bases/:id/tier-config', async (ctx): Promise<Res> => {
+    const id = baseIdFromPath(ctx.path)
+    if (!id) return err(404, 'BASE_NOT_FOUND', `未知底座：${ctx.path}`)
+    const parsed = tierConfigSchema.safeParse(ctx.body ?? {})
+    if (!parsed.success) return err(400, 'INVALID_REQUEST', parsed.error.issues[0]?.message ?? '请求体不合法')
+    saveTierConfig(deps.tierConfigFile, id, parsed.data.tiers as Record<TierName, string>)
+    return { status: 200, json: resolveTierConfig(deps.tierConfigFile, id) }
   })
 }

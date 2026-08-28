@@ -7,6 +7,8 @@ import { EncryptedJsonStore } from './encrypted-store'
 
 export interface PersonSession {
   accessToken: string
+  /** OIDC id_token 原文（023：RP 登出 id_token_hint 用） */
+  idToken?: string
   claims: Record<string, unknown>
   /** 毫秒时刻戳；过期即失效 */
   expiresAt: number

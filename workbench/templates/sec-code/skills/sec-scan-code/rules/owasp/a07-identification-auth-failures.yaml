@@ -1,0 +1,23 @@
+rule_id: A07-IDENTIFICATION-AND-AUTHENTICATION-FAILURES
+name: Identification and Authentication Failures
+owasp: A07
+severity: CRITICAL
+priority: constitutional
+description: |
+  Confirmation of a user's identity, authentication, and session management
+  is critical to protect against authentication-related attacks. Weaknesses
+  exist if the application permits brute force, uses weak passwords, stores
+  them improperly, or has broken session management.
+categories:
+  - id: weak-password
+    name: Weak Password Policy
+    description: Insufficient password length or complexity requirements
+  - id: broken-session
+    name: Broken Session Management
+    description: Session data from request or insecure cookie settings
+  - id: credential-exposure
+    name: Credential Exposure
+    description: Passwords or tokens included in response or log output
+  - id: missing-mfa
+    name: Missing Multi-Factor Authentication
+    description: Login with only password, no MFA verification

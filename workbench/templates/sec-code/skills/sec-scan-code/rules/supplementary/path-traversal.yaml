@@ -1,0 +1,13 @@
+rule_id: PATH-TRAVERSAL
+name: Path Traversal
+owasp: null
+severity: HIGH
+priority: supplementary
+description: User input used in file paths without sanitization, enabling directory traversal
+categories:
+  - id: path-user-input
+    name: Path from User Input
+    description: File operation with user-controlled path
+  - id: path-concatenation
+    name: Path Concatenation
+    description: Path constructed with string concatenation from user input

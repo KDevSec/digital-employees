@@ -1,0 +1,7 @@
+# 宪法文件2：项目常见漏洞（大数据分析产出，最高优先级）
+# 此文件由 sec-scan-code --analyze 自动生成和更新
+# 首次使用时为空，扫描积累数据后自动填充
+version: "1.0.0"
+project: ""
+last_analyzed: null
+rules: []

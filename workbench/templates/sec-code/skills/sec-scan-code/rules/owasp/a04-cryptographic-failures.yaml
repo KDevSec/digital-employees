@@ -1,0 +1,26 @@
+rule_id: A04-CRYPTOGRAPHIC-FAILURES
+name: Cryptographic Failures
+owasp: A04
+severity: HIGH
+priority: constitutional
+description: |
+  Previously A02:2021. Focuses on failures related to cryptography which often
+  lead to exposure of sensitive data. This includes using weak algorithms,
+  hardcoded secrets, insecure random number generation, and transmitting data
+  without encryption.
+categories:
+  - id: weak-hash
+    name: Weak Hash Algorithm
+    description: Use of MD5/SHA1 for security-sensitive hashing
+  - id: hardcoded-secret
+    name: Hardcoded Secret
+    description: Passwords, API keys, or tokens hardcoded in source code
+  - id: insecure-random
+    name: Insecure Random Number Generator
+    description: Using non-cryptographic RNG for security contexts
+  - id: weak-encryption
+    name: Weak Encryption
+    description: Use of DES, Blowfish, RC4, or ECB mode
+  - id: plaintext-transmission
+    name: Plaintext Transmission
+    description: Sensitive data transmitted without encryption

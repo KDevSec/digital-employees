@@ -1,0 +1,10 @@
+rule_id: CSRF
+name: Cross-Site Request Forgery
+owasp: null
+severity: MEDIUM
+priority: supplementary
+description: Missing CSRF protection on state-changing requests
+categories:
+  - id: missing-csrf-token
+    name: Missing CSRF Token
+    description: State-changing request without CSRF token validation

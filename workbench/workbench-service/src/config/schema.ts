@@ -35,9 +35,19 @@ export const configSchema = z
     platform: z
       .object({
         baseUrl: platformBaseUrl,
+        // 内网自签证书试点开关（022）：true = 出站 HTTPS 跳过证书校验；默认 false（安全默认）。
+        insecureTls: z.boolean().default(false),
       })
       .strict()
-      .default({ baseUrl: '' }),
+      .default({ baseUrl: '', insecureTls: false }),
+    // 024：终端心跳间隔（秒）。配置文件可调（局域网规模/实时性权衡）；
+    // 范围 30–600，非法值由 loadConfig 回退默认 60。平台侧离线阈值在管理平台「设置-运行时」配置。
+    heartbeat: z
+      .object({
+        intervalSeconds: z.number().int().min(30).max(600).default(60),
+      })
+      .strict()
+      .default({ intervalSeconds: 60 }),
   })
   .strict()
 

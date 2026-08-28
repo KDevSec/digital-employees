@@ -12,6 +12,7 @@ import { HeartbeatScheduler } from './heartbeat'
 import { MachineTokenManager } from './machine-token'
 import { OidcFlowStore } from './oidc'
 import { PlatformClient } from './platform-client'
+import { collectTerminalMetadata } from './terminal-metadata'
 import { PlatformAccessService } from './service'
 import { SessionStore } from './session-store'
 import { WorkbenchStateStore } from './state-store'
@@ -36,6 +37,8 @@ export function createPlatformAccess(options: PlatformAccessOptions): PlatformAc
   const platform = new PlatformClient({
     getBaseUrl: () => options.loadConfig(options.profileDir).platform.baseUrl,
     version: options.version,
+    getInsecureTls: () => options.loadConfig(options.profileDir).platform.insecureTls,
+    collectMetadata: () => collectTerminalMetadata(),
   })
   const configCache = new PlatformConfigCache(authDir)
   const flows = new OidcFlowStore()
@@ -52,6 +55,12 @@ export function createPlatformAccess(options: PlatformAccessOptions): PlatformAc
     flows,
     enrollment,
   })
-  const scheduler = new HeartbeatScheduler({ stateStore, platform, machineTokens })
+  const scheduler = new HeartbeatScheduler({
+    stateStore,
+    platform,
+    machineTokens,
+    // 024：心跳间隔走配置（heartbeat.intervalSeconds，默认 60s）；每次排程时读取，改配置重启后生效
+    intervalMs: () => options.loadConfig(options.profileDir).heartbeat.intervalSeconds * 1000,
+  })
   return { service, scheduler }
 }

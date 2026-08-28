@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import AccessActions from './AccessActions.vue'
 import AccessStatusCard from './AccessStatusCard.vue'
 import PlatformConfigCard from './PlatformConfigCard.vue'
-import { enrollAction, heartbeatAction, logoutAction, resetAction } from '../../api/access'
+import { enrollAction, logoutAction, resetAction } from '../../api/access'
 import type { ActionResult } from '../../api/access'
 import { useSessionStore } from '../../stores/session'
 
@@ -76,10 +76,6 @@ function onEnroll(): void {
   void run(enrollAction)
 }
 
-function onHeartbeat(): void {
-  void run(heartbeatAction)
-}
-
 function onReset(): void {
   void run(resetAction)
 }
@@ -128,7 +124,6 @@ onBeforeUnmount(() => {
           <AccessActions
             :state="state"
             @enroll="onEnroll"
-            @heartbeat="onHeartbeat"
             @reset="onReset"
             @logout="onLogout"
           />

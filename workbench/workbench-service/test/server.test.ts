@@ -10,6 +10,11 @@ import { registerAllRoutes } from '../src/server/routes'
 import { createPlatformAccess } from '../src/app/platform-access'
 import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { brand } from '../src/brand'
+import { builtinTemplates } from '../src/assets/templates.gen'
+import { createTemplatesProvider } from '../src/templates/provider'
+import { createEmployeeStore } from '../src/employees/store'
+import { createEmployeeBuilder } from '../src/employees/builder'
+
 import { Engine } from '@devzero/engine'
 /** 编排域引擎夹具（L3 T6）：临时目录真实例——本文件断言不触达 engine 端点，行为在 routes-engine.test.ts */
 const engineRoot = mkdtempSync(join(tmpdir(), 'server-engine-'))
@@ -20,6 +25,13 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
   // 无 guard 时 toHonoApp 装配保险丝即炸）；temp profile 供 platform-access 落 auth 密钥。
   const profileDir = mkdtempSync(join(tmpdir(), 'wb-server-'))
   const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
+  // L1 员工域三域占位实例（本文件不触达该域端点，行为断言在 routes-templates/-employees/-skills.test.ts）
+  const store = createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp')
+  const builder = createEmployeeBuilder({
+    provider: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+    store,
+    tmpRoot: 'D:/data/.devzero/tmp',
+  })
   const registry = createRegistry()
   registerAllRoutes(registry, {
     version: '9.9.9',
@@ -32,6 +44,12 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     profileDir,
     loadConfig,
     writeConfigOverride,
+    // Task 7 B2 templates 域：真实 builtin 资产 + 占位 customRoot（本文件不触达该域端点，行为断言在 routes-templates.test.ts）
+    templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+    builder,
+    store,
+    // Task 12 C1 skills 域：tmpRoot 与 builder 同源（本文件不触达该域端点，行为断言在 routes-skills.test.ts）
+    tmpRoot: 'D:/data/.devzero/tmp',
     engine: new Engine({ dataDir: join(engineRoot, 'data'), templatesDir: join(engineRoot, 'flows') }),
     // I1 L2 安装线两域：占位值（本文件不触达该两域端点，行为断言在 routes-installs/routes-bases.test.ts）
     registryFile: 'D:/data/digital-staff/registry.json',
@@ -39,7 +57,8 @@ function buildApp(overrides: Partial<Parameters<typeof registerAllRoutes>[1]> = 
     authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
     probe: () => ({ present: false, version: null }),
     packageRoots: {},
-    cacheDir: 'D:/data/.devzero/bases',
+    employeesRoot: 'D:/data/.devzero/employees', // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
+    cacheDir: 'D:/data/.devzero/bases', tierConfigFile: 'D:/data/.devzero/bases/tier-config.json',
     run: async () => ({ code: 127, stdout: '' }),
     // A 系列认证三域（Task 15 起 service 切片 + guard 注入）
     service,

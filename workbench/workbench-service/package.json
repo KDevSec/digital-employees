@@ -6,7 +6,10 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "bash scripts/build.sh"
+    "build": "bash scripts/build.sh",
+    "gen:templates": "bun run scripts/gen-templates-assets.ts",
+    "pretest": "bun run gen:templates",
+    "prebuild": "bun run gen:templates"
   },
   "dependencies": {
     "hono": "^4",
@@ -16,11 +19,16 @@
     "@devzero/engine": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@hono/mcp": "^0.3.2",
-    "jose": "^6"
+    "jose": "^6",
+    "fflate": "^0.8",
+    "@devzero/shared-protocol": "workspace:*",
+    "js-yaml": "^4"
   },
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^2",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@playwright/test": "^1",
+    "@types/js-yaml": "^4"
   }
 }

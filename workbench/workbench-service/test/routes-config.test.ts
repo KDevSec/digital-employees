@@ -6,6 +6,7 @@ import { loadConfig, writeConfigOverride } from '../src/config/load'
 import { toHonoApp } from '../src/server/hono-adapter'
 import { createRegistry } from '../src/server/registry'
 import { registerConfigRoutes } from '../src/server/routes/config'
+import { applyTlsPolicy } from '../src/config/tls-policy'
 
 /**
  * config 域路由（I0-5 T8 + D-049）：GET/PUT /api/config/platform。
@@ -55,7 +56,7 @@ describe('GET /api/config/platform', () => {
   it('profile 无 config.json → 默认空串 + devEnvironment:true（D-049：未配置平台 = 开发环境）', async () => {
     const res = await buildApp().request('/api/config/platform')
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
+    expect(await res.json()).toEqual({ baseUrl: '', insecureTls: false, devEnvironment: true })
   })
 
   it('config.json 已带 platform.baseUrl → 返回当前值 + devEnvironment:false', async () => {
@@ -66,14 +67,14 @@ describe('GET /api/config/platform', () => {
     )
     const res = await buildApp().request('/api/config/platform')
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: 'http://192.168.1.5:18000', devEnvironment: false })
+    expect(await res.json()).toEqual({ baseUrl: 'http://192.168.1.5:18000', insecureTls: false, devEnvironment: false })
   })
 
   it('config.json 显式空串 → devEnvironment:true（清除配置的落盘形态与默认语义一致）', async () => {
     writeFileSync(join(profileDir, 'config.json'), JSON.stringify({ platform: { baseUrl: '' } }), 'utf8')
     const res = await buildApp().request('/api/config/platform')
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
+    expect(await res.json()).toEqual({ baseUrl: '', insecureTls: false, devEnvironment: true })
   })
 })
 
@@ -81,7 +82,7 @@ describe('PUT /api/config/platform', () => {
   it('合法 http URL → 200 回显新值 + devEnvironment:false；写入 config.json；后续 GET 立即反映（D-14：GET 每次重读文件）', async () => {
     const res = await put({ baseUrl: 'http://10.1.2.3:18000' })
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', devEnvironment: false })
+    expect(await res.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', insecureTls: false, devEnvironment: false })
 
     // 写入文件（D-13：只落覆盖键——首写即全量覆盖键）
     const onDisk = JSON.parse(readFileSync(join(profileDir, 'config.json'), 'utf8'))
@@ -89,7 +90,7 @@ describe('PUT /api/config/platform', () => {
 
     // 后续 GET 立即可见（handler 不缓存，每次 loadConfig 重读）
     const after = await buildApp().request('/api/config/platform')
-    expect(await after.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', devEnvironment: false })
+    expect(await after.json()).toEqual({ baseUrl: 'http://10.1.2.3:18000', insecureTls: false, devEnvironment: false })
   })
 
   it('空串 → 200 清除配置回开发环境（D-049）；落盘空串；后续 GET devEnvironment:true', async () => {
@@ -101,13 +102,13 @@ describe('PUT /api/config/platform', () => {
     )
     const res = await put({ baseUrl: '' })
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ baseUrl: '', devEnvironment: true })
+    expect(await res.json()).toEqual({ baseUrl: '', insecureTls: false, devEnvironment: true })
 
     const onDisk = JSON.parse(readFileSync(join(profileDir, 'config.json'), 'utf8'))
     expect(onDisk).toEqual({ platform: { baseUrl: '' } })
 
     const after = await buildApp().request('/api/config/platform')
-    expect(await after.json()).toEqual({ baseUrl: '', devEnvironment: true })
+    expect(await after.json()).toEqual({ baseUrl: '', insecureTls: false, devEnvironment: true })
   })
 
   it('合法 https URL 同样收（http/https 均过，D-14）', async () => {
@@ -163,7 +164,8 @@ describe('PUT /api/config/platform', () => {
     // 合并产物整体仍可通过 schema 校验（既有键未被破坏）
     expect(loadConfig(profileDir)).toEqual({
       network: { port: 1234 },
-      platform: { baseUrl: 'http://10.9.8.7:18000' },
+      platform: { baseUrl: 'http://10.9.8.7:18000', insecureTls: false },
+      heartbeat: { intervalSeconds: 60 },
     })
   })
 
@@ -171,5 +173,49 @@ describe('PUT /api/config/platform', () => {
     const res = await put({ baseUrl: 'http://10.1.1.1:18000' }, { Host: 'evil.com' })
     expect(res.status).toBe(403)
     expect(existsSync(join(profileDir, 'config.json'))).toBe(false)
+  })
+})
+
+
+describe('insecureTls 内网自签开关（022）', () => {
+  it('GET 默认 insecureTls:false', async () => {
+    const res = await buildApp().request('/api/config/platform')
+    expect((await res.json()).insecureTls).toBe(false)
+  })
+
+  it('PUT insecureTls:true → 回显 true、落盘、进程级跳过 TLS 校验生效', async () => {
+    const before = process.env.NODE_TLS_REJECT_UNAUTHORIZED
+    const res = await put({ baseUrl: 'https://192.168.153.128:18000/', insecureTls: true })
+    expect(res.status).toBe(200)
+    expect((await res.json()).insecureTls).toBe(true)
+    expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBe('0')
+
+    const onDisk = JSON.parse(readFileSync(join(profileDir, 'config.json'), 'utf8'))
+    expect(onDisk.platform.insecureTls).toBe(true)
+
+    // 显式关闭 → 恢复校验（删除 env）
+    await put({ baseUrl: 'https://192.168.153.128:18000/', insecureTls: false })
+    expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBeUndefined()
+    if (before !== undefined) process.env.NODE_TLS_REJECT_UNAUTHORIZED = before
+    else delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
+  })
+
+  it('PUT 仅传 baseUrl 时不覆盖既有 insecureTls（深合并保留）', async () => {
+    await put({ baseUrl: 'https://p:18000', insecureTls: true })
+    await put({ baseUrl: 'https://p2:18000' })
+    const res = await buildApp().request('/api/config/platform')
+    const json = await res.json()
+    expect(json.baseUrl).toBe('https://p2:18000')
+    expect(json.insecureTls).toBe(true)
+    delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
+  })
+})
+
+describe('applyTlsPolicy（022）', () => {
+  it('insecureTls true 设置 env=0；false 删除', () => {
+    applyTlsPolicy({ platform: { baseUrl: 'x', insecureTls: true } } as never)
+    expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBe('0')
+    applyTlsPolicy({ platform: { baseUrl: 'x', insecureTls: false } } as never)
+    expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBeUndefined()
   })
 })
