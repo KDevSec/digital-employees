@@ -174,3 +174,83 @@ describe('POST /api/bases/:id/install（D-bb01：登记名单 npm -g，同步+�
     expect(body.logs).toContain('npm ERR! network')
   })
 })
+
+describe('GET/PUT /api/bases/:id/tiers（底座全局档位，空=跟随 CLI 默认）', () => {
+  it('未配置 GET → 五档空串', async () => {
+    const res = await buildApp().request('/api/bases/qoder/tiers')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      评审安全档: '',
+      设计档: '',
+      探索档: '',
+      编码档: '',
+      执行档: '',
+    })
+  })
+
+  it('PUT 后 GET 读回；漂移 id 原样保留', async () => {
+    const app = buildApp()
+    const put = await app.request('/api/bases/codebuddy/tiers', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        评审安全档: '',
+        设计档: 'hy3',
+        探索档: '',
+        编码档: 'gone-id',
+        执行档: '',
+      }),
+    })
+    expect(put.status).toBe(200)
+    expect(await put.json()).toEqual({
+      评审安全档: '',
+      设计档: 'hy3',
+      探索档: '',
+      编码档: 'gone-id',
+      执行档: '',
+    })
+    const get = await app.request('/api/bases/codebuddy/tiers')
+    expect(await get.json()).toEqual({
+      评审安全档: '',
+      设计档: 'hy3',
+      探索档: '',
+      编码档: 'gone-id',
+      执行档: '',
+    })
+    const other = await app.request('/api/bases/qoder/tiers')
+    expect((await other.json() as { 编码档: string }).编码档).toBe('')
+  })
+
+  it('未知底座 → 404 BASE_NOT_FOUND', async () => {
+    const res = await buildApp().request('/api/bases/kimi/tiers')
+    expect(res.status).toBe(404)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('BASE_NOT_FOUND')
+  })
+
+  it('PUT 缺键 → 400 INVALID_REQUEST', async () => {
+    const res = await buildApp().request('/api/bases/qoder/tiers', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 编码档: 'auto' }),
+    })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('INVALID_REQUEST')
+  })
+
+  it('PUT 五档齐全但多一个键 → 400 INVALID_REQUEST', async () => {
+    const res = await buildApp().request('/api/bases/qoder/tiers', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        评审安全档: '',
+        设计档: '',
+        探索档: '',
+        编码档: 'auto',
+        执行档: '',
+        未知档: 'x',
+      }),
+    })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('INVALID_REQUEST')
+  })
+})

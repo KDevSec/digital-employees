@@ -1,5 +1,5 @@
 /**
- * 底座域 API（D-bb01）：卡片 / 刷新探测 / 真模型 / npm 安装。
+ * 底座域 API（D-bb01）：卡片 / 刷新探测 / 真模型 / npm 安装 / 全局档位表。
  * 手法沿 api/platform-config.ts：同源相对路径 + 超时 + 失败归一不抛。
  * 页面只展示 CB+Qoder（PAGE_BASE_IDS）；claude-code 适配器保留、本页过滤。
  */
@@ -22,6 +22,20 @@ export interface ModelInfo {
   id: string
   label: string
   tier?: string
+}
+
+export const TIER_ORDER = ['评审安全档', '设计档', '探索档', '编码档', '执行档'] as const
+export type TierName = (typeof TIER_ORDER)[number]
+export type BaseTierMap = Record<TierName, string>
+
+export function emptyTierMap(): BaseTierMap {
+  return {
+    评审安全档: '',
+    设计档: '',
+    探索档: '',
+    编码档: '',
+    执行档: '',
+  }
 }
 
 export type ModelsResult =
@@ -139,5 +153,43 @@ export async function installBase(id: string): Promise<InstallResult> {
     }
   } catch (error) {
     return { ok: false, code: 'FETCH_FAILED', message: error instanceof Error ? error.message : '安装失败' }
+  }
+}
+
+function parseTierMap(data: unknown): BaseTierMap | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null
+  const rec = data as Record<string, unknown>
+  const out = emptyTierMap()
+  for (const tier of TIER_ORDER) {
+    if (typeof rec[tier] !== 'string') return null
+    out[tier] = rec[tier]
+  }
+  return out
+}
+
+export async function fetchTierMap(id: string): Promise<BaseTierMap | null> {
+  try {
+    const res = await getJson(`/api/bases/${id}/tiers`, {}, LIST_TIMEOUT_MS)
+    if (!res.ok) return null
+    return parseTierMap(await res.json().catch(() => null))
+  } catch {
+    return null
+  }
+}
+
+export async function saveTierMap(id: string, map: BaseTierMap): Promise<boolean> {
+  try {
+    const res = await getJson(
+      `/api/bases/${id}/tiers`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(map),
+      },
+      LIST_TIMEOUT_MS,
+    )
+    return res.ok
+  } catch {
+    return false
   }
 }

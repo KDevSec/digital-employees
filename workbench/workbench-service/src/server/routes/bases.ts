@@ -4,6 +4,7 @@
  * - POST /api/bases/probe：带 {base} → 单结果对象；空 body 合法（缺省 = 三底座全刷数组）；
  * - GET /api/bases/:id/models：registry 是静态表无参数路由——path 声明用 :id 占位字面量，
  *   handler 内 ctx.path 切段取底座 id（/api/bases/<id>/models 的倒数第二段）；
+ * - GET/PUT /api/bases/:id/tiers：底座全局五档（空串 = 跟随 CLI 默认）；
  * - POST /api/bases/:id/install：登记名单 npm -g，同步+日志，成功后再 probe（D-bb01）。
  */
 import { join } from 'node:path'
@@ -14,11 +15,21 @@ import { baseProfiles } from '../../adapters/index'
 import { readCache as readBaseCache, writeCache as writeBaseCache } from '../../bases/cache'
 import { NPM_INSTALL_TIMEOUT_MS, REGISTERED_NPM } from '../../bases/npm-packages'
 import { assertVersion, probeBase, type CmdRunner } from '../../bases/probe'
+import { readTierMap, writeTierMap } from '../../bases/tier-map-store'
 import { createDeploymentRegistry } from '../../installs/registry/registry'
 import type { Res, RouteRegistry } from '../registry'
 
 const baseIdSchema = z.enum(['claude-code', 'codebuddy', 'qoder'])
 const probeSchema = z.object({ base: baseIdSchema.optional() }).strict()
+const tierMapSchema = z
+  .object({
+    评审安全档: z.string(),
+    设计档: z.string(),
+    探索档: z.string(),
+    编码档: z.string(),
+    执行档: z.string(),
+  })
+  .strict()
 
 export interface BasesRouteDeps {
   /** 探测缓存目录（~/.devzero/bases/；文件名 <base>.json） */
@@ -128,5 +139,19 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
     }
     const presence = await presenceOf(id, deps, true)
     return { status: 200, json: { logs, presence } }
+  })
+
+  reg.get('/api/bases/:id/tiers', async (ctx): Promise<Res> => {
+    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
+    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    return { status: 200, json: readTierMap(deps.cacheDir, id) }
+  })
+
+  reg.put('/api/bases/:id/tiers', async (ctx): Promise<Res> => {
+    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
+    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const parsed = tierMapSchema.safeParse(ctx.body ?? {})
+    if (!parsed.success) return err(400, 'INVALID_REQUEST', '请求体不合法')
+    return { status: 200, json: writeTierMap(deps.cacheDir, id, parsed.data) }
   })
 }

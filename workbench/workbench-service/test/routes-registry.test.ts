@@ -29,7 +29,7 @@ const profileDir = mkdtempSync(join(tmpdir(), 'wb-registry-'))
 const { service } = createPlatformAccess({ profileDir, loadConfig, installationId: 'uid-abc', version: '9.9.9' })
 
 /** 域注册依赖：infra 五项 + shell 一项 + config 三项 + A 系列 platform-access（Task 15 起 service 切片）
- *  + engine 一项（L3 T6）+ installs 五项 + bases 三项（I1 L2 安装线）——与 main 装配同形状，值非契约 */
+ *  + engine 一项（L3 T6）+ installs 五项 + bases 六项（I1 L2 + 档位表）——与 main 装配同形状，值非契约 */
 const deps = {
   version: '9.9.9',
   pid: 4321,
@@ -60,7 +60,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 4（D-bb01））', () => {
+  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 6（D-bb01 + 档位表））', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -68,6 +68,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/activity'],
       ['GET', '/api/bases'],
       ['GET', '/api/bases/:id/models'],
+      ['GET', '/api/bases/:id/tiers'],
       ['GET', '/api/config/platform'],
       ['GET', '/api/deployments'],
       ['GET', '/api/engine/flows'],
@@ -101,6 +102,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/progress'],
       ['POST', '/api/reset'],
       ['POST', '/api/uninstall'],
+      ['PUT', '/api/bases/:id/tiers'],
       ['PUT', '/api/config/platform'],
     ])
   })

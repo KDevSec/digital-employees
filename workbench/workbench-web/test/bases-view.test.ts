@@ -5,6 +5,7 @@ import {
   canPreview,
   modelLine,
   statusBadge,
+  tierSelectOptions,
   visibleCards,
 } from '../src/views/bases-logic'
 
@@ -52,5 +53,33 @@ describe('addTargets', () => {
   it('添加名单 = 登记且未在场（本期缺的那张）', () => {
     const targets = addTargets(visibleCards(remote))
     expect(targets.map((c) => c.id)).toEqual(['codebuddy'])
+  })
+})
+
+describe('tierSelectOptions（空=跟随底座默认；漂移 id 保留并标注）', () => {
+  const models = [{ id: 'auto', label: 'auto' }, { id: 'hy3', label: 'hy3' }]
+
+  it('空值只有跟随底座默认 + 当前名单', () => {
+    expect(tierSelectOptions('', models)).toEqual([
+      { value: '', label: '跟随底座默认' },
+      { value: 'auto', label: 'auto' },
+      { value: 'hy3', label: 'hy3' },
+    ])
+  })
+
+  it('已存 id 不在名单 → 保留并标不在当前列表，不静默丢掉', () => {
+    expect(tierSelectOptions('gone-id', models)).toEqual([
+      { value: '', label: '跟随底座默认' },
+      { value: 'gone-id', label: 'gone-id（不在当前列表）' },
+      { value: 'auto', label: 'auto' },
+      { value: 'hy3', label: 'hy3' },
+    ])
+  })
+
+  it('名单空仍保留已存 id', () => {
+    expect(tierSelectOptions('hy3', [])).toEqual([
+      { value: '', label: '跟随底座默认' },
+      { value: 'hy3', label: 'hy3（不在当前列表）' },
+    ])
   })
 })

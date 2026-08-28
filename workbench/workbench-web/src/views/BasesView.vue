@@ -2,17 +2,24 @@
 /**
  * 底座与环境页（D-bb01）：V0.1 只展示 CodeBuddy + Qoder 两张卡（始终在，含未安装）。
  * 不展示员工数；模型走 CLI 探测（未登录 =「登录后可见」）；安装双入口走 POST /api/bases/:id/install。
+ * 五档全局默认：探测列表里选，空 = 跟随 CLI 默认；任务表单可覆盖、默认跟这里。
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   PAGE_BASE_IDS,
+  TIER_ORDER,
+  emptyTierMap,
   fetchBases,
   fetchModels,
+  fetchTierMap,
   installBase,
   probeBases,
+  saveTierMap,
   type BaseCard,
+  type BaseTierMap,
   type ModelsResult,
   type PageBaseId,
+  type TierName,
 } from '../api/bases'
 import {
   PAGE_SEED,
@@ -21,16 +28,21 @@ import {
   emptyCard,
   modelLine,
   statusBadge,
+  tierSelectOptions,
   visibleCards,
 } from './bases-logic'
 
 const cards = ref<BaseCard[]>(PAGE_BASE_IDS.map(emptyCard))
 const models = reactive<Record<string, ModelsResult | undefined>>({})
+const tiers = reactive<Record<string, BaseTierMap>>(
+  Object.fromEntries(PAGE_BASE_IDS.map((id) => [id, emptyTierMap()])),
+)
 const installing = ref<string | null>(null)
 const installLogs = ref('')
 const addOpen = ref(false)
 const previewId = ref<string | null>(null)
 const probing = ref(false)
+const tierSaveError = ref('')
 
 const addList = computed(() => pickAddTargets(cards.value))
 const previewCard = computed(() => cards.value.find((c) => c.id === previewId.value) ?? null)
@@ -38,6 +50,15 @@ const previewModels = computed(() => {
   const r = previewId.value ? models[previewId.value] : undefined
   return r?.ok ? r.models : []
 })
+
+function modelsOf(id: string) {
+  const r = models[id]
+  return r?.ok ? r.models : []
+}
+
+function selectedTier(id: string, tier: TierName): string {
+  return (tiers[id] ?? emptyTierMap())[tier]
+}
 
 async function loadModels(id: string, present: boolean): Promise<void> {
   if (!present) {
@@ -47,6 +68,10 @@ async function loadModels(id: string, present: boolean): Promise<void> {
   models[id] = await fetchModels(id)
 }
 
+async function loadTiers(id: string): Promise<void> {
+  tiers[id] = (await fetchTierMap(id)) ?? emptyTierMap()
+}
+
 async function loadAll(forceProbe: boolean): Promise<void> {
   if (forceProbe) {
     probing.value = true
@@ -54,11 +79,23 @@ async function loadAll(forceProbe: boolean): Promise<void> {
     probing.value = false
   }
   cards.value = visibleCards(await fetchBases())
-  await Promise.all(cards.value.map((c) => loadModels(c.id, c.present)))
+  await Promise.all(cards.value.map(async (c) => {
+    await loadModels(c.id, c.present)
+    await loadTiers(c.id)
+  }))
 }
 
 function seedOf(id: string) {
   return PAGE_SEED[id as PageBaseId]
+}
+
+async function onTierChange(id: string, tier: TierName, event: Event): Promise<void> {
+  const value = (event.target as HTMLSelectElement).value
+  const next = { ...(tiers[id] ?? emptyTierMap()), [tier]: value }
+  tiers[id] = next
+  tierSaveError.value = ''
+  const ok = await saveTierMap(id, next)
+  if (!ok) tierSaveError.value = '档位保存失败，请重试'
 }
 
 async function install(id: string): Promise<void> {
@@ -81,7 +118,7 @@ onMounted(() => {
     <header class="page-head">
       <div>
         <h1>底座与环境</h1>
-        <p class="sub">本机 CLI 探测与登记名单安装 · 不读配置目录</p>
+        <p class="sub">本机 CLI 探测与登记名单安装 · 五档全局默认，任务可覆盖</p>
       </div>
       <div class="head-actions">
         <button type="button" class="btn btn-ghost" :disabled="probing" @click="loadAll(true)">
@@ -114,6 +151,25 @@ onMounted(() => {
           >预览</button>
         </div>
 
+        <div class="tier-block">
+          <div class="tier-head">模型档位 · 全局默认，任务可覆盖</div>
+          <label v-for="tier in TIER_ORDER" :key="tier" class="tier-row">
+            <span>{{ tier }}</span>
+            <select
+              :value="selectedTier(card.id, tier)"
+              :data-base="card.id"
+              :data-tier="tier"
+              @change="onTierChange(card.id, tier, $event)"
+            >
+              <option
+                v-for="opt in tierSelectOptions(selectedTier(card.id, tier), modelsOf(card.id))"
+                :key="opt.value === '' ? '__empty' : opt.value"
+                :value="opt.value"
+              >{{ opt.label }}</option>
+            </select>
+          </label>
+        </div>
+
         <div class="host-foot">
           <span class="muted">{{ card.present ? 'CLI --version 在场' : '可从登记名单 npm 安装' }}</span>
           <button
@@ -128,6 +184,7 @@ onMounted(() => {
     </div>
 
     <pre v-if="installLogs" class="logs">{{ installLogs }}</pre>
+    <p v-if="tierSaveError" class="form-error">{{ tierSaveError }}</p>
 
     <div v-if="addOpen" class="modal-mask" data-panel="add" @click.self="addOpen = false">
       <div class="modal" role="dialog" aria-labelledby="add-title">
@@ -197,7 +254,7 @@ h1 {
 
 .host-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
@@ -281,6 +338,43 @@ h1 {
   align-items: center;
   gap: 8px;
   min-height: 28px;
+}
+
+.tier-block {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--g100);
+}
+
+.tier-head {
+  font-size: 11.5px;
+  color: var(--g500);
+  margin-bottom: 8px;
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: 7.5em 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  color: var(--g700);
+}
+
+.tier-row select {
+  width: 100%;
+  border: 1px solid var(--g300);
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #fff;
+}
+
+.form-error {
+  margin-top: 12px;
+  color: var(--red);
+  font-size: 13px;
 }
 
 .muted {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchBases, fetchModels, installBase, probeBases, modelSelectFromResult, shouldFetchCliModels, cliSelectAfterFetch } from '../src/api/bases'
+import { fetchBases, fetchModels, installBase, probeBases, fetchTierMap, saveTierMap, modelSelectFromResult, shouldFetchCliModels, cliSelectAfterFetch } from '../src/api/bases'
 
 /**
  * 底座 API（D-bb01）：GET /api/bases、POST probe、GET models、POST install。
@@ -155,6 +155,51 @@ describe('probeBases（POST /api/bases/probe）', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/bases/probe',
       expect.objectContaining({ method: 'POST' }),
+    )
+  })
+})
+
+describe('fetchTierMap / saveTierMap（GET/PUT /api/bases/:id/tiers）', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('GET 200 → 五档表', async () => {
+    const map = {
+      评审安全档: '',
+      设计档: 'hy3',
+      探索档: '',
+      编码档: 'gone-id',
+      执行档: '',
+    }
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(map)))
+    await expect(fetchTierMap('codebuddy')).resolves.toEqual(map)
+  })
+
+  it('GET 非 2xx / 网络异常 → null', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, { ok: false, status: 500 })))
+    await expect(fetchTierMap('qoder')).resolves.toBeNull()
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('down') }))
+    await expect(fetchTierMap('qoder')).resolves.toBeNull()
+  })
+
+  it('PUT 五档到 /api/bases/:id/tiers', async () => {
+    const map = {
+      评审安全档: '',
+      设计档: '',
+      探索档: '',
+      编码档: 'auto',
+      执行档: '',
+    }
+    const fetchMock = vi.fn(async () => jsonResponse(map))
+    vi.stubGlobal('fetch', fetchMock)
+    await expect(saveTierMap('qoder', map)).resolves.toBe(true)
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/bases/qoder/tiers',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify(map),
+      }),
     )
   })
 })

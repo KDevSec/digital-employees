@@ -1,4 +1,4 @@
-/** 底座页纯逻辑（D-bb01）：两张卡始终在、过滤 CC、未登录文案、添加名单。供 BasesView 与单测共用。 */
+/** 底座页纯逻辑（D-bb01）：两张卡始终在、过滤 CC、未登录文案、添加名单、档位下拉。供 BasesView 与单测共用。 */
 import { PAGE_BASE_IDS, type BaseCard, type ModelsResult, type PageBaseId } from '../api/bases'
 
 export const PAGE_SEED: Record<PageBaseId, { label: string; mark: string; icon: string }> = {
@@ -53,4 +53,17 @@ export function canPreview(modelsResult: ModelsResult | undefined): boolean {
 
 export function addTargets(cards: BaseCard[]): BaseCard[] {
   return cards.filter((c) => !c.present)
+}
+
+export function tierSelectOptions(
+  currentId: string,
+  models: { id: string; label: string }[],
+): { value: string; label: string }[] {
+  const options = [{ value: '', label: '跟随底座默认' }]
+  const ids = new Set(models.map((m) => m.id))
+  if (currentId && !ids.has(currentId)) {
+    options.push({ value: currentId, label: `${currentId}（不在当前列表）` })
+  }
+  for (const m of models) options.push({ value: m.id, label: m.label })
+  return options
 }
