@@ -119,7 +119,38 @@ describe('HeartbeatScheduler（A-05：demo 手动按钮 → 后台自动化）',
     await vi.advanceTimersByTimeAsync(4_000)   // 第 3 跳 ok → 下一跳 60s
     await settleUntil(() => delays.length >= 4) // 第 3 跳含 4 连 fs 写——收尾后 60s 定时器才注册
     expect(delays.slice(0, 3)).toEqual([0, 2_000, 4_000])
-    expect(delays[3]).toBe(60_000)
+    // 024：成功间隔走配置（默认 60s）±10% 抖动
+    expect(delays[3]).toBeGreaterThanOrEqual(54_000)
+    expect(delays[3]).toBeLessThanOrEqual(66_000)
+  })
+
+  it('024：intervalMs 注入生效（45s ±10% 抖动）；未注入回退 60s', async () => {
+    vi.useFakeTimers()
+    await activatedState()
+    const platform = {
+      discover: vi.fn(async () => ({ machine_token_endpoint: 'http://p/token' })),
+      heartbeat: vi.fn(async () => ({ received_at: '2026-08-27T01:00:00Z' })),
+      machineToken: vi.fn(async () => ({ accessToken: 'mt', expiresInSeconds: 300 })),
+    }
+    const delays: number[] = []
+    const originalSetTimeout = globalThis.setTimeout
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void, ms?: number) => {
+      delays.push(ms ?? 0)
+      return originalSetTimeout(fn, ms)
+    }) as typeof setTimeout)
+
+    const scheduler = new HeartbeatScheduler({
+      stateStore: store,
+      platform: platform as never,
+      machineTokens: new MachineTokenManager(),
+      intervalMs: () => 45_000,
+    })
+    scheduler.ensureRunning()
+    await settleUntil(() => delays.length >= 2)
+    await vi.advanceTimersByTimeAsync(45_000)
+    await settleUntil(() => delays.length >= 2)
+    expect(delays[1]).toBeGreaterThanOrEqual(40_500)
+    expect(delays[1]).toBeLessThanOrEqual(49_500)
   })
 
   it('ensureRunning 幂等且无 workbenchId 不起；stop 清定时器', async () => {

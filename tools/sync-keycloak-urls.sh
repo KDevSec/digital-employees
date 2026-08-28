@@ -55,9 +55,13 @@ update_client_urls platform-web "$platform_url/auth/callback" "$platform_url" "$
 # are fixed loopback values and must NOT use the server's PUBLIC_HOST.
 wb_id=$("$kcadm" get clients -r digital-employees -q "clientId=workbench-desktop" --fields id --format csv --noquotes | head -n 1 | tr -d '\r')
 if [ -n "$wb_id" ]; then
+  # 多值客户端属性必须用 Keycloak 的配置分隔符「##」连接存储（AbstractClientConfigWrapper：
+  # setAttributeMultivalued 以 String.join("##", ...) 落库，读取时 CFG_DELIMITER_PATTERN 拆分）；
+  # 空格分隔会被 kcadm/Keycloak 当作单个 URI 校验，报 "A post-logout redirect URI is not a valid URI"。
   "$kcadm" update "clients/$wb_id" -r digital-employees \
     -s 'redirectUris=["http://127.0.0.1:19980/auth/callback","http://localhost:19980/auth/callback"]' \
-    -s 'webOrigins=["http://127.0.0.1:19980","http://localhost:19980"]' >/dev/null
+    -s 'webOrigins=["http://127.0.0.1:19980","http://localhost:19980"]' \
+    -s 'attributes={"post.logout.redirect.uris":"http://127.0.0.1:19980/*##http://localhost:19980/*","pkce.code.challenge.method":"S256"}' >/dev/null
 fi
 
 # Existing realms are not re-imported, so keep the IAM service account's least-privilege

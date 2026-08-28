@@ -51,7 +51,7 @@ export function writeSample(profileDir: string): string {
  * type 别名（非 interface）：可隐式赋给 Record<string, unknown>（deepMerge 入参），interface 无索引签名会 TS2322。
  */
 export type ConfigOverrides = {
-  platform: { baseUrl: string }
+  platform: { baseUrl?: string; insecureTls?: boolean }
 }
 
 /**

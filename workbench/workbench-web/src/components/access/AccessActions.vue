@@ -11,7 +11,7 @@ import type { AccessState } from '../../api/access'
  */
 const props = defineProps<{ state: AccessState }>()
 
-const emit = defineEmits<{ enroll: []; heartbeat: []; reset: []; logout: [] }>()
+const emit = defineEmits<{ enroll: []; reset: []; logout: [] }>()
 
 function login(): void {
   window.location.href = '/auth/login'
@@ -22,15 +22,10 @@ function login(): void {
   <div class="actions">
     <button v-if="!props.state.authenticated" class="btn btn-primary" @click="login">登录</button>
     <button
-      v-if="props.state.authenticated && ['NEW', 'REJECTED', 'ERROR'].includes(props.state.status)"
+      v-if="props.state.authenticated && ['NEW', 'REJECTED', 'ERROR', 'PENDING_REVIEW', 'APPROVED'].includes(props.state.status)"
       class="btn btn-ghost"
       @click="emit('enroll')"
     >重新提交接入申请</button>
-    <button
-      v-if="props.state.authenticated && props.state.status === 'ACTIVE'"
-      class="btn btn-ghost"
-      @click="emit('heartbeat')"
-    >发送终端心跳</button>
     <button
       v-if="props.state.authenticated && ['REJECTED', 'ERROR'].includes(props.state.status)"
       class="btn btn-ghost btn-danger"

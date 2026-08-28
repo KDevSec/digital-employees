@@ -12,6 +12,7 @@ import type { ActionResult } from './access'
 /** /api/config/platform 的 GET 响应形状 */
 export interface PlatformConfig {
   baseUrl: string
+  insecureTls: boolean
 }
 
 /**
@@ -27,8 +28,9 @@ export async function fetchPlatformConfig(): Promise<PlatformConfig | null> {
     const data = (await res.json().catch(() => null)) as unknown
     if (typeof data !== 'object' || data === null) return null
     const raw = data as Record<string, unknown>
-    // baseUrl 非字符串 → 形状不对整包拒绝（外部对象不可信）
-    return typeof raw.baseUrl === 'string' ? { baseUrl: raw.baseUrl } : null
+    // baseUrl 非字符串 → 形状不对整包拒绝（外部对象不可信）；insecureTls 缺省按 false
+    if (typeof raw.baseUrl !== 'string') return null
+    return { baseUrl: raw.baseUrl, insecureTls: raw.insecureTls === true }
   } catch {
     return null
   } finally {
@@ -38,6 +40,7 @@ export async function fetchPlatformConfig(): Promise<PlatformConfig | null> {
 
 /**
  * 保存平台地址（PUT /api/config/platform，body { baseUrl }）。
+ * 024：TLS 校验开关不再由 UI 暴露（仅配置文件排障后手），前端只提交平台地址。
  * 成功文案「已保存」（区别于动作类「操作成功」——配置语义）；400 等失败透传服务端
  * error.message（INVALID_PLATFORM_URL 等校验消息），无 message 时回退 statusText。
  */

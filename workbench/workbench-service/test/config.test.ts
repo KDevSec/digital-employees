@@ -26,7 +26,8 @@ describe('loadConfig', () => {
   it('无文件 → 全默认', () => {
     expect(loadConfig(dir)).toEqual({
       network: { port: 19980 },
-      platform: { baseUrl: '' }, // D-049（2026-08-27）：默认未配置平台 = 开发环境（原 T8 默认 http://127.0.0.1:18000 废止）
+      platform: { baseUrl: '', insecureTls: false }, // D-049（2026-08-27）：默认未配置平台 = 开发环境（原 T8 默认 http://127.0.0.1:18000 废止）
+      heartbeat: { intervalSeconds: 60 }, // 024：心跳间隔默认 60s
     })
   })
 
@@ -36,7 +37,8 @@ describe('loadConfig', () => {
     expect(cfg.network.port).toBe(1234)
     expect(cfg).toEqual({
       network: { port: 1234 },
-      platform: { baseUrl: '' }, // 未写的键走默认（只写覆盖项语义不变；D-049 默认空 = 开发环境）
+      platform: { baseUrl: '', insecureTls: false }, // 未写的键走默认（只写覆盖项语义不变；D-049 默认空 = 开发环境）
+      heartbeat: { intervalSeconds: 60 },
     })
   })
 
@@ -52,6 +54,17 @@ describe('loadConfig', () => {
 
   it('port 超范围 → 抛 ZodError', () => {
     writeFileSync(join(dir, 'config.json'), JSON.stringify({ network: { port: 70000 } }), 'utf8')
+    expect(() => loadConfig(dir)).toThrow(ZodError)
+  })
+
+  it('024：heartbeat.intervalSeconds 生效；超范围/类型非法 → 抛 ZodError', () => {
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ heartbeat: { intervalSeconds: 45 } }), 'utf8')
+    expect(loadConfig(dir).heartbeat.intervalSeconds).toBe(45)
+
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ heartbeat: { intervalSeconds: 5 } }), 'utf8')
+    expect(() => loadConfig(dir)).toThrow(ZodError) // < 30
+
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ heartbeat: { intervalSeconds: 'soon' } }), 'utf8')
     expect(() => loadConfig(dir)).toThrow(ZodError)
   })
 

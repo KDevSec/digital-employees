@@ -35,8 +35,8 @@ const ALL_STATUSES: AccessStatus[] = [
 ]
 
 /**
- * 显隐期望表（显式枚举，非公式复算——demo L29 各按钮 hidden 条件取反）：
- * 登录 !authenticated；重提 authenticated 且 NEW/REJECTED/ERROR；心跳 authenticated 且 ACTIVE；
+ * 显隐期望表（显式枚举，非公式复算——demo L29 各按钮 hidden 条件取反；023/D2 扩展重提显隐）：
+ * 登录 !authenticated；重提 authenticated 且 NEW/PENDING_REVIEW/APPROVED/REJECTED/ERROR；心跳 authenticated 且 ACTIVE；
  * 重置 authenticated 且 REJECTED/ERROR；登出 authenticated。顺序 = demo 按钮出现顺序。
  */
 const EXPECTED: Record<string, string[]> = {
@@ -45,10 +45,11 @@ const EXPECTED: Record<string, string[]> = {
     ALL_STATUSES.map((status) => [`false:${status}`, ['登录']]),
   ),
   'true:NEW': ['重新提交接入申请', '退出登录'],
-  'true:PENDING_REVIEW': ['退出登录'],
-  'true:APPROVED': ['退出登录'],
+  // 023/D2：待审批/已批准待激活也展示「重新提交接入申请」（组织变动后重申入口）
+  'true:PENDING_REVIEW': ['重新提交接入申请', '退出登录'],
+  'true:APPROVED': ['重新提交接入申请', '退出登录'],
   'true:COMPLETED': ['退出登录'],
-  'true:ACTIVE': ['发送终端心跳', '退出登录'],
+  'true:ACTIVE': ['退出登录'], // 024：手动心跳按钮删除（后台 60s 调度为唯一驱动）
   'true:REJECTED': ['重新提交接入申请', '重置申请状态', '退出登录'],
   'true:REVOKED': ['退出登录'],
   'true:ERROR': ['重新提交接入申请', '重置申请状态', '退出登录'],
@@ -83,12 +84,6 @@ describe('AccessActions emit（动作事件交父组件处理）', () => {
     expect(wrapper.emitted('reset')![0]).toEqual([])
     expect(wrapper.emitted('logout')).toHaveLength(1)
     expect(wrapper.emitted('logout')![0]).toEqual([])
-  })
-
-  it('ACTIVE 登录态：心跳按钮 emit heartbeat', async () => {
-    const wrapper = mount(AccessActions, { props: { state: fixture({ status: 'ACTIVE' }) } })
-    await clickLabel(wrapper, '发送终端心跳')
-    expect(wrapper.emitted('heartbeat')).toHaveLength(1)
   })
 
   it('登录按钮不走 emit（整页跳转是组件内行为）', async () => {

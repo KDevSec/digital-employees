@@ -1,37 +1,27 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import AccessActions from '../components/access/AccessActions.vue'
-import AccessStatusCard from '../components/access/AccessStatusCard.vue'
 import PlatformConfigCard from '../components/access/PlatformConfigCard.vue'
 import {
   enrollAction,
   fetchAccessState,
-  heartbeatAction,
   logoutAction,
   progressAction,
   resetAction,
 } from '../api/access'
 import type { AccessState, ActionResult } from '../api/access'
-import { useHealthPolling } from '../composables/useHealthPolling'
 
 /**
- * 登录与接入页（I0-5 T2 立项：demo ui.ts 的 Vue 化归宿；T7 视觉蓝系化；T9 双形态重构 D-19/D-20）。
- * - 双形态分支（T9，state 驱动 template v-if）：
- *   · 未登录 = 居中单卡登录页（D-19）：logo 方块（同 SideNav 款蓝渐变+人形 SVG）+
- *     主标「研发零处数字员工终端」（T12/D-27；T13 起 DevZero 不作正式名称出现——CLAUDE.md §4）+ 引导语 + 整宽放大「登录」唯一主按钮 +
- *     卡底一行（左「平台设置 ▾」展开收纳 T8 配置卡 + 右服务状态·版本小字）。头部条在该
- *     形态下移除（页面更纯粹——登录卡自带品牌）；健康轮询逻辑保留，数据进卡底状态行；
- *   · 已登录 = 简化状态页（D-20）：安全边界卡删除（demo 时代开发者展示物）；头部条
- *     （品牌+健康徽章）保留；hero 简化为一行（h1 + sub 一句）；状态卡主位 + 平台配置卡
- *     次位（grid 单列，简洁优先）。
- * - 背景装饰（D-19）：--bg 底 + 左上/右下两团蓝渐变 radial 光斑（纯 CSS 无资源依赖），
- *   两形态共用（.access-page 一处声明）。
- * - 状态卡/动作区数据源 GET /api/state；审批中（authenticated 且 PENDING_REVIEW/APPROVED）
- *   每 5s POST /api/progress + 刷新（demo L31 节奏语义，onUnmounted/条件退出 clearInterval）；
- * - 服务健康徽章：useHealthPolling composable（2s 轮询）——已登录形态进头部条，
- *   未登录形态进卡底服务状态行；
- * - 「返回管理平台」链接不渲染（设计 G-5：Vue 侧无 platformPublicUrl 来源，A 系列定稿后补）。
+ * 登录与接入页（024 极简重构）：
+ * - 未登录 = 居中单卡登录页：品牌 logo + 名称 + 「登录」主按钮 + 卡底「平台设置 ▾」
+ *   （仅平台地址配置；TLS 开关不再暴露）。说明性文案与服务状态小字全部移除；
+ * - 已登录未激活 = 居中等待卡：仅「等待审批」类字样 + 拒绝原因 + 必要操作
+ *   （重新提交/重置/退出登录）。不展示任何终端标识/元数据/心跳信息——
+ *   避免终端使用者感知平台收集的信息（024 用户裁决）；
+ * - ACTIVE 不落地：轮询/刷新拿到 ACTIVE 即 router.push('/employees')（023）；
+ * - 审批中每 5s POST /api/progress + 刷新（onUnmounted/条件退出 clearInterval）。
  */
 
 /** 审批进度轮询间隔（demo ui.ts L31 的 5s） */
@@ -44,18 +34,38 @@ const loadFailed = ref(false)
 const message = ref('')
 /** 登录卡「平台设置 ▾」折叠区开合（D-19：T8 配置卡收纳进登录卡） */
 const configOpen = ref(false)
-const { badge, version } = useHealthPolling()
+const router = useRouter()
 
-/** 双形态分流（D-19/D-20）：authenticated 才进状态页；未登录/不可达（state null）一律登录卡 */
+/** 双形态分流：authenticated 才进等待卡；未登录/不可达（state null）一律登录卡 */
 const isLoggedIn = computed(() => state.value?.authenticated === true)
+
+/** 等待卡标题/说明（仅审批相关字样，不暴露任何终端元数据） */
+const pendingCopy = computed<{ title: string; detail: string }>(() => {
+  const status = state.value?.status
+  if (status === 'REJECTED') {
+    return { title: '接入申请未通过', detail: '管理员已拒绝本次接入申请，可修改后重新提交。' }
+  }
+  if (status === 'ERROR') {
+    return { title: '接入申请提交失败', detail: '提交过程中出现错误，可重新提交接入申请。' }
+  }
+  if (status === 'NEW') {
+    return { title: '正在提交接入申请', detail: '接入申请提交后需管理员审批，请稍候。' }
+  }
+  return { title: '接入申请审批中', detail: '您的接入申请已提交，等待管理员审批；审批通过后将自动进入工作台。' }
+})
 
 let progressTimer: ReturnType<typeof setInterval> | undefined
 
 async function refresh(): Promise<void> {
   const next = await fetchAccessState()
   if (next) {
+    const wasActive = state.value?.status === 'ACTIVE'
     state.value = next
     loadFailed.value = false
+    // 023：审批通过后轮询拿到 ACTIVE（此前非 ACTIVE）→ 自动进入终端工作台
+    if (!wasActive && next.authenticated && next.status === 'ACTIVE') {
+      void router.push('/employees')
+    }
   } else {
     loadFailed.value = true
   }
@@ -95,18 +105,21 @@ function onEnroll(): void {
   void run(enrollAction)
 }
 
-function onHeartbeat(): void {
-  void run(heartbeatAction)
-}
-
 function onReset(): void {
   void run(resetAction)
 }
 
-// demo 登出成功后 location.reload()；SPA 下 run() 成功路径已重拉 /api/state，
-// 等价回到未登录态渲染，不整页重载
-function onLogout(): void {
-  void run(logoutAction)
+// 023：退出登录——服务端清本地会话并返回 Keycloak end_session URL；
+// 有 URL 则整页跳转结束 Keycloak SSO（下次登录需重新输入账号密码），否则回退刷新本地态。
+async function onLogout(): Promise<void> {
+  message.value = '处理中…'
+  const result = await logoutAction()
+  if (result.oidcLogoutUrl) {
+    window.location.href = result.oidcLogoutUrl
+    return
+  }
+  message.value = result.message
+  if (result.ok) await refresh()
 }
 
 /**
@@ -120,7 +133,6 @@ function login(): void {
 
 onMounted(() => {
   void refresh()
-  // 健康徽章轮询（挂载即拉 + 2s 周期 + 卸载清理）在 useHealthPolling 内接管
 })
 
 onBeforeUnmount(() => {
@@ -129,48 +141,25 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="access-page" :class="{ 'login-mode': !isLoggedIn }">
-    <!-- 已登录形态：简化状态页（D-20）——头部条 + 一行 hero + 状态卡主位 + 配置卡次位 -->
-    <template v-if="isLoggedIn">
-      <header class="head">
+  <div class="access-page login-mode">
+    <!-- 已登录未激活（024 极简）：居中等待卡——仅审批相关字样 + 必要操作，不暴露任何终端元数据 -->
+    <main v-if="isLoggedIn" class="login-wrap">
+      <section class="card login-card">
         <div class="logo" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
-        <div class="brand">
-          <strong>研发零处数字员工终端</strong>
-          <small>企业登录与可信接入</small>
-        </div>
-        <div class="health">
-          <span class="tag" :class="badge.badgeClass === 'ok' ? 'tag-green' : 'tag-red'">{{ badge.badge }}</span>
-          <span class="version">{{ version }}</span>
-        </div>
-      </header>
-      <main class="page">
-        <!-- hero 简化为一行（D-20）：h1 + sub 一句，eyebrow/侧挂配置卡移除 -->
-        <section class="hero">
-          <h1>终端接入状态</h1>
-          <p class="sub">登录后将自动提交接入申请；审批通过并完成密钥证明后，才可以使用终端能力。</p>
-        </section>
-        <!-- 「返回管理平台」链接不渲染（设计 G-5：platformPublicUrl 无前端来源） -->
-        <div class="grid">
-          <!-- 状态卡主位（D-20） -->
-          <section class="card">
-            <h2>接入状态</h2>
-            <AccessStatusCard :state="state" />
-            <AccessActions
-              :state="state"
-              @enroll="onEnroll"
-              @heartbeat="onHeartbeat"
-              @reset="onReset"
-              @logout="onLogout"
-            />
-            <p class="muted">{{ message }}</p>
-          </section>
-          <!-- 平台配置卡次位（D-20：T8 卡从 hero 侧挂迁入） -->
-          <PlatformConfigCard />
-        </div>
-      </main>
-    </template>
+        <h1 class="brand-name">{{ pendingCopy.title }}</h1>
+        <p class="lead">{{ pendingCopy.detail }}</p>
+        <p v-if="state?.rejectionReason" class="reason">拒绝原因：{{ state.rejectionReason }}</p>
+        <AccessActions
+          :state="state"
+          @enroll="onEnroll"
+          @reset="onReset"
+          @logout="onLogout"
+        />
+        <p v-if="message" class="action-message">{{ message }}</p>
+      </section>
+    </main>
 
     <!-- 未登录形态：居中单卡登录页（D-19）——登录卡自带品牌，头部条移除 -->
     <main v-else class="login-wrap">
@@ -179,7 +168,6 @@ onBeforeUnmount(() => {
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a8 8 0 0 1 16 0v1" /></svg>
         </div>
         <h1 class="brand-name">研发零处数字员工终端</h1>
-        <p class="lead">使用企业账号登录以继续</p>
         <!-- 整宽放大主按钮（btn-primary：padding 12px / 字号 15px / 整宽） -->
         <button type="button" class="btn btn-primary btn-login" @click="login">登录</button>
         <!-- 首次拉取失败 → 卡内不可达提示（登录卡骨架仍在，不白屏） -->
@@ -188,13 +176,9 @@ onBeforeUnmount(() => {
         <div v-if="configOpen" class="config-drawer">
           <PlatformConfigCard />
         </div>
-        <!-- 卡底一行：左「平台设置 ▾」入口 + 右服务状态·版本小字（健康轮询数据进卡底） -->
+        <!-- 卡底：仅「平台设置 ▾」入口（024：服务状态/版本等说明性信息移除） -->
         <div class="card-foot">
           <button type="button" class="config-toggle" @click="configOpen = !configOpen">平台设置 ▾</button>
-          <span class="service-status">
-            <span class="dot" :class="badge.badgeClass === 'ok' ? 'dot-green' : 'dot-red'" aria-hidden="true"></span>
-            {{ badge.badge }} · {{ version }}
-          </span>
         </div>
       </section>
     </main>
@@ -517,3 +501,25 @@ h1 {
   }
 }
 </style>
+
+/* 024 等待卡：拒绝原因/动作文案 + 按钮组居中（AccessActions 子组件 :deep 收口） */
+.login-card .reason {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--red);
+  background: var(--red-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.login-card .action-message {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--g500);
+}
+
+.login-card :deep(.actions) {
+  justify-content: center;
+  margin-top: 20px;
+}

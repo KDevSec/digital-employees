@@ -56,6 +56,23 @@ const inactiveState: AccessState = {
   authenticated: false,
 }
 
+/** REJECTED + 已登录（024：手动心跳按钮删除，动作链路改由「重新提交接入申请」承载） */
+const rejectedState: AccessState = {
+  installationId: 'inst-001',
+  enrollmentId: 'enr-9',
+  status: 'REJECTED',
+  authenticated: true,
+  user: { name: 'Test User' },
+}
+
+const pendingState: AccessState = {
+  installationId: 'inst-001',
+  enrollmentId: 'enr-9',
+  status: 'PENDING_REVIEW',
+  authenticated: true,
+  user: { name: 'Test User' },
+}
+
 /** 按路径分派的 fetch 桩 + 调用计数（沿 settings-panel.test.ts 手法） */
 function stubFetch(handlers: Record<string, () => unknown>): { calls: (url: string, method: string) => number } {
   const counter = new Map<string, number>()
@@ -144,9 +161,9 @@ describe('AccessModal 挂载与渲染（D-26：三件套零改动复用，store 
     expect(wrapper.text()).toContain('平台连接')
     expect(wrapper.find('.access-modal input').exists()).toBe(true)
     expect(wrapper.text()).toContain('http://192.168.1.5:18000')
-    // AccessActions：ACTIVE fixture → 心跳 + 登出在场；登录/重提/重置不显示（demo 显隐布尔式）
+    // AccessActions：ACTIVE fixture → 仅登出在场（024：手动心跳按钮删除）
     const buttonTexts = wrapper.findAll('.access-modal button').map((button) => button.text())
-    expect(buttonTexts).toContain('发送终端心跳')
+    expect(buttonTexts).not.toContain('发送终端心跳')
     expect(buttonTexts).toContain('退出登录')
     expect(buttonTexts).not.toContain('登录')
     expect(buttonTexts).not.toContain('重新提交接入申请')
@@ -213,32 +230,30 @@ describe('AccessModal 关闭三径（Esc / mask 外点 / X——沿 SettingsPane
 })
 
 describe('AccessModal 动作处理（AccessActions emit → api 动作 → store 刷新，D-26 简版）', () => {
-  it('心跳成功 → POST /api/heartbeat + 刷 store 重拉 /api/state + 「操作成功」文案；停当前页不整页跳转', async () => {
+  it('024：重新提交成功 → POST /api/enroll + 刷 store 重拉 /api/state + 「操作成功」文案；停当前页不整页跳转', async () => {
     let stateCalls = 0
     const { wrapper, stub, router } = await mountModal(
       {
-        // 预载 1 次 ACTIVE；心跳成功后重拉 → 新心跳时间戳（状态卡随 store 更新）
+        // 预载 1 次 REJECTED；重提成功后重拉 → PENDING_REVIEW（状态卡随 store 更新）
         '/api/state': () => {
           stateCalls += 1
-          return jsonResponse(
-            stateCalls === 1 ? activeState : { ...activeState, lastHeartbeatAt: '2026-08-26T12:00:00Z' },
-          )
+          return jsonResponse(stateCalls === 1 ? rejectedState : pendingState)
         },
-        '/api/heartbeat': () => jsonResponse({ status: 'ok' }),
+        '/api/enroll': () => jsonResponse({ status: 'PENDING_REVIEW' }),
         '/api/config/platform': () => jsonResponse(PLATFORM_CONFIG),
       },
       { push: '/employees' },
     )
     expect(router.currentRoute.value.path).toBe('/employees')
     expect(wrapper.text()).not.toContain('操作成功')
-    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送终端心跳')
-    expect(heartbeat, '心跳按钮应存在').toBeTruthy()
-    await heartbeat!.trigger('click')
+    const enroll = wrapper.findAll('.access-modal button').find((button) => button.text() === '重新提交接入申请')
+    expect(enroll, '重新提交按钮应存在').toBeTruthy()
+    await enroll!.trigger('click')
     await flushPromises()
-    expect(stub.calls('/api/heartbeat', 'POST')).toBe(1)
+    expect(stub.calls('/api/enroll', 'POST')).toBe(1)
     expect(stub.calls('/api/state', 'GET')).toBe(2) // 动作成功后刷 store
     expect(wrapper.text()).toContain('操作成功')
-    expect(wrapper.text()).toContain('2026-08-26T12:00:00Z') // 状态卡已翻新心跳
+    expect(wrapper.text()).toContain('待审批') // 状态卡已翻 PENDING_REVIEW
     // 不整页跳转：停当前业务页，弹窗保持开
     expect(router.currentRoute.value.path).toBe('/employees')
     expect(wrapper.find('.access-modal-mask').exists()).toBe(true)
@@ -246,14 +261,14 @@ describe('AccessModal 动作处理（AccessActions emit → api 动作 → store
 
   it('动作失败 → 服务端错误文案透传（demo call() throw 语义），不刷 store', async () => {
     const { wrapper, stub } = await mountModal({
-      '/api/state': () => jsonResponse(activeState),
-      '/api/heartbeat': () =>
+      '/api/state': () => jsonResponse(rejectedState),
+      '/api/enroll': () =>
         jsonResponse({ error: { code: 'PLATFORM_DOWN', message: '平台连接失败' } }, { ok: false, status: 502, statusText: 'Bad Gateway' }),
       '/api/config/platform': () => jsonResponse(PLATFORM_CONFIG),
     })
-    const heartbeat = wrapper.findAll('.access-modal button').find((button) => button.text() === '发送终端心跳')
-    expect(heartbeat, '心跳按钮应存在').toBeTruthy()
-    await heartbeat!.trigger('click')
+    const enroll = wrapper.findAll('.access-modal button').find((button) => button.text() === '重新提交接入申请')
+    expect(enroll, '重新提交按钮应存在').toBeTruthy()
+    await enroll!.trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('平台连接失败')
     expect(wrapper.text()).not.toContain('处理中…')

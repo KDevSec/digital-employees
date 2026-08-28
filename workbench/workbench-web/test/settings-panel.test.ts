@@ -472,7 +472,8 @@ describe('Layout 组装（D-24/D-25：TopBar 退役 + AlertBar 常驻告警；D-
     expect(wrapper.find('.modal-title').text()).toBe('接入与平台设置')
     expect(wrapper.text()).toContain('已激活') // AccessStatusCard
     expect(wrapper.text()).toContain('平台连接') // PlatformConfigCard
-    expect(wrapper.text()).toContain('发送终端心跳') // AccessActions
+    expect(wrapper.text()).not.toContain('发送终端心跳') // 024：手动心跳按钮删除
+    expect(wrapper.text()).toContain('退出登录') // AccessActions
     // URL 不变（弹窗承载，不整页跳转——D-26 动线修复核心：业务页上下文不丢）
     expect(router.currentRoute.value.path).toBe('/employees')
 

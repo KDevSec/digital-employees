@@ -64,6 +64,31 @@ describe('PlatformClient（demo 迁移 + 三处适配）', () => {
     expect(captured?.installation_id).toBe('12345678-abcd')
   })
 
+  it('024：submitEnrollment 终端名称优先取采集到的主机名，主机名空才回退「终端 xxxx」', async () => {
+    let captured: Record<string, unknown> | undefined
+    vi.stubGlobal('fetch', jsonFetch((url, init) => {
+      captured = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}
+      return { status: 200, body: { id: 'enr-1', status: 'PENDING_REVIEW' } }
+    }))
+    const { publicKey } = await generateKeyPair('ES256', { extractable: true })
+    const withHost = new PlatformClient({
+      getBaseUrl: () => 'http://p:18000',
+      version: '9.9.9',
+      collectMetadata: () => ({ hostname: 'ZHANGSAN-PC', mac_address: 'aa:bb:cc:dd:ee:ff' }),
+    })
+    await withHost.submitEnrollment({ installationId: '12345678-abcd', publicJwk: await exportJWK(publicKey) }, 't')
+    expect(captured?.display_name).toBe('ZHANGSAN-PC')
+    expect(captured?.metadata).toEqual({ hostname: 'ZHANGSAN-PC', mac_address: 'aa:bb:cc:dd:ee:ff' })
+
+    const withEmptyHost = new PlatformClient({
+      getBaseUrl: () => 'http://p:18000',
+      version: '9.9.9',
+      collectMetadata: () => ({ hostname: '   ', mac_address: null }),
+    })
+    await withEmptyHost.submitEnrollment({ installationId: '87654321-abcd', publicJwk: await exportJWK(publicKey) }, 't')
+    expect(captured?.display_name).toBe('终端 87654321')
+  })
+
   it('错误归一：非 2xx 带 error.code/message → PlatformError 透传', async () => {
     vi.stubGlobal('fetch', jsonFetch(() => ({ status: 403, body: { error: { code: 'ENROLLMENT_REJECTED', message: '拒绝' } } })))
     const client = new PlatformClient({ getBaseUrl: () => 'http://p:18000', version: '0' })
@@ -103,5 +128,66 @@ describe('PlatformClient（demo 迁移 + 三处适配）', () => {
     expect(captured.body?.workbench_version).toBe('3.2.1')
     expect(captured.body?.event_id).toBeTruthy()
     expect(captured.auth).toBe('Bearer mt-9')
+  })
+})
+
+describe('PlatformClient 终端元数据上报（021）', () => {
+  it('submitEnrollment 携带 collectMetadata() 结果', async () => {
+    let captured: Record<string, unknown> | undefined
+    vi.stubGlobal('fetch', jsonFetch((url, init) => {
+      captured = { url, ...(init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}) }
+      return { status: 200, body: { id: 'enr-1', status: 'PENDING_REVIEW' } }
+    }))
+    const { publicKey } = await generateKeyPair('ES256', { extractable: true })
+    const metadata = { hostname: 'host-1', mac_address: 'aa:bb:cc:dd:ee:ff' }
+    const client = new PlatformClient({
+      getBaseUrl: () => 'http://p:18000', version: '9.9.9', collectMetadata: () => metadata,
+    })
+    await client.submitEnrollment({ installationId: '12345678-abcd', publicJwk: await exportJWK(publicKey) }, 'person-token')
+    expect(captured?.metadata).toEqual(metadata)
+  })
+
+  it('未注入 collectMetadata 时不携带 metadata（向后兼容旧装配）', async () => {
+    let captured: Record<string, unknown> | undefined
+    vi.stubGlobal('fetch', jsonFetch((url, init) => {
+      captured = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {}
+      return { status: 200, body: { id: 'enr-1', status: 'PENDING_REVIEW' } }
+    }))
+    const { publicKey } = await generateKeyPair('ES256', { extractable: true })
+    const client = new PlatformClient({ getBaseUrl: () => 'http://p:18000', version: '9.9.9' })
+    await client.submitEnrollment({ installationId: '12345678-abcd', publicJwk: await exportJWK(publicKey) }, 'person-token')
+    expect(captured).not.toHaveProperty('metadata')
+  })
+})
+
+describe('PlatformClient 平台地址尾斜杠归一（022）', () => {
+  it('getBaseUrl 带尾斜杠时 discover 不产生双斜杠', async () => {
+    let called = ''
+    vi.stubGlobal('fetch', jsonFetch((url) => {
+      called = url
+      return { status: 200, body: CONFIG }
+    }))
+    const client = new PlatformClient({ getBaseUrl: () => 'http://p:18000/', version: '0.0.1' })
+    await client.discover()
+    expect(called).toBe('http://p:18000/.well-known/workbench-configuration')
+    expect(called).not.toContain('//.well-known')
+  })
+})
+
+describe('PlatformClient 内网自签 TLS 开关（022）', () => {
+  it('getInsecureTls=true 时 https 请求带 tls.rejectUnauthorized=false；false 时不带', async () => {
+    const inits: (RequestInit | undefined)[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      inits.push(init)
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }))
+    const insecure = new PlatformClient({ getBaseUrl: () => 'https://p:18000', version: '0', getInsecureTls: () => true })
+    await insecure.request<{ ok: boolean }>('https://p:18000/.well-known/workbench-configuration')
+    expect((inits[0] as RequestInit & { tls?: unknown }).tls).toEqual({ rejectUnauthorized: false })
+
+    inits.length = 0
+    const secure = new PlatformClient({ getBaseUrl: () => 'https://p:18000', version: '0', getInsecureTls: () => false })
+    await secure.request<{ ok: boolean }>('https://p:18000/.well-known/workbench-configuration')
+    expect((inits[0] as RequestInit & { tls?: unknown }).tls).toBeUndefined()
   })
 })

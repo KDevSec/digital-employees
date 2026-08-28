@@ -7,7 +7,11 @@ import type { HealthSnapshot } from '../src/runtime/instance'
 import type { BannerInfo } from '../src/logging/logger'
 
 // I0-5 T8（D-13）：platform 键入配置形状（本测试只消费 network.port，platform 取默认值形态）
-const config: WorkbenchConfig = { network: { port: 19980 }, platform: { baseUrl: 'http://127.0.0.1:18000' } }
+const config: WorkbenchConfig = {
+  network: { port: 19980 },
+  platform: { baseUrl: 'http://127.0.0.1:18000', insecureTls: false },
+  heartbeat: { intervalSeconds: 60 },
+}
 
 const fakeHandle: ServiceHandle = {
   schemaVersion: 1,

@@ -28,7 +28,7 @@ describe('fetchPlatformConfig（GET /api/config/platform，失败/形状不对�
 
   it('成功 → { baseUrl }', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ baseUrl: 'http://192.168.1.5:18000' })))
-    await expect(fetchPlatformConfig()).resolves.toEqual({ baseUrl: 'http://192.168.1.5:18000' })
+    await expect(fetchPlatformConfig()).resolves.toEqual({ baseUrl: 'http://192.168.1.5:18000', insecureTls: false })
   })
 
   it('请求 GET /api/config/platform（同源相对路径）', async () => {
@@ -111,3 +111,20 @@ describe('savePlatformConfig（PUT /api/config/platform，形状沿 ActionResult
     expect(result.message.length).toBeGreaterThan(0)
   })
 })
+
+
+  it('GET insecureTls=true 透传；缺省/非布尔归一为 false（022）', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ baseUrl: 'https://p:18000', insecureTls: true })))
+    await expect(fetchPlatformConfig()).resolves.toEqual({ baseUrl: 'https://p:18000', insecureTls: true })
+    vi.unstubAllGlobals()
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ baseUrl: 'https://p:18000' })))
+    await expect(fetchPlatformConfig()).resolves.toEqual({ baseUrl: 'https://p:18000', insecureTls: false })
+  })
+
+  it('024：PUT body 不再携带 insecureTls（TLS 开关去 UI，仅配置文件后手）', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ baseUrl: 'https://p:18000' }))
+    vi.stubGlobal('fetch', fetchMock)
+    await savePlatformConfig('https://p:18000')
+    const init = fetchMock.mock.calls[0][1] as RequestInit
+    expect(JSON.parse(init.body as string)).toEqual({ baseUrl: 'https://p:18000' })
+  })

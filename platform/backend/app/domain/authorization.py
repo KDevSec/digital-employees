@@ -58,6 +58,7 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
             "workbench.enroll",
             "workbench.enrollment.review",
             "workbench.revoke",
+            "workbench.team.read",
         }
     ),
     RoleCode.PLATFORM_ADMIN: frozenset(
@@ -69,10 +70,11 @@ ROLE_PERMISSIONS: dict[RoleCode, frozenset[str]] = {
             "workbench.enroll",
             "workbench.enrollment.review",
             "workbench.revoke",
+            "workbench.team.read",
         }
     ),
     RoleCode.DEPARTMENT_ADMIN: frozenset(
-        {"workbench.read", "workbench.enroll", "workbench.enrollment.review"}
+        {"workbench.read", "workbench.enroll", "workbench.enrollment.review", "workbench.team.read"}
     ),
     RoleCode.SECURITY_ADMIN: frozenset(
         {"workbench.read", "workbench.enroll"}

@@ -17,6 +17,7 @@ import type { BaseId } from './adapters/contract'
 import { readCache as readBaseCache } from './bases/cache'
 import { brand } from './brand'
 import { loadConfig, writeConfigOverride, writeSample } from './config/load'
+import { applyTlsPolicy } from './config/tls-policy'
 import type { WorkbenchConfig } from './config/schema'
 import { buildProgram } from './cli'
 import type { CliDeps, StartOptions } from './cli'
@@ -95,6 +96,7 @@ function initServiceRuntime(): ServiceRuntime {
   let config: WorkbenchConfig
   try {
     config = loadConfig(profileDir)
+    applyTlsPolicy(config) // 022：启动即按配置同步出站 TLS 校验策略
   } catch (err) {
     logger.close()
     const detail = err instanceof Error ? err.message : String(err)

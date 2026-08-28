@@ -73,10 +73,13 @@ export class PlatformAccessService {
       try {
         configuration = await this.deps.platform.discover()
         await this.deps.configCache.write(configuration)
-      } catch {
+      } catch (discoverError) {
+        // 022：发现失败时把底层原因（自签证书/连接拒绝/超时/JSON 解析）带出，便于现场定位
+        const detail = discoverError instanceof Error ? discoverError.message : String(discoverError)
+        console.error(`[platform-access] discover 失败（baseUrl=${cfg.platform.baseUrl}, insecureTls=${cfg.platform.insecureTls}）: ${detail}`)
         const cached = await this.deps.configCache.read()
         if (cached === undefined || !cacheMatchesConfig(cached, cfg.platform.baseUrl)) {
-          throw new PlatformError(503, 'PLATFORM_UNREACHABLE', '平台不可达（无可用发现配置缓存）')
+          throw new PlatformError(503, 'PLATFORM_UNREACHABLE', `平台不可达（无可用发现配置缓存）。底层原因：${detail}`)
         }
         configuration = cached
       }
@@ -116,6 +119,7 @@ export class PlatformAccessService {
       const sessionId = randomUUID()
       await this.deps.sessionStore.set(sessionId, {
         accessToken: tokens.accessToken,
+        idToken: tokens.idToken,
         claims: tokens.claims,
         expiresAt: Date.now() + tokens.expiresInSeconds * 1000,
       })
@@ -176,14 +180,36 @@ export class PlatformAccessService {
     })
   }
 
-  /** POST /api/logout（偏差 #3：匿名也 200） */
+  /** POST /api/logout（偏差 #3：匿名也 200）。023：有 id_token 时返回 OIDC end_session URL 供前端整页跳转结束 Keycloak SSO。 */
   async logout(ctx: Ctx): Promise<Res> {
     return this.run(async () => {
       const sessionId = ctx.cookies?.[SESSION_COOKIE]
-      if (sessionId !== undefined) await this.deps.sessionStore.delete(sessionId)
+      let idToken: string | undefined
+      if (sessionId !== undefined) {
+        const session = await this.deps.sessionStore.get(sessionId)
+        idToken = session?.idToken
+        await this.deps.sessionStore.delete(sessionId)
+      }
+      let oidcLogoutUrl: string | undefined
+      if (idToken && !isDevEnvironment(this.config())) {
+        try {
+          const configuration = await this.deps.platform.discover()
+          const document = await oidcDocument(configuration.oidc_issuer)
+          const endSession = document.end_session_endpoint
+          if (endSession) {
+            const params = new URLSearchParams({
+              id_token_hint: idToken,
+              post_logout_redirect_uri: `http://${ctx.host}/`,
+            })
+            oidcLogoutUrl = `${endSession}?${params}`
+          }
+        } catch {
+          // 发现/Keycloak 不可达时降级为仅本地登出（不阻断退出）
+        }
+      }
       return {
         status: 200,
-        json: { status: 'logged_out' },
+        json: { status: 'logged_out', oidc_logout_url: oidcLogoutUrl },
         cookies: [{ name: SESSION_COOKIE, value: '', maxAgeSeconds: 0, httpOnly: true, sameSite: 'Strict', path: '/' }],
       }
     })
@@ -195,7 +221,7 @@ export class PlatformAccessService {
       if (isDevEnvironment(this.config())) return this.devDeny()
       const person = await this.requirePerson(ctx)
       const record = await this.deps.stateStore.loadOrCreate()
-      const enrollment = await this.deps.enrollment.submitEnrollmentIfNeeded(person, record)
+      const enrollment = await this.deps.enrollment.submitEnrollmentIfNeeded(person, record, true)
       return { status: 200, json: { id: record.enrollmentId, status: record.status, created: enrollment } }
     })
   }

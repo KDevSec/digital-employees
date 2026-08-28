@@ -165,19 +165,34 @@ export function enrollAction(): Promise<ActionResult> {
   return postAction('/api/enroll')
 }
 
-/** 发送终端心跳（demo：POST /api/heartbeat） */
-export function heartbeatAction(): Promise<ActionResult> {
-  return postAction('/api/heartbeat')
-}
-
 /** 重置申请状态（demo：POST /api/reset；G-3 未入 v0.2 端点表，先按 demo 保留） */
 export function resetAction(): Promise<ActionResult> {
   return postAction('/api/reset')
 }
 
-/** 退出登录（demo：POST /api/logout） */
-export function logoutAction(): Promise<ActionResult> {
-  return postAction('/api/logout')
+/** 退出登录结果（023：RP 登出——服务端返回 Keycloak end_session URL 时整页跳转结束 SSO） */
+export interface LogoutResult extends ActionResult {
+  oidcLogoutUrl?: string
+}
+
+/** 退出登录（POST /api/logout；成功且返回 oidc_logout_url 时由调用方整页跳转） */
+export async function logoutAction(): Promise<LogoutResult> {
+  try {
+    const res = await fetch('/api/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string }
+      oidc_logout_url?: string
+    }
+    if (!res.ok) {
+      return { ok: false, message: data.error?.message ?? res.statusText }
+    }
+    return { ok: true, message: '操作成功', oidcLogoutUrl: data.oidc_logout_url }
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : '操作失败' }
+  }
 }
 
 /** 审批进度刷新（demo：POST /api/progress；G-2 与 v0.2 §5.2 的 GET 矛盾已落档待裁决） */
