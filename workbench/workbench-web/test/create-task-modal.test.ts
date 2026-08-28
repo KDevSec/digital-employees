@@ -29,6 +29,8 @@ function makeApi(ok = true): EngineApi & { calls: Record<string, unknown>[] } {
     getTask: vi.fn(async () => ({ task: { task_id: 'x' }, table: { nodes: [] }, employees: {} })) as never,
     getFlows: vi.fn(async () => FLOWS),
     confirmGate: vi.fn(async () => ({ ok: true })) as never,
+    listTasks: vi.fn(async () => ({ tasks: [], archived: [] })) as never,
+    getEvents: vi.fn(async () => []) as never,
   }
 }
 

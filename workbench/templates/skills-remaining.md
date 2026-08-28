@@ -7,6 +7,9 @@
 
 ## L1 打磨批（语义级改写，fable 评审 #6/#7/#8 遗留）
 
+> 留后续批（V0.1 范围外）：以下两项为 1.0 V4x.1 SOP 词汇的语义级清理，本批仅机械替换前缀/.ieidev→.devzero，
+> L1 不再追改（V0.1 收敛于机械替换 + 跨 skill 引用规整；语义级重构留 V0.2+ 评估）。
+
 | # | 项 | 说明 |
 |---|----|------|
 | 5 | kdev-gen 七件套 V4x.1 流程词汇降级 | 体内 nodes-data/准入 prompt-check.sh/veto 编号/迭代档案坐标（`迭代N/vX-<版本>/03-design/`）等 1.0 V4x.1 SOP 词汇未做语义级清理（本批仅机械替换：前缀/.ieidev→.devzero）——L1 打磨为通用方法论措辞或补齐规范副文件随行 |
@@ -14,12 +17,14 @@
 
 ## 剩余（留 L1 线实施批）
 
+> 全部销账（2026-08-27，L1 收口 Task 22）。下方表格保留为台账记录，状态列已更新为「✅ 销账」。
+
 | # | 项 | 来源 | 动作 | 备注 |
 |---|----|------|------|------|
-| 1 | sec-scan-design（sec-design 的 skill） | `reference-projects/安全skill/` zip | 解包 → SKILL.md frontmatter 校验 → 进 `templates/sec-design/skills/sec-scan-design/` | SKILL.md + 12 模块 133 条规则；纯 LLM 语义 skill 开箱即用 |
-| 2 | sec-scan-code（sec-code 的 skill） | 同上 zip | 同上 → `templates/sec-code/skills/sec-scan-code/` | Python 扫描引擎 + OWASP Top 10:2025；**`.venv`（~40MB）经 install 脚本装员工 home，不进包不分发**（D-044） |
-| 3 | secretgate（sec-compliance 的 skill） | 1.0 仓 `plugins/agents-team/pyieidev/ieidev_hud/secretgate.py`（正则规则引擎） | **已裁决（T11）：a) TS 移植为 skill 内置脚本** + A1 员工形态（LLM 做定性解读，见 sec-compliance AGENTS.md 分工段）；规则集 = API Key/私钥/连接串/凭证模式 |
-| 4 | hooks/redlines/ 拦截脚本本体 | 规则库定义（员工模板设计 §5 + shared-protocol v0.2 §2.1 rule_id 枚举） | 实现 `no-push-to-main` / `no-devzero-state` / `no-external-request` 等 compiled 规则的可执行脚本（1.0 有 `.cmd` 包装器先例） | 与 hooks.json 预编译产物配套；红线规则内容随 Q-T4 裁决定格 |
+| 1 | sec-scan-design（sec-design 的 skill） | `reference-projects/安全skill/` zip | 解包 → SKILL.md frontmatter 校验 → 进 `templates/sec-design/skills/sec-scan-design/` | ✅ 销账（2026-08-27，commit 4ad4f21）：SKILL.md + 12 模块 133 条规则已物化进包；纯 LLM 语义 skill 开箱即用 |
+| 2 | sec-scan-code（sec-code 的 skill） | 同上 zip | 同上 → `templates/sec-code/skills/sec-scan-code/` | ✅ 销账（2026-08-27，commit 4ad4f21）：Python 扫描引擎 + OWASP Top 10:2025 已物化；**`.venv`（~40MB）经 install 脚本装员工 home，不进包不分发**（D-044） |
+| 3 | secretgate（sec-compliance 的 skill） | 1.0 仓 `plugins/agents-team/pyieidev/ieidev_hud/secretgate.py`（正则规则引擎） | **已裁决（T11）：a) TS 移植为 skill 内置脚本** + A1 员工形态（LLM 做定性解读，见 sec-compliance AGENTS.md 分工段）；规则集 = API Key/私钥/连接串/凭证模式 | ✅ 销账（2026-08-27，commit 4fba55a）：secretgate.mjs 已移植为 sec-compliance skill 内置脚本（A1 零 token 扫描 + LLM 定性分工） |
+| 4 | hooks/redlines/ 拦截脚本本体 | 规则库定义（员工模板设计 §5 + shared-protocol v0.2 §2.1 rule_id 枚举） | 实现 `no-push-to-main` / `no-devzero-state` / `no-external-request` 等 compiled 规则的可执行脚本（1.0 有 `.cmd` 包装器先例） | ✅ 销账（2026-08-27，commit 5477336）：run-hook.cmd polyglot 移植 + 6 规则 py（deny-tool/no-db-schema/no-devzero-state/no-external-request/no-production-access/no-push-to-main）×7 模板同构自带；与 hooks.json 预编译产物配套，红线规则内容随 Q-T4 裁决定格 |
 
 ## 模板物料校验现状
 

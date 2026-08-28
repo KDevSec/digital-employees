@@ -12,6 +12,7 @@
 import { defineStore } from 'pinia'
 
 import type { Connection, EngineStream } from '../api/engine-stream'
+import type { EngineApi } from '../api/engine-api'
 import type { EngineEvent } from '../api/engine-events'
 import type { TableSnapshot } from '../api/engine-table'
 
@@ -124,7 +125,8 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
         ...prev,
         title: ev.title,
         flow: ev.flow,
-        displayName: ev.display_name,
+        // 引擎事件 display_name 条件展开（solo 动态表无）——缺省空串
+        displayName: ev.display_name ?? '',
         workspace: ev.workspace,
         status: 'in_progress',
       }
@@ -144,7 +146,7 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
           ...prev,
           activeDispatches: rest,
           blockedReason:
-            ev.status === 'error'
+            ev.status === 'blocked'
               ? (prev.blockedReason ?? `派发失败：${ev.emp}${ev.node ? `（${ev.node}）` : ''}`)
               : prev.blockedReason,
         }
@@ -153,8 +155,10 @@ export function applyEvent(state: KanbanState, ev: EngineEvent): KanbanState {
     case 'transition': {
       const doneNodes = [...prev.doneNodes]
       if (ev.from && !doneNodes.includes(ev.from)) doneNodes.push(ev.from)
-      if (ev.reflow) {
-        // 回流：目标节点重新活跃，从 done 集移除
+      // 回流重置（双口径合并）：① 显式 reflow=true（R2 机械回流标志）② 重访即返工——
+      // 引擎 R3 gate 回流的 transition.reflow=false（reflow 标志只属 R2 两套溢出语义，
+      // L3 实测），落点若已在 done 集同样重置为活跃，否则返工期间阶段进度虚高、chip 卡 done
+      if (ev.reflow || doneNodes.includes(ev.to)) {
         const i = doneNodes.indexOf(ev.to)
         if (i >= 0) doneNodes.splice(i, 1)
       }
@@ -210,15 +214,38 @@ export const useKanbanStore = defineStore('kanban', {
     },
   },
   actions: {
-    /** SSE 事件入口（stream.onEvent 接线目标） */
+    /** SSE 事件入口（stream.onEvent 接线目标）。per-task seq 幂等——初值重放（hydrate）
+     *  与 SSE 增量/Last-Event-ID 回放窗口重叠不重复入状态（事件 seq=行号，append-only 单调） */
     applyIncoming(ev: EngineEvent): void {
+      const prev = this.tasks[ev.task_id]
+      if (prev && ev.seq <= prev.lastSeq) return
       const next = applyEvent(this.$state, ev)
       this.tasks = next.tasks
       this.feed = next.feed
     },
-    /** 表快照/员工映射写入（getTask 响应落地；契约歧义 A/B 先行口径） */
-    setTable(taskId: string, table: TableSnapshot, employees?: Record<string, string>): void {
-      this.tables = { ...this.tables, [taskId]: table }
+    /** 初值拉取（重载不丢板）：任务清单（活动+归档）→ 每任务事件重放（事件溯源式重建，
+     *  表快照由视图层 tasks watcher 补拉）。已在本会话建卡的任务跳过（SSE 增量已在管） */
+    async hydrate(api: EngineApi): Promise<void> {
+      let list: { tasks: { task_id: string }[]; archived: { task_id: string }[] }
+      try {
+        list = await api.listTasks()
+      } catch {
+        return // 引擎未通：保持空板（连接态由 SSE 层表达）
+      }
+      for (const t of [...list.tasks, ...list.archived]) {
+        if (this.tasks[t.task_id]) continue
+        try {
+          const events = await api.getEvents(t.task_id, 0)
+          for (const ev of events) this.applyIncoming(ev)
+        } catch {
+          // 单任务事件拉取失败不拖垮其余任务（该任务保持缺席，SSE 增量仍会补）
+        }
+      }
+    },
+    /** 表快照/员工映射写入（getTask 装配产物落地；表未到/拉取失败 → undefined 只更员工映射，
+     *  tables 不落键——保持骨架态且下次任务列表变动可重试） */
+    setTable(taskId: string, table: TableSnapshot | undefined, employees?: Record<string, string>): void {
+      if (table) this.tables = { ...this.tables, [taskId]: table }
       if (employees) this.employeesMap = { ...this.employeesMap, ...employees }
     },
     /** 发起成功即建占位卡（createTask 202 与 SSE run.created 之间的窗口；归并幂等覆盖） */

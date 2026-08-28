@@ -1,0 +1,26 @@
+rule_id: A02-SECURITY-MISCONFIGURATION
+name: Security Misconfiguration
+owasp: A02
+severity: HIGH
+priority: constitutional
+description: |
+  The application might be vulnerable if it is missing appropriate security
+  hardening, has unnecessary features enabled, uses default accounts/passwords,
+  or exposes overly informative error messages. Moved from A05 in 2021 to A02
+  in 2025 due to increasing prevalence.
+categories:
+  - id: default-credentials
+    name: Default Credentials
+    description: Default or hardcoded passwords and credentials in configuration
+  - id: verbose-errors
+    name: Verbose Error Messages
+    description: Error messages exposing internal system details
+  - id: cors-wildcard
+    name: CORS Wildcard
+    description: Overly permissive CORS configuration
+  - id: debug-enabled
+    name: Debug Mode Enabled
+    description: Debug or development mode enabled in production
+  - id: unnecessary-features
+    name: Unnecessary Features Enabled
+    description: Unrequired services, ports, or features running

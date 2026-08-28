@@ -1,0 +1,17 @@
+[project]
+name = "sec-scan-code"
+version = "2.0.0"
+description = "Security code scanning MCP server and Claude Code skill"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+]
+
+[project.scripts]
+sec-scan-code = "secscancode.server:main"
+sec-scan-engine = "secscancode.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["secscancode*"]

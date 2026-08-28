@@ -1,0 +1,25 @@
+rule_id: SUPPLY-CHAIN-ATTACKS
+name: Supply Chain Attacks
+owasp: null
+severity: CRITICAL
+priority: constitutional
+description: |
+  Supply chain attack patterns including hidden network connections, reverse shells,
+  cryptojacking, and time bombs — malicious code embedded in seemingly legitimate software
+  that enables covert C2 communication, data exfiltration, unauthorized cryptocurrency mining,
+  or time-delayed malicious payloads. These threats are typically introduced through
+  compromised dependencies, typosquatting, or insider threats and are difficult to detect
+  through traditional vulnerability scanning.
+categories:
+  - id: hidden-network-request
+    name: Hidden Network Request
+    description: Covert outbound connections to suspicious IPs/domains, C2 callbacks, data exfiltration channels, obfuscated URLs, DNS tunneling, and beacon patterns
+  - id: reverse-shell
+    name: Reverse Shell
+    description: Socket+subprocess combos, /dev/tcp, nc -e, socat reverse shells, pty.spawn, os.dup2 fd redirection, and other interactive shell callback patterns
+  - id: cryptojacking
+    name: Cryptojacking
+    description: Cryptocurrency mining library imports, WebAssembly mining scripts, stratum pool connections, known mining services (CoinHive/Crypto-Loot), and unusual CPU-intensive computation patterns
+  - id: time-bomb
+    name: Time Bomb
+    description: Hardcoded date/time comparison triggers, long sleep followed by malicious actions, suspicious crontab/scheduled task creation, excessive setTimeout/setInterval delays, and logic bomb patterns

@@ -1,0 +1,81 @@
+language: config
+file_extensions: [".yml", ".yaml", ".properties", ".env", ".toml", ".ini", ".conf"]
+version: "1.0"
+
+# =====================================================
+# 配置文件硬编码凭据/密钥检测
+# 支持 yml/yaml/properties/env/toml/ini 的 `key: value` 与 `key=value` 两种格式
+# =====================================================
+
+rules:
+  - category: config-hardcoded-secret
+    owasp: CONFIG-SECRETS
+    severity: HIGH
+
+    description: |
+      配置文件中的硬编码凭据/密钥：密码、secret、token、API key 直接写入
+      配置文件而非环境变量/密钥管理服务引用。仓库或配置泄露即导致凭据暴露。
+
+    detection:
+      taint_sinks:
+        - "password"
+        - "secret"
+        - "token"
+        - "api_key"
+
+      steps:
+        - "扫描配置文件中的 key: value 或 key=value 对"
+        - "检查值是否为明文硬编码而非占位符/环境变量引用"
+
+      safety_conditions:
+        - "值引用环境变量或密钥管理服务（${VAR}、{{ VAR }}、vault、kms）"
+        - "值为占位符（example、changeme、your-、xxx、***）"
+
+    remediation:
+      principle: "凭据从环境变量或密钥管理服务读取，不在配置文件中硬编码"
+
+      output_requirements:
+        - "必须输出修复后的完整配置片段"
+        - "修复代码必须保持原有业务逻辑"
+        - "修复代码必须可直接替换原配置"
+
+      requirements:
+        - "使用环境变量引用（${VAR}）"
+        - "使用密钥管理服务（Vault/KMS/SSM）"
+
+    patterns:
+      # 密码：password: xxx / password=xxx / login-password: xxx
+      - pattern: "(?i)\\b(password|passwd|pwd)\\s*[:=]\\s*['\"]?[^'\"\\s,;]{4,}"
+        description: "硬编码密码"
+        confidence: 8
+      # 密钥：secret: xxx / client_secret: xxx
+      - pattern: "(?i)\\b(secret|secret[-_]?key|client[-_]?secret|appsecret|secret\\s*key)\\s*[:=]\\s*['\"]?[^'\"\\s,;]{4,}"
+        description: "硬编码密钥"
+        confidence: 8
+      # token / API key
+      - pattern: "(?i)\\b(token|access[-_]?token|auth[-_]?token|api[-_]?key|apikey)\\s*[:=]\\s*['\"]?[^'\"\\s,;]{6,}"
+        description: "硬编码 token / API key"
+        confidence: 7
+      # 框架默认密钥（Django SECRET_KEY / JWT secret）
+      - pattern: "(?i)\\b(SECRET_KEY|secret_key|jwt[-_]?secret|token[-_]?secret)\\s*[:=]\\s*['\"]?[A-Za-z0-9_\\-]{8,}"
+        description: "硬编码 SECRET_KEY / JWT 密钥"
+        confidence: 9
+
+    safe_patterns:
+      - "\\$\\{"
+      - "\\{\\{"
+      - "<[^>]{0,20}>"
+      - "\\bENV\\b"
+      - "getenv"
+      - "os\\.environ"
+      - "\\bvault\\b"
+      - "\\bkms\\b"
+      - "\\bssm\\b"
+      - "secretRef"
+      - "secretmanager"
+      - "\\bexample\\b"
+      - "\\bchangeme\\b"
+      - "\\bplaceholder\\b"
+      - "your[-_]\\w+"
+      - "\\bxxx\\b"
+      - "\\*\\*\\*"

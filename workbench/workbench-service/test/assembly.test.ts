@@ -10,6 +10,10 @@ import { brand } from '../src/brand'
 import { Engine } from '@devzero/engine'
 import { createRegistry } from '../src/server/registry'
 import { registerAllRoutes } from '../src/server/routes'
+import { builtinTemplates } from '../src/assets/templates.gen'
+import { createTemplatesProvider } from '../src/templates/provider'
+import { createEmployeeStore } from '../src/employees/store'
+import { createEmployeeBuilder } from '../src/employees/builder'
 import { toHonoApp } from '../src/server/hono-adapter'
 
 describe('main 装配形态（startRealServer 同构：全域注册 + guard 注入）', () => {
@@ -36,9 +40,19 @@ describe('main 装配形态（startRealServer 同构：全域注册 + guard 注�
       authSourceDirs: { 'claude-code': '', codebuddy: '', qoder: '' },
       probe: () => ({ present: false, version: null }),
       packageRoots: {},
+      employeesRoot: join(profileDir, 'employees'), // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
       cacheDir: join(profileDir, 'bases'),
       run: async () => ({ code: 127, stdout: '' }),
       service,
+      // L1 员工域三域占位（RouteDeps 必含；本测试不触达，行为断言在 routes-templates/-employees/-skills.test.ts）
+      templates: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+      builder: createEmployeeBuilder({
+        provider: createTemplatesProvider(builtinTemplates, 'D:/data/.devzero/templates/custom'),
+        store: createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp'),
+        tmpRoot: 'D:/data/.devzero/tmp',
+      }),
+      store: createEmployeeStore('D:/data/.devzero/employees', 'D:/data/.devzero/tmp'),
+      tmpRoot: 'D:/data/.devzero/tmp',
     })
     const app = toHonoApp(registry, { sessionGuard: (ctx, grade) => service.sessionGuard(ctx, grade) })
 

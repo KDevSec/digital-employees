@@ -34,6 +34,8 @@ onMounted(() => {
   } catch {
     store.connection = 'closed'
   }
+  // 初值拉取（重载不丢板）：清单 + 每任务事件重放；store 级 seq 幂等保证与 SSE 增量不重复
+  void store.hydrate(httpEngineApi)
 })
 
 onUnmounted(() => {
@@ -43,6 +45,15 @@ onUnmounted(() => {
 
 /* ---------- 选中任务与派生数据 ---------- */
 const selectedId = ref<string | null>(null)
+
+// 双层衔接（T4）：泳道全景点卡跳转带 ?task=<id>——经 URL 查询参数初始选中
+// （读 location.search 而非 useRoute：组件在无 router 的测试挂载下也能工作）
+try {
+  const q = new URLSearchParams(window.location.search).get('task')
+  if (q) selectedId.value = q
+} catch {
+  /* 非浏览器环境兜底 */
+}
 
 // 任务列表变化：默认选中第一个；缺表的任务拉表快照（契约歧义 A 口径）
 watch(
@@ -146,6 +157,7 @@ const STATUS_META: Record<TaskStatus, { text: string; cls: string }> = {
         </div>
         <div class="tb-actions">
           <ConnectionBar :connection="store.connection" />
+          <RouterLink class="btn ghost" to="/kanban/board">泳道全景</RouterLink>
           <button class="btn primary" @click="modalOpen = true">发起任务</button>
         </div>
       </header>
@@ -311,6 +323,13 @@ h1 {
 
 .btn.primary:hover {
   background: var(--blue-700);
+}
+
+.btn.ghost {
+  background: #fff;
+  border-color: var(--g200);
+  color: var(--g600);
+  text-decoration: none;
 }
 
 /* 详情滚动区 */

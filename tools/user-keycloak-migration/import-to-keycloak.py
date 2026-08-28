@@ -481,6 +481,115 @@ class KeycloakClient:
     def add_user_to_group(self, user_id, group_id):
         self._req("PUT", f"{self.admin()}/users/{user_id}/groups/{group_id}")
 
+    def get_default_role(self):
+        """返回 realm 默认角色（default-roles-<realm>）的 {id,name}，带缓存。
+
+        交互/Admin API 建用户会自动授予该角色，但 partialImport 批量导入不会；
+        缺少它用户的令牌里就没有 account 客户端角色（manage-account/view-profile），
+        账户控制台 /realms/<realm>/account/ 会 401（页面报 Something went wrong）。
+        """
+        if getattr(self, "_default_role", None) is None:
+            r = self._req("GET", f"{self.base_url}/admin/realms/{self.realm}")
+            dr = (r.json() or {}).get("defaultRole") if r.status_code == 200 else None
+            if not dr or not dr.get("id"):
+                raise RuntimeError(f"无法获取 realm 默认角色 (HTTP {r.status_code})")
+            self._default_role = {"id": dr["id"], "name": dr["name"]}
+        return self._default_role
+
+    def ensure_default_role(self, user_id):
+        """幂等：确保用户被授予 realm 默认角色。返回本次是否补授。"""
+        role = self.get_default_role()
+        r = self._req("GET", f"{self.admin()}/users/{user_id}/role-mappings/realm")
+        if r.status_code == 200 and any(x.get("id") == role["id"] for x in (r.json() or [])):
+            return False
+        r = self._req("POST", f"{self.admin()}/users/{user_id}/role-mappings/realm", json_body=[role])
+        if r.status_code not in (200, 204):
+            raise RuntimeError(f"授予默认角色失败 ({r.status_code}): {r.text[:200]}")
+        return True
+
+    # ── 内置 client scopes（全量导入 --import-realm 不会创建/挂接）────────────
+    _BUILTIN_SCOPE_NAMES = [
+        "web-origins", "acr", "profile", "roles", "basic", "email",
+        "address", "microprofile-jwt", "organization", "phone", "service_account",
+        "AuthnContextClassRef", "role_list", "saml_organization",
+    ]
+    _OIDC_DEFAULT = ["web-origins", "acr", "profile", "roles", "basic", "email"]
+    _OIDC_OPTIONAL = ["address", "microprofile-jwt", "offline_access", "organization", "phone"]
+    _REALM_DEFAULT = ["AuthnContextClassRef", "acr", "basic", "email", "profile",
+                      "role_list", "roles", "saml_organization", "web-origins"]
+    _REALM_OPTIONAL = ["address", "microprofile-jwt", "offline_access", "organization", "phone"]
+
+    def reconcile_builtin_scopes(self):
+        """幂等：以 master 为模板补齐内置 client scopes、realm 默认 scope 及各客户端挂接。
+
+        realm 全量导入（--import-realm）只在 rep 显式声明时才创建 client scopes，且自动创建的
+        内置客户端（account/account-console 等）不会继承 realm 默认 scope。结果这些客户端的令牌
+        缺少 sub/aud/account 角色，账户控制台 /realms/<realm>/account/ 调账户 REST 返回 401，
+        页面报 “Something went wrong”。master 是 Keycloak 自带的健康模板，同版本直接据此复制。
+        返回新建 scope 数量。
+        """
+        master_admin = f"{self.base_url}/admin/realms/master"
+
+        def get(url):
+            r = self._req("GET", url)
+            return r.json() if r.status_code == 200 else None
+
+        master_scopes = {s["name"]: s for s in (get(f"{master_admin}/client-scopes") or [])}
+        target_scopes = {s["name"]: s for s in (get(f"{self.admin()}/client-scopes") or [])}
+        created = 0
+        for name in self._BUILTIN_SCOPE_NAMES:
+            if name in target_scopes or name not in master_scopes:
+                continue
+            full = get(f"{master_admin}/client-scopes/{master_scopes[name]['id']}")
+            rep = {
+                "name": full["name"],
+                "description": full.get("description", ""),
+                "protocol": full.get("protocol", "openid-connect"),
+                "attributes": full.get("attributes", {}),
+                "protocolMappers": [
+                    {
+                        "name": m["name"],
+                        "protocol": m.get("protocol", "openid-connect"),
+                        "protocolMapper": m["protocolMapper"],
+                        "consentRequired": m.get("consentRequired", False),
+                        "config": m.get("config", {}),
+                    }
+                    for m in full.get("protocolMappers", [])
+                ],
+            }
+            r = self._req("POST", f"{self.admin()}/client-scopes", json_body=rep)
+            if r.status_code in (200, 201):
+                created += 1
+                target_scopes[name] = {"id": r.headers.get("Location", "").rstrip("/").split("/")[-1]}
+            elif r.status_code != 409:
+                raise RuntimeError(f"创建内置 scope {name} 失败 ({r.status_code}): {r.text[:200]}")
+        # 重新拉取以拿到 id（POST 有时无 Location）
+        target_scopes = {s["name"]: s for s in (get(f"{self.admin()}/client-scopes") or [])}
+
+        def sid(name):
+            return target_scopes[name]["id"] if name in target_scopes else None
+
+        # realm 默认 scope 列表（幂等 PUT；不动自定义 organization-context）
+        for name in self._REALM_DEFAULT:
+            if sid(name):
+                self._req("PUT", f"{self.admin()}/default-default-client-scopes/{sid(name)}")
+        for name in self._REALM_OPTIONAL:
+            if sid(name):
+                self._req("PUT", f"{self.admin()}/default-optional-client-scopes/{sid(name)}")
+
+        # 各 OIDC 客户端挂接标准 scope
+        for c in (get(f"{self.admin()}/clients") or []):
+            if c.get("protocol") and c["protocol"] != "openid-connect":
+                continue
+            cu = c["id"]
+            for name in self._OIDC_DEFAULT:
+                if sid(name):
+                    self._req("PUT", f"{self.admin()}/clients/{cu}/default-client-scopes/{sid(name)}")
+            for name in self._OIDC_OPTIONAL:
+                if sid(name):
+                    self._req("PUT", f"{self.admin()}/clients/{cu}/optional-client-scopes/{sid(name)}")
+        return created
+
     def get_group_by_path(self, path):
         clean = path.strip("/")
         enc = urllib.parse.quote(clean, safe="/")
@@ -687,6 +796,16 @@ def main() -> int:
     client = KeycloakClient(KC_URL, token, realm, token_getter=_kc_token)
     if_exists_map = {"skip": "SKIP", "overwrite": "OVERWRITE", "fail": "FAIL"}[IF_EXISTS]
 
+    # 预检：全量导入的 realm 缺内置 client scopes 时按 master 模板补齐（幂等），
+    # 否则账户控制台等内置客户端令牌缺 sub/aud/账户角色会 401。
+    if not DRY_RUN and AUTH_MODE == "admin":
+        try:
+            n = client.reconcile_builtin_scopes()
+            if n:
+                print(f"预检：已按 master 模板补齐 {n} 个内置 client scopes 并完成挂接。\n")
+        except Exception as e:
+            print(f"WARN: 内置 client scope 预检失败（不阻断导入）: {e}", file=sys.stderr)
+
     # ── 1) 组织结构 ─────────────────────────────────────────────────────
     org_index = {}
     if has_org:
@@ -830,6 +949,9 @@ def main() -> int:
                     client.set_password(user_id, default_password, temporary=True)
                     client.set_required_actions(user, ["UPDATE_PASSWORD"])
 
+            # partialImport 不授予 realm 默认角色，需手动补齐（否则账户控制台 401）；幂等
+            role_fixed = client.ensure_default_role(user["id"])
+
             # 同步组织属性 + 挂组（幂等）
             if org_attrs:
                 client.update_user_attributes(user, org_attrs)
@@ -841,6 +963,8 @@ def main() -> int:
                     print(f"  [WARN] {username} 组未找到: {group_path}", file=sys.stderr)
 
             tag = "CREATED" if is_new else "EXISTS"
+            if role_fixed:
+                tag += "+ROLE"
             attr_sum = ", ".join(f"{k}={v[0]}" for k, v in org_attrs.items()) if org_attrs else ""
             print(f"  [{tag}] {username} -> {group_path or '(无组)'}" + (f"  ({attr_sum})" if attr_sum else ""))
             created += 1 if is_new else 0

@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import type { EngineEvent } from '../src/api/engine-events'
+import { parseSseFrame, type EngineEvent } from '../src/api/engine-events'
 import { demoFlowGatePauseTable, demoFlowTable } from '../src/fixtures/demo-flow.table'
 import { buildScenario } from '../src/fixtures/scenarios'
 import { applyEvent, emptyKanbanState, type TaskState } from '../src/stores/kanban'
@@ -49,6 +51,29 @@ describe('StageBand（阶段步进横幅）', () => {
     // gate-pause 全量：5 review PASS + 1 人工 approve；变体表 human_gate 节点计入分母 → 6/6
     const w2 = mount(StageBand, { props: { table: demoFlowGatePauseTable, task: replayTo('gate-pause', 40) } })
     expect(w2.find('.sbgate').text()).toContain('6/6')
+  })
+
+  it('gate 末格回流去重（引擎真实流）：g-code-review PASS 两次 + g-sec-code FAIL→PASS → 分子按闸去重 5/5 非 6/5', () => {
+    // L5×L3 联调实锤：引擎 demo-run-events.jsonl 的回流链 g-code-review 过两次（7 闸事件 6 PASS），
+    // 按事件计数的分子会超分母（6/5）；「通过闸数」语义 = 有 PASS 记录的去重闸数
+    const events: EngineEvent[] = (() => {
+      const lines = readFileSync(
+        join(__dirname, '..', '..', 'workbench-engine', 'test', 'fixtures', 'demo-run-events.jsonl'),
+        'utf8',
+      ).split('\n').filter((l) => l.trim() !== '')
+      return lines.map((line) => {
+        const raw = JSON.parse(line) as { type: string; trace_id: string; seq: number }
+        const res = parseSseFrame({ event: raw.type, data: line, id: `${raw.trace_id}:${raw.seq}` })
+        if (!res.ok) throw new Error(res.error)
+        return res.event
+      })
+    })()
+    let state = emptyKanbanState()
+    for (const ev of events) state = applyEvent(state, ev)
+    const taskId = events[0].trace_id
+    expect(state.tasks[taskId].gateRecords.length).toBe(7) // 6 PASS + 1 FAIL（回流链特征）
+    const w = mount(StageBand, { props: { table: demoFlowTable, task: state.tasks[taskId] } })
+    expect(w.find('.sbgate').text()).toContain('5/5')
   })
 
   it('gate_paused 任务：当前阶段格附 paused 类（amber 高亮）', () => {

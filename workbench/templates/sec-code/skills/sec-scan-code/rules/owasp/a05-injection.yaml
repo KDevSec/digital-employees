@@ -1,0 +1,26 @@
+rule_id: A05-INJECTION
+name: Injection
+owasp: A05
+severity: CRITICAL
+priority: constitutional
+description: |
+  Previously A03:2021. Injection occurs when untrusted data is sent to an
+  interpreter as part of a command or query. SQL, NoSQL, OS, and LDAP injection
+  are among the most common. Hostile data can also be injected into template
+  engines, leading to remote code execution.
+categories:
+  - id: sql-injection
+    name: SQL Injection
+    description: User input flows into SQL query without parameterization
+  - id: command-injection
+    name: Command Injection
+    description: User input flows into OS command execution
+  - id: template-injection
+    name: Template Injection
+    description: User input flows into template engine rendering
+  - id: ldap-injection
+    name: LDAP Injection
+    description: User input flows into LDAP query
+  - id: nosql-injection
+    name: NoSQL Injection
+    description: User input flows into NoSQL query without sanitization

@@ -30,7 +30,7 @@ function summarize(ev: EngineEvent): string {
       return `任务发起「${ev.title}」`
     case 'dispatch':
       if (ev.phase === 'start') return `→ ${emp(ev.emp)} 派发至 ${ev.node ?? '?'}`
-      return `${ev.status === 'error' ? '✕ 派发失败' : '✓'} ${emp(ev.emp)} 完成 ${ev.node ?? '?'}`
+      return `${ev.status === 'blocked' ? '✕ 派发失败' : '✓'} ${emp(ev.emp)} 完成 ${ev.node ?? '?'}`
     case 'transition':
       return `${ev.from ?? '∅'} → ${ev.to}${ev.reflow ? '（回流重派）' : ''}${ev.status === 'gate_paused' ? ' ｜停靠待人工' : ''}`
     case 'gate':
@@ -47,7 +47,8 @@ watch(
   () => props.feed.length,
   async () => {
     await nextTick()
-    boxEl.value?.scrollTo({ top: boxEl.value.scrollHeight })
+    // scrollTo?. 方法级探测：jsdom 元素无 scrollTo 实现，缺方法时跳过滚底（真浏览器不受影响）
+    boxEl.value?.scrollTo?.({ top: boxEl.value.scrollHeight })
   },
 )
 </script>

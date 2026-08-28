@@ -101,7 +101,7 @@ export function resToResponse(res: Res): Response {
 }
 
 async function dispatch(
-  c: { req: { path: string; url: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; raw: { headers: Headers } } },
+  c: { req: { path: string; url: string; header: (name: string) => string | undefined; json: () => Promise<unknown>; raw: { headers: Headers; arrayBuffer(): Promise<ArrayBuffer> } } },
   route: Route,
   guard?: SessionGuard,
 ): Promise<Response> {
@@ -111,9 +111,14 @@ async function dispatch(
     method: route.method,
     path: c.req.path,
     host: c.req.header('Host') ?? '127.0.0.1',
-    // 请求体（I0-5 T8 起 config 域 PUT 消费）：非 GET 才读，GET 不触碰 body（SSE 等长连接安全）。
-    // 非 JSON / 空 body 解析失败归一 undefined，交由各域 schema 校验给出 400（adapter 不猜语义）。
-    body: route.method === 'GET' ? undefined : await c.req.json().catch(() => undefined),
+    // 请求体三态（Task 12 / E-13 融合）：GET 不读（SSE 长连接安全）；
+    // 非 GET 且 content-type 为 JSON → json().catch(undefined)（非 JSON/空 body 归一 undefined，交由各域 schema 校验 400）；
+    // 非 GET 且非 JSON（multipart 等）→ bodyRaw 装载原始字节（skills 域 zip 上传走此通道）。
+    ...(route.method === 'GET'
+      ? {}
+      : (c.req.header('content-type') ?? '').toLowerCase().includes('application/json')
+        ? { body: await c.req.json().catch(() => undefined) }
+        : { bodyRaw: await c.req.raw.arrayBuffer().catch(() => undefined) }),
     // 查询串仅 GET 消费（L3 T6 engine 域 after_seq 过滤；A 系列 /auth/callback 同为 GET）
     query: route.method === 'GET' ? parseQuery(c.req.url) : undefined,
     // 请求头小写键快照（L3 T7 SSE last-event-id）；adapter 单点提取，域文件不碰框架类型

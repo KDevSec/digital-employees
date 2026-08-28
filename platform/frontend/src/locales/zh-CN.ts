@@ -304,7 +304,8 @@ export default {
     syncFromIAM: '从 IAM 同步',
     syncing: '同步中...',
     syncFailed: '同步失败',
-    syncDone: '同步完成：{orgs} 个组织节点已同步',
+    syncDone: '同步完成：{principals} 个人员，{orgs} 个组织节点已同步',
+    syncDisabled: '（{disabled} 个账号在 IAM 中已删除，已自动停用）',
     detail: {
       title: 'User Detail',
       userId: '用户 ID',

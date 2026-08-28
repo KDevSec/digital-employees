@@ -43,14 +43,19 @@ const cells = computed<StageCell[]>(() => {
 })
 
 /** gate 末格：通过闸数 / 总闸数（gate_specs + 人工闸节点——human_gate 是节点属性不在
- * gate_specs；不给进度条——1.0 语义） */
+ * gate_specs；不给进度条——1.0 语义）。分子按闸 id 去重——回流链同一闸多次 PASS
+ * （如 g-code-review 过两次）只计一次，否则出现 6/5 超分母（L5×L3 联调实锤） */
 const gateLine = computed<string | null>(() => {
   if (!props.table) return null
   const total =
     Object.keys(props.table.gate_specs).length +
     props.table.nodes.filter((n) => n.human_gate === true).length
-  const passed = props.task.gateRecords.filter((g) => g.verdict === 'PASS' || g.verdict === 'approve').length
-  return `${passed}/${total}`
+  const passedGates = new Set(
+    props.task.gateRecords
+      .filter((g) => g.verdict === 'PASS' || g.verdict === 'approve')
+      .map((g) => g.gate),
+  )
+  return `${passedGates.size}/${total}`
 })
 </script>
 

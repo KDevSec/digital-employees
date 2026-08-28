@@ -127,10 +127,18 @@ describe('parseEngineEvent（六类事件类型守卫矩阵）', () => {
     expect(res.ok).toBe(true)
   })
 
-  it('守卫拒绝：缺 task_id → ok:false 不抛', () => {
+  it('守卫兼容：缺 task_id 但 trace_id 在 → ok:true 且 task_id 兜底=trace_id（引擎真实载荷形态，L5×L3 联调实锤）', () => {
+    const real = baseEvent({ type: 'run.completed', final_node: 'n-done', duration_s: 1 })
+    delete real.task_id
+    const res = parseEngineEvent(real)
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.event.task_id).toBe(real.trace_id)
+  })
+
+  it('守卫拒绝：缺 trace_id（身份锚）→ ok:false 不抛', () => {
     const bad = baseEvent({ type: 'run.completed', final_node: 'n-done', duration_s: 1 })
-    delete bad.task_id
-    expect(parseEngineEvent(bad)).toEqual({ ok: false, error: expect.stringContaining('task_id') })
+    delete bad.trace_id
+    expect(parseEngineEvent(bad)).toEqual({ ok: false, error: expect.stringContaining('trace_id') })
   })
 
   it('守卫拒绝：seq 非数字 → ok:false', () => {

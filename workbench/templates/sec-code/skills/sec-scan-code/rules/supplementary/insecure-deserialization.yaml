@@ -1,0 +1,10 @@
+rule_id: INSECURE-DESERIALIZATION
+name: Insecure Deserialization
+owasp: null
+severity: CRITICAL
+priority: supplementary
+description: Deserializing untrusted data without type validation, enabling RCE
+categories:
+  - id: unsafe-deserialize
+    name: Unsafe Deserialization
+    description: Deserializing untrusted data with unsafe deserializer

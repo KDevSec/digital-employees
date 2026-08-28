@@ -1,0 +1,22 @@
+rule_id: A08-SOFTWARE-AND-DATA-INTEGRITY-FAILURES
+name: Software and Data Integrity Failures
+owasp: A08
+severity: HIGH
+priority: constitutional
+description: |
+  Software and data integrity failures relate to code and infrastructure that
+  does not protect against integrity violations. This includes insecure CI/CD
+  pipelines, unsigned updates, and unsafe deserialization of untrusted data.
+categories:
+  - id: insecure-deserialization
+    name: Insecure Deserialization
+    description: Deserializing untrusted data without type validation (RCE risk)
+  - id: unsigned-update
+    name: Unsigned Update
+    description: Downloading updates without integrity verification
+  - id: insecure-cicd
+    name: Insecure CI/CD
+    description: CI/CD pipeline operations without verification
+  - id: integrity-missing
+    name: Missing Integrity Check
+    description: Writing downloaded content without hash verification

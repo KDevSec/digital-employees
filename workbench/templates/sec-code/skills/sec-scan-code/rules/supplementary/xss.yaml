@@ -1,0 +1,10 @@
+rule_id: XSS
+name: Cross-Site Scripting
+owasp: null
+severity: HIGH
+priority: supplementary
+description: User input rendered in HTML without escaping, enabling script injection
+categories:
+  - id: xss-reflected
+    name: Reflected XSS
+    description: User input directly rendered in response without escaping

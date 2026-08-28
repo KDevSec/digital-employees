@@ -1,0 +1,24 @@
+rule_id: A09-SECURITY-LOGGING-AND-MONITORING-FAILURES
+name: Security Logging and Monitoring Failures
+owasp: A09
+severity: MEDIUM
+priority: constitutional
+description: |
+  This category helps detect, escalate, and respond to active breaches.
+  Without logging and monitoring, breaches cannot be detected. Insufficient
+  logging, detection, monitoring, and active response occurs when auditable
+  events are not logged, warnings and errors generate no logs, or logs are
+  only stored locally.
+categories:
+  - id: missing-logging
+    name: Missing Logging
+    description: Empty exception handlers or security events without logging
+  - id: sensitive-in-log
+    name: Sensitive Data in Log
+    description: Passwords, tokens, or secrets written to log output
+  - id: missing-alert
+    name: Missing Alert
+    description: Brute force or failed auth without alerting mechanism
+  - id: log-injection
+    name: Log Injection
+    description: User input in log output without sanitization

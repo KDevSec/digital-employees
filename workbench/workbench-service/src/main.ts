@@ -8,7 +8,7 @@
  * kill 前做 healthz 身份校验（防误杀）、确认端口释放后自行完成善后簿记，见 stopCommand。
  */
 import { spawn } from 'node:child_process'
-import { appendFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -43,6 +43,11 @@ import { Engine } from '@devzero/engine'
 import { buildEngineMcpServer } from './server/mcp/engine-mcp'
 import demoFlowYaml from '../../workbench-engine/assets/flows/demo-flow.node-table.yml' with { type: 'text' }
 import { toHonoApp } from './server/hono-adapter'
+import { createTemplatesProvider } from './templates/provider'
+import { builtinTemplates } from './assets/templates.gen'
+import { createEmployeeStore } from './employees/store'
+import { createEmployeeBuilder } from './employees/builder'
+import { seedBuiltinEmployees } from './employees/seed'
 
 // S-01 嵌入 Web 壳：Bun 运行时/bundler 均以 text 属性内联（--compile 单体产物自带页面）。
 // vitest 不支持该导入属性——路由域（routes/）经 deps 注入，此处为唯一 import 点（冒烟覆盖）。
@@ -62,6 +67,21 @@ const sentinelsDir = join(runDir, 'sentinels')
 const staffRoot = join(homedir(), 'digital-staff')
 // I1 L2 安装线（设计 §9）：底座探测缓存目录（profile 内 bases/<base>.json，30min TTL）
 const basesCacheDir = join(profileDir, 'bases')
+
+// L1 员工新建线（Task 11/18）：员工库根（~/.devzero/employees/——canonical EmployeeSpec 真源，L2 installs 域消费）
+const employeesRoot = join(profileDir, 'employees')
+
+/** 员工包根映射（L1 合流）：installs 域 packageRoots 自动发现——扫员工库目录构造 { employee_id: 包根 }。
+ *  V0.1 注册期快照（新员工落库/删除后重启服务刷新）；目录不存在/非目录返回空表。 */
+function listEmployeePackageRoots(): Record<string, string> {
+  if (!existsSync(employeesRoot) || !statSync(employeesRoot).isDirectory()) return {}
+  const roots: Record<string, string> = {}
+  for (const id of readdirSync(employeesRoot)) {
+    const p = join(employeesRoot, id)
+    if (statSync(p).isDirectory()) roots[id] = p
+  }
+  return roots
+}
 
 let startedAtMs = Date.now()
 
@@ -208,7 +228,7 @@ function runBaseVersion(command: string, args: string[]): Promise<{ code: number
   })
 }
 
-function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<typeof Bun.serve> {
+function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: ServerDeps): ReturnType<typeof Bun.serve> {
   // A 系列装配（Task 16，详设 §3.1）：platform-access = 八认证端点 handler 门面 + 心跳调度器
   const installationId = rt.uid
   const access = createPlatformAccess({ profileDir, loadConfig, installationId, version: brand.version })
@@ -235,7 +255,6 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     writeConfigOverride,
     engine,
     // I1 L2 安装线两域（设计 §3/§9/§10）：installs + bases 装配——
-    // 员工包目录 E 系列接管前为空表（execute/plan 对未知员工 404——装配口径非域契约）；
     // 探测为同步桥（InstallServiceDeps.probe 同步签名）：读 bases 域探测缓存文件，
     // 实探与回写由 GET /api/bases / POST /api/bases/probe 负责（UI 动线先见底座页再安装）。
     registryFile: join(staffRoot, 'registry.json'),
@@ -246,11 +265,21 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
       qoder: join(homedir(), '.qoder'),
     },
     probe: (base: BaseId) => readBaseCache(join(basesCacheDir, `${base}.json`)) ?? { present: false, version: null },
-    packageRoots: {},
+    // L1 合流：员工包根 = 员工库目录自动发现（README「E-12 落地后 packageRoots 自动发现」——
+    // installs 域按 employee_id 查包根，扫描 employees/ 构造映射；V0.1 注册期快照，新员工落库后重启刷新）
+    packageRoots: listEmployeePackageRoots(),
+    // 终审 B1 修复：packageRoots 注册期快照不感知新建员工——同会话点安装会 404（错误文案与事实不符）。
+    // employeesRoot 注入运行期回退：未命中快照时按 employee_id 实时探查此目录（isSafeEmployeeId 预检防越界）。
+    employeesRoot,
     cacheDir: basesCacheDir,
     run: runBaseVersion,
     // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
     service: access.service,
+    // L1 员工域四项（Task 7/11/12 + Task 18 seed）：templates/employees/skills 三域 + 预置物化共用实例
+    templates: serverDeps.templatesProvider,
+    builder: serverDeps.employeesBuilder,
+    store: serverDeps.employeesStore,
+    tmpRoot: serverDeps.tmpRoot,
   })
   // app 组装必须在路由注册之后（toHonoApp 遍历 routes 数组为快照——顺序反了即全 404）；
   // MCP 例外口（L3）+ 会话守卫（A 系列 A-08）经同一 opts 并集注入
@@ -260,13 +289,56 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
   })
   startedAtMs = Date.now()
   try {
-    const server = Bun.serve({ port: cfg.network.port, hostname: '127.0.0.1', fetch: app.fetch })
+    const server = Bun.serve({
+      port: cfg.network.port,
+      hostname: '127.0.0.1',
+      fetch: app.fetch,
+      // SSE 长连接（/api/engine/stream）空闲保活上限：Bun 默认 10s 会在首个 15s 心跳前掐死
+      // 空闲流（L5×L3 联调实锤：EventSource 经代理收 500 → 连接态「已断开」）；255 为 Bun 上限，
+      // 心跳 15s 每次写入重置计时，长连接不受影响（mock 侧同款修法，见 scripts/mock-engine-server.ts）
+      idleTimeout: 255,
+    })
     // 详设 §3.1 第 9 步：服务起 → 后台任务起（心跳调度；workbenchId 在才真起，幂等）
     access.scheduler.ensureRunning()
     return server
   } catch (err) {
     throw new ExitError(78, `监听 127.0.0.1:${cfg.network.port} 失败（端口被占用？）：${String(err)}`)
   }
+}
+
+/**
+ * 服务端依赖（Task 18 / D2）：模板 provider + 员工库 store/builder + tmpRoot。
+ * 在 daemonEntry 实例化一次，seed 预置物化与 startRealServer 路由注册共用同一组实例。
+ */
+interface ServerDeps {
+  templatesProvider: ReturnType<typeof createTemplatesProvider>
+  employeesStore: ReturnType<typeof createEmployeeStore>
+  employeesBuilder: ReturnType<typeof createEmployeeBuilder>
+  tmpRoot: string
+}
+
+/** 实例化服务端依赖（provider/store/builder 共用同一组 profileDir 派生目录） */
+function createServerDeps(): ServerDeps {
+  // Task 7 B2 templates 域：builtin 内存资产（codegen 产物）+ custom fs 聚合（profileDir/templates/custom）
+  // customRoot 目录不预创建——存在才扫；首启无 custom 模板时 list() 返回 7 个 builtin 不炸
+  // 同一 provider 实例供 templates 域路由 + employees 域 builder 共用（read-only，无状态冲突）
+  const tmpRoot = join(profileDir, 'tmp')
+  const templatesProvider = createTemplatesProvider(
+    builtinTemplates,
+    join(profileDir, 'templates', 'custom'),
+  )
+  // Task 11 B6 employees 域：builder 管线八步（draft → 八步 → 原子落盘）+ store（id 冲突预检/suggestion）
+  // employeesRoot/tmpRoot 落在 profileDir 下（与 config/run/logs 同根）；store 与 builder 共用同一组目录
+  const employeesStore = createEmployeeStore(
+    employeesRoot,
+    tmpRoot,
+  )
+  const employeesBuilder = createEmployeeBuilder({
+    provider: templatesProvider,
+    store: employeesStore,
+    tmpRoot,
+  })
+  return { templatesProvider, employeesStore, employeesBuilder, tmpRoot }
 }
 
 /** 开浏览器（Windows rundll32；测试/冒烟可用 WORKBENCH_NO_BROWSER=1 抑制） */
@@ -307,14 +379,14 @@ function verifyPortReleased(port: number): Promise<boolean> {
   })
 }
 
-function buildStartupDeps(rt: ServiceRuntime): StartupDeps {
+function buildStartupDeps(rt: ServiceRuntime, serverDeps: ServerDeps): StartupDeps {
   return {
     loadConfig: () => structuredClone(rt.config),
     readReliability: () => readReliability(runDir),
     readServiceHandle: () => readServiceHandle(runDir),
     probeHealth: probeHealthSnapshot,
     clearRunDir: clearRunDirFull,
-    startServer: (cfg) => startRealServer(cfg, rt),
+    startServer: (cfg) => startRealServer(cfg, rt, serverDeps),
     writeServiceHandle: (_server, cfg) =>
       writeServiceHandle(runDir, { pid: process.pid, port: cfg.network.port, uid: rt.uid, version: brand.version }),
     writeReliability: (handle) => writeReliability(runDir, { runId: handle.instanceId }),
@@ -357,7 +429,27 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
   try {
     rt = initServiceRuntime()
     const runtime = rt // const 捕获：闭包内保持非空收窄
-    const startupDeps = buildStartupDeps(runtime)
+
+    // Task 18 / D2 预置物化：首启 7 个 builtin 模板走同一 E-12 管线进员工库（幂等跳过/operator 占位）。
+    // 装配在 startRealServer 前、provider/store/builder 实例化后；seed 失败不阻断服务启动（catch 兜底，warn 落日志）。
+    const serverDeps = createServerDeps()
+    try {
+      const seedResult = await seedBuiltinEmployees(
+        serverDeps.templatesProvider,
+        serverDeps.employeesStore,
+        serverDeps.employeesBuilder,
+      )
+      runtime.logger.log('seed_completed', {
+        seeded: seedResult.seeded.length,
+        skipped: seedResult.skipped.length,
+      })
+    } catch (err) {
+      runtime.logger.log('seed_failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    const startupDeps = buildStartupDeps(runtime, serverDeps)
     if (opts.daemon === true) {
       // 调度器路径（__daemon）永不开浏览器：重复触发守护每分钟拉起时若服务已在跑（任务实例外），
       // 幂等分支会开浏览器——用户每分钟吃一个新标签页（安装实测反馈）。浏览器只属于用户显式动作
