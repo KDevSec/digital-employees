@@ -1,15 +1,17 @@
 <script setup lang="ts">
 /**
  * 发起任务表单（L5 看板线 T10，KB-02；字段面 = 协同编排设计 §2 裁决 11 / §9.4）：
- * mode（团队选表 / 单员工动态建表——引擎生成单节点表，一切任务皆 flow）+ 底座（静态三选，
- * B-06 探测归 L2）+ 模型/努力档位（「使用流程阶段内置档位」勾选时任务级置空禁用，
- * 表 model_tier 优先——§9.4 四层解析链）+ 工作区 + 需求文本。
+ * mode（团队选表 / 单员工动态建表——引擎生成单节点表，一切任务皆 flow）+ 底座
+ * （真实源 = GET /api/bases，D-062：在场标注版本/未在场置灰「未检测到」，空选 = 跟随底座默认）
+ * + 模型/努力档位（「使用流程阶段内置档位」勾选时任务级置空禁用，表 model_tier 优先——§9.4 四层解析链）
+ * + 工作区 + 需求文本。
  * 提交 → api.createTask（载荷 1:1 §9.1 参数）→ emit created(task_id) + 关闭；
  * 失败错误常驻表单区（纪律⑥非 toast）。按钮文案精简（品牌 §4）。
  */
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import type { CreateTaskPayload, EngineApi, FlowSummary } from '../../api/engine-api'
 import { createTaskPayload } from '../../api/engine-api'
+import { fetchBases, type BaseCard } from '../../api/bases'
 
 const props = defineProps<{
   open: boolean
@@ -24,13 +26,13 @@ const emit = defineEmits<{
   created: [taskId: string]
 }>()
 
-const BASES = [
-  { value: 'claude-code', label: 'Claude Code' },
-  { value: 'codebuddy', label: 'CodeBuddy' },
-  { value: 'qoder', label: 'Qoder' },
-]
+/** 底座真实源（D-062，GET /api/bases；空 = 服务不可达/零探测 → 仅「未选择」占位项） */
+const baseCards = ref<BaseCard[]>([])
+onMounted(async () => {
+  baseCards.value = await fetchBases()
+})
 
-/** 档位组（1.0 五档语义，Q7 口径；真实数据源 listModels 归 L2——契约歧义 E） */
+/** 档位组（1.0 五档语义，Q7 口径；具体模型映射配置于「底座与环境」页，D-062） */
 const TIERS = ['', '评审安全档', '设计档', '探索档', '编码档', '执行档']
 const EFFORTS = ['', 'low', 'medium', 'high']
 
@@ -43,6 +45,7 @@ const form = reactive({
   model: '',
   effort: '',
   useFlowTier: false,
+  humanReview: false,
   workspace: '',
   input: '',
 })
@@ -75,9 +78,11 @@ async function submit(): Promise<void> {
   if (Object.keys(errors.value).length > 0 || submitting.value || !props.api) return
   submitting.value = true
   formError.value = null
+  // I2 方案 C 人工评审开关：勾选时把 simple-flow 映射到 simple-flow-human（仅 g-exit 节点 human_gate 停靠）
+  const flowValue = form.humanReview && form.flow === 'simple-flow' ? 'simple-flow-human' : form.flow
   const payload = createTaskPayload({
     mode: form.mode,
-    flow: form.mode === 'team' ? form.flow : undefined,
+    flow: form.mode === 'team' ? flowValue : undefined,
     employee: form.mode === 'solo' ? form.employee : undefined,
     title: form.title.trim(),
     workspace: form.workspace.trim(),
@@ -151,8 +156,13 @@ function close(): void {
           <div class="field">
             <label>底座</label>
             <select v-model="form.base" data-field="base">
-              <option value="">跟随终端默认</option>
-              <option v-for="b in BASES" :key="b.value" :value="b.value">{{ b.label }}</option>
+              <option value="">未选择</option>
+              <option
+                v-for="b in baseCards"
+                :key="b.id"
+                :value="b.id"
+                :disabled="!b.present"
+              >{{ b.present ? `${b.label}（${b.version ?? '未知版本'}）` : `${b.label}（未检测到）` }}</option>
             </select>
           </div>
 
@@ -160,7 +170,7 @@ function close(): void {
             <div class="field">
               <label>模型档位</label>
               <select v-model="form.model" data-field="model" :disabled="form.useFlowTier">
-                <option value="">跟随底座默认</option>
+                <option value="">随底座档位配置</option>
                 <option v-for="t in TIERS.slice(1)" :key="t" :value="t">{{ t }}</option>
               </select>
             </div>
@@ -176,6 +186,11 @@ function close(): void {
           <label class="tier-check">
             <input v-model="form.useFlowTier" type="checkbox" data-field="useFlowTier" />
             使用流程阶段内置档位（各阶段按表内置模型档位执行）
+          </label>
+
+          <label v-if="form.mode === 'team' && form.flow === 'simple-flow'" class="tier-check">
+            <input v-model="form.humanReview" type="checkbox" data-field="humanReview" />
+            准出前人工评审（提交时改用 simple-flow-human 表，准出节点停靠等看板放行）
           </label>
 
           <div class="field">

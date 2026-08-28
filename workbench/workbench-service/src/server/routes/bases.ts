@@ -8,15 +8,24 @@
 import { join } from 'node:path'
 import { z } from 'zod'
 import { listModelsFor } from '../../adapters/common/models'
+import { TIER_ORDER, type TierName } from '../../adapters/common/tier-map'
 import type { BaseId } from '../../adapters/contract'
 import { baseProfiles } from '../../adapters/index'
 import { readCache as readBaseCache, writeCache as writeBaseCache } from '../../bases/cache'
 import { assertVersion, probeBase, type CmdRunner } from '../../bases/probe'
+import { readTierConfig, resolveTierConfig, saveTierConfig } from '../../bases/tier-config'
 import { createDeploymentRegistry } from '../../installs/registry/registry'
 import type { Res, RouteRegistry } from '../registry'
 
 const baseIdSchema = z.enum(['claude-code', 'codebuddy', 'qoder'])
 const probeSchema = z.object({ base: baseIdSchema.optional() }).strict()
+/** PUT tier-config 载荷：五档齐全且值非空（D-062；不做候选白名单--CC 网关别名形态合法 id 不止静态表） */
+const tierConfigSchema = z.object({
+  tiers: z.record(z.string()).refine(
+    (t) => TIER_ORDER.every((k) => typeof t[k] === 'string' && t[k].length > 0),
+    { message: '五档映射必须齐全且值非空' },
+  ),
+}).strict()
 
 export interface BasesRouteDeps {
   /** 探测缓存目录（~/.devzero/bases/；文件名 <base>.json） */
@@ -25,6 +34,8 @@ export interface BasesRouteDeps {
   run: CmdRunner
   /** Deployment 台账文件（卡片 employees_count / last_install_at 数据源） */
   registryFile: string
+  /** 模型档位配置文件（~/.devzero/bases/tier-config.json；D-062） */
+  tierConfigFile: string
 }
 
 /** 底座卡片（GET /api/bases 响应元素，设计 §10） */
@@ -103,6 +114,27 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
     // 静态表哲学（无参数路由）：path 声明用 :id 占位，handler 内 ctx.path 切段取底座 id（倒数第二段）
     const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
     if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
-    return { status: 200, json: await listModelsFor(id) }
+    const overrides = readTierConfig(deps.tierConfigFile)[id] ?? {} // D-062：合并用户档位配置
+    return { status: 200, json: await listModelsFor(id, overrides) }
+  })
+
+  reg.get('/api/bases/:id/tier-config', async (ctx): Promise<Res> => {
+    // 同 :id/models 的取段口径（倒数第二段；尾段为 tier-config）
+    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
+    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    try {
+      return { status: 200, json: resolveTierConfig(deps.tierConfigFile, id) }
+    } catch (e) {
+      return err(500, 'TIER_CONFIG_INVALID', e instanceof Error ? e.message : String(e))
+    }
+  })
+
+  reg.put('/api/bases/:id/tier-config', async (ctx): Promise<Res> => {
+    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
+    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const parsed = tierConfigSchema.safeParse(ctx.body ?? {})
+    if (!parsed.success) return err(400, 'INVALID_REQUEST', parsed.error.issues[0]?.message ?? '请求体不合法')
+    saveTierConfig(deps.tierConfigFile, id, parsed.data.tiers as Record<TierName, string>)
+    return { status: 200, json: resolveTierConfig(deps.tierConfigFile, id) }
   })
 }

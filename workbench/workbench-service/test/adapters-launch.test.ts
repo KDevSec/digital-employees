@@ -20,13 +20,17 @@ const input = {
 }
 
 describe('launch()（设计 §4.3；LaunchSpec 纯构造 + prompt 文件中转）', () => {
-  it('CC：env CLAUDE_CONFIG_DIR 指向 home/config；cwd=workdir；args 带 -p 与 prompt 全文 + permission/model 旗标', async () => {
+  it('CC：env CLAUDE_CONFIG_DIR 指向 home/config；cwd=workdir；args 带 `-p -` 与 permission/model 旗标（prompt 全文走 stdin，M2 唯一可靠通道）', async () => {
     const spec = await createClaudeCodeAdapter().launch(input)
     expect(spec.command).toBe('claude')
     expect(spec.env.CLAUDE_CONFIG_DIR).toBe(join(HOME, 'config'))
     expect(spec.cwd).toBe(WORK)
+    // I2 P0c：args 里 `-p -` 占位（Windows .CMD 垫片多行 argv 截断——M2 实锤）；
+    // prompt 全文只在 stdin 字段（launcher 写 spawn input）
     expect(spec.args).toContain('-p')
-    expect(spec.args).toContain('修复登录页 bug\n按 TDD 走')   // args 数组直传不经 shell——多行安全（四坑坑1 免疫）
+    expect(spec.args).toContain('-')
+    expect(spec.args).not.toContain('修复登录页 bug\n按 TDD 走')
+    expect(spec.stdin).toBe('修复登录页 bug\n按 TDD 走')
     expect(spec.args).toContain('--permission-mode')
     expect(spec.args).toContain('--model')
   })

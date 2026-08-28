@@ -6,7 +6,7 @@ import { RouterLink } from 'vue-router'
  * T10 增 D-23 sidebar-foot 设置齿轮）：
  * - 形态：78px 窄图标栏 + 纵向蓝渐变（blue-950→blue-800）+ sticky 100vh；
  *   logo 44px 蓝渐变方块 + 原型人形 SVG，title「研发零处数字员工终端」；
- * - 可点项四枚：我的员工（默认选中）/ 底座与环境 / 协同编排（/kanban/board 泳道全景，T4）/
+ * - 可点项四枚：我的员工（默认选中）/ 底座与环境 / 协同编排（/collab 泳道全景，T4）/
  *   任务看板（/kanban 详情）——RouterLink 样式化为原型
  *   nav-item（竖排 SVG 图标 21px + 10.5px 微字），选中态走 router-link active
  *   （vue-router 内建，无自定义选中逻辑；原型 nav-item.active 的底色/内描边语言）；
@@ -44,7 +44,7 @@ const emit = defineEmits<{ openSettings: [] }>()
           </RouterLink>
         </li>
         <li>
-          <RouterLink class="nav-item" to="/kanban/board">
+          <RouterLink class="nav-item" to="/collab">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /><circle cx="12" cy="12" r="3" /></svg>
             <span>协同编排</span>
           </RouterLink>

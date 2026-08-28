@@ -4,6 +4,8 @@
  * project-file 回退档（D-L2-01 档案值切换）：身份 target = workdir 根 AGENTS.md 薄壳位、skills 带 ds-<id>- 前缀。
  * 虚拟源约定：__mcp__（从 spec.connectors 内存物化）/ __auth__/<f>（从 authSourceDir 取源）——executor actions 物化消费。
  */
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import type { BaseProfile, Placement, PlacementPlan } from '../contract'
 import type { EmployeeSpec } from '../../installs/spec/types'
 
@@ -48,7 +50,11 @@ export function buildPlan(
   }
 
   if (profile.auth.kind !== 'none') {
+    // D-062 auth env-token 分档（设计 §5.1）：profile 声明 envTokenKeys 且任一键在 env 中，
+    // 凭证源缺失时跳过 auth 落位（零置备环境继承）；否则保持 __auth__ 落位让 executor 报阻塞。
+    const envTokenPresent = profile.auth.envTokenKeys?.some((k) => !!process.env[k])
     for (const f of profile.auth.files) {
+      if (envTokenPresent && opts.authSourceDir && !existsSync(join(opts.authSourceDir, f))) continue
       placements.push({ source: `__auth__/${f}`, target: `config/${f}`, action: 'symlink' })
     }
   }

@@ -67,6 +67,7 @@ const deps = {
   packageRoots: {},
   employeesRoot: 'D:/data/.devzero/employees', // 终审 B1 回退根——本文件不触达 installs 端点，占位即可
   cacheDir: 'D:/data/.devzero/bases',
+  tierConfigFile: 'D:/data/.devzero/bases/tier-config.json', // D-062 档位配置（值非契约）
   run: async () => ({ code: 127, stdout: '' }),
 }
 
@@ -78,7 +79,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（I0-5 + session/auth/enrollment（A 系列） + engine 12（L3） + installs 5 / bases 3（I1 L2） + L1：templates 2 / employees 3 / skills 1）', () => {
+  it('注册产物 = 期望路由表（I0-5 + session/auth/enrollment（A 系列） + engine 12（L3） + installs 5 / bases 5（I1 L2 + D-062 档位配置） + L1：templates 2 / employees 3 / skills 1）', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -86,6 +87,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/api/activity'],
       ['GET', '/api/bases'],
       ['GET', '/api/bases/:id/models'],
+      ['GET', '/api/bases/:id/tier-config'],
       ['GET', '/api/config/platform'],
       ['GET', '/api/deployments'],
       ['GET', '/api/employees'],
@@ -124,6 +126,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['POST', '/api/reset'],
       ['POST', '/api/skills/upload'],
       ['POST', '/api/uninstall'],
+      ['PUT', '/api/bases/:id/tier-config'],
       ['PUT', '/api/config/platform'],
     ])
   })

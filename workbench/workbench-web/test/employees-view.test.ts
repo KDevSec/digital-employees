@@ -37,9 +37,9 @@ function makeRouter() {
 }
 
 const THREE_EMPLOYEES: EmployeeCard[] = [
-  { id: 'dev-engineer', display: '开发工程师', brief: '承接需求完成代码实现', avatar: '🧑‍💻', kind: 'flow-owner', version: '0.1.0' },
-  { id: 'reviewer-expert', display: '评审专家', brief: '被 gate 发函的结构化评审', avatar: '⚖️', kind: 'callee', version: '0.1.0' },
-  { id: 'sys-engineer', display: '系统工程师', brief: '总体设计与技术选型', avatar: '🧑‍🔬', kind: 'flow-owner', version: '0.1.0' },
+  { id: 'dev-engineer', display: '开发工程师', brief: '承接需求完成代码实现', avatar: '🧑‍💻', kind: 'flow-owner', version: '0.1.0', hosts: ['claude-code', 'qoder'] },
+  { id: 'reviewer-expert', display: '评审专家', brief: '被 gate 发函的结构化评审', avatar: '⚖️', kind: 'callee', version: '0.1.0', hosts: ['claude-code'] },
+  { id: 'sys-engineer', display: '系统工程师', brief: '总体设计与技术选型', avatar: '🧑‍🔬', kind: 'flow-owner', version: '0.1.0', hosts: [] },
 ]
 
 describe('EmployeesView 花名册页', () => {
@@ -64,7 +64,7 @@ describe('EmployeesView 花名册页', () => {
     expect(btn.text()).toContain('新建员工')
   })
 
-  it('3 员工 → 渲染 3 张卡片（头像/岗位名/kind tag/version/brief）', async () => {
+  it('3 员工（2 已安装 + 1 未安装）→ 渲染 2 张卡片（只显示已安装）', async () => {
     vi.mocked(fetchEmployees).mockResolvedValue({ items: THREE_EMPLOYEES, invalid: [] })
     const router = makeRouter()
     router.push('/employees')
@@ -73,7 +73,7 @@ describe('EmployeesView 花名册页', () => {
     await flushPromises()
 
     const cards = wrapper.findAll('.emp-card')
-    expect(cards.length).toBe(3)
+    expect(cards.length).toBe(2) // hosts=[] 的 sys-engineer 不显示
 
     // 第一张卡：dev-engineer
     const devCard = cards.find((c) => c.text().includes('dev-engineer'))

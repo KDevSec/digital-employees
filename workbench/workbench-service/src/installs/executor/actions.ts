@@ -132,7 +132,9 @@ function mcpPatch(spec: EmployeeSpec): Record<string, unknown> {
   return { mcpServers }
 }
 
-/** __auth__/<f> 虚拟源物化：凭证源 = plan.authSourceDir/<f>（各底座全局配置目录）；缺失 = 一等错误可恢复 */
+/** __auth__/<f> 虚拟源物化：凭证源 = plan.authSourceDir/<f>（各底座全局配置目录）。
+ *  env-token 认证形态（设计 §5.1）由 plan 层在生成 placements 时完成降级（跳过落位），
+ *  本函数仅处理「plan 决定落位但源文件缺失」的阻塞路径（双缺或源不全）。 */
 function authPlacement(plan: PlacementPlan, placement: Placement, dstAbs: string): ActionOutcome {
   const file = placement.source.slice('__auth__/'.length)
   const missing = (): InstallError => new InstallError({

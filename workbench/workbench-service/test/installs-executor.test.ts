@@ -84,6 +84,39 @@ describe('executeInstall（事务八条——设计 §6）', () => {
     expect(input.registry.find('claude-code', 'dev-lite')).toBeUndefined()
   })
 
+  it('auth env-token 分档（设计 §5.1，M2 实测）：凭证文件缺失 + env 有 token -> 零置备降级成功（环境继承）', async () => {
+    const envBackup = process.env.ANTHROPIC_AUTH_TOKEN
+    process.env.ANTHROPIC_AUTH_TOKEN = 'wb-test-env-token'
+    try {
+      const emptyAuthDir = join(scratch, 'empty-cc')
+      mkdirSync(emptyAuthDir, { recursive: true }) // 目录在但无 .credentials.json
+      const input = makeInput({ spec: await parsePackage(fixturePackageDir()), authSourceDir: emptyAuthDir })
+      const out = executeInstall(input)
+      expect(out.result).toBe('success')
+      expect(existsSync(join(input.home, 'config', '.credentials.json'))).toBe(false) // 零置备
+      expect(input.registry.find('claude-code', 'dev-lite')?.status).toBe('installed')
+    } finally {
+      if (envBackup === undefined) delete process.env.ANTHROPIC_AUTH_TOKEN
+      else process.env.ANTHROPIC_AUTH_TOKEN = envBackup
+    }
+  })
+
+  it('auth 双缺才阻塞：无凭证文件且 env 无 token -> INSTALL_AUTH_SOURCE_MISSING 回滚', async () => {
+    const envBackup = process.env.ANTHROPIC_AUTH_TOKEN
+    delete process.env.ANTHROPIC_AUTH_TOKEN
+    try {
+      const emptyAuthDir = join(scratch, 'empty-cc2')
+      mkdirSync(emptyAuthDir, { recursive: true })
+      const input = makeInput({ spec: await parsePackage(fixturePackageDir()), authSourceDir: emptyAuthDir })
+      const out = executeInstall(input)
+      expect(out.result).toBe('rolled-back')
+      expect(out.error?.code).toBe('INSTALL_AUTH_SOURCE_MISSING')
+    } finally {
+      if (envBackup === undefined) delete process.env.ANTHROPIC_AUTH_TOKEN
+      else process.env.ANTHROPIC_AUTH_TOKEN = envBackup
+    }
+  })
+
   it('崩溃恢复：installing 残行 + 完整域 → 补转 installed；不完整 → broken（kill -9 模拟）', async () => {
     const spec = await parsePackage(fixturePackageDir())
     const input = makeInput({ spec })

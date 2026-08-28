@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { saveAsTemplate } from '../../api/employees'
@@ -8,13 +8,16 @@ import { useWizardStore } from '../../stores/wizard'
 import InstallModal from './InstallModal.vue'
 
 /**
- * CompletionPanel（L1 员工新建线 Task 16）：
+ * CompletionPanel（L1 员工新建线 Task 16 + 2026-08-28 UX 迭代）：
  * 生成员工包成功后的完成态视图：
  * - 包路径 + files 清单展示
  * - 三动作：
- *   ① 「安装到底座」→ 打开 InstallModal（静态三底座 + API 预留 + 待接入提示）
- *   ② 「保存为角色模板」→ saveAsTemplate → 成功 toast「已保存为角色模板」/ 失败 toast「保存模板服务未就绪」
+ *   ① 「安装到底座」→ 打开 InstallModal
+ *   ② 「保存为角色模板」→ 手动调 saveAsTemplate（2026-08-28：generate 成功后已自动调一次，此为兜底手动）
  *   ③ 「完成离开」→ router.push('/employees') + clearDraft()
+ *
+ * 2026-08-28 模板池 a 方案：onMounted 自动调 saveAsTemplate（generate 200 后员工包自动落入模板池）。
+ * 失败 toast「保存模板服务未就绪」，不妨碍完成态展示。
  *
  * 禁词红线：本组件是完成态显式「安装到底座」动作承载——「安装」字样在本组件允许出现；
  * 但不得出现「AgentHub」「digital-staff」等其他禁词。
@@ -54,13 +57,12 @@ function onInstallClose(): void {
   installOpen.value = false
 }
 
-/** ② 保存为角色模板 */
+/** ② 保存为角色模板（手动兜底） */
 async function onSaveAsTemplate(): Promise<void> {
   try {
     await saveAsTemplate(store.draft)
     showToast('已保存为角色模板')
   } catch {
-    // service 端 POST /api/templates 尚未实现——404/失败归一到统一文案
     showToast('保存模板服务未就绪')
   }
 }
@@ -70,6 +72,17 @@ function onFinish(): void {
   clearDraft()
   void router.push('/employees')
 }
+
+/** 2026-08-28 模板池 a 方案：generate 200 后自动 saveAsTemplate */
+onMounted(async () => {
+  try {
+    await saveAsTemplate(store.draft)
+    // 成功不打扰（无 toast），静默落入模板池
+  } catch {
+    // 失败 toast 提示但不妨碍完成态展示
+    showToast('保存模板服务未就绪')
+  }
+})
 </script>
 
 <template>

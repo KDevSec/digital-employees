@@ -89,7 +89,8 @@ describe('CreateTaskModal（发起任务表单）', () => {
     const api = makeApi()
     const w = mountModal(api)
     await fill(w)
-    await w.find('select[data-field="base"]').setValue('qoder')
+    // D-062：base 接真实源后，未经 fetchBases 的 jsdom 环境候选为空——
+    // 本用例只断 model/effort 直传语义，底座直传在「底座真实源」describe 块覆盖。
     await w.find('select[data-field="model"]').setValue('编码档')
     await w.find('button.submit').trigger('submit')
     await Promise.resolve()
@@ -101,7 +102,6 @@ describe('CreateTaskModal（发起任务表单）', () => {
       title: '支付网关对接',
       workspace: 'D:/demo/r-x',
       input: '需求文本内容',
-      base: 'qoder',
       model: '编码档',
     })
     expect(w.emitted('created')).toEqual([['R-42']])
@@ -148,5 +148,117 @@ describe('CreateTaskModal（发起任务表单）', () => {
     const w = mountModal(makeApi())
     expect(w.find('button.submit').text()).toBe('提交')
     expect(w.find('button.cancel').text()).toBe('取消')
+  })
+
+  it('I2 方案 C 人工评审开关：勾选 humanReview + flow=simple-flow → 提交载荷 flow=simple-flow-human', async () => {
+    const FLOWS2 = [
+      { flow: 'simple-flow', display_name: '五阶段快速交付' },
+      { flow: 'simple-flow-human', display_name: '五阶段快速交付（人工评审）' },
+    ]
+    const api = makeApi()
+    const w = mount(CreateTaskModal, { props: { open: true, flows: FLOWS2, employees: EMP, api }, attachTo: document.body })
+    await flushPromises()
+    await w.find('input[data-field="title"]').setValue('T')
+    await w.find('input[data-field="workspace"]').setValue('D:/x')
+    await w.find('textarea[data-field="input"]').setValue('input')
+    // flow select 默认是 first=simple-flow；勾选「准出前人工评审」
+    await w.find('input[data-field="humanReview"]').setValue(true)
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'simple-flow-human' })
+  })
+
+  it('I2 方案 C 人工评审开关：不勾选 humanReview → 提交载荷 flow 保留 simple-flow', async () => {
+    const FLOWS2 = [
+      { flow: 'simple-flow', display_name: '五阶段快速交付' },
+      { flow: 'simple-flow-human', display_name: '五阶段快速交付（人工评审）' },
+    ]
+    const api = makeApi()
+    const w = mount(CreateTaskModal, { props: { open: true, flows: FLOWS2, employees: EMP, api }, attachTo: document.body })
+    await flushPromises()
+    await w.find('input[data-field="title"]').setValue('T')
+    await w.find('input[data-field="workspace"]').setValue('D:/x')
+    await w.find('textarea[data-field="input"]').setValue('input')
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'simple-flow' })
+  })
+
+  it('I2 方案 C 人工评审开关：flow != simple-flow（如 demo-flow）时 humanReview 勾选状态不影响提交', async () => {
+    const api = makeApi()
+    const w = mountModal(api)
+    await flushPromises()
+    await fill(w)
+    // demo-flow 不展示 humanReview checkbox（仅 simple-flow 系列适用）——但即使勾了也不该改 flow
+    // 原表单未勾选，仅确认 flow=demo-flow 透传（不被人工评审意外影响）
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'demo-flow' })
+  })
+})
+
+/**
+ * D-062 底座真实源接线：底座下拉候选 = GET /api/bases（在场标注版本/未在场置灰未检测到），
+ * 替代原静态 BASES 三选。未在场选项仍可提交（探测缓存滞后场景——阻塞校验归 service 安装面）。
+ * 顶部占位项统一为「未选择」（跟随底座默认语义由空选承载）。
+ */
+describe('CreateTaskModal —— 底座真实源（D-062）', () => {
+  const BASES = [
+    { id: 'claude-code', label: 'Claude Code', present: true, version: '2.1.226', version_tested: '2.1.226', supported: true, employees_count: 1, last_install_at: null },
+    { id: 'codebuddy', label: 'CodeBuddy', present: true, version: '2.139.0', version_tested: '2.137.1', supported: true, employees_count: 0, last_install_at: null },
+    { id: 'qoder', label: 'Qoder', present: false, version: null, version_tested: '1.1.32', supported: null, employees_count: 0, last_install_at: null },
+  ]
+
+  function stubBasesFetch(cards: unknown[]) {
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      if (url === '/api/bases') {
+        return { ok: true, status: 200, json: async () => cards } as unknown as Response
+      }
+      return { ok: false, status: 404, json: async () => ({}) } as unknown as Response
+    }))
+  }
+
+  async function mountWithBases(cards: unknown[]) {
+    stubBasesFetch(cards)
+    const api = makeApi()
+    const w = mountModal(api)
+    await flushPromises()
+    return { w, api }
+  }
+
+  it('底座下拉候选接真实源：在场标注版本、未在场置灰；不再有静态三选', async () => {
+    const { w } = await mountWithBases(BASES)
+    const options = w.findAll('select[data-field="base"] option')
+    const texts = options.map((o) => o.text())
+    expect(texts[0]).toBe('未选择')
+    expect(texts).toContain('Claude Code（2.1.226）')
+    expect(texts).toContain('CodeBuddy（2.139.0）')
+    expect(texts).toContain('Qoder（未检测到）')
+    // 未在场选项 disabled 但不消失（探测缓存滞后场景仍可回显已选项）
+    const qoderOpt = options.find((o) => o.text().includes('Qoder'))!
+    expect(qoderOpt.attributes('disabled')).toBeDefined()
+  })
+
+  it('fetchBases 空数组（服务不可达/零探测）→ 仅「未选择」占位项，表单可提交不崩', async () => {
+    const { w, api } = await mountWithBases([])
+    const options = w.findAll('select[data-field="base"] option')
+    expect(options.length).toBe(1)
+    expect(options[0].text()).toBe('未选择')
+    // 填表仍可提交（空选 = 跟随底座默认，不阻断发起）
+    await fill(w)
+    await w.find('button.submit').trigger('submit')
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(api.calls[0]).not.toHaveProperty('base')
+  })
+
+  it('选择在场底座 → 提交载荷 base=<id>（真实源 id 直通）', async () => {
+    const { w, api } = await mountWithBases(BASES)
+    await fill(w)
+    await w.find('select[data-field="base"]').setValue('claude-code')
+    await w.find('button.submit').trigger('submit')
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(api.calls[0]).toMatchObject({ base: 'claude-code' })
   })
 })

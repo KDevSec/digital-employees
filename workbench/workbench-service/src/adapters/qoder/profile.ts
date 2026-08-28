@@ -6,8 +6,8 @@ export const profile: BaseProfile = {
   identity_anchor: 'config-domain',
   identity_file: 'AGENTS.md',
   skills_dir: 'skills',
-  version_min: '1.1.26', version_tested: '1.1.26',
+  version_min: '1.1.26', version_tested: '1.1.32',
   provides: ['agent-def', 'fs-access', 'skill-def', 'bash-exec', 'slash-command', 'subagent-dispatch'],
-  auth: { kind: 'copy', files: ['installation_id', 'state.json', '.auth'] },
+  auth: { kind: 'copy', files: ['installation_id', '.auth'] },
   launch: { configFlag: '--config-dir' },
 }
