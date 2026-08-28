@@ -268,7 +268,7 @@ describe('StepHooksTools（约束 + 工具白名单）', () => {
     expect(store.draft.redlines.some((r) => r.rule_id === 'no-push-to-main')).toBe(true)
   })
 
-  it('工具白名单：默认 10 工具全勾', async () => {
+  it('工具黑名单：默认无禁用（deny 为空，toolsAllowed 全集）', async () => {
     const { store, pinia } = setupStore()
     const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
     await flushPromises()
@@ -278,17 +278,35 @@ describe('StepHooksTools（约束 + 工具白名单）', () => {
     expect(store.draft.deny).toEqual([])
   })
 
-  it('工具白名单：反选 → deny 反向构造', async () => {
+  it('工具黑名单：勾选 → deny 追加（反向语义）', async () => {
     const { store, pinia } = setupStore()
     const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
     await flushPromises()
     const bashChip = wrapper.findAll('[data-tool]').find((c) => c.text().includes('Bash'))
     await bashChip!.trigger('click')
-    expect(store.draft.toolsAllowed).not.toContain('Bash')
     expect(store.draft.deny).toContain('Bash')
     expect(store.draft.deny).not.toContain('Read')
     // deny-preview 更新
-    expect(wrapper.text()).toContain('禁用：Bash')
+    expect(wrapper.text()).toContain('已禁 1 个')
+  })
+
+  it('权限管理总开关：默认开；关闭后 redlines 与 deny 全部不启用（不写入员工包）', async () => {
+    const { store, pinia } = setupStore()
+    const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
+    await flushPromises()
+    // 默认总开
+    expect(store.draft.redlinesEnabled).toBe(true)
+    expect(wrapper.text()).toContain('已启用')
+    // 关闭总开关
+    const masterToggle = wrapper.find('[data-role="redlines-master"]')
+    await masterToggle.setValue(false)
+    expect(store.draft.redlinesEnabled).toBe(false)
+    expect(wrapper.text()).toContain('已停用')
+    // manifest 组装：redlines 与 deny 全部为空
+    const { buildManifestFromDraft } = await import('../src/composables/useManifestValidation')
+    const manifest = buildManifestFromDraft(store.draft)
+    expect((manifest.hooks as Record<string, unknown>).redlines).toEqual([])
+    expect((manifest.tools as Record<string, unknown>).deny).toEqual([])
   })
 
   it('层级：高级设置已移除（无 tier/token/治理 UI）', async () => {

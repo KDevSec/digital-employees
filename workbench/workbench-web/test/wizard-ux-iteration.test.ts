@@ -138,12 +138,12 @@ describe('StepHooksTools — 删高级设置 + 红线新描述 + 工具白名单
     expect(text).toContain('自定义红线规则（暂未开放）')
   })
 
-  it('工具白名单：默认 10 个工具全部勾选', async () => {
+  it('工具黑名单：默认无禁用（deny 为空）', async () => {
     const { wrapper, store } = await mountWizard()
     store.gotoStep(4)
     await flushPromises()
     const text = wrapper.text()
-    expect(text).toContain('工具白名单')
+    expect(text).toContain('工具黑名单')
     expect(text).toContain('Bash')
     expect(text).toContain('Read')
     expect(text).toContain('Write')
@@ -154,24 +154,44 @@ describe('StepHooksTools — 删高级设置 + 红线新描述 + 工具白名单
     expect(text).toContain('WebSearch')
     expect(text).toContain('TodoWrite')
     expect(text).toContain('NotebookEdit')
-    // 默认全勾
+    // 默认无禁用
+    expect(store.draft.deny).toEqual([])
     expect(store.draft.toolsAllowed).toEqual([
       'Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
       'WebFetch', 'WebSearch', 'TodoWrite', 'NotebookEdit',
     ])
   })
 
-  it('工具白名单：取消勾选 → deny 反向构造', async () => {
+  it('工具黑名单：勾选 → deny 追加该工具（反向语义）', async () => {
     const { wrapper, store } = await mountWizard()
     store.gotoStep(4)
     await flushPromises()
-    // 取消勾选 Bash 和 Edit
+    // 勾选 Bash = 禁用 Bash
     const bashChip = wrapper.findAll('[data-tool]').find((c) => c.text().includes('Bash'))
     await bashChip!.trigger('click')
-    expect(store.draft.toolsAllowed).not.toContain('Bash')
-    // deny 应包含 Bash
     expect(store.draft.deny).toContain('Bash')
     expect(store.draft.deny).not.toContain('Read')
+    // deny-preview 更新
+    expect(wrapper.text()).toContain('已禁 1 个')
+  })
+
+  it('权限管理总开关：总关 → redlines 与 deny 全部不启用（不写入员工包）', async () => {
+    const { wrapper, store } = await mountWizard()
+    store.gotoStep(4)
+    await flushPromises()
+    // 默认总开
+    expect(store.draft.redlinesEnabled).toBe(true)
+    expect(wrapper.text()).toContain('已启用')
+    // 关闭总开关
+    const masterToggle = wrapper.find('[data-role="redlines-master"]')
+    await masterToggle.setValue(false)
+    expect(store.draft.redlinesEnabled).toBe(false)
+    expect(wrapper.text()).toContain('已停用')
+    // manifest 组装：redlines 与 deny 全部为空
+    const { buildManifestFromDraft } = await import('../src/composables/useManifestValidation')
+    const manifest = buildManifestFromDraft(store.draft)
+    expect((manifest.hooks as Record<string, unknown>).redlines).toEqual([])
+    expect((manifest.tools as Record<string, unknown>).deny).toEqual([])
   })
 })
 

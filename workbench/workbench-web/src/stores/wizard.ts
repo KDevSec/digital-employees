@@ -54,9 +54,12 @@ export interface WizardDraft {
   version: string
   // 红线（StepHooksTools）
   redlines: RedlineEntry[]
+  /** 权限管理总开关（2026-08-31 裁决：总关 → redlines 与 deny 全部不启用，不写入员工包） */
+  redlinesEnabled: boolean
+  /** 工具黑名单（2026-08-31 裁决：勾选 = 禁用；与红线互不干涉） */
+  deny: string[]
   /** 工具白名单（默认全勾；提交时反向构造 deny = 全集 - 已勾） */
   toolsAllowed: string[]
-  deny: string[]
   // 管理面（静默注入默认值——2026-08-28 裁决：高级设置 UI 移除）
   tier: string
   tokenPerTask?: number
@@ -102,7 +105,9 @@ function emptyDraft(): WizardDraft {
     brief: '',
     version: '',
     redlines: [],
-    // 工具白名单默认全勾
+    // 权限管理总开关默认开（2026-08-31 裁决）
+    redlinesEnabled: true,
+    // 工具白名单默认全勾（deny 为空）
     toolsAllowed: [...ALL_TOOLS],
     deny: [],
     // 管理面静默注入默认值（tier/治理/可见性/审计 UI 已移除）
