@@ -1,0 +1,48 @@
+workbench/workbench-engine/assets/flows/simple-flow.node-table.yml
+  s_3d694229081e72::t_ed0424bc8ff8f3 1-22
+workbench/workbench-web/test/create-task-modal.test.ts
+  s_3d694229081e72::t_722d90cb196638 152-197
+workbench/workbench-service/src/main.ts
+  s_3d694229081e72::t_7f19685946ec18 48-50
+  s_3d694229081e72::t_dd3426dd647cff 246-253
+  s_3d694229081e72::t_33d57d557d82f6 256-261
+  s_3d694229081e72::t_2e51489bf490c1 492
+  s_3d694229081e72::t_fd7b57413a66a7 97-99
+  s_3d694229081e72::t_80eb72807696d3 44-45
+workbench/workbench-web/test/board.test.ts
+  s_3d694229081e72::t_84a1b023892176 238-256
+workbench/workbench-web/src/components/kanban/CreateTaskModal.vue
+  s_3d694229081e72::t_fbbeb27eb33899 81-82,85
+  s_3d694229081e72::t_69b094149cdb40 191-195
+  s_3d694229081e72::t_1e94c44eba64bb 48
+workbench/workbench-service/test/i2-auto-driver.test.ts
+  s_3d694229081e72::t_b2e5cd12f6d2bc 37-38
+  s_3d694229081e72::t_407c09a77c8137 1-15,17-36,39-40,43-97
+  s_3d694229081e72::t_b12e0c199a203a 41-42
+  s_3d694229081e72::t_ca4c0bdc96f7c2 16
+workbench/workbench-engine/assets/flows/simple-flow-human.node-table.yml
+  s_3d694229081e72::t_ad6fabd762e25e 1-19
+  s_3d694229081e72::t_e773f1e1ee6467 20
+workbench/workbench-web/src/components/board/NeedDrawer.vue
+  s_3d694229081e72::t_c0b855ee1b5f16 227-236
+  s_3d694229081e72::t_1b2186e1849e51 41
+  s_3d694229081e72::t_8db0389bbd0deb 59-60,65
+  s_3d694229081e72::t_70122821fa39b3 23
+  s_3d694229081e72::t_fd037658d65eec 101-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "8cc51ca353bc9c210c15be10e8ea16f5f2896900",
+  "prompts": {},
+  "sessions": {
+    "s_3d694229081e72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2199f3e7-389e-4372-9a88-24e0ee734a42",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
