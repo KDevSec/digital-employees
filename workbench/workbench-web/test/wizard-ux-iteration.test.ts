@@ -216,8 +216,8 @@ describe('EmployeesView — 只显示已安装员工 + 底座徽章行', () => {
     vi.mocked(fetchEmployees).mockResolvedValue({ items: employees, invalid: [] })
     const wrapper = mount(EmployeesView, { global: { plugins: [createPinia()] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('claude-code')
-    expect(wrapper.text()).toContain('qoder')
+    expect(wrapper.text()).toContain('Claude Code')
+    expect(wrapper.text()).toContain('Qoder')
     expect(wrapper.find('[data-role="host-badges"]').exists()).toBe(true)
   })
 

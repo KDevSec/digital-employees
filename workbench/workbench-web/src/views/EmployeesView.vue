@@ -4,6 +4,17 @@ import { useRouter } from 'vue-router'
 import { fetchEmployees } from '../api/employees'
 import type { EmployeeCard } from '../api/employees'
 
+/** 底座 id → 显示名映射（前端静态表；后续底座检测域完善后可换 API 驱动） */
+const BASE_LABELS: Record<string, string> = {
+  'claude-code': 'Claude Code',
+  qoder: 'Qoder',
+  codebuddy: 'CodeBuddy',
+}
+
+function baseLabel(hostId: string): string {
+  return BASE_LABELS[hostId] ?? hostId
+}
+
 /**
  * 我的员工页（L1 员工新建线 Task 17 + 2026-08-28 UX 迭代）：
  * - page-head：h1「我的员工」+ 副标 + 工具行「＋新建员工」按钮 → /employees/new
@@ -88,7 +99,7 @@ function avatarChar(card: EmployeeCard): string {
         </div>
         <!-- 底座徽章行（2026-08-28：一员工一卡，卡上标注安装到了几个底座） -->
         <div class="host-badges" data-role="host-badges">
-          <span v-for="host in emp.hosts" :key="host" class="host-badge">{{ host }}</span>
+          <span v-for="host in emp.hosts" :key="host" class="host-badge">{{ baseLabel(host) }}</span>
         </div>
       </div>
     </div>
