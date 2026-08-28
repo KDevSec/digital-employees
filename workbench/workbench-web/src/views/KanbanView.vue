@@ -157,7 +157,7 @@ const STATUS_META: Record<TaskStatus, { text: string; cls: string }> = {
         </div>
         <div class="tb-actions">
           <ConnectionBar :connection="store.connection" />
-          <RouterLink class="btn ghost" to="/kanban/board">泳道全景</RouterLink>
+          <RouterLink class="btn ghost" to="/collab">泳道全景</RouterLink>
           <button class="btn primary" @click="modalOpen = true">发起任务</button>
         </div>
       </header>

@@ -257,11 +257,11 @@ describe('NeedDrawer（创建需求抽屉）', () => {
 })
 
 describe('路由与双层衔接', () => {
-  it('/kanban/board 指向 BoardView；/kanban 仍指 KanbanView（详情层不动）', async () => {
-    await router.push('/kanban/board')
+  it('/collab 指向 BoardView；/kanban 仍指 KanbanView（详情层不动）', async () => {
+    await router.push('/collab')
     await router.isReady()
     expect(router.currentRoute.value.matched[0]?.components?.default).toBeDefined()
-    expect(router.currentRoute.value.path).toBe('/kanban/board')
+    expect(router.currentRoute.value.path).toBe('/collab')
   })
 
   it('点任务卡 → 跳 /kanban?task=<id>（双层衔接：泳道全景 → 任务详情）', async () => {
@@ -280,7 +280,7 @@ describe('路由与双层衔接', () => {
       confirmGate: vi.fn(async () => ({ ok: true })),
     }
     const w = mount(BoardView, { global: { plugins: [router] }, props: { api } })
-    await router.push('/kanban/board')
+    await router.push('/collab')
     await flushPromises()
     await (w.vm as unknown as { openTask: (id: string) => Promise<void> }).openTask('R-42')
     expect(router.currentRoute.value.path).toBe('/kanban')
