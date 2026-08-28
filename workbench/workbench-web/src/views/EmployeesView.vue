@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchEmployees } from '../api/employees'
 import type { EmployeeCard } from '../api/employees'
 
 /**
- * 花名册页（L1 员工新建线 Task 17）：
+ * 我的员工页（L1 员工新建线 Task 17 + 2026-08-28 UX 迭代）：
  * - page-head：h1「我的员工」+ 副标 + 工具行「＋新建员工」按钮 → /employees/new
- * - 卡片 grid：每张卡 = 头像 emoji + 岗位名 + kind tag（flow-owner 蓝/callee 紫）+ version + id + brief 两行截断
- * - 空态引导卡：items 为空时显示「＋新建员工」+ 一句话「从模板快速创建你的数字员工」
+ * - 卡片 grid：每张卡 = 头像 emoji + 岗位名 + kind tag + version + id + brief 两行截断 + 底座徽章行
+ * - 只显示已安装员工（hosts.length > 0）；未安装员工不在此页显示
+ * - 空态引导卡：无已安装员工时显示「＋新建员工」
  * - 数据：onMounted 调 fetchEmployees()；失败归一空列表 → 空态
  *
- * 视觉沿 tokens.css + 原型类名风格（card grid 同 tpl-grid 形态）。
+ * 2026-08-28 裁决：一员工一卡（非一底座一卡），卡上带底座徽章行（该员工全部 deployments 的 host display）。
  */
 const router = useRouter()
 const items = ref<EmployeeCard[]>([])
 const loading = ref(true)
+
+/** 只显示已安装员工（hosts.length > 0） */
+const installedItems = computed(() => items.value.filter((emp) => emp.hosts && emp.hosts.length > 0))
 
 onMounted(async () => {
   const result = await fetchEmployees()
@@ -46,14 +50,14 @@ function avatarChar(card: EmployeeCard): string {
     <header class="page-head">
       <div>
         <h1>我的员工</h1>
-        <p class="sub">从模板快速创建你的数字员工</p>
+        <p class="sub">已安装到底座的数字员工</p>
       </div>
       <button class="btn btn-primary new-emp-btn" @click="goCreate">＋ 新建员工</button>
     </header>
 
     <div v-if="loading" class="loading">加载中…</div>
 
-    <div v-else-if="items.length === 0" class="emp-grid">
+    <div v-else-if="installedItems.length === 0" class="emp-grid">
       <div
         class="empty-card"
         role="button"
@@ -69,7 +73,7 @@ function avatarChar(card: EmployeeCard): string {
     </div>
 
     <div v-else class="emp-grid">
-      <div v-for="emp in items" :key="emp.id" class="emp-card">
+      <div v-for="emp in installedItems" :key="emp.id" class="emp-card">
         <div class="emp-head">
           <div class="avatar">{{ avatarChar(emp) }}</div>
           <div>
@@ -81,6 +85,10 @@ function avatarChar(card: EmployeeCard): string {
         <div class="emp-foot">
           <span class="muted">{{ emp.id }}</span>
           <span class="muted">v{{ emp.version }}</span>
+        </div>
+        <!-- 底座徽章行（2026-08-28：一员工一卡，卡上标注安装到了几个底座） -->
+        <div class="host-badges" data-role="host-badges">
+          <span v-for="host in emp.hosts" :key="host" class="host-badge">{{ host }}</span>
         </div>
       </div>
     </div>
@@ -232,6 +240,28 @@ h1 {
 .muted {
   color: var(--g500);
   font-size: 12px;
+}
+
+/* 底座徽章行（2026-08-28：demo 工牌卡风格） */
+.host-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--g100);
+}
+
+.host-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--green-bg);
+  color: var(--green);
 }
 
 /* 空态引导卡：虚线边 + 居中布局，点击跳 /employees/new */

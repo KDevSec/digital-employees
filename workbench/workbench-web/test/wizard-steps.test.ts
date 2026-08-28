@@ -241,21 +241,22 @@ describe('StepSkills（能力配置 + 搜索 + 上传）', () => {
   })
 })
 
-describe('StepHooksTools（约束 + 高级设置折叠）', () => {
+describe('StepHooksTools（约束 + 工具白名单）', () => {
   beforeEach(() => {
     vi.mocked(fetchTemplates).mockReset()
     vi.mocked(fetchSkills).mockReset()
   })
 
-  it('红线 7 项渲染（含中文描述）', async () => {
+  it('红线 7 项渲染（含括号举例描述）', async () => {
     const { pinia } = setupStore()
     const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
     await flushPromises()
     const items = wrapper.findAll('[data-redline]')
     expect(items.length).toBe(7)
     const text = wrapper.text()
-    expect(text).toContain('禁止直接 push 到 main')
-    expect(text).toContain('高风险操作走人工闸')
+    expect(text).toContain('禁止直接推送到主分支（如 git push origin main / master）')
+    expect(text).toContain('危险操作必须经人工确认（如 rm -rf、删除文件夹、修改系统配置）')
+    expect(text).toContain('自定义红线规则（暂未开放）')
   })
 
   it('勾选红线 → draft.redlines 增', async () => {
@@ -267,30 +268,40 @@ describe('StepHooksTools（约束 + 高级设置折叠）', () => {
     expect(store.draft.redlines.some((r) => r.rule_id === 'no-push-to-main')).toBe(true)
   })
 
-  it('折叠区默认收起，点击展开 tier 五档 radio-cards', async () => {
-    const { pinia } = setupStore()
-    const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
-    await flushPromises()
-    expect(wrapper.text()).not.toContain('评审安全档')
-    const toggle = wrapper.find('[data-role="advanced-toggle"]')
-    await toggle.trigger('click')
-    await flushPromises()
-    expect(wrapper.text()).toContain('评审安全档')
-    expect(wrapper.text()).toContain('设计档')
-    expect(wrapper.text()).toContain('编码档')
-    expect(wrapper.text()).toContain('执行档')
-  })
-
-  it('tier 切换 → draft.tier 更新', async () => {
+  it('工具白名单：默认 10 工具全勾', async () => {
     const { store, pinia } = setupStore()
     const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
     await flushPromises()
-    await wrapper.find('[data-role="advanced-toggle"]').trigger('click')
+    const chips = wrapper.findAll('[data-tool]')
+    expect(chips.length).toBe(10)
+    expect(store.draft.toolsAllowed.length).toBe(10)
+    expect(store.draft.deny).toEqual([])
+  })
+
+  it('工具白名单：反选 → deny 反向构造', async () => {
+    const { store, pinia } = setupStore()
+    const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
     await flushPromises()
-    const tierCards = wrapper.findAll('[data-tier]')
-    expect(tierCards.length).toBe(5)
-    await tierCards[0].trigger('click')
-    expect(store.draft.tier).not.toBe('')
+    const bashChip = wrapper.findAll('[data-tool]').find((c) => c.text().includes('Bash'))
+    await bashChip!.trigger('click')
+    expect(store.draft.toolsAllowed).not.toContain('Bash')
+    expect(store.draft.deny).toContain('Bash')
+    expect(store.draft.deny).not.toContain('Read')
+    // deny-preview 更新
+    expect(wrapper.text()).toContain('禁用：Bash')
+  })
+
+  it('层级：高级设置已移除（无 tier/token/治理 UI）', async () => {
+    const { pinia } = setupStore()
+    const wrapper = mount(StepHooksTools, { global: { plugins: [pinia] } })
+    await flushPromises()
+    const text = wrapper.text()
+    expect(text).not.toContain('高级设置')
+    expect(text).not.toContain('模型档位')
+    expect(text).not.toContain('Token')
+    expect(text).not.toContain('可见范围')
+    expect(text).not.toContain('审计级别')
+    expect(text).not.toContain('治理级别')
   })
 
   it('禁词红线：UI 文案不含「底座」「安装」「AgentHub」', async () => {

@@ -76,11 +76,11 @@ describe('CreateWizard 骨架渲染', () => {
     expect(wrapper.find('button.back-btn').exists()).toBe(true)
   })
 
-  it('左栏「1 · 选择角色模板」+ 「2 · 配置向导」两段标题在位', async () => {
+  it('左栏「配置向导」标题在位（TplGrid 移入 step1，无常驻「1 · 选择角色模板」）', async () => {
     const { wrapper } = await mountWizard()
     const text = wrapper.text()
-    expect(text).toContain('1 · 选择角色模板')
-    expect(text).toContain('2 · 配置向导')
+    expect(text).toContain('配置向导')
+    expect(text).not.toContain('1 · 选择角色模板')
   })
 
   it('TplGrid 渲染 8 张卡（7 模板 + Custom）', async () => {

@@ -5,12 +5,15 @@ import { slugify } from '../../../composables/useWizardDraft'
 import { useWizardStore } from '../../../stores/wizard'
 
 /**
- * Step 2 · Agent 定义（L1 员工新建线 Task 14）：
+ * Step 2 · Agent 定义（L1 员工新建线 Task 14 + 2026-08-28 UX 迭代）：
  * - 岗位名 input（draft.display）/ 员工 ID input（draft.id，mono 字体）；
+ * - 一句话职责 input（draft.brief）；
  * - 头像选择：12 emoji 池（demo AVATARS 同源 + 图标字兜底）；
  * - 职责描述 textarea（persona.identity）；
- * - 工作原则 textarea（每行一条 → persona.principles）；
- * - 使用深度 check-grid 四档（裸用/+方法论/+流程/+编排 → persona.usage_modes）。
+ * - 工作原则 textarea（每行一条 → persona.principles）。
+ *
+ * 2026-08-28 裁决：「使用深度」UI 移除（用户难以理解且非独立配置项），
+ * usage_modes 由 store 静默注入 ['裸用']（kind 分派保底）。
  *
  * slug 联动：watch display → !idTouched 才同步 draft.id（slugify 后）；
  * id 输入手改 → idTouched=true 停跟。
@@ -23,18 +26,6 @@ const store = useWizardStore()
 /** 头像 emoji 池（12 个，demo AVATARS 同源） */
 const AVATARS = ['🧑‍💻', '👩‍💻', '🧑‍🔬', '🧑‍🎨', '🧑‍🏫', '⚖️', '🕵️', '🧙', '🤖', '🦾', '🐱', '🦊'] as const
 
-/**
- * 使用深度四档（值 = manifestSchema 的中文枚举，直接透传 buildManifestFromDraft 不需映射）：
- *   '裸用' / '+方法论' / '+流程' / '+编排'
- * 标签可保持中文展示（schema 枚举本身即中文，label 直接复用）。
- */
-const USAGE_MODES = [
-  { value: '裸用', label: '裸用（直接对话）' },
-  { value: '+方法论', label: '+方法论（skill 调用序列）' },
-  { value: '+流程', label: '+流程（runbook 流程档）' },
-  { value: '+编排', label: '+编排（node-table 多员工接力）' },
-] as const
-
 /** 工作原则文本（每行一条） */
 function principlesText(): string {
   return store.draft.principles.join('\n')
@@ -43,19 +34,6 @@ function principlesText(): string {
 function onPrinciplesInput(event: Event): void {
   const value = (event.target as HTMLTextAreaElement).value
   store.draft.principles = value.split('\n').map((s) => s.trim()).filter((s) => s !== '')
-}
-
-/** usage_modes 勾选态 */
-function isUsageModeOn(mode: string): boolean {
-  return store.draft.usage_modes.includes(mode)
-}
-
-function toggleUsageMode(mode: string): void {
-  if (isUsageModeOn(mode)) {
-    store.draft.usage_modes = store.draft.usage_modes.filter((m) => m !== mode)
-  } else {
-    store.draft.usage_modes = [...store.draft.usage_modes, mode]
-  }
 }
 
 /** slug 联动：display 改 → 未 touched 才同步 id */
@@ -134,21 +112,6 @@ function onIdentityInput(event: Event): void {
         placeholder="例如：增量交付，小步迭代"
         @input="onPrinciplesInput"
       ></textarea>
-    </div>
-
-    <div class="form-row">
-      <label>使用深度（写入 persona.usage_modes）</label>
-      <div class="check-grid">
-        <div
-          v-for="mode in USAGE_MODES"
-          :key="mode.value"
-          class="check-item"
-          :class="{ on: isUsageModeOn(mode.value) }"
-          @click="toggleUsageMode(mode.value)"
-        >
-          <span class="box">✓</span>{{ mode.label }}
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -263,53 +226,5 @@ function onIdentityInput(event: Event): void {
   border-color: var(--blue-500);
   background: var(--blue-50);
   box-shadow: 0 0 0 2px var(--blue-100);
-}
-
-/* 原型 .check-grid */
-.check-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.check-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--g200);
-  border-radius: 8px;
-  padding: 8px 11px;
-  font-size: 12.5px;
-  cursor: pointer;
-  transition: 0.12s;
-  background: #fff;
-}
-
-.check-item:hover {
-  border-color: var(--blue-300);
-}
-
-.check-item.on {
-  border-color: var(--blue-500);
-  background: var(--blue-50);
-  color: var(--blue-800);
-}
-
-.check-item .box {
-  width: 15px;
-  height: 15px;
-  border-radius: 4px;
-  border: 1.5px solid var(--g300);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #fff;
-}
-
-.check-item.on .box {
-  background: var(--blue-600);
-  border-color: var(--blue-600);
 }
 </style>
