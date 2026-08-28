@@ -235,6 +235,25 @@ describe('NeedDrawer（创建需求抽屉）', () => {
     const w = mount(NeedDrawer, { props: { open: false, flows: [], defaultWorkspace: '' } })
     expect(w.find('.drawer').exists()).toBe(false)
   })
+
+  it('I2 方案 C 人工评审开关：勾选 humanReview + flow=simple-flow → emit add 载荷 flow=simple-flow-human', async () => {
+    const w = mount(NeedDrawer, {
+      props: {
+        open: true,
+        flows: [
+          { flow: 'simple-flow', display_name: '五阶段快速交付' },
+          { flow: 'simple-flow-human', display_name: '五阶段快速交付（人工评审）' },
+        ],
+        defaultWorkspace: 'D:/demo/ws',
+      },
+    })
+    await w.find('input[data-f="title"]').setValue('登录页交付')
+    await w.find('textarea[data-f="input"]').setValue('实现登录页')
+    await w.find('input[data-f="humanReview"]').setValue(true)
+    await w.find('button.nd-submit').trigger('submit')
+    const emitted = w.emitted('add')![0][0] as NeedDraft
+    expect(emitted.flow).toBe('simple-flow-human')
+  })
 })
 
 describe('路由与双层衔接', () => {

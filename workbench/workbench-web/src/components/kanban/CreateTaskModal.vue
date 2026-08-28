@@ -45,6 +45,7 @@ const form = reactive({
   model: '',
   effort: '',
   useFlowTier: false,
+  humanReview: false,
   workspace: '',
   input: '',
 })
@@ -77,9 +78,11 @@ async function submit(): Promise<void> {
   if (Object.keys(errors.value).length > 0 || submitting.value || !props.api) return
   submitting.value = true
   formError.value = null
+  // I2 方案 C 人工评审开关：勾选时把 simple-flow 映射到 simple-flow-human（仅 g-exit 节点 human_gate 停靠）
+  const flowValue = form.humanReview && form.flow === 'simple-flow' ? 'simple-flow-human' : form.flow
   const payload = createTaskPayload({
     mode: form.mode,
-    flow: form.mode === 'team' ? form.flow : undefined,
+    flow: form.mode === 'team' ? flowValue : undefined,
     employee: form.mode === 'solo' ? form.employee : undefined,
     title: form.title.trim(),
     workspace: form.workspace.trim(),
@@ -183,6 +186,11 @@ function close(): void {
           <label class="tier-check">
             <input v-model="form.useFlowTier" type="checkbox" data-field="useFlowTier" />
             使用流程阶段内置档位（各阶段按表内置模型档位执行）
+          </label>
+
+          <label v-if="form.mode === 'team' && form.flow === 'simple-flow'" class="tier-check">
+            <input v-model="form.humanReview" type="checkbox" data-field="humanReview" />
+            准出前人工评审（提交时改用 simple-flow-human 表，准出节点停靠等看板放行）
           </label>
 
           <div class="field">

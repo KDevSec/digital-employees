@@ -1,0 +1,22 @@
+# simple-flow —— 五阶段快速交付（I2 §5；demo-flow 简版，全机检版）
+# 5 action + 2 机检 gate（human_gate 全 false）+ 终点 terminal。
+# 人工闸变体见 simple-flow-human.node-table.yml（仅 g-exit 的 human_gate 置 true）。
+# 节点 prompt 轻量化——真会话分钟级完成：每节点产出 ≤30 行 markdown 至 handoffs/。
+flow: simple-flow
+display_name: 五阶段快速交付
+version: 1
+max_retries: 3
+terminal_fail: n-fail
+delivery_node: n-done
+nodes:
+  - {id: n-adm,    name: 准入,     kind: action, stage: 准入,     emp: sec-compliance, prompt: "对输入需求做安全准入检查：扫一遍是否含密钥/Token/敏感数据示意（secretgate 风格，仅示意不写盘真实扫描），≤10 行结果写入 handoffs/admission.md，然后接着报 advance", next: [n-req]}
+  - {id: n-req,    name: 需求核验, kind: action, stage: 需求核验, emp: req-clarifier,  prompt: "把输入需求改写成一份 ≤15 行的需求核验清单（目标 / 验收标准 / 范围边界），写入 handoffs/requirements.md，然后接着报 advance", human_gate: false, next: [n-design]}
+  - {id: n-design, name: 设计核验, kind: action, stage: 设计核验, emp: sys-engineer,  prompt: "基于 handoffs/requirements.md 产出 ≤20 行设计概要（架构要点 / 关键决策 / 主要接口），写入 handoffs/design.md，然后接着报 advance", next: [g-design]}
+  - {id: g-design, name: 设计评审, kind: gate,   stage: 设计核验, gate: g-design, next: [n-impl, n-design]}
+  - {id: n-impl,   name: 开发实现, kind: action, stage: 开发实现, emp: dev-engineer,  prompt: "按 handoffs/design.md 给出实现要点（文件清单 + TDD 顺序），≤20 行写入 handoffs/implementation.md（骨架代码可选，不强求真写码），然后接着报 advance", next: [g-exit]}
+  - {id: g-exit,   name: 准出评审, kind: gate,   stage: 准出,     gate: g-exit,    next: [n-done, n-impl]}
+  - {id: n-done,   name: 交付,     kind: terminal, next: []}
+  - {id: n-fail,   name: 终止,     kind: terminal, next: []}
+gate_specs:
+  g-design: {kind: review, reviewer: reviewer-expert, on_pass: n-impl, on_reflow: n-design, covers: [n-design]}
+  g-exit:   {kind: review, reviewer: reviewer-expert, on_pass: n-done, on_reflow: n-impl,   covers: [n-impl]}

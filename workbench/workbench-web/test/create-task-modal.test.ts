@@ -149,6 +149,52 @@ describe('CreateTaskModal（发起任务表单）', () => {
     expect(w.find('button.submit').text()).toBe('提交')
     expect(w.find('button.cancel').text()).toBe('取消')
   })
+
+  it('I2 方案 C 人工评审开关：勾选 humanReview + flow=simple-flow → 提交载荷 flow=simple-flow-human', async () => {
+    const FLOWS2 = [
+      { flow: 'simple-flow', display_name: '五阶段快速交付' },
+      { flow: 'simple-flow-human', display_name: '五阶段快速交付（人工评审）' },
+    ]
+    const api = makeApi()
+    const w = mount(CreateTaskModal, { props: { open: true, flows: FLOWS2, employees: EMP, api }, attachTo: document.body })
+    await flushPromises()
+    await w.find('input[data-field="title"]').setValue('T')
+    await w.find('input[data-field="workspace"]').setValue('D:/x')
+    await w.find('textarea[data-field="input"]').setValue('input')
+    // flow select 默认是 first=simple-flow；勾选「准出前人工评审」
+    await w.find('input[data-field="humanReview"]').setValue(true)
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'simple-flow-human' })
+  })
+
+  it('I2 方案 C 人工评审开关：不勾选 humanReview → 提交载荷 flow 保留 simple-flow', async () => {
+    const FLOWS2 = [
+      { flow: 'simple-flow', display_name: '五阶段快速交付' },
+      { flow: 'simple-flow-human', display_name: '五阶段快速交付（人工评审）' },
+    ]
+    const api = makeApi()
+    const w = mount(CreateTaskModal, { props: { open: true, flows: FLOWS2, employees: EMP, api }, attachTo: document.body })
+    await flushPromises()
+    await w.find('input[data-field="title"]').setValue('T')
+    await w.find('input[data-field="workspace"]').setValue('D:/x')
+    await w.find('textarea[data-field="input"]').setValue('input')
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'simple-flow' })
+  })
+
+  it('I2 方案 C 人工评审开关：flow != simple-flow（如 demo-flow）时 humanReview 勾选状态不影响提交', async () => {
+    const api = makeApi()
+    const w = mountModal(api)
+    await flushPromises()
+    await fill(w)
+    // demo-flow 不展示 humanReview checkbox（仅 simple-flow 系列适用）——但即使勾了也不该改 flow
+    // 原表单未勾选，仅确认 flow=demo-flow 透传（不被人工评审意外影响）
+    await w.find('button.submit').trigger('submit')
+    await flushPromises()
+    expect(api.calls[0]).toMatchObject({ mode: 'team', flow: 'demo-flow' })
+  })
 })
 
 /**

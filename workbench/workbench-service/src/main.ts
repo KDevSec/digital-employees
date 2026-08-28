@@ -41,8 +41,13 @@ import { registerAllRoutes } from './server/routes'
 import { Engine } from '@devzero/engine'
 import { buildEngineMcpServer } from './server/mcp/engine-mcp'
 import demoFlowYaml from '../../workbench-engine/assets/flows/demo-flow.node-table.yml' with { type: 'text' }
+import simpleFlowYaml from '../../workbench-engine/assets/flows/simple-flow.node-table.yml' with { type: 'text' }
+import simpleFlowHumanYaml from '../../workbench-engine/assets/flows/simple-flow-human.node-table.yml' with { type: 'text' }
 import { toHonoApp } from './server/hono-adapter'
 import { createTemplatesProvider } from './templates/provider'
+import { RealClaudeLauncher } from './engine/real-launcher'
+import { SpawnRunner } from './engine/spawn-runner'
+import { Driver } from './engine/driver'
 import { builtinTemplates } from './assets/templates.gen'
 import { createEmployeeStore } from './employees/store'
 import { createEmployeeBuilder } from './employees/builder'
@@ -88,6 +93,9 @@ let startedAtMs = Date.now()
 
 /** 心跳后台任务句柄（startRealServer 装配时赋值；优雅退出 serverStop 前先停，详设 §14） */
 let heartbeatScheduler: { stop(): void } | null = null
+
+/** 编排 Driver 句柄（I2：优雅退出前停消费，防半途派发挂起） */
+let activeDriver: { stop(): void } | null = null
 
 // ---------- 守护路径运行时（惰性初始化，I-3：急切初始化会使坏 config 连累 stop/status） ----------
 
@@ -235,11 +243,22 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime, serverDeps: S
   // 编排域（L3 T6）：EngineDirs 注入（D-045 布局——templatesDir 在 profileDir 侧）；
   // 首启 ensure demo-flow 表落位（bun --compile 单体内 assets 以 text 内联，不依赖 fs 布局）
   const flowsDir = join(profileDir, 'templates', 'flows')
-  if (!existsSync(join(flowsDir, 'demo-flow.node-table.yml'))) {
-    mkdirSync(flowsDir, { recursive: true })
-    writeFileSync(join(flowsDir, 'demo-flow.node-table.yml'), demoFlowYaml as unknown as string)
+  mkdirSync(flowsDir, { recursive: true })
+  // 三张表首启落位：demo（保留既有依赖）+ simple-flow 两表（I2 表单选表映射源）
+  for (const [name, text] of [
+    ['demo-flow.node-table.yml', demoFlowYaml as unknown as string],
+    ['simple-flow.node-table.yml', simpleFlowYaml as unknown as string],
+    ['simple-flow-human.node-table.yml', simpleFlowHumanYaml as unknown as string],
+  ] as const) {
+    if (!existsSync(join(flowsDir, name))) writeFileSync(join(flowsDir, name), text)
   }
   const engine = new Engine({ dataDir: profileDir, templatesDir: flowsDir })
+  // I2 Driver 装配：RealClaudeLauncher 真机 spawn（D-048），消费 LaunchSpec.stdin（P0c）
+  const launcher = new RealClaudeLauncher({ registryFile: join(staffRoot, 'registry.json') })
+  const runner = new SpawnRunner({ launcher })
+  const driver = new Driver(engine, runner)
+  driver.start()
+  activeDriver = driver   // 供 shutdown 钩子停（进程级单例——一服务一 Driver）
   registerAllRoutes(registry, {
     version: brand.version,
     pid: process.pid,
@@ -470,6 +489,7 @@ async function daemonEntry(opts: StartOptions): Promise<number> {
       markCleanStop: () => markCleanStop(runDir),
       serverStop: () => {
         heartbeatScheduler?.stop()
+        activeDriver?.stop()   // I2：先停 Driver 事件消费（幂等），防 spawn 在途任务被掐
         server.stop(true)
       },
       clearRunDir: clearDiscoveryFiles,
