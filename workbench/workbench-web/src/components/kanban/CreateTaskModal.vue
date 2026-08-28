@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
  * 发起任务表单（L5 看板线 T10，KB-02；字段面 = 协同编排设计 §2 裁决 11 / §9.4）：
- * mode（团队选表 / 单员工动态建表——引擎生成单节点表，一切任务皆 flow）+ 底座（静态三选，
- * B-06 探测归 L2）+ 模型/努力档位（「使用流程阶段内置档位」勾选时任务级置空禁用，
- * 表 model_tier 优先——§9.4 四层解析链）+ 工作区 + 需求文本。
+ * mode（团队选表 / 单员工动态建表——引擎生成单节点表，一切任务皆 flow）+ 底座（静态三选）+
+ * 模型：档位组 + 所选底座 CLI 真模型（D-bb01；未登录显示「登录后可见」）+ 努力档位 +
+ * 工作区 + 需求文本。
  * 提交 → api.createTask（载荷 1:1 §9.1 参数）→ emit created(task_id) + 关闭；
  * 失败错误常驻表单区（纪律⑥非 toast）。按钮文案精简（品牌 §4）。
  */
 import { computed, reactive, ref, watch } from 'vue'
 import type { CreateTaskPayload, EngineApi, FlowSummary } from '../../api/engine-api'
 import { createTaskPayload } from '../../api/engine-api'
+import { cliSelectAfterFetch, fetchModels, shouldFetchCliModels, type ModelInfo } from '../../api/bases'
 
 const props = defineProps<{
   open: boolean
@@ -30,9 +31,12 @@ const BASES = [
   { value: 'qoder', label: 'Qoder' },
 ]
 
-/** 档位组（1.0 五档语义，Q7 口径；真实数据源 listModels 归 L2——契约歧义 E） */
+/** 档位组（1.0 五档语义，Q7 口径）+ 底座 CLI 真模型（D-bb01） */
 const TIERS = ['', '评审安全档', '设计档', '探索档', '编码档', '执行档']
 const EFFORTS = ['', 'low', 'medium', 'high']
+
+const cliModels = ref<ModelInfo[]>([])
+const modelHint = ref('')
 
 const form = reactive({
   mode: 'team' as 'team' | 'solo',
@@ -56,6 +60,21 @@ watch(
     }
   },
   { immediate: true },
+)
+
+watch(
+  () => form.base,
+  async (base) => {
+    cliModels.value = []
+    modelHint.value = ''
+    form.model = ''
+    if (!base || !shouldFetchCliModels(base)) return
+    const result = await fetchModels(base)
+    const sel = cliSelectAfterFetch(base, form.base, result)
+    if (!sel) return
+    cliModels.value = sel.models
+    modelHint.value = sel.hint
+  },
 )
 
 const errors = computed(() => {
@@ -162,7 +181,9 @@ function close(): void {
               <select v-model="form.model" data-field="model" :disabled="form.useFlowTier">
                 <option value="">跟随底座默认</option>
                 <option v-for="t in TIERS.slice(1)" :key="t" :value="t">{{ t }}</option>
+                <option v-for="m in cliModels" :key="m.id" :value="m.id">{{ m.label }}</option>
               </select>
+              <p v-if="modelHint" class="field-hint">{{ modelHint }}</p>
             </div>
             <div class="field">
               <label>努力档位</label>
@@ -333,6 +354,12 @@ function close(): void {
 .field-error {
   font-size: 11.5px;
   color: var(--red);
+}
+
+.field-hint {
+  font-size: 11.5px;
+  color: var(--g500);
+  margin-top: 4px;
 }
 
 .form-error {

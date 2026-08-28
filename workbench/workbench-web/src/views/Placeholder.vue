@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * 参数化占位页（I0-5 T3，设计 D-6）：employees/bases/kanban 三域路由共用，
- * 标题/说明文案由各域路由以 props 注入（见 src/router/routes/<domain>.ts）。
+ * 参数化占位页（I0-5 T3，设计 D-6）：employees 域仍用本页；
+ * 标题/说明文案由域路由以 props 注入。bases / kanban 已换真页。
  * T7 视觉对齐原型：page-head 形态（h1 24px/700 + sub g500 13px）+ 内容区居中空态卡
  * （.card 语言 + g400 dot 装饰，简朴）。业务线落地时整页替换。
  */

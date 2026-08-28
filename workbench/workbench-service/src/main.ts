@@ -193,16 +193,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** bases 域探测命令执行（CmdRunner 生产实现：`<cmd> --version` 抓 stdout 与退出码，5s 兜底超时）。
- * Windows CLI 多为 .cmd/.ps1 shim，无 shell 直 spawn 会 ENOENT——shell 包装（探测只读、args 为固定旗标）。 */
-function runBaseVersion(command: string, args: string[]): Promise<{ code: number; stdout: string }> {
+/** bases 域 CLI 执行（CmdRunner 生产实现：`--version` / `--list-models` / `npm install -g`）。
+ * Windows CLI 多为 .cmd/.ps1 shim，无 shell 直 spawn 会 ENOENT——shell 包装（args 为固定旗标）。
+ * 缺省超时 30s（`--list-models` 未登录实测 ~13s）；npm 安装由调用方传入 timeoutMs。 */
+function runBaseCommand(command: string, args: string[], opts?: { timeoutMs?: number }): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawn(command, args, { shell: process.platform === 'win32' })
     let stdout = ''
-    const timer = setTimeout(() => child.kill(), 5_000)
+    let stderr = ''
+    const timer = setTimeout(() => child.kill(), opts?.timeoutMs ?? 30_000)
     child.stdout?.on('data', (d) => { stdout += d })
-    child.on('error', () => { clearTimeout(timer); resolve({ code: 127, stdout: '' }) })
-    child.on('close', (code) => { clearTimeout(timer); resolve({ code: code ?? 127, stdout }) })
+    child.stderr?.on('data', (d) => { stderr += d })
+    child.on('error', () => { clearTimeout(timer); resolve({ code: 127, stdout: '', stderr: '' }) })
+    child.on('close', (code) => { clearTimeout(timer); resolve({ code: code ?? 127, stdout, stderr }) })
   })
 }
 
@@ -246,7 +249,7 @@ function startRealServer(cfg: WorkbenchConfig, rt: ServiceRuntime): ReturnType<t
     probe: (base: BaseId) => readBaseCache(join(basesCacheDir, `${base}.json`)) ?? { present: false, version: null },
     packageRoots: {},
     cacheDir: basesCacheDir,
-    run: runBaseVersion,
+    run: runBaseCommand,
     // A 系列认证域（Task 16，详设 §3.1）：platform-access 门面（auth/session/enrollment 三域消费切片）
     service: access.service,
   })

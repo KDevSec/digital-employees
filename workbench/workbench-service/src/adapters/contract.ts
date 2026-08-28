@@ -1,4 +1,5 @@
 import type { EmployeeSpec } from '../installs/spec/types'
+import type { CmdRunner } from '../bases/probe'
 
 /** adapter 契约类型真源（设计 §4；Task 1 先立 BaseId/AnchorKind，Task 2 补全） */
 export type BaseId = 'claude-code' | 'codebuddy' | 'qoder'
@@ -60,5 +61,5 @@ export interface BaseAdapter {
   readonly profile: BaseProfile
   plan(spec: EmployeeSpec, opts: { home: string; authSourceDir?: string }): PlacementPlan
   launch(input: LaunchInput): Promise<LaunchSpec>
-  listModels(): Promise<ModelInfo[]>
+  listModels(run?: CmdRunner): Promise<ModelInfo[]>
 }

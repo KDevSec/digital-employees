@@ -142,7 +142,7 @@ describe('守卫集成：登录态放行与 Layout 占位渲染', () => {
     await router.push('/bases')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/bases')
-    expect(text()).toContain('底座探测与安装管理即将上线')
+    expect(text()).toContain('刷新探测')
 
     await router.push('/kanban')
     await flushPromises()

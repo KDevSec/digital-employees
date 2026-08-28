@@ -3,7 +3,8 @@
  * - 在场探测走 30min TTL 缓存（~/.devzero/bases/<base>.json，Task 11）；手动刷新端点旁路缓存强探测；
  * - POST /api/bases/probe：带 {base} → 单结果对象；空 body 合法（缺省 = 三底座全刷数组）；
  * - GET /api/bases/:id/models：registry 是静态表无参数路由——path 声明用 :id 占位字面量，
- *   handler 内 ctx.path 切段取底座 id（/api/bases/<id>/models 的倒数第二段）。
+ *   handler 内 ctx.path 切段取底座 id（/api/bases/<id>/models 的倒数第二段）；
+ * - POST /api/bases/:id/install：登记名单 npm -g，同步+日志，成功后再 probe（D-bb01）。
  */
 import { join } from 'node:path'
 import { z } from 'zod'
@@ -11,6 +12,7 @@ import { listModelsFor } from '../../adapters/common/models'
 import type { BaseId } from '../../adapters/contract'
 import { baseProfiles } from '../../adapters/index'
 import { readCache as readBaseCache, writeCache as writeBaseCache } from '../../bases/cache'
+import { NPM_INSTALL_TIMEOUT_MS, REGISTERED_NPM } from '../../bases/npm-packages'
 import { assertVersion, probeBase, type CmdRunner } from '../../bases/probe'
 import { createDeploymentRegistry } from '../../installs/registry/registry'
 import type { Res, RouteRegistry } from '../registry'
@@ -103,6 +105,28 @@ export function registerBasesRoutes(reg: RouteRegistry, deps: BasesRouteDeps): v
     // 静态表哲学（无参数路由）：path 声明用 :id 占位，handler 内 ctx.path 切段取底座 id（倒数第二段）
     const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
     if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
-    return { status: 200, json: await listModelsFor(id) }
+    const result = await listModelsFor(id, deps.run)
+    if (!result.ok) {
+      const status = result.code === 'NOT_LOGGED_IN' ? 403 : 502
+      return err(status, result.code, result.message)
+    }
+    return { status: 200, json: result.models }
+  })
+
+  reg.post('/api/bases/:id/install', async (ctx): Promise<Res> => {
+    const id = ctx.path.split('/').slice(-2, -1)[0] as BaseId
+    if (!(id in baseProfiles)) return err(404, 'BASE_NOT_FOUND', `未知底座：${id}`)
+    const pkg = REGISTERED_NPM[id]
+    if (!pkg) return err(404, 'INSTALL_NOT_REGISTERED', `底座未登记安装：${id}`)
+    const npm = await deps.run('npm', ['install', '-g', pkg], { timeoutMs: NPM_INSTALL_TIMEOUT_MS })
+    const logs = `${npm.stdout}${npm.stderr ?? ''}`
+    if (npm.code !== 0) {
+      return {
+        status: 502,
+        json: { error: { code: 'NPM_INSTALL_FAILED', message: `npm install -g ${pkg} 失败` }, logs },
+      }
+    }
+    const presence = await presenceOf(id, deps, true)
+    return { status: 200, json: { logs, presence } }
   })
 }

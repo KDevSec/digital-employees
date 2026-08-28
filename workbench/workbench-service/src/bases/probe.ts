@@ -2,7 +2,12 @@
 import type { BaseProfile } from '../adapters/contract'
 
 export interface BasePresence { present: boolean; version: string | null; probed_at: string }
-export type CmdRunner = (command: string, args: string[]) => Promise<{ code: number; stdout: string }> | { code: number; stdout: string }
+export type CmdResult = { code: number; stdout: string; stderr?: string }
+export type CmdRunner = (
+  command: string,
+  args: string[],
+  opts?: { timeoutMs?: number },
+) => Promise<CmdResult> | CmdResult
 
 const SEMVER_RE = /(\d+\.\d+\.\d+)/
 

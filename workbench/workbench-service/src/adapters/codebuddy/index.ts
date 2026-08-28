@@ -2,7 +2,8 @@
 import type { BaseAdapter } from '../contract'
 import { buildPlan } from '../common/plan'
 import { buildLaunchSpec } from '../common/launch'
-import { listModelsFor } from '../common/models'
+import { listModelsFor, unwrapListModels } from '../common/models'
+import type { CmdRunner } from '../../bases/probe'
 import { profile } from './profile'
 
 export function createCodebuddyAdapter(): BaseAdapter {
@@ -10,6 +11,8 @@ export function createCodebuddyAdapter(): BaseAdapter {
     profile,
     plan(spec, opts) { return buildPlan(profile, spec, opts) },
     async launch(input) { return await buildLaunchSpec(profile, input) },
-    async listModels() { return await listModelsFor(profile.id) },
+    async listModels(run?: CmdRunner) {
+      return unwrapListModels(await listModelsFor(profile.id, run))
+    },
   }
 }

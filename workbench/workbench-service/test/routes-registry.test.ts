@@ -60,7 +60,7 @@ function table(routes: Route[]): string[][] {
 }
 
 describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
-  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 3（I1 L2））', () => {
+  it('注册产物 = 期望路由表（I0-5 六端点 + session 2 + auth 2 + enrollment 4（A 系列） + engine 12（L3） + installs 5 / bases 4（D-bb01））', () => {
     const reg = createRegistry()
     registerAllRoutes(reg, deps)
     expect(table(reg.routes)).toEqual([
@@ -81,6 +81,7 @@ describe('路由汇总表（routes/index.ts registerAllRoutes）', () => {
       ['GET', '/auth/callback'],
       ['GET', '/auth/login'],
       ['GET', '/healthz'],
+      ['POST', '/api/bases/:id/install'],
       ['POST', '/api/bases/probe'],
       ['POST', '/api/deployments/execute'],
       ['POST', '/api/deployments/plan'],
