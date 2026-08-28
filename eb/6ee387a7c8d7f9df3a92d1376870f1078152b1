@@ -1,0 +1,25 @@
+workbench/workbench-web/test/wizard-ux-iteration.test.ts
+  s_50810e6282795c::t_2992ca5afbc015 219-220
+workbench/workbench-web/src/components/wizard/steps/StepExtensions.vue
+  s_50810e6282795c::t_24fa43d6291fce 90-101
+  s_50810e6282795c::t_8acb032691976d 3,5-6,16-19
+workbench/workbench-web/src/views/EmployeesView.vue
+  s_50810e6282795c::t_4aba34438be4c4 102
+  s_50810e6282795c::t_a142cc10c0f9ae 7-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "eb6ee387a7c8d7f9df3a92d1376870f1078152b1",
+  "prompts": {},
+  "sessions": {
+    "s_50810e6282795c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e021fb8b-2906-4b27-90fe-485a618b86b0",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
