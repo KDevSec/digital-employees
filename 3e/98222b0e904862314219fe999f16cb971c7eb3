@@ -1,0 +1,33 @@
+workbench/workbench-web/test/wizard-steps.test.ts
+  s_50810e6282795c::t_18f07a04b0e067 271,281,290-309
+workbench/workbench-web/test/wizard-ux-iteration.test.ts
+  s_50810e6282795c::t_5dd091df139c2e 141,146,157-158,165,169,174-194
+workbench/workbench-web/src/stores/wizard.ts
+  s_50810e6282795c::t_ee07c23f3b9a2c 57-60
+  s_50810e6282795c::t_0192802e889989 108-110
+workbench/workbench-web/src/components/wizard/steps/StepHooksTools.vue
+  s_50810e6282795c::t_75373f7064127f 317-318,322-324,342-343
+  s_50810e6282795c::t_00d28e92296dd8 80-101,107,116-119,125,127,129,132-133
+  s_50810e6282795c::t_55e351ec4f8a2a 35-42,57-59,62-65,67,71-73
+  s_50810e6282795c::t_635418153770af 172-228
+  s_50810e6282795c::t_c6f9cf2ac930a1 7-11,134,293-294
+  s_50810e6282795c::t_2fddc5a0af97ae 287-292
+workbench/workbench-web/src/composables/useManifestValidation.ts
+  s_50810e6282795c::t_145c8d7295864d 112-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3e98222b0e904862314219fe999f16cb971c7eb3",
+  "prompts": {},
+  "sessions": {
+    "s_50810e6282795c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e021fb8b-2906-4b27-90fe-485a618b86b0",
+        "model": "kimi-k3"
+      },
+      "human_author": "liyong <ly1989abc@126.com>"
+    }
+  }
+}
