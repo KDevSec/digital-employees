@@ -291,6 +291,36 @@ describe('SettingsPanel 动作组（D-24 ③：D-22 两项 + 检查更新占位�
     expect(wrapper.text()).toContain('未登录')
     expect(wrapper.emitted('update:open')).toContainEqual([false]) // 浮层收起
   })
+
+  it('027：服务端返回 oidc_logout_url → 整页跳转 Keycloak end_session（结束 SSO），不再走本地刷新/回路由链路', async () => {
+    const endSession = 'https://kc.example/realms/digital-employees/protocol/openid-connect/logout?id_token_hint=abc'
+    const original = Object.getOwnPropertyDescriptor(window, 'location')
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: 'http://127.0.0.1:19980/employees' },
+    })
+    try {
+      const { wrapper, stub, router } = await mountPanel(
+        {
+          '/api/state': () => jsonResponse(activeFresh),
+          '/api/logout': () => jsonResponse({ status: 'logged_out', oidc_logout_url: endSession }),
+          '/healthz': () => jsonResponse(HEALTHY),
+        },
+        { push: '/employees' },
+      )
+      const logout = wrapper.findAll('.settings-panel button').find((item) => item.text() === '退出登录')!
+      await logout.trigger('click')
+      await flushPromises()
+
+      expect(stub.calls('/api/logout', 'POST')).toBe(1)
+      expect(window.location.href).toBe(endSession) // 整页跳转 end_session 杀 SSO
+      expect(stub.calls('/api/state', 'GET')).toBe(1) // 预载 1 次；整页跳走后无后续 fetchState
+      expect(router.currentRoute.value.path).toBe('/employees') // 未做本地路由回跳
+    } finally {
+      if (original) Object.defineProperty(window, 'location', original)
+    }
+  })
 })
 
 describe('SettingsPanel 开关（props.open + 外点/Esc 关闭——沿 T9 TopBar 下拉手法）', () => {

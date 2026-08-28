@@ -40,7 +40,6 @@ const roleNames = computed(() => {
         </div>
       </nav>
       <div class="sidebar-foot">
-        <div class="environment"><span class="status-dot"></span>{{ t('app.environment') }}</div>
         <div v-if="platformVersion" class="platform-version">v{{ platformVersion }}</div>
       </div>
     </aside>

@@ -95,6 +95,9 @@ export class PlatformAccessService {
         nonce,
         code_challenge: challenge,
         code_challenge_method: 'S256',
+        // 027：强制重新认证——退出后即使 Keycloak SSO 会话残留（end_session 未访问/失败降级），
+        // 再点登录也必须重新输入账号密码（桌面终端共享设备语义）
+        prompt: 'login',
       })
       return { status: 302, redirect: `${document.authorization_endpoint}?${params}` }
     })
@@ -203,8 +206,10 @@ export class PlatformAccessService {
             })
             oidcLogoutUrl = `${endSession}?${params}`
           }
-        } catch {
-          // 发现/Keycloak 不可达时降级为仅本地登出（不阻断退出）
+        } catch (error) {
+          // 发现/Keycloak 不可达时降级为仅本地登出（不阻断退出）；027：不再静默，留痕便于现场定位
+          const detail = error instanceof Error ? error.message : String(error)
+          console.warn(`[platform-access] 未能构造 OIDC end_session URL，降级为仅本地登出：${detail}`)
         }
       }
       return {

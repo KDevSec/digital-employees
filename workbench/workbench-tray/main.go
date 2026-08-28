@@ -60,6 +60,11 @@ type app struct {
 	trayExe    string
 	client     probe.Client
 
+	// openGate openWorkbench 并发合并闸门（028）：左键连击 / 菜单「打开工作台」 /
+	// 第二实例唤醒并发到达时只放第一个过去，其余记 tray.open_coalesced 直接返回——
+	// 服务未就绪时单次开窗链路最长 15s（healthwait 预算），期间重复点击不得再弹窗口
+	openGate actions.OpenGate
+
 	// 探活外部计数器（statemachine 是无状态纯函数，计数纪律在壳侧——见 internal/statemachine 注释）
 	state            statemachine.State
 	port             int
@@ -497,6 +502,8 @@ func isDaemonSegment(seg []string) bool {
 func (a *app) spawnDaemon(seg []string) (int, error) {
 	cmd := exec.Command(a.serviceExe, seg...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
+	// 028：子进程禁开浏览器——开窗只由托盘就绪后显式做一次（防双登录窗口）
+	cmd.Env = actions.ChildEnv()
 	if err := cmd.Start(); err != nil {
 		a.logger.Event("cli.spawn_failed", map[string]any{"args": seg, "error": err.Error()})
 		return 0, err
@@ -510,6 +517,8 @@ func (a *app) spawnDaemon(seg []string) (int, error) {
 func (a *app) runCli(args []string) ([]byte, error) {
 	cmd := exec.Command(a.serviceExe, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: createNoWindow}
+	// 028：与 spawnDaemon 同源——start 段经 runCli 路径（restart 等）同样禁子进程开窗
+	cmd.Env = actions.ChildEnv()
 	out, err := cmd.CombinedOutput()
 	rec := map[string]any{"args": args, "exit": exitCode(err)}
 	if len(out) > 0 {
@@ -555,6 +564,13 @@ func (a *app) stopWithActivityCheck() {
 // CLI 段全部消费 actions 纯模块（I-2）：预算统一引用 actions.HealthWaitBudgetMs，
 // 组装层不手写段与 15000 字面量
 func (a *app) openWorkbench() {
+	// 028：并发合并——左键连击/菜单/第二实例唤醒同时到达时只放一条链路（最长 15s），
+	// 重复触发不落开窗（否则一次点击弹两个终端窗口）
+	if !a.openGate.TryEnter() {
+		a.logger.Event("tray.open_coalesced", nil)
+		return
+	}
+	defer a.openGate.Leave()
 	a.logger.Event("tray.open", nil)
 	port := probe.DiscoverPort(a.profileDir)
 	if probe.Probe(a.client, port).Ok {

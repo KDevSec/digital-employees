@@ -113,6 +113,8 @@ describe('PlatformAccessService——生产语义', () => {
     expect(location).toContain('code_challenge_method=S256')
     expect(location).toContain('client_id=workbench-desktop')
     expect(location).toContain('redirect_uri=' + encodeURIComponent('http://127.0.0.1:19990/auth/callback'))
+    // 027：强制重新认证——退出登录后即使 Keycloak SSO 会话残留，再点登录也必须输账号密码
+    expect(location).toContain('prompt=login')
   })
 
   it('发现缓存回退：discover 失败但缓存来源匹配 → 用缓存继续 302；来源不匹配 → 503', async () => {

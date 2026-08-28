@@ -57,8 +57,6 @@ p { color: var(--muted); }
 .sidebar nav a { padding: 10px 12px; border-radius: 9px; color: #bad1cc; }
 .sidebar nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
 .sidebar nav a.router-link-active { background: #fff; color: var(--forest); font-weight: 850; }
-.environment { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); color: #a8c8c0; font-size: 12px; }
-.status-dot { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: #6ee7b7; }
 .app-main { margin-left: 240px; }
 .topbar { height: 68px; position: sticky; top: 0; z-index: 4; display: flex; justify-content: flex-end; align-items: center; gap: 20px; padding: 0 28px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line); }
 .topbar div { display: grid; text-align: right; }
@@ -109,7 +107,6 @@ td small { color: var(--muted); }
   .hero, .package-grid, .kpi-grid, .flow, .form-grid, .overview-grid, .my-wb-grid { grid-template-columns: 1fr; }
   .sidebar { position: static; width: auto; }
   .sidebar nav { grid-template-columns: repeat(2, 1fr); }
-  .environment { display: none; }
   .app-main { margin-left: 0; }
   .workspace { padding: 20px 12px 50px; }
 }

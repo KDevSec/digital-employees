@@ -3,8 +3,10 @@
 package actions
 
 import (
+	"os"
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 
 	"devzero-tray/internal/brand"
 )
@@ -93,6 +95,34 @@ func BuildCliArgs(a Action) [][]string {
 // OpenBrowserURL 左键直达/打开工作台的浏览器地址
 func OpenBrowserURL(port int) string {
 	return "http://" + brand.LoopbackHost + ":" + strconv.Itoa(port)
+}
+
+// ChildEnv 托盘 spawn devzero CLI 子进程时继承的环境（028：单窗口修复）。
+// 在继承当前环境的基础上追加 WORKBENCH_NO_BROWSER=1：浏览器只由托盘
+// openWorkbench 在服务就绪后显式开一次——服务侧 runStartup 的 idempotent 分支
+// （实例已在跑也开窗）与首启哨兵分支（fresh 首启开窗）都会与托盘就绪后的开窗
+// 重复，表现为一次点击弹两个终端登录窗口。非托盘路径（终端直跑 devzero start /
+// 安装器拉起）不经过本函数，服务侧首启自动开窗行为保持不变。
+func ChildEnv() []string {
+	return append(os.Environ(), "WORKBENCH_NO_BROWSER=1")
+}
+
+// OpenGate openWorkbench 并发合并闸门（028）：同一时刻只允许一条开窗链路进行
+// （未就绪时链路含 spawn start + healthwait，最长 HealthWaitBudgetMs）。
+// 期间重复触发（左键连击 / 菜单「打开工作台」/ 第二实例唤醒并发）TryEnter 返回
+// false，调用方记日志后直接返回，不再弹第二个窗口。
+type OpenGate struct {
+	inFlight int32
+}
+
+// TryEnter 非阻塞尝试进入；首个调用者返回 true，链路结束必须配对 Leave。
+func (g *OpenGate) TryEnter() bool {
+	return atomic.CompareAndSwapInt32(&g.inFlight, 0, 1)
+}
+
+// Leave 释放闸门，允许后续开窗链路。
+func (g *OpenGate) Leave() {
+	atomic.StoreInt32(&g.inFlight, 0)
 }
 
 // DataDirPath 打开数据目录（explorer 目标）——数据目录即 profile 目录

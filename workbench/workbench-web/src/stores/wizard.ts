@@ -45,6 +45,7 @@ export interface WizardDraft {
   org: string
   identity: string
   principles: string[]
+  /** usage_modes 静默注入（2026-08-28 裁决：UI 移除，按 kind 分派保底值） */
   usage_modes: string[]
   // 模板元
   kind: 'flow-owner' | 'callee' | ''
@@ -53,8 +54,13 @@ export interface WizardDraft {
   version: string
   // 红线（StepHooksTools）
   redlines: RedlineEntry[]
+  /** 权限管理总开关（2026-08-31 裁决：总关 → redlines 与 deny 全部不启用，不写入员工包） */
+  redlinesEnabled: boolean
+  /** 工具黑名单（2026-08-31 裁决：勾选 = 禁用；与红线互不干涉） */
   deny: string[]
-  // 管理面（StepHooksTools 折叠区）
+  /** 工具白名单（默认全勾；提交时反向构造 deny = 全集 - 已勾） */
+  toolsAllowed: string[]
+  // 管理面（静默注入默认值——2026-08-28 裁决：高级设置 UI 移除）
   tier: string
   tokenPerTask?: number
   tokenMonthly?: number
@@ -76,6 +82,12 @@ export interface WizardDraft {
  */
 export const WIZARD_STEPS = ['模板', 'Agent定义', 'Skills', '约束Hook', '连接器MCP', '其他'] as const
 
+/** 工具白名单全集（2026-08-28 裁决：默认全勾，反选进 deny） */
+export const ALL_TOOLS = [
+  'Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
+  'WebFetch', 'WebSearch', 'TodoWrite', 'NotebookEdit',
+] as const
+
 /** 空 draft 初值（Custom 起步态） */
 function emptyDraft(): WizardDraft {
   return {
@@ -86,14 +98,19 @@ function emptyDraft(): WizardDraft {
     org: '',
     identity: '',
     principles: [],
-    usage_modes: [],
+    // 2026-08-28 裁决：UI 移除 usage_modes，静默注入 ['裸用']（kind 分派保底）
+    usage_modes: ['裸用'],
     kind: '',
     level: '',
     brief: '',
     version: '',
     redlines: [],
+    // 权限管理总开关默认开（2026-08-31 裁决）
+    redlinesEnabled: true,
+    // 工具白名单默认全勾（deny 为空）
+    toolsAllowed: [...ALL_TOOLS],
     deny: [],
-    // 管理面初值对齐 manifestSchema 枚举（tier default '编码档'；governance.level 原型默认 L2）
+    // 管理面静默注入默认值（tier/治理/可见性/审计 UI 已移除）
     tier: '编码档',
     governanceLevel: 'L2',
     visibility: 'team',

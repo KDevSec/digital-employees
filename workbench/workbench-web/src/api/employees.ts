@@ -56,6 +56,8 @@ export interface EmployeeCard {
   avatar: string
   kind: string
   version: string
+  /** 已安装底座 id 列表（2026-08-28 后端扩展：installs registry 聚合） */
+  hosts: string[]
 }
 
 /** GET /api/employees 响应：花名册扫描派生（items + invalid 透传） */

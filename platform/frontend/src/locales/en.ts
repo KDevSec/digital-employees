@@ -19,7 +19,6 @@ export default {
   },
   app: {
     brand: 'Digital Employees Management Platform',
-    environment: 'Live Services Connected',
     logout: 'Logout',
     currentRole: 'Current Role',
     roles: {

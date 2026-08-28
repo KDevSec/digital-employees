@@ -19,7 +19,6 @@ export default {
   },
   app: {
     brand: '数字员工管理平台',
-    environment: '真实服务已连接',
     logout: '退出',
     currentRole: '当前角色',
     roles: {

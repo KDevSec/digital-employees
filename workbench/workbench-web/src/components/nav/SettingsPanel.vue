@@ -98,12 +98,18 @@ function onDocKeydown(event: KeyboardEvent): void {
 }
 
 /**
- * 退出登录（D-22 语义迁移）：logoutAction → 刷新 store（拿到未登录态）→ 编程导航回 '/'。
- * 退出后守卫按未登录分流（无 ACTIVE 自动跳），登录卡/接入页自然衔接。
+ * 退出登录（D-22 语义迁移；027 对齐 AccessView/AccessModal 的 023/026 链路）：
+ * logoutAction 返回 oidcLogoutUrl 时整页跳转 Keycloak end_session 结束 SSO
+ * （否则同浏览器再点登录会被 Keycloak SSO 静默免密放行）；无 URL（发现失败降级/
+ * 开发态）才走 close → 刷新 store（拿到未登录态）→ 编程导航回 '/' 的本地登出链路。
  */
 async function onLogout(): Promise<void> {
+  const result = await logoutAction()
+  if (result.oidcLogoutUrl) {
+    window.location.href = result.oidcLogoutUrl
+    return
+  }
   close()
-  await logoutAction()
   await store.fetchState()
   await router.push('/')
 }

@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 
-import { useWizardStore } from '../../../stores/wizard'
+import { useWizardStore, ALL_TOOLS } from '../../../stores/wizard'
 
 /**
- * Step 4 · Hooks 与 Tools 约束（L1 员工新建线 Task 14）：
- * - 红线 check-grid（7 rule_id + 中文自然语言描述）；
- * - tools.deny 折叠说明（V0.1 空）；
- * - 折叠区「高级设置」：tier 五档 radio-cards + Token 配额两 input + 可见性/审计/治理级别 select。
- *
- * 红线 7 项（spec §7 表④）：
- *   no-push-to-main / high-risk-via-gate / no-devzero-state / no-external-request /
- *   no-production-access / no-db-schema / custom（disabled 占位）
- *
- * tier 五档：评审安全档 / 设计档 / 探索档 / 编码档 / 执行档
+ * Step 4 · 约束与工具（2026-08-31 用户裁决 restructure）：
+ * ① 权限红线（hooks 规则拦截，编译期生效；整套作用域挂在「权限管理总开关」下）
+ * ② 工具黑名单（PreToolUse 拦截工具调用；作用域仅「工具调用」一层，与红线互不相干）
+ * ③ 权限管理总开关：总开→全部规则启用；总关→整套拦截不启用（draft 侧 UI 态，
+ *    不写入 manifest；生成器拆成：开 → redlines 编译 + deny 下发；关 → 两者都不下发）
  *
  * 禁词红线：UI 文案无「底座/安装/AgentHub」。
- * 「.devzero 状态」红线描述：spec 原文用「.devzero 状态」，本组件用「.devzero 状态」（无禁词冲突）。
  */
 
 const store = useWizardStore()
-const advancedOpen = ref(false)
 
-/** 红线 7 项 */
+/** 红线 7 项（2026-08-28 裁决：主描述 + 括号举例） */
 interface RedlineOption {
   rule_id: string
   label: string
@@ -30,27 +23,22 @@ interface RedlineOption {
 }
 
 const REDLINES: RedlineOption[] = [
-  { rule_id: 'no-push-to-main', label: '禁止直接 push 到 main' },
-  { rule_id: 'high-risk-via-gate', label: '高风险操作走人工闸' },
-  { rule_id: 'no-devzero-state', label: '不改动 .devzero 状态' },
-  { rule_id: 'no-external-request', label: '禁止外网请求' },
-  { rule_id: 'no-production-access', label: '禁止生产环境访问' },
-  { rule_id: 'no-db-schema', label: '禁止改库表结构' },
-  { rule_id: 'custom', label: '自定义红线（V0.2 开放）', disabled: true },
+  { rule_id: 'no-push-to-main', label: '禁止直接推送到主分支（如 git push origin main / master）' },
+  { rule_id: 'high-risk-via-gate', label: '危险操作必须经人工确认（如 rm -rf、删除文件夹、修改系统配置）' },
+  { rule_id: 'no-devzero-state', label: '禁止修改运行时状态文件（如 .devzero/ 目录下任何文件）' },
+  { rule_id: 'no-external-request', label: '禁止访问外网（如 curl / wget / 任何 HTTP 请求外部站点）' },
+  { rule_id: 'no-production-access', label: '禁止访问生产环境（如 prod 域名/IP、/etc/prod/ 路径）' },
+  { rule_id: 'no-db-schema', label: '禁止修改数据库结构（如 ALTER TABLE、DROP TABLE、CREATE INDEX）' },
+  { rule_id: 'custom', label: '自定义红线规则（暂未开放）', disabled: true },
 ]
 
-/**
- * tier 五档（值 = manifestSchema 的中文枚举，直接透传 buildManifestFromDraft 不需映射）：
- *   '评审安全档' / '设计档' / '探索档' / '编码档' / '执行档'
- * label 直接复用枚举值（schema 枚举本身即中文），sub 补充语义说明。
- */
-const TIERS = [
-  { value: '评审安全档', label: '评审安全档', sub: '高风险评审 + 安全审计节点' },
-  { value: '设计档', label: '设计档', sub: '架构设计与方案评审节点' },
-  { value: '探索档', label: '探索档', sub: '调研与原型探索节点' },
-  { value: '编码档', label: '编码档', sub: '常规编码 + 自测节点' },
-  { value: '执行档', label: '执行档', sub: '轻量执行 + 通报节点' },
-]
+/** 权限管理总开关（draft 侧 UI 态） */
+const redlinesEnabled = computed({
+  get: () => store.draft.redlinesEnabled,
+  set: (v: boolean) => {
+    store.draft.redlinesEnabled = v
+  },
+})
 
 /** 红线勾选态 */
 function isRedlineOn(ruleId: string): boolean {
@@ -66,42 +54,57 @@ function toggleRedline(rule: RedlineOption): void {
   }
 }
 
-/** tier 切换 */
-function selectTier(value: string): void {
-  store.draft.tier = value
+/** 工具黑名单勾选态（反向：勾选 = 禁用该工具） */
+function isToolDenied(tool: string): boolean {
+  return store.draft.deny.includes(tool)
 }
 
-/** 可见性选项 */
-const VISIBILITIES = [
-  { value: 'private', label: '仅自己' },
-  { value: 'team', label: '团队内' },
-  { value: 'department', label: '部门内' },
-  { value: 'company', label: '全公司' },
-]
+/** 工具黑名单切换 */
+function toggleToolDeny(tool: string): void {
+  if (isToolDenied(tool)) {
+    store.draft.deny = store.draft.deny.filter((t) => t !== tool)
+  } else {
+    store.draft.deny = [...store.draft.deny, tool]
+  }
+}
 
-/** 审计级别 */
-const AUDITS = [
-  { value: 'full', label: '全量记录' },
-  { value: 'exceptions-only', label: '仅异常记录' },
-  { value: 'off', label: '可关闭' },
-]
-
-/** 治理级别 */
-const GOVERNANCE_LEVELS = ['L1', 'L2', 'L3', 'L4']
+/** 当前已选中的红线数 / 已禁工具数（徽章文案） */
+const enabledRedlines = computed(() => store.draft.redlines.length)
+const deniedTools = computed(() => store.draft.deny.length)
 </script>
 
 <template>
   <div class="cat-section">
     <div class="cat-section-label"><span class="cat-icon">🛡️</span> 约束 —— 员工不能干什么</div>
 
-    <div class="form-row">
-      <label>权限红线（写入 constraints.red_lines）</label>
+    <!-- 权限管理总开关 -->
+    <div class="form-row master-row">
+      <label class="master-toggle">
+        <input
+          type="checkbox"
+          data-role="redlines-master"
+          :checked="redlinesEnabled"
+          @change="redlinesEnabled = ($event.target as HTMLInputElement).checked"
+        />
+        <span class="master-label">
+          权限管理总开关
+          <span class="master-sub">总关 → 下述红线与工具黑名单全部不启用（不写入员工包）</span>
+        </span>
+      </label>
+      <span class="master-count" data-role="redlines-summary">
+        {{ redlinesEnabled ? `已启用 ${enabledRedlines} 条红线` : '已停用' }}
+      </span>
+    </div>
+
+    <!-- 权限红线（总开关下） -->
+    <div class="form-row" :class="{ 'section-disabled': !redlinesEnabled }">
+      <label>权限红线（hooks 规则拦截，编译期生效）</label>
       <div class="check-grid">
         <div
           v-for="rule in REDLINES"
           :key="rule.rule_id"
           class="check-item"
-          :class="{ on: isRedlineOn(rule.rule_id), disabled: rule.disabled }"
+          :class="{ on: isRedlineOn(rule.rule_id), disabled: rule.disabled || !redlinesEnabled }"
           data-redline
           @click="toggleRedline(rule)"
         >
@@ -110,106 +113,24 @@ const GOVERNANCE_LEVELS = ['L1', 'L2', 'L3', 'L4']
       </div>
     </div>
 
-    <div class="form-row">
-      <label>工具禁用（tools.deny）</label>
-      <div class="hint-box">V0.1 阶段 tools.deny 默认空——红线编译时由 hooks 编译器自动生成对应 PreToolUse 拦截规则。</div>
-    </div>
-
-    <!-- 折叠区「高级设置」 -->
-    <div class="advanced-section">
-      <button
-        type="button"
-        class="advanced-toggle"
-        data-role="advanced-toggle"
-        :aria-expanded="advancedOpen"
-        @click="advancedOpen = !advancedOpen"
-      >
-        {{ advancedOpen ? '▾' : '▸' }} 高级设置（治理与配额）
-      </button>
-
-      <div v-if="advancedOpen" class="advanced-body">
-        <div class="form-row">
-          <label>模型档位（写入 tier-map，按节点类型分档）</label>
-          <div class="radio-cards">
-            <div
-              v-for="t in TIERS"
-              :key="t.value"
-              class="radio-card"
-              :class="{ on: store.draft.tier === t.value }"
-              data-tier
-              @click="selectTier(t.value)"
-            >
-              <div class="rc-name">{{ t.label }}</div>
-              <div class="rc-sub">{{ t.sub }}</div>
-            </div>
-          </div>
+    <!-- 工具黑名单（与红线互不干涉） -->
+    <div class="form-row" :class="{ 'section-disabled': !redlinesEnabled }">
+      <label>工具黑名单（PreToolUse 拦截，员工运行时生效）</label>
+      <p class="tool-hint">勾选 = 禁用该工具（红线走 hooks 规则链，工具黑名单走 PreToolUse 拦截，两套机制互不干涉）</p>
+      <div class="tools-grid">
+        <div
+          v-for="tool in ALL_TOOLS"
+          :key="tool"
+          class="tool-chip"
+          :class="{ on: isToolDenied(tool), disabled: !redlinesEnabled }"
+          :data-tool="tool"
+          @click="toggleToolDeny(tool)"
+        >
+          <span class="tool-check">✕</span>{{ tool }}
         </div>
-
-        <div class="form-row-pair">
-          <div class="form-row">
-            <label>单任务 Token 上限</label>
-            <input
-              class="input"
-              type="number"
-              data-field="tokenPerTask"
-              :value="store.draft.tokenPerTask ?? ''"
-              placeholder="例如：500000"
-              @input="store.draft.tokenPerTask = Number(($event.target as HTMLInputElement).value) || undefined"
-            />
-          </div>
-          <div class="form-row">
-            <label>月度 Token 上限</label>
-            <input
-              class="input"
-              type="number"
-              data-field="tokenMonthly"
-              :value="store.draft.tokenMonthly ?? ''"
-              placeholder="例如：20000000"
-              @input="store.draft.tokenMonthly = Number(($event.target as HTMLInputElement).value) || undefined"
-            />
-          </div>
-        </div>
-
-        <div class="form-row-pair">
-          <div class="form-row">
-            <label>可见范围（写入 governance.visibility）</label>
-            <select
-              class="select"
-              data-field="visibility"
-              :value="store.draft.visibility"
-              @change="store.draft.visibility = ($event.target as HTMLSelectElement).value"
-            >
-              <option v-for="v in VISIBILITIES" :key="v.value" :value="v.value">{{ v.label }}</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>审计级别（写入 governance.audit）</label>
-            <select
-              class="select"
-              data-field="audit"
-              :value="store.draft.audit"
-              @change="store.draft.audit = ($event.target as HTMLSelectElement).value"
-            >
-              <option v-for="a in AUDITS" :key="a.value" :value="a.value">{{ a.label }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label>治理级别（写入 governance.level）</label>
-          <div class="radio-cards radio-cards-4">
-            <div
-              v-for="lvl in GOVERNANCE_LEVELS"
-              :key="lvl"
-              class="radio-card"
-              :class="{ on: store.draft.governanceLevel === lvl }"
-              data-governance-level
-              @click="store.draft.governanceLevel = lvl"
-            >
-              <div class="rc-name">{{ lvl }}</div>
-            </div>
-          </div>
-        </div>
+      </div>
+      <div class="deny-preview" data-role="deny-preview">
+        {{ deniedTools === 0 ? '无禁用工具' : `已禁 ${deniedTools} 个：${store.draft.deny.join('、')}` }}
       </div>
     </div>
   </div>
@@ -248,40 +169,64 @@ const GOVERNANCE_LEVELS = ['L1', 'L2', 'L3', 'L4']
   margin-bottom: 6px;
 }
 
-.form-row-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 22px;
-}
-
-.input,
-.select {
-  width: 100%;
-  border: 1px solid var(--g300);
-  border-radius: 9px;
-  padding: 9px 13px;
-  font-size: 13px;
-  outline: none;
-  font-family: inherit;
-  background: #fff;
-}
-
-.input:focus,
-.select:focus {
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px var(--blue-100);
-}
-
-.hint-box {
-  background: var(--g100);
-  border-radius: 8px;
+/* 权限管理总开关 */
+.master-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 12px;
-  font-size: 12px;
-  color: var(--g600);
-  line-height: 1.55;
+  background: var(--blue-50);
+  border: 1px solid var(--blue-200);
+  border-radius: 10px;
+  margin-bottom: 14px;
 }
 
-/* check-grid */
+.master-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.master-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.master-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.master-sub {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--g500);
+  margin-top: 3px;
+}
+
+.master-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--blue-700);
+  white-space: nowrap;
+}
+
+/* 分区禁用态（总开关关） */
+.section-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* check-grid（红线） */
 .check-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -299,6 +244,7 @@ const GOVERNANCE_LEVELS = ['L1', 'L2', 'L3', 'L4']
   cursor: pointer;
   transition: 0.12s;
   background: #fff;
+  line-height: 1.45;
 }
 
 .check-item:hover {
@@ -338,65 +284,69 @@ const GOVERNANCE_LEVELS = ['L1', 'L2', 'L3', 'L4']
   border-color: var(--blue-600);
 }
 
-/* 折叠区 */
-.advanced-section {
-  margin-top: 8px;
-}
-
-.advanced-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--g700);
-  padding: 6px 0;
-  font-family: inherit;
-}
-
-.advanced-toggle:hover {
-  color: var(--blue-700);
-}
-
-.advanced-body {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--g100);
-}
-
-/* radio-cards */
-.radio-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 9px;
-}
-
-.radio-cards-4 {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.radio-card {
-  border: 1.5px solid var(--g200);
-  border-radius: 10px;
-  padding: 11px;
-  cursor: pointer;
-  text-align: center;
-  transition: 0.12s;
-}
-
-.radio-card.on {
-  border-color: var(--blue-600);
-  background: var(--blue-50);
-}
-
-.rc-name {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.rc-sub {
-  font-size: 11px;
+/* 工具黑名单 chip 区 */
+.tool-hint {
+  font-size: 12px;
   color: var(--g500);
-  margin-top: 3px;
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+
+.tools-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tool-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  cursor: pointer;
+  background: var(--g100);
+  color: var(--g600);
+  border: 1.5px solid transparent;
+  transition: 0.12s;
+  font-family: Menlo, Consolas, monospace;
+}
+
+.tool-chip:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.tool-chip.on {
+  background: var(--red-bg);
+  color: var(--red);
+  border-color: var(--red);
+  font-weight: 500;
+}
+
+.tool-chip .tool-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--g300);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  background: transparent;
+}
+
+.tool-chip.on .tool-check {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.deny-preview {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--g500);
+  font-family: Menlo, Consolas, monospace;
 }
 </style>

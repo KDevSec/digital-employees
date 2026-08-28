@@ -193,7 +193,7 @@ describe('L1 收口 · 边界守卫 —— 全链未触碰 ~/digital-staff/', ()
 
     // ---------- ③ GET /api/employees 路由调用（花名册扫描派生） ----------
     const registry = createRegistry()
-    registerEmployeesRoutes(registry, { builder, store })
+    registerEmployeesRoutes(registry, { builder, store, registryFile: join(tmpRoot, "registry.json") })
     const app = toHonoApp(registry)
     const res = await app.request('/api/employees')
     expect(res.status).toBe(200)

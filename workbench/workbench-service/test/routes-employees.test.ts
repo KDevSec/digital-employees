@@ -61,7 +61,7 @@ function buildApp() {
   const provider = createTemplatesProvider(builtinTemplates, customRoot)
   const store = createEmployeeStore(employeesRoot, tmpRoot)
   const builder = createEmployeeBuilder({ provider, store, tmpRoot })
-  registerEmployeesRoutes(registry, { builder, store })
+  registerEmployeesRoutes(registry, { builder, store, registryFile: join(tmpRoot, "registry.json") })
   return toHonoApp(registry)
 }
 
@@ -80,7 +80,7 @@ describe('分域注册（routes/employees.ts 只注册本域端点）', () => {
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const store = createEmployeeStore(employeesRoot, tmpRoot)
     const builder = createEmployeeBuilder({ provider, store, tmpRoot })
-    registerEmployeesRoutes(reg, { builder, store })
+    registerEmployeesRoutes(reg, { builder, store, registryFile: join(tmpRoot, "registry.json") })
     expect(reg.routes.map((r) => [r.method, r.path]).sort()).toEqual([
       ['GET', '/api/employees'],
       ['GET', '/api/employees/validate-id'],
@@ -274,7 +274,7 @@ describe('GET /api/employees（花名册扫描派生）', () => {
     const registry = createRegistry()
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const builder = createEmployeeBuilder({ provider, store, tmpRoot })
-    registerEmployeesRoutes(registry, { builder, store })
+    registerEmployeesRoutes(registry, { builder, store, registryFile: join(tmpRoot, "registry.json") })
     const app = toHonoApp(registry)
 
     const res = await app.request('/api/employees')
@@ -303,7 +303,7 @@ describe('GET /api/employees（花名册扫描派生）', () => {
     const registry = createRegistry()
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const builder = createEmployeeBuilder({ provider, store, tmpRoot })
-    registerEmployeesRoutes(registry, { builder, store })
+    registerEmployeesRoutes(registry, { builder, store, registryFile: join(tmpRoot, "registry.json") })
     const app = toHonoApp(registry)
 
     const res = await app.request('/api/employees')
@@ -330,7 +330,7 @@ describe('GET /api/employees（花名册扫描派生）', () => {
     const registry = createRegistry()
     const provider = createTemplatesProvider(builtinTemplates, customRoot)
     const builder = createEmployeeBuilder({ provider, store, tmpRoot })
-    registerEmployeesRoutes(registry, { builder, store })
+    registerEmployeesRoutes(registry, { builder, store, registryFile: join(tmpRoot, "registry.json") })
     const app = toHonoApp(registry)
 
     const res = await app.request('/api/employees')

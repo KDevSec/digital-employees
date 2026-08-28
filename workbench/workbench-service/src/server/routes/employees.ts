@@ -21,8 +21,9 @@ import {
   SkillMissingError,
 } from '../../employees/builder'
 import { EmployeeIdConflictError } from '../../employees/store'
+import { createDeploymentRegistry } from '../../installs/registry/registry'
 
-/** employees 域依赖：builder（管线八步）+ store（id 冲突预检/suggestion + 花名册扫描派生） */
+/** employees 域依赖：builder（管线八步）+ store（id 冲突预检/suggestion + 花名册扫描派生）+ registryFile（installs registry 路径，hosts 聚合用） */
 export interface EmployeesRouteDeps {
   builder: {
     generate(draft: EmployeeDraft): Promise<GenerateResult>
@@ -35,6 +36,8 @@ export interface EmployeesRouteDeps {
     /** 最近一次 list() 收集的坏 yaml 目录 id 列表 */
     readonly invalid: string[]
   }
+  /** installs registry 文件路径（2026-08-28 扩展：hosts 字段聚合用） */
+  registryFile: string
 }
 
 /**
@@ -137,8 +140,9 @@ export function employeesValidateIdHandler(deps: EmployeesRouteDeps) {
 }
 
 /**
- * 花名册卡片字段（GET /api/employees 派生；仅展示所需字段子集，无安装数据——E-10 后续批）。
+ * 花名册卡片字段（GET /api/employees 派生）。
  * 字段全部 string（id/display/brief/avatar/version）+ kind 枚举；防御性提取后兜底空串。
+ * hosts：已安装底座 id 列表（2026-08-28 扩展：installs registry 聚合）。
  */
 export interface EmployeeCard {
   id: string
@@ -147,15 +151,17 @@ export interface EmployeeCard {
   avatar: string
   kind: string
   version: string
+  hosts: string[]
 }
 
 /**
  * 从 manifest（unknown，store.list 返回的 yaml load 原样）防御性提取卡片字段。
  * - manifest 非对象 → 全兜底空串（id 仍取 store.list 的 id）
  * - 各字段类型不对（display 非字符串、kind 非枚举等）→ 兜底空串
+ * - hosts 由调用方注入（installs registry 聚合）
  */
-function extractCard(id: string, manifest: unknown): EmployeeCard {
-  const empty: EmployeeCard = { id, display: '', brief: '', avatar: '', kind: '', version: '' }
+function extractCard(id: string, manifest: unknown, hosts: string[] = []): EmployeeCard {
+  const empty: EmployeeCard = { id, display: '', brief: '', avatar: '', kind: '', version: '', hosts }
   if (typeof manifest !== 'object' || manifest === null) return empty
   const m = manifest as Record<string, unknown>
   return {
@@ -165,13 +171,26 @@ function extractCard(id: string, manifest: unknown): EmployeeCard {
     avatar: typeof m['avatar'] === 'string' ? m['avatar'] : '',
     kind: typeof m['kind'] === 'string' ? m['kind'] : '',
     version: typeof m['version'] === 'string' ? m['version'] : '',
+    hosts,
   }
 }
 
-/** GET /api/employees —— 花名册扫描派生（store.list → 卡片字段 + invalid 透传） */
+/** GET /api/employees —— 花名册扫描派生（store.list → 卡片字段 + invalid 透传 + hosts 聚合） */
 export function employeesListHandler(deps: EmployeesRouteDeps) {
   return (_ctx: Ctx): Res => {
-    const items = deps.store.list().map(({ id, manifest }) => extractCard(id, manifest))
+    // installs registry 聚合：employee_id → hosts[]
+    const deployments = createDeploymentRegistry(deps.registryFile).list()
+    const hostsByEmployee = new Map<string, string[]>()
+    for (const d of deployments) {
+      if (d.status !== 'installed') continue
+      const existing = hostsByEmployee.get(d.employee_id) ?? []
+      if (!existing.includes(d.base)) existing.push(d.base)
+      hostsByEmployee.set(d.employee_id, existing)
+    }
+    const items = deps.store.list().map(({ id, manifest }) => {
+      const hosts = hostsByEmployee.get(id) ?? []
+      return extractCard(id, manifest, hosts)
+    })
     return { status: 200, json: { items, invalid: deps.store.invalid } }
   }
 }

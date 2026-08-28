@@ -210,10 +210,7 @@ onBeforeUnmount(() => {
 
     <div class="layout-2col">
       <div>
-        <div class="section-title">1 · 选择角色模板</div>
-        <TplGrid :templates="store.templates" :selected-id="selectedId" @select="onSelectTemplate" />
-
-        <div class="section-title">2 · 配置向导 <span class="muted">{{ wizardSubtitle }}</span></div>
+        <div class="section-title">配置向导 <span class="muted">{{ wizardSubtitle }}</span></div>
         <div class="card wizard-card">
           <StepBar :current-step="store.currentStep" @goto="onGoto" />
 
@@ -226,8 +223,13 @@ onBeforeUnmount(() => {
 
           <template v-else>
             <div class="step-area">
-              <!-- Step 1 模板：左栏 TplGrid 已涵盖，此处提示文案 -->
-              <p v-if="store.currentStep === 1" class="step-hint">请在上方选择角色模板，然后点「下一步」开始配置。</p>
+              <!-- Step 1 模板：TplGrid 移入 step 区域（不再常驻上方） -->
+              <TplGrid
+                v-if="store.currentStep === 1"
+                :templates="store.templates"
+                :selected-id="selectedId"
+                @select="onSelectTemplate"
+              />
 
               <!-- Step 2 Agent定义 -->
               <StepAgent v-else-if="store.currentStep === 2" />

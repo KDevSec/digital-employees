@@ -109,8 +109,9 @@ export function buildManifestFromDraft(draft: WizardDraft): Record<string, unkno
       if (s.origin !== undefined) out.origin = s.origin
       return out
     }),
-    hooks: { redlines: draft.redlines },
-    tools: { deny: draft.deny },
+    // 2026-08-31 裁决：权限管理总开关关 → redlines 与 deny 全部不启用（不写入员工包）
+    hooks: { redlines: draft.redlinesEnabled ? draft.redlines : [] },
+    tools: { deny: draft.redlinesEnabled ? draft.deny : [] },
     commands: FIXED.commands,
     knowledge: FIXED.knowledge,
     connectors: [],
