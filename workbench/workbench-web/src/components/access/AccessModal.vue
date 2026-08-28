@@ -80,9 +80,15 @@ function onReset(): void {
   void run(resetAction)
 }
 
-/** 退出登录（SettingsPanel 同款链路，D-26）：logoutAction → fetchState → 关 modal → 回 '/' */
+/** 退出登录（D-26；026 对齐 AccessView 023 逻辑）：
+ * 服务端返回 oidcLogoutUrl 时整页跳转 Keycloak end_session 结束 SSO（否则再点登录免密）；
+ * 无 URL（发现失败降级/开发态）才走 fetchState → 关 modal → 回 '/' 的本地登出链路。 */
 async function onLogout(): Promise<void> {
-  await logoutAction()
+  const result = await logoutAction()
+  if (result.oidcLogoutUrl) {
+    window.location.href = result.oidcLogoutUrl
+    return
+  }
   await store.fetchState()
   close()
   await router.push('/')

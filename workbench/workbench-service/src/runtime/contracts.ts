@@ -62,7 +62,27 @@ function currentBuildCommitId(): string {
 function atomicWrite(filePath: string, content: string): void {
   const tmpPath = `${filePath}.${randomUUID()}.tmp`
   writeFileSync(tmpPath, content, 'utf8')
-  renameSync(tmpPath, filePath)
+  renameWithRetrySync(tmpPath, filePath)
+}
+
+/** Windows rename 目标被杀毒扫描/其他进程短暂占用时 EPERM——退避重试（026）。 */
+function renameWithRetrySync(from: string, to: string): void {
+  const delays = [20, 40, 80, 160]
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      renameSync(from, to)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException | undefined)?.code
+      if (attempt >= delays.length || (code !== 'EPERM' && code !== 'EACCES' && code !== 'EBUSY' && code !== 'EEXIST')) {
+        throw error
+      }
+      const waitUntil = Date.now() + delays[attempt]
+      while (Date.now() < waitUntil) {
+        // 同步忙等退避（调用点本身为同步低频写：启动落句柄/保存配置）
+      }
+    }
+  }
 }
 
 function writeJsonAtomic(filePath: string, value: unknown): void {

@@ -299,6 +299,36 @@ describe('AccessModal 动作处理（AccessActions emit → api 动作 → store
     expect(router.currentRoute.value.path).toBe('/') // 编程导航回 '/'（守卫按未登录分流回登录卡）
     expect(wrapper.emitted('update:open')).toContainEqual([false]) // 关 modal
   })
+
+  it('026：服务端返回 oidc_logout_url → 整页跳转 Keycloak end_session（结束 SSO），不再走本地关弹窗链路', async () => {
+    const endSession = 'https://kc.example/realms/digital-employees/protocol/openid-connect/logout?id_token_hint=abc'
+    const original = Object.getOwnPropertyDescriptor(window, 'location')
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: 'http://127.0.0.1:19980/employees' },
+    })
+    try {
+      const { wrapper, stub, router } = await mountModal(
+        {
+          '/api/state': () => jsonResponse(activeState),
+          '/api/logout': () => jsonResponse({ status: 'logged_out', oidc_logout_url: endSession }),
+          '/api/config/platform': () => jsonResponse(PLATFORM_CONFIG),
+        },
+        { push: '/employees' },
+      )
+      const logout = wrapper.findAll('.access-modal button').find((button) => button.text() === '退出登录')!
+      await logout.trigger('click')
+      await flushPromises()
+      expect(stub.calls('/api/logout', 'POST')).toBe(1)
+      expect(window.location.href).toBe(endSession) // 整页跳转
+      expect(stub.calls('/api/state', 'GET')).toBe(1) // 无后续 fetchState（整页跳走）
+      expect(router.currentRoute.value.path).toBe('/employees') // 未做本地路由回跳
+      expect(wrapper.emitted('update:open')).toBeUndefined() // 未关弹窗
+    } finally {
+      if (original) Object.defineProperty(window, 'location', original)
+    }
+  })
 })
 
 describe('AccessModal store 数据流（AccessView 登录态一致：accessState 驱动三组件）', () => {

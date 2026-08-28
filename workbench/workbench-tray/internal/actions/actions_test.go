@@ -70,6 +70,44 @@ func TestOpenBrowserURL(t *testing.T) {
 	}
 }
 
+// TestChildEnv 028：托盘 spawn 的 devzero 子进程继承当前环境且追加 WORKBENCH_NO_BROWSER=1
+// （浏览器只由托盘就绪后显式开一次，服务侧 start 的 idempotent/首启开窗被抑制）。
+func TestChildEnv(t *testing.T) {
+	t.Setenv("WORKBENCH_CHILDENV_MARKER", "inherit-me")
+	env := ChildEnv()
+	var sawSuppress, sawInherit bool
+	for _, kv := range env {
+		if kv == "WORKBENCH_NO_BROWSER=1" {
+			sawSuppress = true
+		}
+		if kv == "WORKBENCH_CHILDENV_MARKER=inherit-me" {
+			sawInherit = true
+		}
+	}
+	if !sawSuppress {
+		t.Fatalf("ChildEnv 缺少 WORKBENCH_NO_BROWSER=1：%v", env)
+	}
+	if !sawInherit {
+		t.Fatalf("ChildEnv 未继承父进程环境（缺 WORKBENCH_CHILDENV_MARKER）：%v", env)
+	}
+}
+
+// TestOpenGate 028：并发开窗链路合并——首个 TryEnter 放行，链路期间其余请求拒绝，
+// Leave 后下一次开窗链路可正常进入。
+func TestOpenGate(t *testing.T) {
+	var gate OpenGate
+	if !gate.TryEnter() {
+		t.Fatal("首次 TryEnter 应放行")
+	}
+	if gate.TryEnter() {
+		t.Fatal("链路进行中第二次 TryEnter 应被拒绝（并发合并）")
+	}
+	gate.Leave()
+	if !gate.TryEnter() {
+		t.Fatal("Leave 后 TryEnter 应再次放行")
+	}
+}
+
 func TestPaths(t *testing.T) {
 	profile := t.TempDir()
 	if got := DataDirPath(profile); got != profile {
